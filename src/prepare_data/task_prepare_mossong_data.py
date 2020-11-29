@@ -16,7 +16,6 @@ LOCATIONS = [
 ]
 
 
-
 MOSSONG_PATH = SRC / "original_data" / "mossong_2008"
 
 
