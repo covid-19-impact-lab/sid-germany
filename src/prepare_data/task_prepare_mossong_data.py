@@ -16,20 +16,18 @@ LOCATIONS = [
 ]
 
 
+
+MOSSONG_PATH = SRC / "original_data" / "mossong_2008"
+
+
 @pytask.mark.depends_on(
     {
-        "hh_common": SRC / "original_data" / "mossong_2008" / "hh_common.csv",
-        "hh_extra": SRC / "original_data" / "mossong_2008" / "hh_extra.csv",
-        "participant_common": SRC
-        / "original_data"
-        / "mossong_2008"
-        / "participant_common.csv",
-        "participant_extra": SRC
-        / "original_data"
-        / "mossong_2008"
-        / "participant_extra.csv",
-        "contact_common": SRC / "original_data" / "mossong_2008" / "contact_common.csv",
-        "sday": SRC / "original_data" / "mossong_2008" / "sday.csv",
+        "hh_common": MOSSONG_PATH / "hh_common.csv",
+        "hh_extra": MOSSONG_PATH / "hh_extra.csv",
+        "participant_common": MOSSONG_PATH / "participant_common.csv",
+        "participant_extra": MOSSONG_PATH / "participant_extra.csv",
+        "contact_common": MOSSONG_PATH / "contact_common.csv",
+        "sday": MOSSONG_PATH / "sday.csv",
     }
 )
 @pytask.mark.produces(BLD / "data" / "mossong_2008" / "contact_data.pkl")
