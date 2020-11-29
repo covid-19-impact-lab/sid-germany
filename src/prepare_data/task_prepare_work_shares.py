@@ -16,7 +16,6 @@ def clean_work_shares(path):
     work_shares.drop(columns=["age_group"], inplace=True)
     work_shares.rename(columns={"men": "male", "women": "female"}, inplace=True)
 
-    work_shares = work_shares.copy(deep=True)
     work_shares["interval"] = work_shares.apply(
         lambda x: pd.Interval(x["age_lower"], x["age_upper"]), axis=1
     )
