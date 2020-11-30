@@ -55,4 +55,8 @@ def task_eu_hh_size_distribution(depends_on, produces):
     data = data.loc[countries].sort_index().astype(float)
 
     hh_size_shares = data.unstack().T / 100
+    hh_size_shares.index = [
+        int(x) if isinstance(x, str) else x for x in hh_size_shares.index
+    ]
+
     hh_size_shares.to_pickle(produces)
