@@ -3,9 +3,30 @@ import itertools as it
 
 import numpy as np
 import pandas as pd
+import pytask
 
+from src.config import BLD
 from src.shared import create_age_groups
 from src.shared import create_age_groups_rki
+from src.shared import load_dataset
+
+
+@pytask.mark.depends_on(
+    {
+        "hh_data": BLD / "data" / "mossong_2008" / "hh_sample_ger.csv",
+        "hh_probabilities": BLD / "data" / "mossong_2008" / "hh_probabilities.csv",
+        "working_probabilities": BLD
+        / "data"
+        / "population_structure"
+        / "working_shares.pkl",
+        "county_probabilities": BLD / "data" / "counties.parquet",
+    }
+)
+@pytask.mark.produces(BLD / "data" / "inital_states.parquet")
+def task_create_background_characteristics(depends_on, produces):
+    data = {name: load_dataset(path) for name, path in depends_on.items()}
+    df = create_background_characteristics(n_households=400_000, seed=3489, **data)
+    df.to_parquet(produces)
 
 
 def create_background_characteristics(
@@ -145,7 +166,10 @@ def _create_gender(df, seed):
     """"""
     # add helper variables
     df = df.copy(deep=True)
-    df["hh_size"] = df["hh_id"].replace(df.groupby("hh_id").size())
+    hh_sizes = df.groupby("hh_id").size()
+    hh_sizes.name = "hh_size"
+    to_merge = hh_sizes.to_frame()
+    df = df.merge(to_merge, left_on="hh_id", right_index=True, validate="m:1")
     df["underage"] = df["age"] < 18
     df["nr_children_in_hh"] = df.groupby("hh_id")["underage"].transform(np.sum)
     df["nr_adults_in_hh"] = df["hh_size"] - df["nr_children_in_hh"]

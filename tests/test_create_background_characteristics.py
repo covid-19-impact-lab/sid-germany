@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-from src.create_initial_states.create_background_characteristics import _sample_hhs
-from src.create_initial_states.create_background_characteristics import (
+from src.create_initial_states.task_create_background_characteristics import _sample_hhs
+from src.create_initial_states.task_create_background_characteristics import (
     create_background_characteristics,
 )
 
@@ -88,6 +88,7 @@ def test_create_background_characteristics(
         seed=930,
     )
     assert df.notnull().all().all(), "No NaN allowed in the background characteristics."
+    assert not df["p_id"].duplicated().any(), "Person id duplicate."
 
 
 def test_sample_hhs(hh_data, hh_probabilities):
