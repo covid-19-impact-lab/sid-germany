@@ -63,7 +63,6 @@ def create_background_characteristics(
         df (pandas.DataFrame): DataFrame where each row represents an individual.
             Columns are:
                 - hh_id
-                - p_id (person id)
                 - age
                 - county
                 - state
@@ -89,7 +88,7 @@ def create_background_characteristics(
     # age group necessary for drawing gender
     df["age_group"] = create_age_groups(df["age"])
 
-    df["gender"] = _create_gender(df, seed)
+    df["gender"] = _create_gender(df, next(seed))
     county_and_state = _draw_counties(
         hh_ids=df["hh_id"].unique(),
         county_probabilities=county_probabilities,
@@ -105,12 +104,9 @@ def create_background_characteristics(
     df["work_contact_priority"] = _draw_work_contact_priority(
         df["occupation"], df["systemically_relevant"], next(seed)
     )
-
     df["age_group_rki"] = create_age_groups_rki(df)
-
-    df = df.astype({"age": np.uint8, "hh_id": "category", "p_id": "category"})
-
-    df = df.sort_values(["hh_id", "p_id"])
+    df = df.astype({"age": np.uint8, "hh_id": "category"})
+    df = df.sort_values("hh_id").reset_index()
 
     return df
 
@@ -129,8 +125,7 @@ def _sample_hhs(n_households, hh_data, hh_probabilities, seed):
         seed (int): seed for numpy.random.
 
     Returns:
-        sampled_hh (pandas.DataFrame): sampled households.
-            Each row is an individual with a person id (p_id).
+        sampled_hh (pandas.DataFrame): sampled households. Each row is an individual.
 
     """
     np.random.seed(seed)
@@ -140,30 +135,37 @@ def _sample_hhs(n_households, hh_data, hh_probabilities, seed):
         size=n_households,
         replace=True,
     )
-    new_id_from_sampled_indices = pd.DataFrame({"old_hh_id": sampled_ids})
-    new_id_from_sampled_indices = new_id_from_sampled_indices.reset_index()
-    new_id_from_sampled_indices = new_id_from_sampled_indices.rename(
-        columns={"index": "hh_id"}
-    )
-    sampled_hh = new_id_from_sampled_indices.merge(
+    new_id_df = pd.DataFrame({"old_hh_id": sampled_ids})
+    new_id_df = new_id_df.reset_index()
+    new_id_df = new_id_df.rename(columns={"index": "hh_id"})
+    df = new_id_df.merge(
         hh_data[["hh_id", "age"]],
         left_on="old_hh_id",
         right_on="hh_id",
         validate="m:m",
         suffixes=("", "_"),
     )
-    sampled_hh = sampled_hh.sort_values("hh_id")
-    sampled_hh = sampled_hh.drop(columns=["old_hh_id", "hh_id_"])
-    sampled_hh["hh_id"] = sampled_hh["hh_id"].astype("category")
-    sampled_hh = sampled_hh.sort_values("hh_id")
-    sampled_hh = sampled_hh.reset_index(drop=True).reset_index()
-    sampled_hh = sampled_hh.rename(columns={"index": "p_id"})
+    df = df.drop(columns=["old_hh_id", "hh_id_"])
+    df = df.sort_values("hh_id")
+    df["hh_id"] = df["hh_id"].astype("category")
+    df = df.reset_index(drop=True)
 
-    return sampled_hh
+    return df
 
 
 def _create_gender(df, seed):
-    """"""
+    """Create a gender variable that replicates assortative matching.
+
+    For children and adults not in two-adult households we draw the gender randomly.
+    For older adults living alone we adjust the probability to be female upwards.
+
+    For two adult households we draw the older adult to be more likely male and assign
+    the younger adult the opposite gender.
+    This is important for the spread of an infectious disease as women are less likely
+    to work than men. Gender does not enter into our model otherwise.
+
+    """
+    np.random.seed(seed)
     # add helper variables
     df = df.copy(deep=True)
     hh_sizes = df.groupby("hh_id").size()
@@ -175,26 +177,23 @@ def _create_gender(df, seed):
     df["nr_adults_in_hh"] = df["hh_size"] - df["nr_children_in_hh"]
 
     female = pd.Series(np.nan, index=df.index)
-    female[df["underage"]] = _draw_gender(size=df["underage"].sum(), seed=next(seed))
+    female[df["underage"]] = _draw_gender(size=df["underage"].sum())
     female = _add_gender_of_single_adult_hhs(
         female,
         single_adult_in_hh=df["nr_adults_in_hh"] == 1,
         age_group=df["age_group"],
-        seed=seed,
     )
-    female = _add_gender_of_two_adult_hhs(female, df, seed=next(seed))
+    female = _add_gender_of_two_adult_hhs(female, df)
     # choose remaining elderly's gender from age specific gender distribution
     elderly = df["age_group"] == "70-79"
-    female[elderly] = _draw_gender(size=elderly.sum(), p_female=0.55, seed=next(seed))
+    female[elderly] = _draw_gender(size=elderly.sum(), p_female=0.55)
     very_old = df["age_group"] == "80-100"
-    female[very_old] = _draw_gender(size=very_old.sum(), p_female=0.65, seed=next(seed))
+    female[very_old] = _draw_gender(size=very_old.sum(), p_female=0.65)
     remaining_adults = female.isnull()
     assert (
         remaining_adults.mean() < 0.2
     ), "Too many adults have not been assigned a gender."
-    female[remaining_adults] = _draw_gender(
-        size=remaining_adults.sum(), seed=next(seed)
-    )
+    female[remaining_adults] = _draw_gender(size=remaining_adults.sum())
 
     gender_sr = female.astype(bool).replace({True: "female", False: "male"})
     gender_sr = pd.Categorical(gender_sr, categories=["male", "female"], ordered=False)
@@ -210,20 +209,15 @@ def _draw_counties(hh_ids, county_probabilities, seed):
         size=len(hh_ids),
         replace=True,
     )
-    sampled_counties = (
-        pd.DataFrame({"county": sampled_counties})
-        .reset_index()
-        .rename(columns={"index": "hh_id"})
+    df = pd.DataFrame({"county": sampled_counties})
+    df = df.reset_index()
+    df = df.rename(columns={"index": "hh_id"})
+    df = df.merge(
+        county_probabilities[["id", "state"]], left_on="county", right_on="id"
     )
-    sampled_counties = (
-        sampled_counties.merge(
-            county_probabilities[["id", "state"]], left_on="county", right_on="id"
-        )
-        .drop(columns="id")
-        .astype({"state": "category"})
-    )
-    sampled_counties["county"] = sampled_counties["county"].astype("category")
-    return sampled_counties
+    df = df.drop(columns="id")
+    df = df.astype({"state": "category", "county": "category"})
+    return df
 
 
 def _draw_occupation(df, working_probabilities, seed):
@@ -285,7 +279,7 @@ def _draw_work_contact_priority(occupation, systemically_relevant, seed):
     return work_contact_priority
 
 
-def _add_gender_of_single_adult_hhs(female, single_adult_in_hh, age_group, seed):
+def _add_gender_of_single_adult_hhs(female, single_adult_in_hh, age_group):
     """Add the gender of adults in single adult households.
 
     This abstracts from women being much more likely to be single parents.
@@ -304,22 +298,16 @@ def _add_gender_of_single_adult_hhs(female, single_adult_in_hh, age_group, seed)
     """
     female = female.copy()
     single_non_elderly = single_adult_in_hh & (age_group < "70-79")
-    female[single_non_elderly] = _draw_gender(
-        size=single_non_elderly.sum(), seed=next(seed)
-    )
+    female[single_non_elderly] = _draw_gender(size=single_non_elderly.sum())
     single_elderly = single_adult_in_hh & (age_group == "70-79")
-    female[single_elderly] = _draw_gender(
-        size=single_elderly.sum(), p_female=0.55, seed=next(seed)
-    )
+    female[single_elderly] = _draw_gender(size=single_elderly.sum(), p_female=0.55)
     single_very_old = single_adult_in_hh & (age_group == "80-100")
-    female[single_very_old] = _draw_gender(
-        size=single_very_old.sum(), p_female=0.65, seed=next(seed)
-    )
+    female[single_very_old] = _draw_gender(size=single_very_old.sum(), p_female=0.65)
     assert female[single_adult_in_hh].notnull().all()
     return female
 
 
-def _add_gender_of_two_adult_hhs(female, hh, seed):
+def _add_gender_of_two_adult_hhs(female, hh):
     """Add gender to the female column in *hh* for households with two adults.
 
 
@@ -334,9 +322,7 @@ def _add_gender_of_two_adult_hhs(female, hh, seed):
     two_adults = hh[hh["nr_adults_in_hh"] == 2]
     oldest_adult = two_adults.groupby("hh_id", as_index=False).nth(0)
     second_adult = two_adults.groupby("hh_id", as_index=False).nth(1)
-    age_of_oldest_in_pair = _draw_gender(
-        size=len(oldest_adult), p_female=0.3, seed=seed
-    )
+    age_of_oldest_in_pair = _draw_gender(size=len(oldest_adult), p_female=0.3)
     age_of_2nd_oldest = ~age_of_oldest_in_pair
     female[oldest_adult.index] = age_of_oldest_in_pair
     female[second_adult.index] = age_of_2nd_oldest
@@ -344,6 +330,7 @@ def _add_gender_of_two_adult_hhs(female, hh, seed):
     return female
 
 
-def _draw_gender(size, seed, p_female=0.5):
-    np.random.seed(seed)
+def _draw_gender(size, seed=None, p_female=0.5):
+    if seed is not None:
+        np.random.seed(seed)
     return np.random.choice([True, False], size=size, p=[p_female, 1 - p_female])

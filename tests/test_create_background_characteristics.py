@@ -88,7 +88,7 @@ def test_create_background_characteristics(
         seed=930,
     )
     assert df.notnull().all().all(), "No NaN allowed in the background characteristics."
-    assert not df["p_id"].duplicated().any(), "Person id duplicate."
+    assert not df.index.duplicated().any(), "Duplicates in index."
 
 
 def test_sample_hhs(hh_data, hh_probabilities):
