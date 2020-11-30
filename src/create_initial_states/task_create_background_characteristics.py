@@ -347,28 +347,3 @@ def _add_gender_of_two_adult_hhs(female, hh, seed):
 def _draw_gender(size, seed, p_female=0.5):
     np.random.seed(seed)
     return np.random.choice([True, False], size=size, p=[p_female, 1 - p_female])
-
-
-def _draw_who_attends_nursery(age, seed):
-    """Draw which children attend a nursery.
-
-    For children below 3 we assume that 35% attend a nursery.
-    This hides substantial heterogeneity in attendance with respect to age
-    (older children are much more likely to be in day care) and with respect to state
-    (East German children are much more likely to attend nurseries).
-
-
-    sources:
-    - percent of children in day care: https://tinyurl.com/yefhpney
-    - percent of children below age 3 in day care: https://tinyurl.com/y6zft8sx
-
-    """
-    np.random.seed(seed)
-    below_3_yos = age[age < 3].index
-    share_of_children_in_nursery = 0.35
-    n_kids_to_draw = int(share_of_children_in_nursery * len(below_3_yos))
-    attend_nursery_indices = np.random.choice(
-        below_3_yos, size=n_kids_to_draw, replace=False
-    )
-    attends_nursery = age.index.isin(attend_nursery_indices)
-    return attends_nursery
