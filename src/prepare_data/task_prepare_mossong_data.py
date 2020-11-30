@@ -1,9 +1,11 @@
+import numpy as np
 import pandas as pd
 import pytask
 
 from src.config import BLD
 from src.config import SRC
 from src.shared import create_age_groups
+from src.shared import load_dataset
 
 
 LOCATIONS = [
@@ -16,24 +18,35 @@ LOCATIONS = [
 ]
 
 
-MOSSONG_PATH = SRC / "original_data" / "mossong_2008"
+MOSSONG_IN = SRC / "original_data" / "mossong_2008"
+MOSSONG_OUT = BLD / "data" / "mossong_2008"
 
 
 @pytask.mark.depends_on(
     {
-        "hh_common": MOSSONG_PATH / "hh_common.csv",
-        "hh_extra": MOSSONG_PATH / "hh_extra.csv",
-        "participant_common": MOSSONG_PATH / "participant_common.csv",
-        "participant_extra": MOSSONG_PATH / "participant_extra.csv",
-        "contact_common": MOSSONG_PATH / "contact_common.csv",
-        "sday": MOSSONG_PATH / "sday.csv",
+        "hh_common": MOSSONG_IN / "hh_common.csv",
+        "hh_extra": MOSSONG_IN / "hh_extra.csv",
+        "participant_common": MOSSONG_IN / "participant_common.csv",
+        "participant_extra": MOSSONG_IN / "participant_extra.csv",
+        "contact_common": MOSSONG_IN / "contact_common.csv",
+        "sday": MOSSONG_IN / "sday.csv",
+        "eu_hh_size_shares": BLD
+        / "data"
+        / "population_structure"
+        / "eu_hh_size_shares.pkl",
     }
 )
-@pytask.mark.produces(BLD / "data" / "mossong_2008" / "contact_data.pkl")
-def task_prepare_mossong_data(depends_on, produces):
-    datasets = {
-        key: pd.read_csv(val, low_memory=False) for key, val in depends_on.items()
+@pytask.mark.produces(
+    {
+        "contact_data": MOSSONG_OUT / "contact_data.pkl",
+        "hh_sample": MOSSONG_OUT / "hh_sample_ger.csv",
+        "hh_probabilities": MOSSONG_OUT / "hh_probabilities.csv",
     }
+)
+def task_prepare_mossong_data(depends_on, produces):
+    datasets = {key: load_dataset(val) for key, val in depends_on.items()}
+
+    # clean data
     hh = _prepare_hh_data(datasets["hh_common"], datasets["hh_extra"])
     participants = _prepare_participant_data(
         datasets["participant_common"], datasets["participant_extra"]
@@ -41,53 +54,32 @@ def task_prepare_mossong_data(depends_on, produces):
     contacts = _prepare_contact_data(datasets["contact_common"])
     sday = _prepare_day_data(datasets["sday"])
 
-    contacts = pd.merge(left=contacts, right=participants, on="part_id", validate="m:1")
-    contacts = pd.merge(left=contacts, right=hh, on="hh_id", validate="m:1")
-    contacts = pd.merge(left=contacts, right=sday, on="part_id", validate="m:1")
-    contacts.set_index("cont_id", inplace=True)
-
-    # remove problematic entries
-    contacts = contacts[contacts["problems"] != "Y"]
-
-    contacts = contacts.rename(
-        columns={
-            "cnt_age_exact": "age_of_contact",
-            "cnt_gender": "gender_of_contact",
-            "duration_multi": "duration",
-            "frequency_multi": "frequency",
-            "part_education_length": "participant_edu",
-            "part_id": "id",
-            "part_occupation": "participant_occupation",
-        }
+    # contact_data
+    contacts = _build_contacts(
+        contacts=contacts, participants=participants, sday=sday, hh=hh
     )
+    contacts.to_pickle(produces["contact_data"])
 
-    drop_cols = [
-        "child_care",
-        "child_care_detail",
-        "problems",
-        "participant_school_year",
-        "part_occupation_detail",
-        "child_nationality",
-        "part_education",
-        "child_relationship",
-        "cnt_age_est_max",
-        "cnt_age_est_min",
-        "diary_how",
-        "type",
-    ]
-    drop_cols += [f"hh_age_{x}" for x in range(5, 21)]  # noqa
-    contacts.drop(columns=drop_cols, inplace=True)
+    # household sample for initial states
+    with_missing_ages = _from_wide_to_long_format(hh)
+    only_complete_ages = _drop_hh_with_missing_ages(with_missing_ages)
+    german_hhs = only_complete_ages.query("country == 'DE_TOT'")
+    german_hhs.to_csv(produces["hh_sample"])
 
-    contacts["part_age_group"] = create_age_groups(contacts["part_age"])
-    contacts["age_group_of_contact"] = create_age_groups(contacts["age_of_contact"])
-
-    contacts["recurrent"] = contacts["frequency"].isin(
-        ["1-2 times a week", "(almost) daily"]
+    # household probability weights
+    german_hhs["collapsed_hh_size"] = german_hhs["hh_size"].where(
+        german_hhs["hh_size"] <= 5, pd.Interval(5.0, np.inf)
     )
-
-    # remove one kid's work contact
-    contacts = contacts[~((contacts["part_age"] < 15) & (contacts["work"]))]
-    contacts.to_pickle(produces)
+    sample_hh_size_shares = german_hhs["collapsed_hh_size"].value_counts(normalize=True)
+    inv_prob_weights = datasets["eu_hh_size_shares"]["DE_TOT"] / sample_hh_size_shares
+    german_hhs["hh_inv_prob_weights"] = german_hhs["collapsed_hh_size"].replace(
+        inv_prob_weights
+    )
+    german_hhs["probability"] = (
+        german_hhs["hh_inv_prob_weights"] / german_hhs["hh_inv_prob_weights"].sum()
+    )
+    hh_probabilities = german_hhs[["hh_id", "probability"]]
+    hh_probabilities.to_csv(produces["hh_probabilities"])
 
 
 def _prepare_hh_data(common, extra):
@@ -194,3 +186,92 @@ def _prepare_day_data(sday):
     )
     sday["weekend"] = sday["dayofweek"].isin(["Sat", "Sun"])
     return sday
+
+
+def _build_contacts(contacts, participants, hh, sday):
+    contacts = pd.merge(left=contacts, right=participants, on="part_id", validate="m:1")
+    contacts = pd.merge(left=contacts, right=hh, on="hh_id", validate="m:1")
+    contacts = pd.merge(left=contacts, right=sday, on="part_id", validate="m:1")
+    contacts.set_index("cont_id", inplace=True)
+
+    # remove problematic entries
+    contacts = contacts[contacts["problems"] != "Y"]
+
+    contacts = contacts.rename(
+        columns={
+            "cnt_age_exact": "age_of_contact",
+            "cnt_gender": "gender_of_contact",
+            "duration_multi": "duration",
+            "frequency_multi": "frequency",
+            "part_education_length": "participant_edu",
+            "part_id": "id",
+            "part_occupation": "participant_occupation",
+        }
+    )
+
+    drop_cols = [
+        "child_care",
+        "child_care_detail",
+        "problems",
+        "participant_school_year",
+        "part_occupation_detail",
+        "child_nationality",
+        "part_education",
+        "child_relationship",
+        "cnt_age_est_max",
+        "cnt_age_est_min",
+        "diary_how",
+        "type",
+    ]
+    drop_cols += [f"hh_age_{x}" for x in range(5, 21)]  # noqa
+    contacts.drop(columns=drop_cols, inplace=True)
+
+    contacts["part_age_group"] = create_age_groups(contacts["part_age"])
+    contacts["age_group_of_contact"] = create_age_groups(contacts["age_of_contact"])
+
+    contacts["recurrent"] = contacts["frequency"].isin(
+        ["1-2 times a week", "(almost) daily"]
+    )
+
+    # remove one kid's work contact
+    contacts = contacts[~((contacts["part_age"] < 15) & (contacts["work"]))]
+    return contacts
+
+
+def _from_wide_to_long_format(hh):
+    """Convert the data from wide to long format."""
+    # To long format.
+    age_columns = [f"hh_age_{x}" for x in range(1, 21)]
+    hh = hh.melt(
+        id_vars=["hh_id", "country", "hh_size"],
+        value_vars=age_columns,
+        var_name="p_id",
+        value_name="age",
+    )
+
+    # Create personal id from the order in which ages were reported.
+    hh["p_id"] = hh["p_id"].str.split("_").str[-1].astype(np.uint8)
+
+    # Remove all observations which were artificially created in wide format.
+    hh = hh.loc[hh.p_id.le(hh.hh_size)]
+
+    hh = hh.astype({"hh_id": "category", "country": "category"})
+
+    return hh
+
+
+def _drop_hh_with_missing_ages(hh):
+    """Drop households that don't have ages for every person in the household."""
+    hh = hh.dropna()
+
+    # Keep only complete households.
+    n_hh_members_with_age = hh.groupby("hh_id")["p_id"].transform("size")
+    hh = hh.loc[hh.hh_size.eq(n_hh_members_with_age)]
+
+    # Drop households consisting of children only
+    oldest_above_16 = hh.groupby("hh_id")["age"].max() >= 16
+    adult_led_hh = oldest_above_16[oldest_above_16].index
+    hh = hh[hh["hh_id"].isin(adult_led_hh)]
+
+    hh["age"] = hh["age"].astype(np.uint8)
+    return hh

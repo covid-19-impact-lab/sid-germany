@@ -215,3 +215,16 @@ def from_epochs_to_timestamps(epochs):
 
     """
     return pd.to_datetime(epochs, unit="s")
+
+
+def load_dataset(path):
+    """Infer data type from suffix and load the data with pandas."""
+    if path.suffix == ".csv":
+        df = pd.read_csv(path, low_memory=False)
+    elif path.suffix == ".pkl":
+        df = pd.read_pickle(path)
+    elif path.suffix == ".parquet":
+        df = pd.read_parquet(path)
+    else:
+        raise ValueError(f"Unknown suffix for {path}")
+    return df
