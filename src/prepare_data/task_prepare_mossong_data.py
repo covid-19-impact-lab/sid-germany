@@ -58,7 +58,7 @@ def task_prepare_mossong_data(depends_on, produces):
     contacts = _merge_mossong_data(
         contacts=contacts, participants=participants, sday=sday, hh=hh
     )
-    contacts = _nice_columns_in_contact_data(contacts)
+    contacts = _make_columns_in_contact_data_nice(contacts)
     contacts.to_pickle(produces["contact_data"])
 
     # household sample for initial states
@@ -220,7 +220,7 @@ def _from_wide_to_long_format(hh):
     return hh
 
 
-def _nice_columns_in_contact_data(df):
+def _make_columns_in_contact_data_nice(df):
     df = df.copy(deep=True)
     df = df.rename(
         columns={
