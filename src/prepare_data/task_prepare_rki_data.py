@@ -56,7 +56,13 @@ AGE_GROUPS_TO_INTERVALS = {
 
 
 @pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "rki.csv")
-@pytask.mark.produces(BLD / "data" / "processed_time_series" / "rki.pkl")
+@pytask.mark.produces(
+    {
+        "full_rki": BLD / "data" / "processed_time_series" / "rki.pkl",
+        "newly_infected": BLD / "data" / "processed_time_series" / "newly_infected.pkl",
+        "newly_deceased": BLD / "data" / "processed_time_series" / "newly_deceased.pkl",
+    }
+)
 def task_prepare_rki_data(depends_on, produces):
     df = (
         pd.read_csv(depends_on, parse_dates=["Refdatum"])
@@ -64,13 +70,19 @@ def task_prepare_rki_data(depends_on, produces):
         .rename(columns=RENAME_COLUMNS)
     )
 
-    df["age_group"] = (
+    df["age_group_rki"] = (
         df["age_group"].replace(AGE_GROUPS_TO_INTERVALS).astype("category")
     )
+    df = df.drop(columns=["age_group"])
 
     df["is_date_disease_onset"] = df["is_date_disease_onset"].astype(bool)
 
     df["newly_infected"] = df["n_cases"] * df["type_case"].isin([0, 1])
     df["newly_deceased"] = df["n_deaths"] * df["type_death"].isin([0, 1])
 
-    df.to_pickle(produces)
+    df.to_pickle(produces["full_rki"])
+
+    for col in ["newly_infected", "newly_deceased"]:
+        summed = df.groupby(["date", "county", "age_group_rki"])[[col]].sum()
+        summed = summed.fillna(0).reset_index()
+        summed.to_pickle(produces[col])
