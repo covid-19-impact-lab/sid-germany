@@ -2,11 +2,25 @@ import numpy as np
 import pandas as pd
 from sid.shared import boolean_choices
 
+from src.config import POPULATION_GERMANY
+
 
 def create_initial_infections(
-    empirical_data, synthetic_data, start, end, undetected_multiplier, seed
+    empirical_data,
+    synthetic_data,
+    start,
+    end,
+    undetected_multiplier,
+    seed,
+    population_size=POPULATION_GERMANY,
 ):
     """Create a DataFrame with initial infections.
+
+    .. warning::
+        In case a person is drawn to be newly infected more than once we only
+        infect her on the first date. If the probability of being infected is
+        large, not correcting for this will lead to a lower infection probability
+        than in the empirical data.
 
     Args:
         empirical_data (pandas.DataFrame): Dataset with the columns age_group_rki,
@@ -19,6 +33,7 @@ def create_initial_infections(
         end (str or pd.Timestamp): End date.
         undetected_multiplier (float): Multiplier used to scale up the observed
             infections to account for unknown cases. Must be >=1.
+        population_size (int): Size of the population behind the empirical_data.
         seed (int)
 
     Returns:
@@ -27,31 +42,26 @@ def create_initial_infections(
 
     """
     np.random.seed(seed)
+
     assert undetected_multiplier >= 1, "undetected_multiplier must be >= 1."
-    if (
-        empirical_data.set_index(["date", "county", "age_group_rki"])
-        .index.duplicated()
-        .any()
-    ):
-        grouped = empirical_data.groupby(["date", "county", "age_group_rki"]).copy(
-            deep=True
-        )
+    index_cols = ["date", "county", "age_group_rki"]
+    if empirical_data.set_index(index_cols).index.duplicated().any():
+        grouped = empirical_data.groupby().copy(deep=True)
         empirical_data = grouped.sum().fillna(0).reset_index()
     assert (
-        empirical_data[["date", "county", "age_group_rki", "newly_infected"]]
-        .notnull()
-        .all()
-        .all()
+        empirical_data[index_cols + ["newly_infected"]].notnull().all().all()
     ), "No NaN allowed in the empirical data"
 
     cases = _create_cases(empirical_data, start, end)
     infection_probs = _calculate_infection_probs(
-        synthetic_data, cases, undetected_multiplier
+        synthetic_data, cases, undetected_multiplier, population_size
     )
 
     initial_infections = pd.DataFrame(index=synthetic_data.index)
     for col in infection_probs:
         initial_infections[col] = boolean_choices(infection_probs[col].to_numpy())
+
+    initial_infections = _only_leave_first_true(initial_infections)
     return initial_infections
 
 
@@ -78,7 +88,9 @@ def _create_cases(empirical_data, start, end):
     return cases
 
 
-def _calculate_infection_probs(synthetic_data, cases, undetected_multiplier):
+def _calculate_infection_probs(
+    synthetic_data, cases, undetected_multiplier, population_size
+):
     """Calculate the infection probabilities from the cases and synthetic data.
 
     Args:
@@ -95,23 +107,31 @@ def _calculate_infection_probs(synthetic_data, cases, undetected_multiplier):
             probabilities for each individual to be infected on the particular day.
 
     """
-    scaling_factor = 83_000_000 / len(synthetic_data)
-    group_probability = (
-        scaling_factor * synthetic_data.groupby(["county", "age_group_rki"]).size()
-    )
+    scaling_factor = population_size / len(synthetic_data)
+
+    group_sizes = synthetic_data.groupby(["county", "age_group_rki"]).size()
+    scaled_up_group_sizes = scaling_factor * group_sizes
     group_infection_probs = pd.DataFrame(index=cases.index)
-    group_infection_probs["group_probability"] = group_probability
+    group_infection_probs["scaled_up_group_sizes"] = scaled_up_group_sizes
 
     for col in cases.columns:
-        group_infection_probs[col] = (
-            undetected_multiplier
-            * cases[col]
-            / group_infection_probs["group_probability"]
-        )
+        true_cases = undetected_multiplier * cases[col]
+        prob = true_cases / group_infection_probs["scaled_up_group_sizes"]
+        group_infection_probs[col] = prob
 
     infection_probs = synthetic_data[["county", "age_group_rki"]].copy(deep=True)
     infection_probs = infection_probs.merge(
         group_infection_probs, on=["county", "age_group_rki"], validate="m:1"
     )
-    infection_probs = infection_probs.drop(columns=["county", "age_group_rki"])
+    infection_probs = infection_probs.drop(
+        columns=["county", "age_group_rki", "group_probability"]
+    )
     return infection_probs
+
+
+def _only_leave_first_true(df):
+    df = df.copy()
+    for i, col in enumerate(df.columns):
+        for other_col in df.columns[i + 1 :]:  # noqa
+            df[other_col] = df[other_col] & ~df[col]
+    return df
