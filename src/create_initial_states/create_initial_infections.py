@@ -124,7 +124,7 @@ def _calculate_infection_probs(
         group_infection_probs, on=["county", "age_group_rki"], validate="m:1"
     )
     infection_probs = infection_probs.drop(
-        columns=["county", "age_group_rki", "group_probability"]
+        columns=["county", "age_group_rki", "scaled_up_group_sizes"]
     )
     return infection_probs
 

@@ -3,6 +3,9 @@ import pandas as pd
 import pandas.testing as pdt
 import pytest
 
+from src.create_initial_states.create_initial_infections import (
+    _calculate_infection_probs,
+)
 from src.create_initial_states.create_initial_infections import _create_cases
 from src.create_initial_states.create_initial_infections import _only_leave_first_true
 
@@ -63,3 +66,45 @@ def test_create_cases(empirical_data, cases):
     end = "2020-10-03"
     res = _create_cases(empirical_data, start, end)
     pdt.assert_frame_equal(res.sort_index(), cases.sort_index())
+
+
+@pytest.fixture
+def synthetic_data():
+    df = pd.DataFrame()
+    df["county"] = list("AABBBBAAA")
+    df["age_group_rki"] = ["young"] * 4 + ["old"] * 5
+    return df
+
+
+def test_calculate_infection_probs(synthetic_data, cases):
+    pop_size = 14
+    undetected_multiplier = 1.5
+    res = _calculate_infection_probs(
+        synthetic_data=synthetic_data,
+        cases=cases,
+        undetected_multiplier=undetected_multiplier,
+        population_size=pop_size,
+    )
+    expected = pd.DataFrame(index=synthetic_data.index, columns=cases.columns)
+    group_shares = np.array([2, 2, 2, 2, 2, 2, 3, 3, 3]) / 9
+    scaled_up_group_sizes = pop_size * group_shares
+    p1 = (
+        undetected_multiplier
+        * np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])
+        / scaled_up_group_sizes
+    )
+    p2 = (
+        undetected_multiplier
+        * np.array([1, 1, 0, 0, 0, 0, 1, 1, 1])
+        / scaled_up_group_sizes
+    )
+    p3 = (
+        undetected_multiplier
+        * np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])
+        / scaled_up_group_sizes
+    )
+
+    expected["2020-10-01"] = p1
+    expected["2020-10-02"] = p2
+    expected["2020-10-03"] = p3
+    pdt.assert_frame_equal(res, expected, check_less_precise=4)
