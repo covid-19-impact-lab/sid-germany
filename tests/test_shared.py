@@ -26,7 +26,6 @@ def df():
 def test_draw_groups(df):
     res = draw_groups(
         df=df,
-        group_name="work_team",
         query="18 <= age <= 65",
         assort_bys=["region"],
         n_per_group=20,
@@ -76,7 +75,6 @@ def test_expand_or_contract_ids_need_remove_one():
 def test_create_groups_from_dist(monkeypatch):
     monkeypatch.setattr(np.random, "choice", lambda x, size, replace: x)
 
-    group_name = "sr_name"
     assort_bys = ["assort1"]
     query = "a == 1"
     initial_states = pd.DataFrame()
@@ -86,7 +84,6 @@ def test_create_groups_from_dist(monkeypatch):
     group_distribution = pd.Series([0.5, 0.5], index=[3, 6], name="group_sizes")
     res = create_groups_from_dist(
         initial_states=initial_states,
-        group_name=group_name,
         group_distribution=group_distribution,
         query=query,
         assort_bys=assort_bys,
@@ -98,7 +95,6 @@ def test_create_groups_from_dist(monkeypatch):
         + ["1_3_0", "1_3_0", "1_3_0", "1_3_1", "1_3_1", "1_3_1"]
         + ["1_6_0"] * 6
         + [-1],
-        name=group_name,
         index=initial_states.index,
         dtype="category",
     )

@@ -67,6 +67,12 @@ FIG_SPECS = [
 @pytask.mark.parametrize("specs, produces", FIG_SPECS)
 def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
     name = produces[0].stem.replace("_", " ").title()
+    regression_criterion_values = {
+        "Other Recurrent Weekly": 2760,
+        "Other Recurrent Daily": 1385,
+        "Work Recurrent Weekly": 90,
+        "Work Recurrent Daily": 1285,
+    }
     max_contacts = specs.pop("max_contacts")
     contacts = pd.read_pickle(depends_on)
 
@@ -74,7 +80,7 @@ def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
     empirical_distribution = n_contacts.value_counts().sort_index()
     if max_contacts is not None and max_contacts < empirical_distribution.index.max():
         approx_dist = _reduce_empirical_distribution_to_max_contacts(
-            empirical_distribution, max_contacts
+            empirical_distribution, max_contacts, regression_criterion_values[name]
         )
         approx_dist.name = name
     else:
@@ -177,7 +183,7 @@ def _calculate_n_of_contacts(df, relevant_ids):
 
 
 def _reduce_empirical_distribution_to_max_contacts(
-    empirical_distribution, max_contacts
+    empirical_distribution, max_contacts, assert_below_this
 ):
     """Find the closest distribution that has no more than max_contacts.
 
@@ -237,6 +243,7 @@ def _reduce_empirical_distribution_to_max_contacts(
     )
     assert res["success"]
     assert res["solution_criterion"] <= start_crit
+    assert res["solution_criterion"] < assert_below_this
     closest_distribution = res["solution_params"]["value"].astype(int)
     return closest_distribution
 

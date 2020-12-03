@@ -83,7 +83,7 @@ def test_make_decreasing_needs_change():
 def test_reduce_empirical_distribution_to_max_contacts_no_restriction():
     emp_dist = pd.Series([5, 4, 3, 2], index=[0, 1, 2, 3], name="value")
     max_contacts = 3
-    res = _reduce_empirical_distribution_to_max_contacts(emp_dist, max_contacts)
+    res = _reduce_empirical_distribution_to_max_contacts(emp_dist, max_contacts, 1e10)
     pdt.assert_series_equal(res, emp_dist)
 
 
@@ -93,6 +93,6 @@ def test_reduce_empirical_distribution_to_max_contacts_restriction():
     # total desired: 22
     # 6 * 1 + 6 * 2 is the solution (18)
     max_contacts = 2
-    res = _reduce_empirical_distribution_to_max_contacts(emp_dist, max_contacts)
+    res = _reduce_empirical_distribution_to_max_contacts(emp_dist, max_contacts, 1e10)
     expected = pd.Series([8, 6, 6], index=[0, 1, 2], name="value")
     pdt.assert_series_equal(res, expected)

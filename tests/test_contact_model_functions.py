@@ -87,7 +87,6 @@ def a_thursday(states):
 
     a_thursday["work_recurrent_weekly"] = draw_groups(
         df=a_thursday,
-        group_name="work_recurrent_weekly",
         query="occupation == 'working'",
         assort_bys=["region"],
         n_per_group=20,

@@ -8,12 +8,11 @@ from sid.contacts import _sum_preserving_round
 # ---------------------------------- Contact Models ----------------------------------
 
 
-def draw_groups(df, group_name, query, assort_bys, n_per_group):
+def draw_groups(df, query, assort_bys, n_per_group):
     """Assign individuals to random groups based on their characteristics.
 
     Args:
         df (pandas.DataFrame): sid states DataFrame
-        group_name (str): name of the column to be created
         query (str): identify who gets a group. All others are assigned -1. Make sure
             your contact model assigns these people a 0 so they do not meet.
         assort_bys (list): columns by which to group individuals, such that in every
@@ -26,7 +25,7 @@ def draw_groups(df, group_name, query, assort_bys, n_per_group):
 
     """
     counter = itertools.count()
-    drawn_groups = pd.Series(-1, index=df.index, name=group_name)
+    drawn_groups = pd.Series(-1, index=df.index)
     grouped_people_to_get_group = df.query(query).groupby(assort_bys, as_index=False)
     for _, indices in grouped_people_to_get_group.groups.items():
         drawn_groups[indices] = _create_groups(df.loc[indices], counter, n_per_group)
@@ -48,9 +47,7 @@ def _create_groups(df, counter, n_per_group):
     return groups
 
 
-def create_groups_from_dist(
-    initial_states, group_name, group_distribution, query, assort_bys
-):
+def create_groups_from_dist(initial_states, group_distribution, query, assort_bys):
     """Assign individuals to random groups to match a group size distribution.
 
     Notes:
@@ -64,7 +61,6 @@ def create_groups_from_dist(
 
     Args:
         initial_states (pandas.DataFrame): SID initial states DataFrame.
-        group_name (str): name of the Series to be created.
         group_distribution (pandas.Series): the index is the support of the group sizes,
             the values is the share of the group size we are aiming for.
         query (str): query string to identify the subpopulation for which we want to
@@ -79,8 +75,8 @@ def create_groups_from_dist(
 
     """
     assert 0 not in group_distribution.index, "Group sizes must be greater than 0."
-    df = initial_states.query(query)
-    group_sr = pd.Series(-1, index=initial_states.index, name=group_name)
+    df = initial_states.query(query) if query is not None else initial_states
+    group_sr = pd.Series(-1, index=initial_states.index)
     size_sr = pd.Series(-1, index=df.index, name="group_size")
 
     grouped_people_to_get_group = df.groupby(assort_bys, as_index=False).groups
