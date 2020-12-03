@@ -17,13 +17,6 @@ SUBSET_SPECS = {
         "weekend": False,
         "max_contacts": None,
     },
-    "other_non_recurrent": {
-        "places": ["otherplace", "leisure"],
-        "recurrent": False,
-        "frequency": None,
-        "weekend": None,
-        "max_contacts": None,
-    },
     "work_recurrent_daily": {
         "places": ["work"],
         "recurrent": True,
@@ -38,12 +31,26 @@ SUBSET_SPECS = {
         "weekend": False,
         "max_contacts": 14,
     },
-    "other_recurrent": {
+    "other_non_recurrent": {
         "places": ["otherplace", "leisure"],
-        "recurrent": True,
+        "recurrent": False,
         "frequency": None,
         "weekend": None,
         "max_contacts": None,
+    },
+    "other_recurrent_daily": {
+        "places": ["otherplace", "leisure"],
+        "recurrent": True,
+        "frequency": "(almost) daily",
+        "weekend": None,
+        "max_contacts": 5,
+    },
+    "other_recurrent_weekly": {
+        "places": ["otherplace", "leisure"],
+        "recurrent": True,
+        "frequency": "1-2 times a week",
+        "weekend": None,
+        "max_contacts": 8,
     },
 }
 
@@ -59,22 +66,32 @@ FIG_SPECS = [
 @pytask.mark.depends_on(BLD / "data" / "mossong_2008" / "contact_data.pkl")
 @pytask.mark.parametrize("specs, produces", FIG_SPECS)
 def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
+    name = produces[0].stem.replace("_", " ").title()
     max_contacts = specs.pop("max_contacts")
     contacts = pd.read_pickle(depends_on)
+
     n_contacts = _create_n_contacts(contacts, **specs)
     empirical_distribution = n_contacts.value_counts().sort_index()
     if max_contacts is not None and max_contacts < empirical_distribution.index.max():
-        empirical_distribution = _reduce_empirical_distribution_to_max_contacts(
+        approx_dist = _reduce_empirical_distribution_to_max_contacts(
             empirical_distribution, max_contacts
         )
-    fig_title = produces[0].stem.replace("_", " ").title()
+        approx_dist.name = name
+    else:
+        approx_dist = empirical_distribution
+
+    pct_non_zero = (empirical_distribution / empirical_distribution.sum())[1:].sum()
     fig, ax = plt.subplots(figsize=(10, 4))
-    sns.lineplot(x=empirical_distribution.index, y=empirical_distribution, ax=ax)
-    ax.set_title(fig_title)
+    sns.lineplot(x=approx_dist.index, y=approx_dist, ax=ax)
+    ax.set_title(name)
+    ax.set_xlabel(
+        f"\n{int(100 * pct_non_zero)}% individuals reported non-zero contacts."
+    )
     sns.despine()
+    fig.tight_layout()
     fig.savefig(produces[0])
 
-    shares = empirical_distribution / empirical_distribution.sum()
+    shares = approx_dist / approx_dist.sum()
     shares.to_pickle(produces[1])
 
 
@@ -187,9 +204,7 @@ def _reduce_empirical_distribution_to_max_contacts(
 
     assert truncated.index[0] == 0, "No individuals reporting 0 contacts."
 
-    params = pd.DataFrame(index=truncated.index)
-    params["original"] = truncated.copy(deep=True)
-    params["value"] = _make_decreasing(truncated)
+    params = _make_decreasing(truncated).to_frame()
 
     constraints = [
         # fix number of people without contacts
@@ -211,6 +226,8 @@ def _reduce_empirical_distribution_to_max_contacts(
         desired_total=desired_total,
     )
 
+    start_crit = criterion_func(params)
+
     res = minimize(
         criterion=criterion_func,
         params=params,
@@ -219,6 +236,7 @@ def _reduce_empirical_distribution_to_max_contacts(
         logging=False,
     )
     assert res["success"]
+    assert res["solution_criterion"] <= start_crit
     closest_distribution = res["solution_params"]["value"].astype(int)
     return closest_distribution
 
@@ -260,6 +278,7 @@ def measure_of_diff_btw_distributions(params, old_distribution, desired_total):
 def _make_decreasing(sr):
     """Make a pandas.Series decreasing."""
     out = sr.copy(deep=True)
+    out.name = "value"
 
     to_add_to_2nd_entry = 0
     for loc, val in out[1:].items():

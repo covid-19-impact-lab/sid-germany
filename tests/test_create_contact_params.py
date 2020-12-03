@@ -7,6 +7,9 @@ from src.contact_models.task_create_contact_params import _calculate_n_of_contac
 from src.contact_models.task_create_contact_params import _create_n_contacts
 from src.contact_models.task_create_contact_params import _get_relevant_contacts_subset
 from src.contact_models.task_create_contact_params import _make_decreasing
+from src.contact_models.task_create_contact_params import (
+    _reduce_empirical_distribution_to_max_contacts,
+)
 
 
 @pytest.fixture
@@ -65,7 +68,7 @@ def test_create_n_contacts_leisure(mostly_worker):
 
 
 def test_make_decreasing_unchanged():
-    already_decreasing = pd.Series([4, 3, 2, 1])
+    already_decreasing = pd.Series([4, 3, 2, 1], name="value")
     res = _make_decreasing(already_decreasing)
     pdt.assert_series_equal(res, already_decreasing)
 
@@ -73,5 +76,23 @@ def test_make_decreasing_unchanged():
 def test_make_decreasing_needs_change():
     already_decreasing = pd.Series([4, 3, 1, 2])
     res = _make_decreasing(already_decreasing)
-    expected = pd.Series([4, 4, 1, 1])
+    expected = pd.Series([4, 4, 1, 1], name="value")
+    pdt.assert_series_equal(res, expected)
+
+
+def test_reduce_empirical_distribution_to_max_contacts_no_restriction():
+    emp_dist = pd.Series([5, 4, 3, 2], index=[0, 1, 2, 3], name="value")
+    max_contacts = 3
+    res = _reduce_empirical_distribution_to_max_contacts(emp_dist, max_contacts)
+    pdt.assert_series_equal(res, emp_dist)
+
+
+def test_reduce_empirical_distribution_to_max_contacts_restriction():
+    emp_dist = pd.Series([8, 6, 3, 2, 1], index=[0, 1, 2, 3, 4], name="value")
+    # nobs with non-zero contacts: 12
+    # total desired: 22
+    # 6 * 1 + 6 * 2 is the solution (18)
+    max_contacts = 2
+    res = _reduce_empirical_distribution_to_max_contacts(emp_dist, max_contacts)
+    expected = pd.Series([8, 6, 6], index=[0, 1, 2], name="value")
     pdt.assert_series_equal(res, expected)
