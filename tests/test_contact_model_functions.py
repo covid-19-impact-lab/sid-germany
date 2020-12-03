@@ -90,6 +90,7 @@ def a_thursday(states):
         query="occupation == 'working'",
         assort_bys=["region"],
         n_per_group=20,
+        seed=484,
     )
 
     return a_thursday

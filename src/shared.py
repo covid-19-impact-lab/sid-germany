@@ -8,7 +8,7 @@ from sid.contacts import _sum_preserving_round
 # ---------------------------------- Contact Models ----------------------------------
 
 
-def draw_groups(df, query, assort_bys, n_per_group):
+def draw_groups(df, query, assort_bys, n_per_group, seed):
     """Assign individuals to random groups based on their characteristics.
 
     Args:
@@ -18,12 +18,14 @@ def draw_groups(df, query, assort_bys, n_per_group):
         assort_bys (list): columns by which to group individuals, such that in every
             group people share all characteristics in the assort_by variables.
         n_per_group (int): number of people per group.
+        seed (int)
 
     Returns:
         drawn_groups (pandas.Series): Series with the group ids.
             It has the same index as **df**. It's -1 for individuals without a group.
 
     """
+    np.random.seed(seed)
     counter = itertools.count()
     drawn_groups = pd.Series(-1, index=df.index)
     grouped_people_to_get_group = df.query(query).groupby(assort_bys, as_index=False)
@@ -47,7 +49,9 @@ def _create_groups(df, counter, n_per_group):
     return groups
 
 
-def create_groups_from_dist(initial_states, group_distribution, query, assort_bys):
+def create_groups_from_dist(
+    initial_states, group_distribution, query, assort_bys, seed
+):
     """Assign individuals to random groups to match a group size distribution.
 
     Notes:
@@ -68,12 +72,14 @@ def create_groups_from_dist(initial_states, group_distribution, query, assort_by
             distribution of group sizes in this subpopulation.
         assort_bys (list): columns by which to group individuals, such that in every
             group people share all charackteristics in the assort_by variables.
+        seed (int)
 
     Returns:
         group_sr (pandas.Series): index is the same as the initial_states. Values are
             identifiers (strings) of each group.
 
     """
+    np.random.seed(seed)
     assert 0 not in group_distribution.index, "Group sizes must be greater than 0."
     df = initial_states.query(query) if query is not None else initial_states
     group_sr = pd.Series(-1, index=initial_states.index)
@@ -144,7 +150,7 @@ def format_thousands_with_comma(value, pos):  # noqa: U100
     return f"{value:,.0f}"
 
 
-def draw_from_distribution_for_subset(states, distribution, query, outside_val):
+def draw_from_distribution_for_subset(states, distribution, query, outside_val, seed):
     """Draw for all workers from a distribution how many they are going to meet.
 
     Args:
@@ -155,14 +161,16 @@ def draw_from_distribution_for_subset(states, distribution, query, outside_val):
             draw the number of contacts.
         outside_val: value the output Series should draw for indivdiuals who
             do not fulfill the query condition.
+        seed (int)
 
     Returns:
         contacts (pandas.Series): index is the same as states,
             the values are outside_val for anyone outside the query and
             drawn from the distribution for the rest.
     """
+    np.random.seed(seed)
     contacts = pd.Series(outside_val, index=states.index)
-    to_pair = states.query(query).index
+    to_pair = states.query(query).index if query is not None else states.index
 
     contacts[to_pair] = np.random.choice(
         a=distribution.index, size=len(to_pair), p=distribution

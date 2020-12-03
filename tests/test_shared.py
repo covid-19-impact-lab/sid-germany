@@ -29,6 +29,7 @@ def test_draw_groups(df):
         query="18 <= age <= 65",
         assort_bys=["region"],
         n_per_group=20,
+        seed=393,
     )
     expected = np.array([-1, 1, 1, -1, 0, 0])
     assert_array_equal(res.to_numpy(), expected)
@@ -87,6 +88,7 @@ def test_create_groups_from_dist(monkeypatch):
         group_distribution=group_distribution,
         query=query,
         assort_bys=assort_bys,
+        seed=3944,
     )
 
     expected = pd.Series(
