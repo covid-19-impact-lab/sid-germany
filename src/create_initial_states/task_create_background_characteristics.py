@@ -492,9 +492,28 @@ def _check_group_ids(
     other_daily_dist,
     other_weekly_dist,  # noqa: U100
 ):
+    df = df.copy(deep=True)
+
+    # weekly group ids
+    w_weekly_cols = [x for x in df if x.startswith("work_weekly_group")]
+    o_weekly_cols = [x for x in df if x.startswith("other_weekly_group")]
+    assert len(w_weekly_cols) == 14
+    assert len(o_weekly_cols) == 8
+    n_weekly_w_groups = df[w_weekly_cols].replace(-1, np.nan).notnull().sum(axis=1)
+    df["n_weekly_w_groups"] = n_weekly_w_groups
+    n_weekly_o_groups = df[o_weekly_cols].replace(-1, np.nan).notnull().sum(axis=1)
+    df["n_weekly_o_groups"] = n_weekly_o_groups
+
     workers = df.query("occupation == 'working'")
     non_workers = df.query("occupation != 'working'")
 
+    assert (non_workers[w_weekly_cols] == -1).all().all()
+    w_weekly_size_shares = workers["n_weekly_w_groups"].value_counts(normalize=True)
+    o_weekly_size_shares = df["n_weekly_o_groups"].value_counts(normalize=True)
+    assert np.abs(w_weekly_size_shares - work_weekly_dist).max() < 0.04
+    assert np.abs(o_weekly_size_shares - other_weekly_dist).max() < 0.08
+
+    # daily work group ids
     w_daily_group_vc = workers["work_daily_group_id"].value_counts()
     # drop -1 category
     w_daily_group_vc = w_daily_group_vc[w_daily_group_vc > 0]
@@ -508,6 +527,7 @@ def _check_group_ids(
     goal_w_daily_group_size_shares.index += 1
     assert w_daily_group_size_shares.argmax() == goal_w_daily_group_size_shares.argmax()
 
+    # daily other group ids
     o_daily_group_vc = df["other_daily_group_id"].value_counts()
     # drop -1 category
     o_daily_group_vc = o_daily_group_vc[o_daily_group_vc > 0]
