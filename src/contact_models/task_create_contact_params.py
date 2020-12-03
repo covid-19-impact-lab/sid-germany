@@ -1,7 +1,10 @@
+from functools import partial
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 import seaborn as sns
+from estimagic import minimize
 
 from src.config import BLD
 
@@ -12,30 +15,35 @@ SUBSET_SPECS = {
         "recurrent": False,
         "frequency": None,
         "weekend": False,
+        "max_contacts": None,
     },
     "other_non_recurrent": {
         "places": ["otherplace", "leisure"],
         "recurrent": False,
         "frequency": None,
         "weekend": None,
+        "max_contacts": None,
     },
     "work_recurrent_daily": {
         "places": ["work"],
         "recurrent": True,
         "frequency": "(almost) daily",
         "weekend": False,
+        "max_contacts": 15,
     },
     "work_recurrent_weekly": {
         "places": ["work"],
         "recurrent": True,
         "frequency": "1-2 times a week",
         "weekend": False,
+        "max_contacts": 14,
     },
     "other_recurrent": {
         "places": ["otherplace", "leisure"],
         "recurrent": True,
         "frequency": None,
         "weekend": None,
+        "max_contacts": None,
     },
 }
 
@@ -43,7 +51,7 @@ SUBSET_SPECS = {
 OUT_PATH = BLD / "contact_models" / "empirical_distributions"
 
 FIG_SPECS = [
-    (spec, [OUT_PATH / "figures" / f"{name}.png", OUT_PATH / f"{name}_raw.pkl"])
+    (spec, [OUT_PATH / "figures" / f"{name}.png", OUT_PATH / f"{name}.pkl"])
     for name, spec in SUBSET_SPECS.items()
 ]
 
@@ -51,18 +59,44 @@ FIG_SPECS = [
 @pytask.mark.depends_on(BLD / "data" / "mossong_2008" / "contact_data.pkl")
 @pytask.mark.parametrize("specs, produces", FIG_SPECS)
 def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
+    max_contacts = specs.pop("max_contacts")
     contacts = pd.read_pickle(depends_on)
-    fig_title = produces[0].stem.replace("_", " ").title()
     n_contacts = _create_n_contacts(contacts, **specs)
+    empirical_distribution = n_contacts.value_counts().sort_index()
+    if max_contacts is not None and max_contacts < empirical_distribution.index.max():
+        empirical_distribution = _reduce_empirical_distribution_to_max_contacts(
+            empirical_distribution, max_contacts
+        )
+    fig_title = produces[0].stem.replace("_", " ").title()
     fig, ax = plt.subplots(figsize=(10, 4))
-    sns.countplot(n_contacts, ax=ax, color="goldenrod", alpha=0.7)
+    sns.lineplot(x=empirical_distribution.index, y=empirical_distribution, ax=ax)
     ax.set_title(fig_title)
     sns.despine()
     fig.savefig(produces[0])
-    n_contacts.to_pickle(produces[1])
+
+    shares = empirical_distribution / empirical_distribution.sum()
+    shares.to_pickle(produces[1])
 
 
 def _create_n_contacts(contacts, places, recurrent, frequency, weekend):
+    """Calculate the reported number of contacts for the given specification.
+
+    Args:
+        contacts (pandas.DataFrame)
+        places (list): list of the places belonging to the current contact model.
+            If places is ["work"], only workers are counted as reporting contacts.
+        recurrent (bool): whether to keep recurrent or non-recurrent contacts
+        frequency (str): which frequency to keep. None means all frequencies are kept
+        weekend (bool): whether to use weekday or weekend data.
+            None means both are kept.
+
+    Returns:
+        n_contacts (pandas.Series): index are reporting individuals
+            (or reporting workers if places == ["work"]) and the values are the
+            number of condition meeting contacts (with respect to
+            recurrent, placse, frequency and weekend) individuals reported.
+
+    """
     if places != ["work"]:
         relevant_ids = contacts["id"].unique()
     else:
@@ -121,4 +155,117 @@ def _calculate_n_of_contacts(df, relevant_ids):
     missing = [x for x in relevant_ids if x not in n_contacts.index]
     to_append = pd.Series(0, index=missing)
     n_contacts = n_contacts.append(to_append)
+    n_contacts = n_contacts.sort_index()
     return n_contacts
+
+
+def _reduce_empirical_distribution_to_max_contacts(
+    empirical_distribution, max_contacts
+):
+    """Find the closest distribution that has no more than max_contacts.
+
+    Args:
+        empirical_distribution (pandas.Series): value counts of the
+            number of reported contacts.
+        max_contacts (int): maximal allowed numbers of reported contacts
+
+    Returns:
+        closest_distribution (pandas.Series): approximated value counts
+            of the number of reported contacts. Adjusted so that no one
+            has too many contacts, the number of individuals reporting
+            contacts stayed the same and the total number of reported
+            contacts over all individuals is close to before.
+
+    """
+    desired_total = empirical_distribution @ empirical_distribution.index
+    nobs = empirical_distribution.sum()
+
+    truncated = empirical_distribution.copy(deep=True)
+    n_above_contacts = truncated[max_contacts + 1 :].sum()  # noqa
+    truncated[max_contacts] += n_above_contacts
+    truncated = truncated[: max_contacts + 1]
+
+    assert truncated.index[0] == 0, "No individuals reporting 0 contacts."
+
+    params = pd.DataFrame(index=truncated.index)
+    params["original"] = truncated.copy(deep=True)
+    params["value"] = _make_decreasing(truncated)
+
+    constraints = [
+        # fix number of people without contacts
+        {"loc": 0, "type": "fixed", "value": truncated[0]},
+        # decreasing
+        {"loc": params.index[1:], "type": "decreasing"},
+        # fix number of individuals reporting contacts
+        {
+            "loc": params.index[1:],
+            "type": "linear",
+            "weights": 1,
+            "value": nobs - truncated[0],
+        },
+    ]
+
+    criterion_func = partial(
+        measure_of_diff_btw_distributions,
+        old_distribution=truncated,
+        desired_total=desired_total,
+    )
+
+    res = minimize(
+        criterion=criterion_func,
+        params=params,
+        constraints=constraints,
+        algorithm="nag_pybobyqa",
+        logging=False,
+    )
+    assert res["success"]
+    closest_distribution = res["solution_params"]["value"].astype(int)
+    return closest_distribution
+
+
+def measure_of_diff_btw_distributions(params, old_distribution, desired_total):
+    """Cost function for the minimization problem.
+
+    We try to minimize the difference between the truncated value counts and the
+    proposed distribution while keeping the number of total contacts as close as
+    possible to the original distribution.
+
+    Args:
+        params (pandas.DataFrame): estimagic params DataFrame. The index is the
+            support of the distribuiton, the "value" column the number of
+            individuals reporting the respective number.
+
+        old_distribution (pandas.Series): The distribution to be approximated.
+            The index is the support of the distribution. It must be the same
+            as that of params.
+
+        desired_total (int): desired value of the dot product of params. In the
+            context of number of reported contacts this means the total number
+            of reported contacts by all individuals.
+
+    Returns:
+        cost (float): sum of the parameter distance penalty and a penalty for
+            distance between the desired and achieved total.
+
+    """
+    assert (params.index == old_distribution.index).all()
+    params_deviation = params["value"].to_numpy() - old_distribution.to_numpy()
+    params_penalty = (params_deviation ** 2).sum()
+    actual_total = params.index.to_numpy() @ params["value"].to_numpy()
+    total_contacts_penalty = (desired_total - actual_total) ** 2
+    cost = total_contacts_penalty + params_penalty
+    return cost
+
+
+def _make_decreasing(sr):
+    """Make a pandas.Series decreasing."""
+    out = sr.copy(deep=True)
+
+    to_add_to_2nd_entry = 0
+    for loc, val in out[1:].items():
+        before = out[loc - 1]
+        if before < val:
+            out[loc] = before
+            to_add_to_2nd_entry += val - before
+    out[1] += to_add_to_2nd_entry
+    return out

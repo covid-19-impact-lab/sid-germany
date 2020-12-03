@@ -6,6 +6,7 @@ import pytest
 from src.contact_models.task_create_contact_params import _calculate_n_of_contacts
 from src.contact_models.task_create_contact_params import _create_n_contacts
 from src.contact_models.task_create_contact_params import _get_relevant_contacts_subset
+from src.contact_models.task_create_contact_params import _make_decreasing
 
 
 @pytest.fixture
@@ -41,7 +42,11 @@ def test_calculate_n_of_contacts(mostly_worker):
 
 def test_create_n_contacts_work(mostly_worker):
     res = _create_n_contacts(
-        mostly_worker, places=["work"], recurrent=True, frequency=None, weekend=None
+        mostly_worker,
+        places=["work"],
+        recurrent=True,
+        frequency=None,
+        weekend=None,
     )
     expected = pd.Series([1, 0], index=[0, 1])
     pdt.assert_series_equal(res, expected)
@@ -49,7 +54,24 @@ def test_create_n_contacts_work(mostly_worker):
 
 def test_create_n_contacts_leisure(mostly_worker):
     res = _create_n_contacts(
-        mostly_worker, places=["leisure"], recurrent=False, frequency=None, weekend=None
+        mostly_worker,
+        places=["leisure"],
+        recurrent=False,
+        frequency=None,
+        weekend=None,
     )
     expected = pd.Series([1, 1, 1], index=[0, 1, 2])
+    pdt.assert_series_equal(res, expected)
+
+
+def test_make_decreasing_unchanged():
+    already_decreasing = pd.Series([4, 3, 2, 1])
+    res = _make_decreasing(already_decreasing)
+    pdt.assert_series_equal(res, already_decreasing)
+
+
+def test_make_decreasing_needs_change():
+    already_decreasing = pd.Series([4, 3, 1, 2])
+    res = _make_decreasing(already_decreasing)
+    expected = pd.Series([4, 4, 1, 1])
     pdt.assert_series_equal(res, expected)
