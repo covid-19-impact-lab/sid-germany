@@ -173,16 +173,16 @@ def get_other_daily_contact_model():
 def get_other_weekly_contact_models():
     prefix = "other_weekly_group_id"
     days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
         "Saturday",
+        "Sunday",
+        "Tuesday",
+        "Thursday",
+        "Monday",
+        "Friday",
+        "Wednesday",
     ]
     other_weekly_contact_models = {}
-    for n in range(8):
+    for n in range(4):
         col_name = f"{prefix}_{n}"
         model_name = f"other_recurrent_weekly_{n}"
         policy = {

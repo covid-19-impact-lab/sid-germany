@@ -50,7 +50,7 @@ SUBSET_SPECS = {
         "recurrent": True,
         "frequency": "1-2 times a week",
         "weekend": None,
-        "max_contacts": 8,
+        "max_contacts": 4,
     },
 }
 
@@ -68,7 +68,7 @@ FIG_SPECS = [
 def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
     name = produces[0].stem.replace("_", " ").title()
     regression_criterion_values = {
-        "Other Recurrent Weekly": 2760,
+        "Other Recurrent Weekly": 137_000,
         "Other Recurrent Daily": 1385,
         "Work Recurrent Weekly": 90,
         "Work Recurrent Daily": 1285,

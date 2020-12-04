@@ -281,7 +281,7 @@ def _check_other_group_ids(df, daily_dist, weekly_dist):
     df["n_weekly_o_groups"] = n_weekly_o_groups
     o_weekly_size_shares = df["n_weekly_o_groups"].value_counts(normalize=True)
 
-    assert len(o_weekly_cols) == 8
+    assert len(o_weekly_cols) == 4
     assert np.abs(o_weekly_size_shares - weekly_dist).max() < 0.08
     o_daily_group_vc = df["other_daily_group_id"].value_counts()
     o_daily_group_vc = o_daily_group_vc[o_daily_group_vc > 0]
