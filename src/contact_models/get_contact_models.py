@@ -76,6 +76,18 @@ def get_work_non_recurrent_contact_model():
     return work_non_recurrent_contact_model
 
 
+def get_work_daily_contact_model():
+    work_daily_contact_model = {
+        "work_recurrent_daily": {
+            "is_recurrent": True,
+            "assort_by": ["daily_work_group_id"],
+            "model": cm_funcs.go_to_work,
+            "loc": "work_recurrent_daily",
+        },
+    }
+    return work_daily_contact_model
+
+
 # ----------------------------------------------------------------------------
 # Other Contact Models
 # ----------------------------------------------------------------------------
@@ -95,3 +107,14 @@ def get_other_non_recurrent_contact_model():
         }
     }
     return other_non_recurrent_contact_model
+
+
+def get_other_daily_contact_model():
+    other_daily_contact_model = {
+        "other_recurrent_daily": {
+            "is_recurrent": True,
+            "assort_by": ["daily_other_group_id"],
+            "model": cm_funcs.meet_daily_other_contacts,
+        }
+    }
+    return other_daily_contact_model

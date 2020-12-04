@@ -9,6 +9,7 @@ from src.contact_models.contact_model_functions import _draw_nr_of_contacts
 from src.contact_models.contact_model_functions import (
     calculate_non_recurrent_contacts_from_empirical_distribution,
 )
+from src.contact_models.contact_model_functions import meet_daily_other_contacts
 from src.contact_models.contact_model_functions import (
     reduce_non_recurrent_contacts_on_condition,
 )
@@ -381,3 +382,22 @@ def test_reduce_recurrent_contacts_on_condition(states):
     )
     expected = pd.Series([10, 0, 0] + [10] * (len(states) - 3))
     assert_series_equal(res, expected, check_dtype=False)
+
+
+def test_meet_daily_other_contacts():
+    states = pd.DataFrame()
+    states["symptomatic"] = [False, False, False, True]
+    states["knows_infectious"] = [False, True, False, False]
+    states["knows_immune"] = False
+    states["cd_received_test_result_true"] = -20
+
+    params = pd.DataFrame()
+    params["value"] = [1.0, 1.0]
+    params["category"] = "other_recurrent"
+    params["subcategory"] = ["reduction_when_symptomatic", "reduction_when_positive"]
+    params["name"] = params["subcategory"]
+    params = params.set_index(["category", "subcategory", "name"])
+
+    res = meet_daily_other_contacts(states, params, 339)
+    expected = pd.Series([1, 0, 1, 0])
+    assert_series_equal(res, expected)

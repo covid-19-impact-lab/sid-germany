@@ -97,7 +97,23 @@ def go_to_work(states, contact_params):
     return attends_work
 
 
-def attends_educational_facility(states, params, facility):
+def meet_daily_other_contacts(states, params, seed):
+    going = pd.Series(data=1, index=states.index)
+    for params_entry, condition in [
+        ("reduction_when_symptomatic", "symptomatic"),
+        ("reduction_when_positive", IS_POSITIVE_CASE),
+    ]:
+        going = reduce_recurrent_contacts_on_condition(
+            going,
+            states,
+            params.loc[("other_recurrent", params_entry, params_entry), "value"],
+            condition,
+            seed=seed,
+        )
+    return going
+
+
+def attends_educational_facility(states, params, facility, seed):
     """Indicate which children go to an educational facility.
 
     Children go to an educational facility on weekdays. The group is defined by the
@@ -143,11 +159,12 @@ def attends_educational_facility(states, params, facility):
                 states,
                 params.loc[(facility, params_entry, params_entry), "value"],
                 condition,
+                seed=seed,
             )
     return attends_facility
 
 
-def meet_hh_members(states, contact_params):
+def meet_hh_members(states, contact_params, seed):
     """Meet household members.
 
     As single person households have unique household ids, everyone meets their
@@ -171,6 +188,7 @@ def meet_hh_members(states, contact_params):
             states,
             contact_params.loc[(params_entry, params_entry), "value"],
             condition,
+            seed=seed,
         )
     return meet_hh
 
