@@ -204,13 +204,13 @@ def _check_educators(df):
 def _check_educ_group_sizes(df):
     name_to_class_bounds = {
         # school target is 23 pupils + 2 teachers => 25 +/- 5
-        "school": (20, 30),
+        "school": (20, 30, 2),
         # preschool target is 9 pupils + 2 adults => 11 +/- 1
-        "preschool": (10, 12),
+        "preschool": (10, 12, 2),
         # nursery target is 4 pupils + 1 adult => 5 +/- 1
-        "nursery": (4, 6),
+        "nursery": (4, 6, 1),
     }
-    for name, (lower, upper) in name_to_class_bounds.items():
+    for name, (lower, upper, expected_n_teachers) in name_to_class_bounds.items():
         id_col = f"{name}_group_id_0"
         class_id_to_size = df.groupby(id_col).size()
         ids_of_true_classes = class_id_to_size[class_id_to_size > 1].index
@@ -218,6 +218,10 @@ def _check_educ_group_sizes(df):
         class_sizes = pupils_and_teachers[id_col].value_counts().unique()
         assert (class_sizes >= lower).all()
         assert (class_sizes <= upper).all()
+        n_teachers = pupils_and_teachers.groupby(id_col)["occupation"].apply(
+            lambda x: (x == f"{name}_teacher").sum()
+        )
+        assert (n_teachers == expected_n_teachers).all()
 
 
 def _check_educ_group_assortativeness(df):
