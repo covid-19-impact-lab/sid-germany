@@ -136,27 +136,3 @@ def test_occupation(background_characteristics):
     assert (
         occ_shares.loc[("male", "working")] > occ_shares.loc[("female", "working")]
     ), "Men are not working more than women."
-
-
-def test_systemically_relevant(background_characteristics):
-    shares = background_characteristics.groupby("occupation")[
-        "systemically_relevant"
-    ].mean()
-    assert shares["retired"] == 0.0, "retired systemically relevant."
-    assert shares["school"] == 0.0, "children systemically relevant."
-    assert shares["stays home"] == 0.0, "stays home systemically relevant."
-    assert (0.31 < shares["working"]) and (
-        shares["working"] < 0.35
-    ), "not a third of workers systemically_relevant"
-
-
-def test_work_contact_priority(background_characteristics):
-    df = background_characteristics
-    assert (df.query("occupation != 'working'")["work_contact_priority"] == -1).all()
-    assert (df.query("systemically_relevant")["work_contact_priority"] == 2).all()
-    non_essential_prios = df.query("occupation == 'working' & ~ systemically_relevant")[
-        "work_contact_priority"
-    ]
-    assert non_essential_prios.between(-0.01, 1.01).all()
-    assert non_essential_prios.std() > 0.2
-    assert (non_essential_prios.mean() < 0.52) & (non_essential_prios.mean() > 0.48)

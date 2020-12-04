@@ -76,7 +76,6 @@ def task_create_background_characteristics(depends_on, produces):
 def _check_background_characteristics(df):
     """Check that the background characteristics come out right."""
     df = df.copy(deep=True)
-    workers = df.query("occupation == 'working'")
     df["female"] = df["gender"] == "female"
     df["male"] = df["gender"] == "male"
 
@@ -109,9 +108,6 @@ def _check_background_characteristics(df):
     assert 0.18 > (df["occupation"] == "stays home").mean()
     assert (df[df["age"].between(6, 14)]["occupation"] == "school").all()
     assert (df[df["age"] > 70]["occupation"] == "retired").all()
-    assert not df[df["occupation"] != "working"]["systemically_relevant"].any()
-    assert workers["systemically_relevant"].mean() > 0.27
-    assert workers["systemically_relevant"].mean() < 0.35
 
 
 def _check_group_ids(
@@ -121,27 +117,76 @@ def _check_group_ids(
     other_daily_dist,
     other_weekly_dist,
 ):
-    df = df.copy(deep=True)
+    _check_systemically_relevant(df)
+    _check_systemically_relevant(df)
+    _check_educ_group_ids(df)
+    _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
+    _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
+
+
+def _check_systemically_relevant(df):
+    shares = df.groupby("occupation")["systemically_relevant"].mean()
+    assert shares["retired"] == 0.0, "retired systemically relevant."
+    assert shares["school"] == 0.0, "children systemically relevant."
+    teach_occs = ["school_teacher", "preschool_teacher", "nursery_teacher"]
+    assert (shares[teach_occs] == 1.0).all(), "not all teachers systemically relevant."
+    assert shares["stays home"] == 0.0, "stays home systemically relevant."
+    assert (0.31 < shares["working"]) and (
+        shares["working"] < 0.35
+    ), "not a third of workers systemically_relevant"
+
+    not_working = "occupation in ['stays home', 'retired', 'school']"
+    assert not df.query(not_working)["systemically_relevant"].any()
+    workers = df.query("occupation == 'working'")
+    assert workers["systemically_relevant"].mean() > 0.27
+    assert workers["systemically_relevant"].mean() < 0.35
+
+
+def _check_work_contact_priority(df):
+    not_working = "occupation in ['stays home', 'retired', 'school']"
+    assert (df.query(not_working)["work_contact_priority"] == -1).all()
+    assert (df.query("systemically_relevant")["work_contact_priority"] == 2).all()
+    non_essential_prios = df.query("occupation == 'working' & ~ systemically_relevant")[
+        "work_contact_priority"
+    ]
+    assert non_essential_prios.between(-0.01, 1.01).all()
+    assert non_essential_prios.std() > 0.2
+    assert (non_essential_prios.mean() < 0.52) & (non_essential_prios.mean() > 0.48)
+
+
+def _check_educ_group_ids(df):
+    set(df["occupation"].cat.categories) == {
+        "school",
+        "working",
+        "stays home",
+        "retired",
+        "school_teacher",
+        "preschool_teacher",
+        "nursery_teacher",
+    }
+
+    teachers = df[df["occupation"].str.endswith("_teacher")]
+    assert (teachers["age"] >= 15).all()
+    assert (teachers["age"] >= 18).mean() > 0.95
+    assert (teachers["age"] < 70).all()
+
+
+def _check_work_group_ids(df, daily_dist, weekly_dist):
+    df = df.copy()
 
     # create helpers
     w_weekly_cols = [x for x in df if x.startswith("work_weekly_group")]
-    o_weekly_cols = [x for x in df if x.startswith("other_weekly_group")]
     n_weekly_w_groups = df[w_weekly_cols].replace(-1, np.nan).notnull().sum(axis=1)
     df["n_weekly_w_groups"] = n_weekly_w_groups
-    n_weekly_o_groups = df[o_weekly_cols].replace(-1, np.nan).notnull().sum(axis=1)
-    df["n_weekly_o_groups"] = n_weekly_o_groups
 
     workers = df.query("occupation == 'working'")
     non_workers = df.query("occupation != 'working'")
 
     # weekly group ids
     assert len(w_weekly_cols) == 14
-    assert len(o_weekly_cols) == 8
     assert (non_workers[w_weekly_cols] == -1).all().all()
     w_weekly_size_shares = workers["n_weekly_w_groups"].value_counts(normalize=True)
-    o_weekly_size_shares = df["n_weekly_o_groups"].value_counts(normalize=True)
-    assert np.abs(w_weekly_size_shares - work_weekly_dist).max() < 0.04
-    assert np.abs(o_weekly_size_shares - other_weekly_dist).max() < 0.08
+    assert np.abs(w_weekly_size_shares - weekly_dist).max() < 0.04
 
     # daily work group ids
     w_daily_group_vc = workers["work_daily_group_id"].value_counts()
@@ -153,17 +198,28 @@ def _check_group_ids(
     # compare true and target distribution (incomplete!)
     w_daily_group_size_shares = w_daily_group_vc.value_counts(normalize=True)
     assert w_daily_group_size_shares[::-1].is_monotonic
-    goal_w_daily_group_size_shares = work_daily_dist.copy(deep=True)
+    goal_w_daily_group_size_shares = daily_dist.copy(deep=True)
     goal_w_daily_group_size_shares.index += 1
     assert w_daily_group_size_shares.argmax() == goal_w_daily_group_size_shares.argmax()
 
+
+def _check_other_group_ids(df, daily_dist, weekly_dist):
+    df = df.copy()
+
+    o_weekly_cols = [x for x in df if x.startswith("other_weekly_group")]
+    n_weekly_o_groups = df[o_weekly_cols].replace(-1, np.nan).notnull().sum(axis=1)
+    df["n_weekly_o_groups"] = n_weekly_o_groups
+    o_weekly_size_shares = df["n_weekly_o_groups"].value_counts(normalize=True)
+
+    assert len(o_weekly_cols) == 8
+    assert np.abs(o_weekly_size_shares - weekly_dist).max() < 0.08
     # daily other group ids
     o_daily_group_vc = df["other_daily_group_id"].value_counts()
     # drop -1 category
     o_daily_group_vc = o_daily_group_vc[o_daily_group_vc > 0]
     assert o_daily_group_vc.max() <= 6
     o_daily_group_size_shares = o_daily_group_vc.value_counts(normalize=True)
-    goal_o_daily_group_size_shares = other_daily_dist.copy(deep=True)
+    goal_o_daily_group_size_shares = daily_dist.copy(deep=True)
     goal_o_daily_group_size_shares.index += 1
     diff_btw_o_shares = o_daily_group_size_shares - goal_o_daily_group_size_shares
     assert np.abs(diff_btw_o_shares).max() < 0.1

@@ -1,6 +1,7 @@
 import itertools as it
 
 import numpy as np
+import pandas as pd
 
 from src.create_initial_states.add_weekly_ids import add_weekly_ids
 from src.create_initial_states.make_educ_group_columns import make_educ_group_columns
@@ -108,6 +109,13 @@ def add_contact_model_group_ids(
     df = df.merge(nursery_class_ids, left_index=True, right_index=True, validate="1:1")
     df["occupation"] = updated_occupation
 
+    df["systemically_relevant"] = _draw_systemically_relevant(
+        df["occupation"], seed=next(seed)
+    )
+    df["work_contact_priority"] = _draw_work_contact_priority(
+        df["occupation"], df["systemically_relevant"], next(seed)
+    )
+
     work_daily_group_sizes = work_daily_dist.copy(deep=True)
     work_daily_group_sizes.index += 1
     df["work_daily_group_id"] = create_groups_from_dist(
@@ -173,3 +181,44 @@ def _draw_who_attends_nursery(df, seed):
     )
     attends_nursery = df.index.isin(attend_nursery_indices)
     return attends_nursery
+
+
+def _draw_systemically_relevant(occupation, seed):
+    """Assign each worker whether (s)he is systemically relevant.
+
+    According to the German government around 1 in 3 German workers work
+    in systemically relevant jobs. Teachers of any age group are classified as
+    systemically relevant.
+
+    source: https://dip21.bundestag.de/dip21/btd/19/218/1921889.pdf
+
+    """
+    np.random.seed(seed)
+
+    is_teacher = occupation.str.endswith("_teacher")
+    share_teachers = is_teacher.mean()
+    corrected_probs = [0.33 - share_teachers, 0.67 + share_teachers]
+    values = np.random.choice(
+        a=[True, False],
+        size=len(occupation),
+        p=corrected_probs,
+    )
+    systemically_relevant = pd.Series(
+        values, index=occupation.index, name="systemically_relevant"
+    )
+    systemically_relevant = systemically_relevant.where(occupation == "working", False)
+    systemically_relevant = systemically_relevant.where(~is_teacher, True)
+    return systemically_relevant
+
+
+def _draw_work_contact_priority(occupation, systemically_relevant, seed):
+    np.random.seed(seed)
+
+    is_worker = occupation == "working"
+    values = np.random.uniform(low=0, high=1, size=len(occupation))
+    work_contact_priority = pd.Series(
+        values, index=occupation.index, name="work_contact_priority"
+    )
+    work_contact_priority = work_contact_priority.where(is_worker, other=-1)
+    work_contact_priority = work_contact_priority.where(~systemically_relevant, 2)
+    return work_contact_priority

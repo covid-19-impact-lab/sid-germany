@@ -45,8 +45,7 @@ def create_background_characteristics(
                 - county
                 - state
                 - gender
-                - occupation
-                - systemically_relevant
+                - occupation (only roughly. teachers will be put into own categories)
                 - age_group
                 - age_group_rki
 
@@ -75,12 +74,6 @@ def create_background_characteristics(
     df["gender"] = _create_gender(df, next(seed))
     df["occupation"] = _draw_occupation(
         df=df, working_probabilities=working_probabilities, seed=next(seed)
-    )
-    df["systemically_relevant"] = _draw_systemically_relevant(
-        df["occupation"], seed=next(seed)
-    )
-    df["work_contact_priority"] = _draw_work_contact_priority(
-        df["occupation"], df["systemically_relevant"], next(seed)
     )
     df["age_group_rki"] = create_age_groups_rki(df)
     df = df.astype({"age": np.uint8, "hh_id": "category"})
@@ -179,38 +172,6 @@ def _draw_occupation(df, working_probabilities, seed):
     occ = occ.astype("category")
 
     return occ
-
-
-def _draw_systemically_relevant(occupation, seed):
-    """Assign each worker whether (s)he is systemically relevant.
-
-    According to the German government around 1 in 3 German workers work
-    in systemically relevant jobs
-    source: https://dip21.bundestag.de/dip21/btd/19/218/1921889.pdf
-
-    """
-    np.random.seed(seed)
-    values = np.random.choice(a=[True, False], size=len(occupation), p=[0.33, 0.67])
-    systemically_relevant = pd.Series(
-        values, index=occupation.index, name="systemically_relevant"
-    )
-    systemically_relevant = systemically_relevant.where(occupation == "working", False)
-    return systemically_relevant
-
-
-def _draw_work_contact_priority(occupation, systemically_relevant, seed):
-    np.random.seed(seed)
-    values = np.random.uniform(low=0, high=1, size=len(occupation))
-    work_contact_priority = pd.Series(
-        values, index=occupation.index, name="work_contact_priority"
-    )
-    work_contact_priority = work_contact_priority.where(
-        occupation == "working", other=-1
-    ).where(~systemically_relevant, 2)
-    return work_contact_priority
-
-
-# ----------------------------------------------------------------------------
 
 
 def _create_gender(df, seed):
