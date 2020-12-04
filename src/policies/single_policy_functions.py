@@ -51,29 +51,39 @@ def reopen_educ_model_germany(
         reopening_dates (dict): Maps German federal states to dates
 
     """
-    if reopening_dates is None:
-        reopening_dates = {
-            # https://tinyurl.com/y2733xkl
-            # https://tinyurl.com/yywha63j
-            "Baden-Württemberg": pd.Timestamp("2020-05-04"),
-            "Bayern": pd.Timestamp("2020-04-27"),
-            "Berlin": pd.Timestamp("2020-04-20"),
-            "Brandenburg": pd.Timestamp("2020-05-04"),
-            "Bremen": pd.Timestamp("2020-05-04"),
-            "Hamburg": pd.Timestamp("2020-05-04"),
-            "Hessen": pd.Timestamp("2020-05-04"),
-            "Mecklenburg-Vorpommern": pd.Timestamp("2020-04-27"),
-            "Niedersachsen": pd.Timestamp("2020-04-27"),
-            "Nordrhein-Westfalen": pd.Timestamp("2020-04-20"),
-            "Rheinland-Pfalz": pd.Timestamp("2020-04-27"),
-            "Saarland": pd.Timestamp("2020-05-04"),  # https://tinyurl.com/y4p55nh9
-            "Sachsen": pd.Timestamp("2020-04-20"),
-            "Sachsen-Anhalt": pd.Timestamp("2020-04-20"),
-            "Schleswig-Holstein": pd.Timestamp("2020-04-20"),
-            "Thüringen": pd.Timestamp("2020-04-27"),
-        }
+    default_reopening_dates = {
+        # https://tinyurl.com/y2733xkl
+        # https://tinyurl.com/yywha63j
+        "Baden-Württemberg": pd.Timestamp("2020-05-04"),
+        "Bayern": pd.Timestamp("2020-04-27"),
+        "Berlin": pd.Timestamp("2020-04-20"),
+        "Brandenburg": pd.Timestamp("2020-05-04"),
+        "Bremen": pd.Timestamp("2020-05-04"),
+        "Hamburg": pd.Timestamp("2020-05-04"),
+        "Hessen": pd.Timestamp("2020-05-04"),
+        "Mecklenburg-Vorpommern": pd.Timestamp("2020-04-27"),
+        "Niedersachsen": pd.Timestamp("2020-04-27"),
+        "Nordrhein-Westfalen": pd.Timestamp("2020-04-20"),
+        "Rheinland-Pfalz": pd.Timestamp("2020-04-27"),
+        "Saarland": pd.Timestamp("2020-05-04"),  # https://tinyurl.com/y4p55nh9
+        "Sachsen": pd.Timestamp("2020-04-20"),
+        "Sachsen-Anhalt": pd.Timestamp("2020-04-20"),
+        "Schleswig-Holstein": pd.Timestamp("2020-04-20"),
+        "Thüringen": pd.Timestamp("2020-04-27"),
+    }
 
     date = get_date(states)
+    if reopening_dates is None:
+        assert pd.Timestamp("2020-04-22") <= date <= pd.Timestamp("2020-09-30"), (
+            "Default reopening dates assume that policy is applied between 2020-04-22 "
+            "and 2020-09-30"
+        )
+        reopening_dates = default_reopening_dates
+    else:
+        assert set(reopening_dates) == set(default_reopening_dates), (
+            "You need to provide reopening dates for all german states:\n"
+            f"{set(default_reopening_dates)}"
+        )
 
     closed_states = []
     for state, start_date in reopening_dates.items():
