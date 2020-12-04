@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-from src.create_initial_states.task_create_background_characteristics import _sample_hhs
-from src.create_initial_states.task_create_background_characteristics import (
+from src.create_initial_states.create_background_characteristics import _sample_hhs
+from src.create_initial_states.create_background_characteristics import (
     create_background_characteristics,
 )
 
