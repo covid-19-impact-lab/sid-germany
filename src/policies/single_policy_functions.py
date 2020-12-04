@@ -31,7 +31,8 @@ def reopen_educ_model_germany(
     start_multiplier,
     end_multiplier,
     switching_date,
-    reopening_dates=None,
+    reopening_dates,
+    is_recurrent,
 ):
     """Reopen an educ model at state specific dates
 
@@ -49,6 +50,7 @@ def reopen_educ_model_germany(
         end_multiplier (float): Activity multiplier after summer vacation.
         switching_date (str or pandas.Timestamp): Date at which multipliers are switched
         reopening_dates (dict): Maps German federal states to dates
+        is_recurrent (bool): If the affected contact models is recurrent.
 
     """
     default_reopening_dates = {
@@ -95,12 +97,16 @@ def reopen_educ_model_germany(
     switching_date = pd.Timestamp(switching_date)
     multiplier = start_multiplier if date < switching_date else end_multiplier
 
-    contacts = reduce_recurrent_model(
-        states=states,
-        contacts=contacts,
-        seed=seed,
-        multiplier=multiplier,
-    )
+    if is_recurrent:
+        contacts = reduce_recurrent_model(
+            states=states,
+            contacts=contacts,
+            seed=seed,
+            multiplier=multiplier,
+        )
+    else:
+        contacts = contacts * multiplier
+
     return contacts
 
 

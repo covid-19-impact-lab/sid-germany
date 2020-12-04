@@ -45,6 +45,8 @@ def test_reopen_educ_model_germany_multiplier_1(fake_states):
         start_multiplier=1,
         end_multiplier=1,
         switching_date="2020-08-01",
+        reopening_dates=None,
+        is_recurrent=True,
     )
 
     expected = pd.Series([0, 1] * 5)
@@ -59,6 +61,8 @@ def test_reopen_educ_model_germany_multiplier_0(fake_states):
         start_multiplier=0,
         end_multiplier=0,
         switching_date="2020-08-01",
+        reopening_dates=None,
+        is_recurrent=True,
     )
 
     expected = pd.Series([0] * 10)

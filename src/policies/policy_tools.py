@@ -62,21 +62,26 @@ def combine_dictionaries(dictionaries):
         {'a': 1, 'b': 2}
 
     """
+    if isinstance(dictionaries, dict):
+        combined = dictionaries
+    elif isinstance(dictionaries, list):
+        if len(dictionaries) == 1:
+            combined = dictionaries[0]
+        else:
+            key_sets = [set(d) for d in dictionaries]
 
-    if not isinstance(dictionaries, list):
+            for first, second in itertools.combinations(key_sets, 2):
+                intersection = first.intersection(second)
+                if intersection:
+                    raise ValueError(
+                        f"The following keys occur more than once: {intersection}"
+                    )
+
+            combined = {}
+            for d in dictionaries:
+                combined = {**combined, **d}
+
+    else:
         raise ValueError("dictionaries must be a list.")
-
-    key_sets = [set(d) for d in dictionaries]
-
-    for first, second in itertools.combinations(key_sets, 2):
-        intersection = first.intersection(second)
-        if intersection:
-            raise ValueError(
-                f"The following keys are in more than one dictionary: {intersection}"
-            )
-
-    combined = {}
-    for d in dictionaries:
-        combined = {**combined, **d}
 
     return combined
