@@ -3,7 +3,7 @@ from functools import partial
 from src.contact_models import contact_model_functions as cm_funcs
 
 
-def get_fully_specified_contact_models():
+def get_all_contact_models():
     contact_models = {
         **get_household_contact_model(),
         # education

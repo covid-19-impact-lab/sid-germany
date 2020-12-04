@@ -23,7 +23,7 @@ The individual either ...
 """
 
 
-def go_to_weekly_meeting(states, contact_params, group_col_name, day_of_week):
+def go_to_weekly_meeting(states, contact_params, group_col_name, day_of_week, seed):
     """Return who participates in a weekly meeting.
 
     Args:
@@ -55,11 +55,12 @@ def go_to_weekly_meeting(states, contact_params, group_col_name, day_of_week):
                 states,
                 contact_params.loc[(params_entry, params_entry), "value"],
                 condition,
+                seed=seed,
             )
     return attends_meeting
 
 
-def go_to_work(states, contact_params):
+def go_to_work(states, contact_params, seed):
     """Return which people go to work.
 
     Adults go to work if they are workers, it is a weekday, and they do not show any
@@ -93,6 +94,7 @@ def go_to_work(states, contact_params):
                 states,
                 contact_params.loc[(params_entry, params_entry), "value"],
                 condition,
+                seed=seed,
             )
     return attends_work
 

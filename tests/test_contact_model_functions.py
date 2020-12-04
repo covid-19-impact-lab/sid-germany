@@ -9,6 +9,8 @@ from src.contact_models.contact_model_functions import _draw_nr_of_contacts
 from src.contact_models.contact_model_functions import (
     calculate_non_recurrent_contacts_from_empirical_distribution,
 )
+from src.contact_models.contact_model_functions import go_to_weekly_meeting
+from src.contact_models.contact_model_functions import go_to_work
 from src.contact_models.contact_model_functions import meet_daily_other_contacts
 from src.contact_models.contact_model_functions import (
     reduce_non_recurrent_contacts_on_condition,
@@ -95,6 +97,86 @@ def a_thursday(states):
     )
 
     return a_thursday
+
+
+@pytest.fixture
+def no_reduction_params():
+    params = pd.DataFrame()
+    params["subcategory"] = ["reduction_when_symptomatic", "reduction_when_positive"]
+    params["name"] = params["subcategory"]
+    params["value"] = 0.0
+    params = params.set_index(["subcategory", "name"])
+    return params
+
+
+def test_go_to_weekly_meeting_wrong_day(a_thursday):
+    a_thursday["group_col"] = [1, 2, 1, 2, 3, 3, 3] + [-1] * (len(a_thursday) - 7)
+    contact_params = pd.DataFrame()
+    group_col_name = "group_col"
+    day_of_week = "Saturday"
+    seed = 3931
+    res = go_to_weekly_meeting(
+        a_thursday, contact_params, group_col_name, day_of_week, seed
+    )
+    expected = pd.Series(0, index=a_thursday.index)
+    assert_series_equal(res, expected, check_names=False)
+
+
+def test_go_to_weekly_meeting_right_day(a_thursday, no_reduction_params):
+    a_thursday["group_col"] = [1, 2, 1, 2, 3, 3, 3] + [-1] * (len(a_thursday) - 7)
+
+    res = go_to_weekly_meeting(
+        states=a_thursday,
+        contact_params=no_reduction_params,
+        group_col_name="group_col",
+        day_of_week="Thursday",
+        seed=3931,
+    )
+    expected = pd.Series(0, index=a_thursday.index)
+    expected[:7] = 1
+    assert_series_equal(res, expected, check_names=False)
+
+
+def test_go_to_work_weekend(states, no_reduction_params):
+    a_saturday = states[states["date"] == pd.Timestamp("2020-04-04 00:00:00")]
+    res = go_to_work(a_saturday, no_reduction_params, 555)
+    expected = pd.Series(0, index=a_saturday.index)
+    assert_series_equal(res, expected, check_names=False)
+
+
+def test_go_to_work_weekday(a_thursday, no_reduction_params):
+    a_thursday["daily_work_group_id"] = [1, 2, 1, 2, 3, 3, 3] + [-1] * (
+        len(a_thursday) - 7
+    )
+    res = go_to_work(a_thursday, no_reduction_params, 1309)
+    expected = pd.Series(0, index=a_thursday.index)
+    # not every one we assigned a group id is a worker
+    expected[:7] = [1, 1, 0, 1, 1, 0, 1]
+    assert_series_equal(res, expected, check_names=False)
+
+
+def test_go_to_work_weekday_with_reduction(a_thursday, no_reduction_params):
+    reduction_params = no_reduction_params
+    reduction_params["value"] = 1
+    a_thursday["daily_work_group_id"] = [1, 2, 1, 2, 3, 3, 3, 3, 3] + [-1] * (
+        len(a_thursday) - 9
+    )
+    a_thursday.loc[1450:1458, "symptomatic"] = [
+        False,
+        False,
+        False,
+        False,
+        True,
+        False,
+        False,
+        False,
+        False,
+    ]
+    res = go_to_work(a_thursday, no_reduction_params, 1309)
+    expected = pd.Series(0, index=a_thursday.index)
+    # not every one we assigned a group id is a worker
+    expected[:9] = [1, 1, 0, 1, 0, 0, 1, 0, 1]
+    assert_series_equal(res, expected, check_names=False)
 
 
 # --------------------------- Non Recurrent Contact Models ---------------------------
