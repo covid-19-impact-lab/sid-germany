@@ -30,7 +30,7 @@ def reopen_educ_model_germany(
     seed,
     start_multiplier,
     end_multiplier,
-    switching_date="2020-08-01",
+    switching_date,
     reopening_dates=None,
 ):
     """Reopen an educ model at state specific dates
@@ -126,9 +126,13 @@ def implement_a_b_school_system_above_age(
 
     """
     assert set(states["school_group_a"].unique()) == {0, 1}
+    assert "teacher" in states["occupation"].cat.categories
     date = get_date(states)
     attending_half = contacts.where(
-        (states["age"] < age_cutoff) | (states["school_group_a"] == date.week % 2), 0
+        (states["age"] < age_cutoff)
+        | (states["occupation"] == "teacher")
+        | (states["school_group_a"] == date.week % 2),
+        0,
     )
     return attending_half
 
@@ -137,17 +141,17 @@ def shut_down_work_model(states, contacts, seed):  # noqa: U100
     return contacts.where(states["systemically_relevant"], 0)
 
 
-def reduce_work_model(states, contacts, seed, share):  # noqa: U100
+def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
     """Reduce contacts for the non essential working population.
 
     Contacts of essential workers are never reduced.
 
     Args:
-        share (float): Share of non-essential workers that have normal contacts.
+        multiplier (float): multiplier of non-essential workers that have work contacts.
 
     """
-    assert 0 <= share <= 1
-    threshold = 1 - share
+    assert 0 <= multiplier <= 1
+    threshold = 1 - multiplier
     reduced_contacts = contacts.where(states["work_contact_priority"] > threshold, 0)
     return reduced_contacts
 
@@ -174,7 +178,7 @@ def reopen_work_model(
     """
     date = get_date(states)
 
-    share = _interpolate_activity_level(
+    multiplier = _interpolate_activity_level(
         date=date,
         start_multiplier=start_multiplier,
         end_multiplier=end_multiplier,
@@ -182,14 +186,21 @@ def reopen_work_model(
         end_date=end_date,
     )
     contacts = reduce_work_model(
-        states=states, contacts=contacts, seed=seed, share=share
+        states=states, contacts=contacts, seed=seed, multiplier=multiplier
     )
 
     return contacts
 
 
 def reopen_other_model(
-    states, contacts, seed, start_multiplier, end_multiplier, start_date, end_date
+    states,
+    contacts,
+    seed,
+    start_multiplier,
+    end_multiplier,
+    start_date,
+    end_date,
+    is_recurrent,
 ):
     """Reduce non-work contacts to active people in gradual opening or closing phase.
 
@@ -213,7 +224,10 @@ def reopen_other_model(
         end_date=end_date,
     )
 
-    reduced = multiplier * contacts
+    if is_recurrent:
+        reduced = reduce_recurrent_model(states, contacts, seed, multiplier)
+    else:
+        reduced = multiplier * contacts
     return reduced
 
 

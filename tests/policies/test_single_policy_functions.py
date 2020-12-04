@@ -22,6 +22,7 @@ def fake_states():
     # date with uneven week number, i.e. where group a attends school
     states["date"] = pd.Timestamp("2020-04-23")
     states["school_group_a"] = [0, 1] * 5
+    states["occupation"] = pd.Categorical(["school"] * 8 + ["teacher"] * 2)
     states["age"] = np.arange(10)
     states["systemically_relevant"] = [True, False] * 5
     return states
@@ -43,6 +44,7 @@ def test_reopen_educ_model_germany_multiplier_1(fake_states):
         seed=123,
         start_multiplier=1,
         end_multiplier=1,
+        switching_date="2020-08-01",
     )
 
     expected = pd.Series([0, 1] * 5)
@@ -56,6 +58,7 @@ def test_reopen_educ_model_germany_multiplier_0(fake_states):
         seed=123,
         start_multiplier=0,
         end_multiplier=0,
+        switching_date="2020-08-01",
     )
 
     expected = pd.Series([0] * 10)
@@ -88,12 +91,11 @@ def test_a_b_school_system_above_age_0(fake_states):
         age_cutoff=0,
     )
 
-    expected = pd.Series([0, 1] * 5)
+    expected = pd.Series([0, 1] * 4 + [1, 1])
     assert_series_equal(calculated, expected)
 
 
 def test_a_b_school_system_above_age_5(fake_states):
-
     calculated = implement_a_b_school_system_above_age(
         states=fake_states,
         contacts=pd.Series(1, index=fake_states.index),
@@ -101,7 +103,7 @@ def test_a_b_school_system_above_age_5(fake_states):
         age_cutoff=5,
     )
 
-    expected = pd.Series([1] * 6 + [0, 1] * 2)
+    expected = pd.Series([1] * 6 + [0] + [1] * 3)
     assert_series_equal(calculated, expected)
 
 
@@ -120,7 +122,7 @@ def test_reduce_work_model(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        share=0.5,
+        multiplier=0.5,
     )
 
     expected = pd.Series([0, 1, 0, 1] + [0] * 6)
@@ -148,6 +150,7 @@ def test_reopen_other_model():
         end_multiplier=1,
         start_date="2020-03-15",
         end_date="2020-03-25",
+        is_recurrent=False,
     )
 
     expected = pd.Series(np.arange(10) * 0.75)
