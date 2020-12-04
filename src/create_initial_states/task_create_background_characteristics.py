@@ -1,8 +1,10 @@
 """Create a synthetic population that is representative of Germany."""
 import numpy as np
+import pandas as pd
 import pytask
 
 from src.config import BLD
+from src.config import POPULATION_GERMANY
 from src.config import SRC
 from src.create_initial_states.create_background_characteristics import (
     create_background_characteristics,
@@ -118,7 +120,7 @@ def _check_group_ids(
     other_weekly_dist,
 ):
     _check_systemically_relevant(df)
-    _check_systemically_relevant(df)
+    _check_work_contact_priority(df)
     _check_educ_group_ids(df)
     _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
     _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
@@ -165,10 +167,74 @@ def _check_educ_group_ids(df):
         "nursery_teacher",
     }
 
-    teachers = df[df["occupation"].str.endswith("_teacher")]
-    assert (teachers["age"] >= 15).all()
-    assert (teachers["age"] >= 18).mean() > 0.95
-    assert (teachers["age"] < 70).all()
+    for age in range(6, 15):
+        students = df.query(f"age == {age}")
+        pd.testing.assert_series_equal(
+            students["school_group_id_0"],
+            students["school_group_id_1"],
+            check_names=False,
+        )
+        pd.testing.assert_series_equal(
+            students["school_group_id_0"],
+            students["school_group_id_2"],
+            check_names=False,
+        )
+
+    _check_educators(df)
+    _check_educ_group_sizes(df)
+    _check_educ_group_assortativeness(df)
+
+
+def _check_educators(df):
+    educators = df[df["occupation"].str.endswith("_teacher")]
+    assert (educators["age"] >= 15).all()
+    assert (educators["age"] >= 18).mean() > 0.95
+    assert (educators["age"] < 70).all()
+
+    # source: https://tinyurl.com/y3psel4p
+    pct_teachers = 782_613 / POPULATION_GERMANY
+    assert np.abs((df["occupation"] == "school_teacher").mean() - pct_teachers) < 0.004
+
+    # source: https://tinyurl.com/y2v8zlgo
+    pct_preschool_teachers = 380_000 / POPULATION_GERMANY
+    share_preschool_teachers = (df["occupation"] == "preschool_teacher").mean()
+    assert np.abs(share_preschool_teachers - pct_preschool_teachers) < 0.002
+
+
+def _check_educ_group_sizes(df):
+    name_to_class_bounds = {
+        # school target is 23 pupils + 2 teachers => 25 +/- 5
+        "school": (20, 30),
+        # preschool target is 9 pupils + 2 adults => 11 +/- 1
+        "preschool": (10, 12),
+        # nursery target is 4 pupils + 1 adult => 5 +/- 1
+        "nursery": (4, 6),
+    }
+    for name, (lower, upper) in name_to_class_bounds.items():
+        id_col = f"{name}_group_id_0"
+        class_id_to_size = df.groupby(id_col).size()
+        ids_of_true_classes = class_id_to_size[class_id_to_size > 1].index
+        pupils_and_teachers = df[df[id_col].isin(ids_of_true_classes)]
+        class_sizes = pupils_and_teachers[id_col].value_counts().unique()
+        assert (class_sizes >= lower).all()
+        assert (class_sizes <= upper).all()
+
+
+def _check_educ_group_assortativeness(df):
+    col_to_limits = {
+        "nursery_group_id_0": (3, [2, 3, 4]),
+        "preschool_group_id_0": (4, [3, 4, 5]),
+        "school_group_id_0": (5, [2, 3]),
+    }
+    for col, (max_counties, allowed_n_ages) in col_to_limits.items():
+        class_id_to_size = df.groupby(col).size()
+        ids_of_true_classes = class_id_to_size[class_id_to_size > 1].index
+        pupils_and_teachers = df[df[col].isin(ids_of_true_classes)]
+        grouped = pupils_and_teachers.groupby(col)
+        assert (grouped["state"].nunique() == 1).all()
+        assert grouped["county"].nunique().max() <= max_counties
+        assert grouped["county"].nunique().mode()[0] == 1
+        assert sorted(grouped["age"].nunique().unique()) == allowed_n_ages
 
 
 def _check_work_group_ids(df, daily_dist, weekly_dist):
@@ -188,13 +254,13 @@ def _check_work_group_ids(df, daily_dist, weekly_dist):
     w_weekly_size_shares = workers["n_weekly_w_groups"].value_counts(normalize=True)
     assert np.abs(w_weekly_size_shares - weekly_dist).max() < 0.04
 
-    # daily work group ids
+    # daily group ids
     w_daily_group_vc = workers["work_daily_group_id"].value_counts()
-    # drop -1 category
     w_daily_group_vc = w_daily_group_vc[w_daily_group_vc > 0]
     assert w_daily_group_vc.max() <= 16
     assert (non_workers["work_daily_group_id"] == -1).all()
     assert (workers["work_daily_group_id"] != -1).all()
+
     # compare true and target distribution (incomplete!)
     w_daily_group_size_shares = w_daily_group_vc.value_counts(normalize=True)
     assert w_daily_group_size_shares[::-1].is_monotonic
@@ -213,9 +279,7 @@ def _check_other_group_ids(df, daily_dist, weekly_dist):
 
     assert len(o_weekly_cols) == 8
     assert np.abs(o_weekly_size_shares - weekly_dist).max() < 0.08
-    # daily other group ids
     o_daily_group_vc = df["other_daily_group_id"].value_counts()
-    # drop -1 category
     o_daily_group_vc = o_daily_group_vc[o_daily_group_vc > 0]
     assert o_daily_group_vc.max() <= 6
     o_daily_group_size_shares = o_daily_group_vc.value_counts(normalize=True)
