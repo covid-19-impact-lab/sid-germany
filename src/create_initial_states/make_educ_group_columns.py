@@ -29,7 +29,7 @@ def make_educ_group_columns(
         group_size (int): Target group size that will be achieved approximately.
         strict_assort_by (list or str): Groups only contain individuals that have
             the same value in all ``strict_assort_by`` variables.
-        weak_assort_by (list or sttr): Individuals that have the same value in all
+        weak_assort_by (list or str): Individuals that have the same value in all
             weak_assort_by variables are more likely to be matched into one group.
             Adults are taken from the modal weak group.
         adults_per_group (int): Number of teachers added to each class.
@@ -76,15 +76,17 @@ def make_educ_group_columns(
         reduced_states = states.loc[indices].copy()
         group_ids = id_to_weak_group[id_to_weak_group == weak_group].index.tolist()
         n_groups = len(group_ids)
-        n_adults = n_groups * adults_per_group
-        adult_candidates = reduced_states.query("occupation == 'working'").index
-        adults = np.random.choice(adult_candidates, size=n_adults, replace=False)
-        occupation.loc[adults] = occupation_name
-        for contact_model in id_cols.columns:
-            urn = np.array(group_ids * adults_per_group)
-            id_cols.loc[adults, contact_model] = np.random.choice(
-                urn, size=n_adults, replace=False
-            )
+        # skip groups with no participants
+        if n_groups > 0:
+            n_adults = n_groups * adults_per_group
+            adult_candidates = reduced_states.query("occupation == 'working'").index
+            adults = np.random.choice(adult_candidates, size=n_adults, replace=False)
+            occupation.loc[adults] = occupation_name
+            for contact_model in id_cols.columns:
+                urn = np.array(group_ids * adults_per_group)
+                id_cols.loc[adults, contact_model] = np.random.choice(
+                    urn, size=n_adults, replace=False
+                )
 
     id_cols = id_cols.astype(int)
     return id_cols, occupation

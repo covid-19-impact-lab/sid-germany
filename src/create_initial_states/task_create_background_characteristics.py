@@ -3,15 +3,22 @@ import numpy as np
 import pytask
 
 from src.config import BLD
+from src.config import SRC
 from src.create_initial_states.create_background_characteristics import (
     create_background_characteristics,
 )
 from src.create_initial_states.create_contact_model_group_ids import (
-    create_contact_model_group_ids,
+    add_contact_model_group_ids,
 )
 from src.shared import load_dataset
 
 DEPENDENCIES = {
+    # modules
+    "py1": SRC / "create_initial_states" / "create_background_characteristics.py",
+    "py2": SRC / "create_initial_states" / "create_contact_model_group_ids.py",
+    "py3": SRC / "create_initial_states" / "add_weekly_ids.py",
+    "py4": SRC / "create_initial_states" / "make_educ_group_columns.py",
+    # data
     "hh_data": BLD / "data" / "mossong_2008" / "hh_sample_ger.csv",
     "hh_probabilities": BLD / "data" / "mossong_2008" / "hh_probabilities.csv",
     "working_probabilities": BLD
@@ -41,7 +48,10 @@ DEPENDENCIES = {
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.produces(BLD / "data" / "inital_states.pickle")
 def task_create_background_characteristics(depends_on, produces):
-    data = {name: load_dataset(path) for name, path in depends_on.items()}
+    data = {}
+    for name, path in depends_on.items():
+        if path.suffix != ".py":
+            data[name] = load_dataset(path)
 
     repeating_contact_distributions = [
         "work_daily_dist",
@@ -54,12 +64,11 @@ def task_create_background_characteristics(depends_on, produces):
     df = create_background_characteristics(n_households=400_000, seed=3489, **data)
     _check_background_characteristics(df)
 
-    model_group_ids = create_contact_model_group_ids(
+    df = add_contact_model_group_ids(
         df,
         **group_id_specs,
         seed=1109,
     )
-    df = df.merge(model_group_ids, left_index=True, right_index=True, validate="1:1")
     _check_group_ids(df, **group_id_specs)
     df.to_pickle(produces)
 
@@ -114,7 +123,7 @@ def _check_group_ids(
 ):
     df = df.copy(deep=True)
 
-    # add helper variables
+    # create helpers
     w_weekly_cols = [x for x in df if x.startswith("work_weekly_group")]
     o_weekly_cols = [x for x in df if x.startswith("other_weekly_group")]
     n_weekly_w_groups = df[w_weekly_cols].replace(-1, np.nan).notnull().sum(axis=1)
@@ -128,7 +137,6 @@ def _check_group_ids(
     # weekly group ids
     assert len(w_weekly_cols) == 14
     assert len(o_weekly_cols) == 8
-
     assert (non_workers[w_weekly_cols] == -1).all().all()
     w_weekly_size_shares = workers["n_weekly_w_groups"].value_counts(normalize=True)
     o_weekly_size_shares = df["n_weekly_o_groups"].value_counts(normalize=True)
