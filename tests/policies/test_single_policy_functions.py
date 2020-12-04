@@ -4,22 +4,14 @@ import pytest
 from pandas.testing import assert_series_equal
 
 from src.policies.single_policy_functions import _interpolate_activity_level
-from src.policies.single_policy_functions import apply_multiplier_to_recurrent_contacts
-from src.policies.single_policy_functions import (
-    close_educ_facilities_until_reopening_date,
-)
 from src.policies.single_policy_functions import implement_a_b_school_system_above_age
-from src.policies.single_policy_functions import (
-    reduce_other_contacts_in_gradual_opening_or_closing,
-)
-from src.policies.single_policy_functions import reduce_to_systemically_relevant
-from src.policies.single_policy_functions import (
-    reduce_work_contacts_in_gradual_opening_or_closing,
-)
-from src.policies.single_policy_functions import (
-    reduce_work_contacts_to_share_of_active_non_essential_workers,
-)
-from src.policies.single_policy_functions import set_to_zero
+from src.policies.single_policy_functions import reduce_recurrent_model
+from src.policies.single_policy_functions import reduce_work_model
+from src.policies.single_policy_functions import reopen_educ_model_germany
+from src.policies.single_policy_functions import reopen_other_model
+from src.policies.single_policy_functions import reopen_work_model
+from src.policies.single_policy_functions import shut_down_model
+from src.policies.single_policy_functions import shut_down_work_model
 
 
 @pytest.fixture
@@ -35,44 +27,46 @@ def fake_states():
     return states
 
 
-def test_set_to_zero():
+def test_shut_down_model():
     contacts = pd.Series(np.arange(3))
     states = pd.DataFrame(index=["a", "b", "c"])
-    calculated = set_to_zero(states, contacts, 123)
+    calculated = shut_down_model(states, contacts, 123)
     expected = pd.Series(0, index=["a", "b", "c"])
     assert_series_equal(calculated, expected)
 
 
-def test_close_educ_facilities_until_reopening_date_multiplier_1(fake_states):
+def test_reopen_educ_model_germany_multiplier_1(fake_states):
     # date at which Berlin is open but Bavaria not
-    calculated = close_educ_facilities_until_reopening_date(
+    calculated = reopen_educ_model_germany(
         states=fake_states,
         contacts=pd.Series([1] * 10),
         seed=123,
-        multiplier=1,
+        start_multiplier=1,
+        end_multiplier=1,
     )
 
     expected = pd.Series([0, 1] * 5)
     assert_series_equal(calculated, expected)
 
 
-def test_close_educ_facilities_until_reopening_date_multiplier_0(fake_states):
-    calculated = close_educ_facilities_until_reopening_date(
+def test_reopen_educ_model_germany_multiplier_0(fake_states):
+    calculated = reopen_educ_model_germany(
         states=fake_states,
         contacts=pd.Series([1] * 10),
         seed=123,
-        multiplier=0,
+        start_multiplier=0,
+        end_multiplier=0,
     )
 
     expected = pd.Series([0] * 10)
     assert_series_equal(calculated, expected)
 
 
-def test_apply_multiplier_to_recurrent_contacts():
+def test_reduce_recurrent_model():
     n_obs = 10_000
     states = pd.DataFrame(index=np.arange(n_obs))
     contacts = pd.Series([1, 0] * int(n_obs / 2))
-    calculated = apply_multiplier_to_recurrent_contacts(
+    calculated = reduce_recurrent_model(
         states=states, contacts=contacts, seed=1234, multiplier=0.25
     )
 
@@ -111,18 +105,18 @@ def test_a_b_school_system_above_age_5(fake_states):
     assert_series_equal(calculated, expected)
 
 
-def test_reduce_to_systemically_relevant(fake_states):
+def test_shut_down_work_model(fake_states):
     contacts = pd.Series([0] * 5 + [1] * 5)
-    calculated = reduce_to_systemically_relevant(fake_states, contacts, 123)
+    calculated = shut_down_work_model(fake_states, contacts, 123)
     expected = pd.Series([0] * 6 + [1, 0, 1, 0])
     assert_series_equal(calculated, expected)
 
 
-def test_reduce_work_contacts_to_share_of_active_non_essential_workers(fake_states):
+def test_reduce_work_model(fake_states):
     fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
     contacts = pd.Series([0, 1] * 5)
 
-    calculated = reduce_work_contacts_to_share_of_active_non_essential_workers(
+    calculated = reduce_work_model(
         states=fake_states,
         contacts=contacts,
         seed=123,
@@ -136,8 +130,8 @@ def test_reduce_work_contacts_to_share_of_active_non_essential_workers(fake_stat
 def test_interpolate_activity_level():
     calculated = _interpolate_activity_level(
         date="2020-03-20",
-        start_level=0.5,
-        end_level=1,
+        start_multiplier=0.5,
+        end_multiplier=1,
         start_date="2020-03-15",
         end_date="2020-03-25",
     )
@@ -145,13 +139,13 @@ def test_interpolate_activity_level():
     assert calculated == 0.75
 
 
-def test_reduce_other_contacts_in_gradual_opening_or_closing():
-    calculated = reduce_other_contacts_in_gradual_opening_or_closing(
+def test_reopen_other_model():
+    calculated = reopen_other_model(
         states=pd.DataFrame([pd.Timestamp("2020-03-20")], columns=["date"]),
         contacts=pd.Series(np.arange(10)),
         seed=1234,
-        start_level=0.5,
-        end_level=1,
+        start_multiplier=0.5,
+        end_multiplier=1,
         start_date="2020-03-15",
         end_date="2020-03-25",
     )
@@ -161,16 +155,16 @@ def test_reduce_other_contacts_in_gradual_opening_or_closing():
     assert_series_equal(calculated, expected)
 
 
-def test_reduce_work_contacts_in_gradual_opening_or_closing(fake_states):
+def test_reopen_work_model(fake_states):
     fake_states["date"] = pd.Timestamp("2020-03-20")
     fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
 
-    calculated = reduce_work_contacts_in_gradual_opening_or_closing(
+    calculated = reopen_work_model(
         states=fake_states,
         contacts=pd.Series([1] * 10),
         seed=1234,
-        start_level=0.5,
-        end_level=1,
+        start_multiplier=0.5,
+        end_multiplier=1,
         start_date="2020-03-15",
         end_date="2020-03-25",
     )

@@ -19,30 +19,36 @@ from scipy.interpolate import interp1d
 from sid.shared import get_date
 
 
-def set_to_zero(states, contacts, seed):
+def shut_down_model(states, contacts, seed):
     """Set all contacts to zero independent of incoming contacts."""
     return pd.Series(0, index=states.index)
 
 
-def close_educ_facilities_until_reopening_date(
-    states, contacts, seed, multiplier, reopening_dates=None
+def reopen_educ_model_germany(
+    states,
+    contacts,
+    seed,
+    start_multiplier,
+    end_multiplier,
+    switching_date="2020-08-01",
+    reopening_dates=None,
 ):
-    """Keep schools, nurseries and preschools closed until local reopening date
+    """Reopen an educ model at state specific dates
+
+    - Keep the model closed until local reopening date
+    - Work with strongly reduced contacts until summer vacation
+    - Work with slightly reduced contact after summer vacation
+
+    The reopening dates are very coarse, based on a very simplified map covering
+    first openings and only focusing on schools: https://tinyurl.com/yyrsmfp2
+    Following it, we err on the side of making kids start attending too early.
 
     Args:
-        multiplier (float): Activity multiplier at the end of the reopening phase.
-            Must be smaller than one.
-        reopening_dates (dict): Dict that maps the federal states to reopening dates.
-            If not provided, we use a default one that corresponds to reopening after
-            the first German lockdown and is a bit coarse.
-
-
-
-
-    This is extremely coarse, based on a very simplified map covering
-    first openings and only focusing on schools: https://tinyurl.com/yyrsmfp2
-
-    Following it, we err on the side of making kids start attending too early.
+        start_multiplier (float): Activity multiplier after reopening but before
+            summer vacations. Typically stricter than after summer vacation.
+        end_multiplier (float): Activity multiplier after summer vacation.
+        switching_date (str or pandas.Timestamp): Date at which multipliers are switched
+        reopening_dates (dict): Maps German federal states to dates
 
     """
     if reopening_dates is None:
@@ -76,7 +82,10 @@ def close_educ_facilities_until_reopening_date(
     still_closed = states["state"].isin(closed_states)
     contacts[still_closed] = 0
 
-    contacts = apply_multiplier_to_recurrent_contacts(
+    switching_date = pd.Timestamp(switching_date)
+    multiplier = start_multiplier if date < switching_date else end_multiplier
+
+    contacts = reduce_recurrent_model(
         states=states,
         contacts=contacts,
         seed=seed,
@@ -85,7 +94,7 @@ def close_educ_facilities_until_reopening_date(
     return contacts
 
 
-def apply_multiplier_to_recurrent_contacts(states, contacts, seed, multiplier):
+def reduce_recurrent_model(states, contacts, seed, multiplier):
     """Reduce the number of recurrent contacts taking place by a multiplier.
 
     For recurrent contacts only whether the contacts Series is > 0 plays a role.
@@ -124,13 +133,11 @@ def implement_a_b_school_system_above_age(
     return attending_half
 
 
-def reduce_to_systemically_relevant(states, contacts, seed):  # noqa: U100
+def shut_down_work_model(states, contacts, seed):  # noqa: U100
     return contacts.where(states["systemically_relevant"], 0)
 
 
-def reduce_work_contacts_to_share_of_active_non_essential_workers(
-    states, contacts, seed, share
-):  # noqa: U100
+def reduce_work_model(states, contacts, seed, share):  # noqa: U100
     """Reduce contacts for the non essential working population.
 
     Contacts of essential workers are never reduced.
@@ -145,8 +152,8 @@ def reduce_work_contacts_to_share_of_active_non_essential_workers(
     return reduced_contacts
 
 
-def reduce_work_contacts_in_gradual_opening_or_closing(
-    states, contacts, seed, start_level, end_level, start_date, end_date
+def reopen_work_model(
+    states, contacts, seed, start_multiplier, end_multiplier, start_date, end_date
 ):
     """Reduce work contacts to active people in gradual opening or closing phase.
 
@@ -158,8 +165,8 @@ def reduce_work_contacts_in_gradual_opening_or_closing(
     with a continuum in between.
 
     Args:
-        start_level (float): Activity at start.
-        end_level (float): Activity level at end.
+        start_multiplier (float): Activity at start.
+        end_multiplier (float): Activity level at end.
         start_date (str or pandas.Timestamp): Date at which the interpolation phase
             starts.
         end_date (str or pandas.Timestamp): Date at which the interpolation phase ends.
@@ -169,20 +176,20 @@ def reduce_work_contacts_in_gradual_opening_or_closing(
 
     share = _interpolate_activity_level(
         date=date,
-        start_level=start_level,
-        end_level=end_level,
+        start_multiplier=start_multiplier,
+        end_multiplier=end_multiplier,
         start_date=start_date,
         end_date=end_date,
     )
-    contacts = reduce_work_contacts_to_share_of_active_non_essential_workers(
+    contacts = reduce_work_model(
         states=states, contacts=contacts, seed=seed, share=share
     )
 
     return contacts
 
 
-def reduce_other_contacts_in_gradual_opening_or_closing(
-    states, contacts, seed, start_level, end_level, start_date, end_date
+def reopen_other_model(
+    states, contacts, seed, start_multiplier, end_multiplier, start_date, end_date
 ):
     """Reduce non-work contacts to active people in gradual opening or closing phase.
 
@@ -190,8 +197,8 @@ def reduce_other_contacts_in_gradual_opening_or_closing(
     in Germany (End of April 2020 to beginning of October 2020).
 
     Args:
-        start_level (float): Activity at start.
-        end_level (float): Activity level at end.
+        start_multiplier (float): Activity at start.
+        end_multiplier (float): Activity level at end.
         start_date (str or pandas.Timestamp): Date at which the interpolation phase
             starts.
         end_date (str or pandas.Timestamp): Date at which the interpolation phase ends.
@@ -200,8 +207,8 @@ def reduce_other_contacts_in_gradual_opening_or_closing(
     date = get_date(states)
     multiplier = _interpolate_activity_level(
         date=date,
-        start_level=start_level,
-        end_level=end_level,
+        start_multiplier=start_multiplier,
+        end_multiplier=end_multiplier,
         start_date=start_date,
         end_date=end_date,
     )
@@ -210,13 +217,15 @@ def reduce_other_contacts_in_gradual_opening_or_closing(
     return reduced
 
 
-def _interpolate_activity_level(date, start_level, end_level, start_date, end_date):
+def _interpolate_activity_level(
+    date, start_multiplier, end_multiplier, start_date, end_date
+):
     """Calculate an activity level in a gradual reopening or closing phase.
 
     Args:
         date (str or pandas.Timestamp): Date at which activity level is calculated.
-        start_level (float): Activity at start.
-        end_level (float): Activity level at end.
+        start_multiplier (float): Activity at start.
+        end_multiplier (float): Activity level at end.
         start_date (str or pandas.Timestamp): Date at which the interpolation phase
             starts.
         end_date (str or pandas.Timestamp): Date at which the interpolation phase ends.
@@ -231,12 +240,12 @@ def _interpolate_activity_level(date, start_level, end_level, start_date, end_da
 
     assert date >= start_date
     assert date <= end_date
-    assert 0 <= start_level <= 1
-    assert 0 <= end_level <= 1
+    assert 0 <= start_multiplier <= 1
+    assert 0 <= end_multiplier <= 1
 
     interpolator = interp1d(
         x=[start_date.dayofyear, end_date.dayofyear],
-        y=[start_level, end_level],
+        y=[start_multiplier, end_multiplier],
         kind="linear",
     )
     activity = interpolator(date.dayofyear)
