@@ -69,7 +69,21 @@ def test_reopen_educ_model_germany_multiplier_0(fake_states):
     assert_series_equal(calculated, expected)
 
 
-def test_reduce_recurrent_model():
+def test_reduce_recurrent_model_set_zero():
+    states = pd.DataFrame(index=[0, 1, 2, 3])
+    contacts = pd.Series([1.0, 1.0, 0, 0])
+    calculated = reduce_recurrent_model(states, contacts, 333, multiplier=0.0)
+    assert (calculated == 0).all()
+
+
+def test_reduce_recurrent_model_no_change():
+    states = pd.DataFrame(index=[0, 1, 2, 3])
+    contacts = pd.Series([1.0, 1.0, 0, 0])
+    calculated = reduce_recurrent_model(states, contacts, 333, multiplier=1.0)
+    assert np.allclose(contacts, calculated)
+
+
+def test_reduce_recurrent_model_one_in_four():
     n_obs = 10_000
     states = pd.DataFrame(index=np.arange(n_obs))
     contacts = pd.Series([1, 0] * int(n_obs / 2))
@@ -87,7 +101,6 @@ def test_reduce_recurrent_model():
 
 
 def test_a_b_school_system_above_age_0(fake_states):
-
     calculated = implement_a_b_school_system_above_age(
         states=fake_states,
         contacts=pd.Series(1, index=fake_states.index),
@@ -106,7 +119,6 @@ def test_a_b_school_system_above_age_5(fake_states):
         seed=123,
         age_cutoff=5,
     )
-
     expected = pd.Series([1] * 6 + [0] + [1] * 3)
     assert_series_equal(calculated, expected)
 
@@ -120,7 +132,8 @@ def test_shut_down_work_model(fake_states):
 
 def test_reduce_work_model(fake_states):
     fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
-    contacts = pd.Series([0, 1] * 5)
+    contacts = pd.Series(1, index=fake_states.index)
+    contacts[2] = 0
 
     calculated = reduce_work_model(
         states=fake_states,
@@ -128,8 +141,7 @@ def test_reduce_work_model(fake_states):
         seed=123,
         multiplier=0.5,
     )
-
-    expected = pd.Series([0, 1, 0, 1] + [0] * 6)
+    expected = pd.Series([1, 1, 0, 1, 1, 0, 1, 0, 1, 0], index=fake_states.index)
     assert_series_equal(calculated, expected)
 
 
@@ -176,5 +188,5 @@ def test_reopen_work_model(fake_states):
         end_date="2020-03-25",
     )
 
-    expected = pd.Series([1] * 7 + [0] * 3)
+    expected = pd.Series([1] * 7 + [0, 1, 0])
     assert_series_equal(calculated, expected)

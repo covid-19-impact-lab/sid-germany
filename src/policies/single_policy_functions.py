@@ -40,7 +40,7 @@ def reopen_educ_model_germany(
     - Work with strongly reduced contacts until summer vacation
     - Work with slightly reduced contact after summer vacation
 
-    The reopening dates are very coarse, based on a very simplified map covering
+    The default reopening dates are very coarse, based on a very simplified map covering
     first openings and only focusing on schools: https://tinyurl.com/yyrsmfp2
     Following it, we err on the side of making kids start attending too early.
 
@@ -81,11 +81,9 @@ def reopen_educ_model_germany(
             "and 2020-09-30"
         )
         reopening_dates = default_reopening_dates
-    else:
-        assert set(reopening_dates) == set(default_reopening_dates), (
-            "You need to provide reopening dates for all german states:\n"
-            f"{set(default_reopening_dates)}"
-        )
+    assert (
+        states["state"].isin(reopening_dates.keys()).all()
+    ), "Not all federal states are included in the reopening dates."
 
     closed_states = []
     for state, start_date in reopening_dates.items():
@@ -95,6 +93,8 @@ def reopen_educ_model_germany(
     contacts[still_closed] = 0
 
     switching_date = pd.Timestamp(switching_date)
+    assert start_multiplier >= 0.0, "Multipliers must be greater or equal to zero."
+    assert end_multiplier >= 0.0, "Multipliers must be greater or equal to zero."
     multiplier = start_multiplier if date < switching_date else end_multiplier
 
     if is_recurrent:
@@ -168,7 +168,10 @@ def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
     """
     assert 0 <= multiplier <= 1
     threshold = 1 - multiplier
-    reduced_contacts = contacts.where(states["work_contact_priority"] > threshold, 0)
+    reduced_contacts = contacts.where(
+        states["systemically_relevant"] | (states["work_contact_priority"] > threshold),
+        0,
+    )
     return reduced_contacts
 
 
