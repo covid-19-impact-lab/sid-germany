@@ -159,12 +159,13 @@ def shut_down_work_model(states, contacts, seed):  # noqa: U100
 
 
 def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
-    """Reduce contacts for the non essential working population.
+    """Reduce contacts for the non systemically relevant working population.
 
-    Contacts of essential workers are never reduced.
+    Contacts of systemically relevant workers are never reduced.
 
     Args:
-        multiplier (float): multiplier of non-essential workers that have work contacts.
+        multiplier (float): share of non-systemically relevant workers
+            that have work contacts.
 
     """
     assert 0 <= multiplier <= 1
