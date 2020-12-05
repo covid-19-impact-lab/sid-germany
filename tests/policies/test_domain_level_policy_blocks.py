@@ -79,7 +79,7 @@ def test_shut_down_work_models(contact_models):
             "policy": shut_down_work_model,
         },
     }
-    assert res == expected
+    compare_policy_dicts(res, expected)
 
 
 def test_shut_down_educ_models(contact_models):
@@ -100,7 +100,7 @@ def test_shut_down_educ_models(contact_models):
             "policy": shut_down_model,
         },
     }
-    res == expected
+    assert res == expected
 
 
 def test_shut_down_other_models(contact_models):
@@ -120,7 +120,7 @@ def test_shut_down_other_models(contact_models):
             "policy": shut_down_model,
         },
     }
-    res == expected
+    compare_policy_dicts(res, expected)
 
 
 def test_reduce_work_models(contact_models):
@@ -376,4 +376,4 @@ def test_get_base_policy():
         "start": "2020-10-01",
         "end": "2020-10-10",
     }
-    res == expected
+    assert res == expected
