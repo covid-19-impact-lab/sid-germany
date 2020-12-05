@@ -37,8 +37,8 @@ def reopen_educ_model_germany(
     """Reopen an educ model at state specific dates
 
     - Keep the model closed until local reopening date
-    - Work with strongly reduced contacts until summer vacation
-    - Work with slightly reduced contact after summer vacation
+    - Use start_multiplier until switching date (e.g. end of summer vacation)
+    - Us end_multiplier after switching date.
 
     The default reopening dates are very coarse, based on a very simplified map covering
     first openings and only focusing on schools: https://tinyurl.com/yyrsmfp2
@@ -46,8 +46,8 @@ def reopen_educ_model_germany(
 
     Args:
         start_multiplier (float): Activity multiplier after reopening but before
-            summer vacations. Typically stricter than after summer vacation.
-        end_multiplier (float): Activity multiplier after summer vacation.
+            switching date. Typically stricter than after switching date.
+        end_multiplier (float): Activity multiplier after switching date.
         switching_date (str or pandas.Timestamp): Date at which multipliers are switched
         reopening_dates (dict): Maps German federal states to dates
         is_recurrent (bool): If the affected contact models is recurrent.
@@ -118,6 +118,8 @@ def reduce_recurrent_model(states, contacts, seed, multiplier):
     an effect on the number of contacts taking place. Instead we make a random share of
     individuals scheduled to participate not participate.
 
+    This function returns a Series of 0s and 1s.
+
     Args:
         multiplier (float): Must be smaller or equal to one.
 
@@ -142,11 +144,10 @@ def implement_a_b_school_system_above_age(
 
     """
     assert set(states["school_group_a"].unique()) == {0, 1}
-    assert "teacher" in states["occupation"].cat.categories
     date = get_date(states)
     attending_half = contacts.where(
         (states["age"] < age_cutoff)
-        | (states["occupation"] == "teacher")
+        | states["educ_worker"]
         | (states["school_group_a"] == date.week % 2),
         0,
     )

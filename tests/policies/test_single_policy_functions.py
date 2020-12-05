@@ -22,7 +22,10 @@ def fake_states():
     # date with uneven week number, i.e. where group a attends school
     states["date"] = pd.Timestamp("2020-04-23")
     states["school_group_a"] = [0, 1] * 5
-    states["occupation"] = pd.Categorical(["school"] * 8 + ["teacher"] * 2)
+    states["occupation"] = pd.Categorical(
+        ["school"] * 8 + ["preschool_teacher", "school_teacher"]
+    )
+    states["educ_worker"] = [False] * 8 + [True] * 2
     states["age"] = np.arange(10)
     states["systemically_relevant"] = [True, False] * 5
     return states
