@@ -11,7 +11,6 @@ Moreover, all public functions return a pandas.Series with the same index as sta
 
 All other arguments must be documented.
 
-
 """
 import numpy as np
 import pandas as pd

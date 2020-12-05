@@ -82,6 +82,6 @@ def combine_dictionaries(dictionaries):
                 combined = {**combined, **d}
 
     else:
-        raise ValueError("dictionaries must be a list.")
+        raise ValueError("'dictionaries' must be a dict or list of dicts.")
 
     return combined
