@@ -124,8 +124,6 @@ def reopen_educ_models(
         policy = _get_base_policy(mod, block_info)
         policy["policy"] = partial(
             reopen_educ_model_germany,
-            start_date=block_info["start_date"],
-            end_date=block_info["end_date"],
             start_multiplier=start_multiplier,
             end_multiplier=end_multiplier,
             switching_date=switching_date,
@@ -146,7 +144,9 @@ def implement_ab_schooling_with_reduced_other_educ_models(
     policies = reduce_educ_models(contact_models, block_info, multiplier)
 
     educ_models = _get_educ_models(contact_models)
-    school_models = [cm for cm in educ_models if "school" in cm]
+    school_models = [
+        cm for cm in educ_models if "school" in cm and "preschool" not in cm
+    ]
 
     for mod in school_models:
         pol_name = f"{block_info['prefix']}_{mod}"
@@ -204,7 +204,7 @@ def reopen_other_models(contact_models, block_info, start_multiplier, end_multip
             end_date=block_info["end_date"],
             start_multiplier=start_multiplier,
             end_multiplier=end_multiplier,
-            is_recurrent=contact_models["is_recurrent"],
+            is_recurrent=contact_models[mod]["is_recurrent"],
         )
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
