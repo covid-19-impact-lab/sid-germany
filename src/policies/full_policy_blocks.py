@@ -157,8 +157,7 @@ def get_soft_lockdown_with_ab_schooling(
 def get_hard_lockdown_with_ab_schooling(
     contact_models,
     block_info,
-    other_contacts_multiplier,
-    educ_multiplier,
+    multipliers,
     age_cutoff,
 ):
     """Implement a hard lockdown but with a-b scholing instead of closed schools."""
@@ -167,11 +166,11 @@ def get_hard_lockdown_with_ab_schooling(
         implement_ab_schooling_with_reduced_other_educ_models(
             contact_models=contact_models,
             block_info=block_info,
-            multiplier=educ_multiplier,
+            multiplier=multipliers["educ"],
             age_cutoff=age_cutoff,
         ),
         shut_down_work_models(contact_models, block_info),
-        reduce_other_models(contact_models, block_info, other_contacts_multiplier),
+        reduce_other_models(contact_models, block_info, multipliers["other"]),
     ]
 
     policies = combine_dictionaries(to_combine)
