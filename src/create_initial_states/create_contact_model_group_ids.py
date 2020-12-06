@@ -54,8 +54,17 @@ def add_contact_model_group_ids(
 
     Returns:
         df (pandas.DataFrame): states with an updated occupation column and
-            expanded by the following contact model group ids:
-                -  "school_group_id_0"
+            expanded by the contact model group ids and helper columns:
+                - school_group_id_0
+                - school_group_id_1
+                - school_group_id_2
+                - preschool_group_id_0
+                - nursery_group_id_0
+                - updated occupation column
+                - educ_worker
+                - school_group_a
+                - systemically_relevant
+                - work_contact_priority
 
     """
     seed = it.count(seed)
@@ -75,6 +84,12 @@ def add_contact_model_group_ids(
     )
     df = df.merge(school_class_ids, left_index=True, right_index=True, validate="1:1")
     df["occupation"] = updated_occupation
+
+    df["one"] = 1
+    gb = df.groupby("school_group_id")
+    df["pos_in_group"] = gb["one"].cumsum() - 1
+    df["group_size"] = gb["one"].transform("size")
+    df["school_group_a"] = df.eval("pos_in_group < group_size / 2").astype(np.uint8)
 
     preschool_class_ids, updated_occupation = make_educ_group_columns(
         states=df,
@@ -108,6 +123,7 @@ def add_contact_model_group_ids(
     )
     df = df.merge(nursery_class_ids, left_index=True, right_index=True, validate="1:1")
     df["occupation"] = updated_occupation
+    df["educ_worker"] = df["occupation"].str.endswith("_teacher")
 
     df["systemically_relevant"] = _draw_systemically_relevant(
         df["occupation"], seed=next(seed)
@@ -168,6 +184,7 @@ def add_contact_model_group_ids(
         validate="1:1",
     )
 
+    df = df.drop(columns=["pos_in_group", "one", "group_size", "attends_nursery"])
     return df
 
 
