@@ -157,7 +157,7 @@ def _check_work_contact_priority(df):
 
 
 def _check_educ_group_ids(df):
-    set(df["occupation"].cat.categories) == {
+    assert set(df["occupation"].cat.categories) == {
         "school",
         "working",
         "stays home",
