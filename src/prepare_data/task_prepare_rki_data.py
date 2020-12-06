@@ -13,6 +13,9 @@ Explanation on the coding of the variables
 - https://covid19-de-stats.sourceforge.io/rki-fall-tabelle.html
 
 """
+from datetime import datetime
+from datetime import timedelta
+
 import numpy as np
 import pandas as pd
 import pytask
@@ -56,13 +59,7 @@ AGE_GROUPS_TO_INTERVALS = {
 
 
 @pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "rki.csv")
-@pytask.mark.produces(
-    {
-        "full_rki": BLD / "data" / "processed_time_series" / "rki.pkl",
-        "newly_infected": BLD / "data" / "processed_time_series" / "newly_infected.pkl",
-        "newly_deceased": BLD / "data" / "processed_time_series" / "newly_deceased.pkl",
-    }
-)
+@pytask.mark.produces(BLD / "data" / "processed_time_series" / "rki.pkl")
 def task_prepare_rki_data(depends_on, produces):
     df = (
         pd.read_csv(depends_on, parse_dates=["Refdatum"])
@@ -80,9 +77,11 @@ def task_prepare_rki_data(depends_on, produces):
     df["newly_infected"] = df["n_cases"] * df["type_case"].isin([0, 1])
     df["newly_deceased"] = df["n_deaths"] * df["type_death"].isin([0, 1])
 
-    df.to_pickle(produces["full_rki"])
+    gb = df.groupby(["date", "county", "age_group_rki"])
+    summed = gb[["newly_infected", "newly_deceased"]].sum()
+    summed = summed.fillna(0)
+    today = datetime.now().date()
+    one_week_ago = today - timedelta(weeks=1)
+    cropped = summed.loc[:one_week_ago]
 
-    for col in ["newly_infected", "newly_deceased"]:
-        summed = df.groupby(["date", "county", "age_group_rki"])[[col]].sum()
-        summed = summed.fillna(0).reset_index()
-        summed.to_pickle(produces[col])
+    cropped.to_pickle(produces)
