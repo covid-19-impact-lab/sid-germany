@@ -6,7 +6,6 @@ import pytest
 from src.create_initial_states.create_initial_infections import (
     _calculate_infection_probs,
 )
-from src.create_initial_states.create_initial_infections import _create_cases
 from src.create_initial_states.create_initial_infections import _only_leave_first_true
 
 
@@ -47,7 +46,8 @@ def empirical_data():
     df["age_group_rki"] = ["young", "old"] * 10
     np.random.seed(3984)
     df["newly_infected"] = np.random.choice([0, 1], 20)
-    return df
+    sr = df.set_index(["date", "county", "age_group_rki"])
+    return sr
 
 
 @pytest.fixture
@@ -59,13 +59,6 @@ def cases():
     df["2020-10-02"] = [1, 1, 0, 0]
     df["2020-10-03"] = [1, 0, 0, 1]
     return df
-
-
-def test_create_cases(empirical_data, cases):
-    start = "2020-10-01"
-    end = "2020-10-03"
-    res = _create_cases(empirical_data, start, end)
-    pdt.assert_frame_equal(res.sort_index(), cases.sort_index())
 
 
 @pytest.fixture

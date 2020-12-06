@@ -23,10 +23,8 @@ def create_initial_infections(
         than in the empirical data.
 
     Args:
-        empirical_data (pandas.DataFrame): Dataset with the columns age_group_rki,
-            county, date and newly_infected. If there is more than one row per
-            (county, date, age_group_rki) the newly_infected cases will be summed
-            up over these groups.
+        empirical_data (pandas.Series): Newly infected Series with the index levels
+            ["date", "county", "age_group_rki"].
         synthetic_data (pandas.DataFrame): Dataset with one row per simulated
             individual. Must contain the columns age_group_rki and county.
         start (str or pd.Timestamp): Start date.
@@ -45,14 +43,19 @@ def create_initial_infections(
 
     assert undetected_multiplier >= 1, "undetected_multiplier must be >= 1."
     index_cols = ["date", "county", "age_group_rki"]
-    if empirical_data.set_index(index_cols).index.duplicated().any():
-        grouped = empirical_data.groupby().copy(deep=True)
-        empirical_data = grouped.sum().fillna(0).reset_index()
-    assert (
-        empirical_data[index_cols + ["newly_infected"]].notnull().all().all()
-    ), "No NaN allowed in the empirical data"
+    right_index = empirical_data.index == index_cols
+    assert right_index, f"Your data must have {index_cols} as index levels."
+    duplicates_in_index = empirical_data.index.duplicated().any()
+    assert not duplicates_in_index, "Your index must not have any duplicates."
+    dates = empirical_data.index.get_level_values("date")
+    assert start in dates, f"Your start date {start} is not in your empirical data."
+    assert end in dates, f"Your end date {end} is not in your empirical data."
+    empirical_data = empirical_data.loc[pd.Timestamp(start) : pd.Timestamp(end)]  # noqa
+    assert empirical_data.notnull().all().all(), "No NaN allowed in the empirical data"
 
-    cases = _create_cases(empirical_data, start, end)
+    cases = empirical_data.to_frame().unstack("date")
+    cases.columns = [str(x.date()) for x in cases.columns.droplevel()]
+
     infection_probs = _calculate_infection_probs(
         synthetic_data, cases, undetected_multiplier, population_size
     )
@@ -63,29 +66,6 @@ def create_initial_infections(
 
     initial_infections = _only_leave_first_true(initial_infections)
     return initial_infections
-
-
-def _create_cases(empirical_data, start, end):
-    """Create a DataFrame of cases with dates as columns and age group and county as index.
-
-    Args:
-        empirical_data (pandas.DataFrame): Dataset with the columns age_group_rki,
-            county date and newly_infected. There is one row per date, county and
-            age group.
-        start (str or pd.Timestamp): Start date.
-        end (str or pd.Timestamp): End date.
-
-    Returns:
-        cases (pandas.DataFrame): DataFrame of cases with dates as columns and
-            age group and county as index levels.
-
-    """
-    index_cols = ["date", "county", "age_group_rki"]
-    cases = empirical_data.set_index(index_cols)["newly_infected"].copy(deep=True)
-    cases = cases[pd.Timestamp(start) : pd.Timestamp(end)]  # noqa
-    cases = cases.to_frame().unstack("date")
-    cases.columns = [str(x.date()) for x in cases.columns.droplevel()]
-    return cases
 
 
 def _calculate_infection_probs(
