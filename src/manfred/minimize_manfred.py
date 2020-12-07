@@ -9,9 +9,9 @@ from scipy import stats
 def minimize_manfred(
     func,
     x,
-    step_size,
+    step_sizes,
     max_fun,
-    xtol=None,
+    xtol=0.01,
     one_sided_confidence_level=0.5,
     momentum_window=3,
     use_line_search=True,
@@ -26,7 +26,7 @@ def minimize_manfred(
             (a 1d numpy array with parameters) and returns a dictionary
             with the entries "residuals" and "value".
         x (numpy.ndarray): 1d numpy array with parameters.
-        step_size (float): The step size in the direct search phase.
+        initial_step_size (float): The step size in the direct search phase.
         max_fun (int): Maximum number of function evaluations.
         xtol (float): Maximal sum of absolute differences for two
             parameter vectors to be considered equal
@@ -68,33 +68,36 @@ def minimize_manfred(
     state = {
         "func_counter": 0,
         "iter_counter": 0,
+        "inner_iter_counter": 0,
         "cache": {hash_array(x): {"x": x, "evals": [func(x)]}},
         "history": [],
     }
 
-    convergence_criteria = {
-        "xtol": xtol if xtol is not None else 0.1 * step_size,
-        "max_fun": max_fun,
-    }
+    convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
+
+    step_sizes = _process_step_sizes(step_sizes)
 
     current_x = x
-    while not _is_converged(state, convergence_criteria):
-        current_x, state = do_manfred_direct_search(
-            func=func,
-            current_x=current_x,
-            step_size=step_size,
-            state=state,
-            info=direct_search_info,
-        )
+    for step_size in step_sizes:
+        state["inner_iter_counter"] = 0
+        while not _is_converged(state, convergence_criteria):
+            current_x, state = do_manfred_direct_search(
+                func=func,
+                current_x=current_x,
+                step_size=step_size,
+                state=state,
+                info=direct_search_info,
+            )
 
-        current_x, state = do_manfred_line_search(
-            func=func,
-            current_x=current_x,
-            step_size=step_size,
-            state=state,
-            info=line_search_info,
-        )
-        state["iter_counter"] = state["iter_counter"] + 1
+            current_x, state = do_manfred_line_search(
+                func=func,
+                current_x=current_x,
+                step_size=step_size,
+                state=state,
+                info=line_search_info,
+            )
+            state["iter_counter"] = state["iter_counter"] + 1
+            state["inner_iter_counter"] = state["inner_iter_counter"] + 1
 
     out_history = {"criterion": [], "x": []}
     for x_hash in state["history"]:
@@ -112,10 +115,20 @@ def minimize_manfred(
     return res
 
 
+def _process_step_sizes(step_sizes):
+    if isinstance(step_sizes, (list, tuple, np.ndarray)):
+        step_sizes = list(step_sizes)
+    elif isinstance(step_sizes, (float, int)):
+        step_sizes = [float(step_sizes)]
+    else:
+        raise ValueError("step_sizes must be int, float or list thereof.")
+    return step_sizes
+
+
 def _is_converged(state, convergence_criteria):
     cache = state["cache"]
     history = state["history"]
-    if len(history) >= 2:
+    if state["inner_iter_counter"] > 0:
         current_x = cache[history[-1]]["x"]
         last_x = cache[history[-2]]["x"]
         max_diff = np.abs(last_x - current_x).max()
