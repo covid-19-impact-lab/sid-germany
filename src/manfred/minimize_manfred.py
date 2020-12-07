@@ -1,5 +1,6 @@
 import hashlib
 import itertools
+from collections import namedtuple
 
 import numpy as np
 from scipy import stats
@@ -52,137 +53,139 @@ def minimize_manfred(
         n_points_per_line_search (int): How many points are tried during a line search.
 
     """
-    if xtol is None:
-        xtol = 0.1 * step_size
-    func_counter = 0
-    current_x = x
-    last_x = x + 1
-    history = []
-    x_hash = hash_array(current_x)
-    cache = {x_hash: {"x": current_x, "evals": [func(current_x)]}}
-    n_iter = 0
+    line_search_info = {
+        "active": use_line_search,
+        "relative_bounds": relative_line_search_bounds,
+        "n_points": n_points_per_line_search,
+        "frequency": line_search_frequency,
+    }
 
-    while func_counter <= max_fun and np.abs(last_x - current_x).max() > xtol:
-        last_x = current_x
-        current_x, cache, history, func_counter = do_manfred_direct_search(
+    direct_search_info = {
+        "one_sided_confidence_level": one_sided_confidence_level,
+        "momentum_window": momentum_window,
+    }
+
+    state = {
+        "func_counter": 0,
+        "iter_counter": 0,
+        "cache": {hash_array(x): {"x": x, "evals": [func(x)]}},
+        "history": [],
+    }
+
+    convergence_criteria = {
+        "xtol": xtol if xtol is not None else 0.1 * step_size,
+        "max_fun": max_fun,
+    }
+
+    current_x = x
+    while not _is_converged(state, convergence_criteria):
+        current_x, state = do_manfred_direct_search(
             func=func,
             current_x=current_x,
             step_size=step_size,
-            cache=cache,
-            history=history,
-            func_counter=func_counter,
-            one_sided_confidence_level=one_sided_confidence_level,
-            momentum_window=momentum_window,
+            state=state,
+            info=direct_search_info,
         )
 
-        if use_line_search and (n_iter % line_search_frequency) == 0:
-            current_x, cache, history, func_counter = do_manfred_line_search(
-                func=func,
-                current_x=current_x,
-                step_size=step_size,
-                cache=cache,
-                relative_line_search_bounds=relative_line_search_bounds,
-                n_points_per_line_search=n_points_per_line_search,
-                history=history,
-                func_counter=func_counter,
-            )
-        n_iter += 1
+        current_x, state = do_manfred_line_search(
+            func=func,
+            current_x=current_x,
+            step_size=step_size,
+            state=state,
+            info=line_search_info,
+        )
+        state["iter_counter"] = state["iter_counter"] + 1
 
     out_history = {"criterion": [], "x": []}
-    for x_hash in history:
-        cache_entry = cache[x_hash]
+    for x_hash in state["history"]:
+        cache_entry = state["cache"][x_hash]
         out_history["criterion"].append(_aggregate_evaluations(cache_entry["evals"]))
         out_history["x"].append(cache_entry["x"])
 
     res = {
         "solution_x": current_x,
-        "n_criterion_evaluations": func_counter,
-        "n_iterations": n_iter,
+        "n_criterion_evaluations": state["func_counter"],
+        "n_iterations": state["iter_counter"],
         "history": out_history,
     }
 
     return res
 
 
-def do_manfred_direct_search(
-    func,
-    current_x,
-    step_size,
-    cache,
-    history,
-    func_counter,
-    one_sided_confidence_level,
-    momentum_window,
-):
-    search_strategies = _determine_search_strategies(
-        current_x, cache, one_sided_confidence_level, history, momentum_window
-    )
+def _is_converged(state, convergence_criteria):
+    cache = state["cache"]
+    history = state["history"]
+    if len(history) >= 2:
+        current_x = cache[history[-1]]["x"]
+        last_x = cache[history[-2]]["x"]
+        max_diff = np.abs(last_x - current_x).max()
+        xtol = convergence_criteria["xtol"]
+
+        func_counter = state["func_counter"]
+        max_fun = convergence_criteria["max_fun"]
+
+        converged = func_counter >= max_fun or max_diff <= xtol
+    else:
+        converged = False
+
+    return converged
+
+
+def do_manfred_direct_search(func, current_x, step_size, state, info):
+    search_strategies = _determine_search_strategies(current_x, state, info)
     x_sample = _get_direct_search_sample(current_x, step_size, search_strategies)
 
-    evaluations, cache, func_counter = _do_evaluations(
-        func=func,
-        x_sample=x_sample,
-        cache=cache,
-        func_counter=func_counter,
-        return_type="aggregated",
-    )
+    evaluations, state = _do_evaluations(func, x_sample, state, "aggregated")
 
     argmin = np.argmin(evaluations)
     next_x = x_sample[argmin]
-    history = history + [hash_array(next_x)]
+    state["history"].append(hash_array(next_x))
 
-    return next_x, cache, history, func_counter
-
-
-def do_manfred_line_search(
-    func,
-    current_x,
-    step_size,
-    cache,
-    relative_line_search_bounds,
-    n_points_per_line_search,
-    history,
-    func_counter,
-):
-    direction = _calculate_manfred_direction(current_x, step_size, cache)
-    lower, upper = np.array(relative_line_search_bounds) * step_size
-
-    step_grid = np.linspace(lower, upper, n_points_per_line_search)
-
-    x_sample = [current_x] + [current_x + step * direction for step in step_grid]
-
-    evaluations, cache, func_counter = _do_evaluations(
-        func=func,
-        x_sample=x_sample,
-        cache=cache,
-        func_counter=func_counter,
-        return_type="aggregated",
-    )
-
-    argmin = np.argmin(evaluations)
-    next_x = x_sample[argmin]
-    history = history + [hash_array(next_x)]
-
-    return next_x, cache, history, func_counter
+    return next_x, state
 
 
-def _do_evaluations(func, x_sample, cache, func_counter, return_type="aggregated"):
-    x_sample_hashes = [hash_array(x) for x in x_sample]
+def do_manfred_line_search(func, current_x, step_size, state, info):
+    if info["active"] and (state["iter_counter"] % info["frequency"]) == 0:
+        direction = _calculate_manfred_direction(current_x, step_size, state["cache"])
+        lower, upper = np.array(info["relative_bounds"]) * step_size
+
+        step_grid = np.linspace(lower, upper, info["n_points"])
+
+        x_sample = [current_x] + [current_x + step * direction for step in step_grid]
+
+        evaluations, state = _do_evaluations(
+            func=func,
+            x_sample=x_sample,
+            state=state,
+            return_type="aggregated",
+        )
+
+        argmin = np.argmin(evaluations)
+        next_x = x_sample[argmin]
+        state["history"].append(hash_array(next_x))
+    else:
+        next_x = current_x
+
+    return next_x, state
+
+
+def _do_evaluations(func, x_sample, state, return_type="aggregated"):
+    x_hashes = [hash_array(x) for x in x_sample]
     need_to_evaluate = [
-        x for x, x_hash in zip(x_sample, x_sample_hashes) if x_hash not in cache
+        x for x, x_hash in zip(x_sample, x_hashes) if x_hash not in state["cache"]
     ]
     new_evaluations = [func(x) for x in need_to_evaluate]
     for x, evaluation in zip(need_to_evaluate, new_evaluations):
-        cache = _add_to_cache(x, evaluation, cache)
+        cache = _add_to_cache(x, evaluation, state["cache"])
 
-    all_results = [cache[x_hash]["evals"] for x_hash in x_sample_hashes]
+    all_results = [cache[x_hash]["evals"] for x_hash in x_hashes]
 
     if return_type == "aggregated":
         all_results = [_aggregate_evaluations(res) for res in all_results]
 
-    func_counter += len(need_to_evaluate)
+    state["func_counter"] = state["func_counter"] + len(need_to_evaluate)
 
-    return all_results, cache, func_counter
+    return all_results, state
 
 
 def _calculate_manfred_direction(current_x, step_size, cache):
@@ -222,11 +225,11 @@ def _get_values_for_pseudo_gradient(current_x, step_size, sign, cache):
     return np.array(values)
 
 
-def _determine_search_strategies(
-    current_x, cache, one_sided_confidence_level, history, momentum_window
-):
+def _determine_search_strategies(current_x, state, info):
+    one_sided_confidence_level = info["one_sided_confidence_level"]
+    momentum_window = info["momentum_window"]
     x_hash = hash_array(current_x)
-    evals = cache[x_hash]["evals"]
+    evals = state["cache"][x_hash]["evals"]
     residuals = np.array([evaluation["residuals"] for evaluation in evals])
     residual_mean = residuals.mean()
     residual_std = residuals.std()
@@ -241,10 +244,11 @@ def _determine_search_strategies(
     else:
         residual_strategies = ["two-sided"] * len(current_x)
 
-    effective_window = min(momentum_window, len(history))
+    effective_window = min(momentum_window, len(state["history"]))
     if effective_window >= 2:
         momentum_history = [
-            cache[x_hash]["x"] for x_hash in history[-effective_window:]
+            state["cache"][x_hash]["x"]
+            for x_hash in state["history"][-effective_window:]
         ]
         diffs = np.diff(momentum_history, axis=0)
         all_zero = (diffs == 0).all(axis=0)
@@ -321,3 +325,7 @@ def hash_array(arr):
     # make the array exactly representable as float
     arr = 1 + arr - 1
     return hashlib.sha1(arr.tobytes()).hexdigest()
+
+
+def _namedtuple_from_dict(dict_, name):
+    return namedtuple(name, dict_)(**dict_)
