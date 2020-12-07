@@ -14,7 +14,7 @@ def minimize_manfred(
     one_sided_confidence_level=0.7,
     momentum_window=3,
     do_line_search=True,
-    line_search_frequency=1,
+    line_search_frequency=3,
     relative_line_search_bounds=(0.1, 4),
     n_points_per_line_search=5,
 ):
@@ -46,7 +46,7 @@ def minimize_manfred(
             evaluations does not depend on the dimensionality. The disadvantage
             is that they make caching more inefficient by leaving the
             grid and that they make it harder to check convergence of the
-            direct search with a given step size.
+            direct search with a given step size. 3 seems to be a sweet spot.
         relative_line_search_bounds (float): lower and upper bound for the line
             search step size, relative to normal step size.
         n_points_per_line_search (int): How many points are tried during a line search.

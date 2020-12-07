@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy.optimize import minimize
 
 from src.manfred.minimize_manfred import minimize_manfred
 
@@ -43,12 +44,14 @@ def plot_history(res, x_names=None):
 
 
 if __name__ == "__main__":
-    start_x = np.array([-0.5, 0.4, 0.8, -0.7, 0.6])
+    start_x = np.array([-0.2, 0.6, 0.8, -0.6, 0.6, -0.4])
     res = minimize_manfred(func=test_func, x=start_x, step_size=0.05, max_fun=1000)
+    scipy_res = minimize(scipy_test_func, start_x, method="Nelder-Mead")
 
     fig = plot_history(res)
 
     fig.savefig(Path(__file__).resolve().parent / "convergence_plot.png")
 
     print("Solution:", res["solution_x"].round(2))  # noqa
-    print("n_evaluations:", res["n_criterion_evaluations"])  # noqa
+    print("manfred_n_evaluations:", res["n_criterion_evaluations"])  # noqa
+    print("nelder-mead_n_evaluations", scipy_res.nfev)  # noqa
