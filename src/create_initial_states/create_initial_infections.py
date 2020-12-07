@@ -45,13 +45,15 @@ def create_initial_infections(
     index_cols = ["date", "county", "age_group_rki"]
     right_index = empirical_data.index == index_cols
     assert right_index, f"Your data must have {index_cols} as index levels."
-    duplicates_in_index = empirical_data.index.duplicated().any()
-    assert not duplicates_in_index, "Your index must not have any duplicates."
     dates = empirical_data.index.get_level_values("date")
     assert start in dates, f"Your start date {start} is not in your empirical data."
     assert end in dates, f"Your end date {end} is not in your empirical data."
+
     empirical_data = empirical_data.loc[pd.Timestamp(start) : pd.Timestamp(end)]  # noqa
+
     assert empirical_data.notnull().all().all(), "No NaN allowed in the empirical data"
+    duplicates_in_index = empirical_data.index.duplicated().any()
+    assert not duplicates_in_index, "Your index must not have any duplicates."
 
     cases = empirical_data.to_frame().unstack("date")
     cases.columns = [str(x.date()) for x in cases.columns.droplevel()]
@@ -87,25 +89,26 @@ def _calculate_infection_probs(
             probabilities for each individual to be infected on the particular day.
 
     """
-    scaling_factor = population_size / len(synthetic_data)
+    upscale_factor = population_size / len(synthetic_data)
 
-    group_sizes = synthetic_data.groupby(["county", "age_group_rki"]).size()
-    scaled_up_group_sizes = scaling_factor * group_sizes
-    group_infection_probs = pd.DataFrame(index=cases.index)
-    group_infection_probs["scaled_up_group_sizes"] = scaled_up_group_sizes
+    synthetic_group_sizes = synthetic_data.groupby(["county", "age_group_rki"]).size()
+    upscaled_group_sizes = upscale_factor * synthetic_group_sizes
+    cases = cases.reindex(upscaled_group_sizes.index).fillna(0)
+
+    group_infection_probs = pd.DataFrame(index=upscaled_group_sizes.index)
 
     for col in cases.columns:
         true_cases = undetected_multiplier * cases[col]
-        prob = true_cases / group_infection_probs["scaled_up_group_sizes"]
+        prob = true_cases / upscaled_group_sizes
         group_infection_probs[col] = prob
 
-    infection_probs = synthetic_data[["county", "age_group_rki"]].copy(deep=True)
-    infection_probs = infection_probs.merge(
-        group_infection_probs, on=["county", "age_group_rki"], validate="m:1"
+    infection_probs = synthetic_data[["county", "age_group_rki"]].merge(
+        group_infection_probs,
+        left_on=["county", "age_group_rki"],
+        right_index=True,
+        validate="m:1",
     )
-    infection_probs = infection_probs.drop(
-        columns=["county", "age_group_rki", "scaled_up_group_sizes"]
-    )
+    infection_probs = infection_probs.drop(columns=["county", "age_group_rki"])
     return infection_probs
 
 

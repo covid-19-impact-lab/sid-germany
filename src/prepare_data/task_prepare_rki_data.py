@@ -83,5 +83,6 @@ def task_prepare_rki_data(depends_on, produces):
     today = datetime.now().date()
     one_week_ago = today - timedelta(weeks=1)
     cropped = summed.loc[:one_week_ago]
+    cropped = cropped.sort_index()
 
     cropped.to_pickle(produces)
