@@ -11,7 +11,7 @@ def minimize_manfred(
     step_size,
     max_fun,
     xtol=None,
-    one_sided_confidence_level=0.7,
+    one_sided_confidence_level=0.5,
     momentum_window=3,
     do_line_search=True,
     line_search_frequency=3,
@@ -225,13 +225,15 @@ def _determine_search_strategies(
     x_hash = hash_array(current_x)
     evals = cache[x_hash]["evals"]
     residuals = np.array([evaluation["residuals"] for evaluation in evals])
-    residual_sum = residuals.sum()
+    residual_mean = residuals.mean()
     residual_std = residuals.std()
-    critical_value = stats.norm.ppf(one_sided_confidence_level) * residual_std
 
-    if residual_sum > critical_value:
+    test_statistic = np.sqrt(len(residuals)) * residual_mean / residual_std
+    critical_value = stats.norm.ppf(one_sided_confidence_level)
+
+    if test_statistic > critical_value:
         residual_strategies = ["left"] * len(current_x)
-    elif residual_sum < -critical_value:
+    elif test_statistic < -critical_value:
         residual_strategies = ["right"] * len(current_x)
     else:
         residual_strategies = ["two-sided"] * len(current_x)
