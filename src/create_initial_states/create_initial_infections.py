@@ -43,7 +43,7 @@ def create_initial_infections(
 
     assert undetected_multiplier >= 1, "undetected_multiplier must be >= 1."
     index_cols = ["date", "county", "age_group_rki"]
-    right_index = empirical_data.index == index_cols
+    right_index = empirical_data.index.names == index_cols
     assert right_index, f"Your data must have {index_cols} as index levels."
     dates = empirical_data.index.get_level_values("date")
     assert start in dates, f"Your start date {start} is not in your empirical data."

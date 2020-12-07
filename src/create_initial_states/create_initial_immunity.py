@@ -2,15 +2,17 @@ import numpy as np
 import pandas as pd
 from sid.shared import boolean_choices
 
+from src.config import POPULATION_GERMANY
+
 
 def create_initial_immunity(
     empirical_data,
     synthetic_data,
     initial_infections,
     undetected_multiplier,
-    population_size,
     date,
     seed,
+    population_size=POPULATION_GERMANY,
 ):
     """Create a Series with initial immunity.
 
