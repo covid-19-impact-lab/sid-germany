@@ -43,8 +43,8 @@ def plot_history(res, x_names=None):
 
 
 if __name__ == "__main__":
-    start_x = np.array([-1, 1, 2])
-    res = minimize_manfred(func=test_func, x=start_x, step_size=0.1, max_fun=1000)
+    start_x = np.array([-0.5, 0.4, 0.8, -0.7, 0.6])
+    res = minimize_manfred(func=test_func, x=start_x, step_size=0.05, max_fun=1000)
 
     fig = plot_history(res)
 

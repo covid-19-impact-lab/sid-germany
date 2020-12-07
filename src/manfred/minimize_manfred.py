@@ -10,11 +10,11 @@ def minimize_manfred(
     x,
     step_size,
     max_fun,
-    xtol=1e-5,
+    xtol=None,
     one_sided_confidence_level=0.7,
     momentum_window=3,
     do_line_search=True,
-    line_search_frequency=3,
+    line_search_frequency=1,
     relative_line_search_bounds=(0.1, 4),
     n_points_per_line_search=5,
 ):
@@ -52,6 +52,8 @@ def minimize_manfred(
         n_points_per_line_search (int): How many points are tried during a line search.
 
     """
+    if xtol is None:
+        xtol = 0.1 * step_size
     func_counter = 0
     current_x = x
     last_x = x + 1
@@ -60,7 +62,7 @@ def minimize_manfred(
     cache = {x_hash: {"x": current_x, "evals": [func(current_x)]}}
     n_iter = 0
 
-    while func_counter <= max_fun and np.abs(last_x - current_x).sum() > xtol:
+    while func_counter <= max_fun and np.abs(last_x - current_x).max() > xtol:
         last_x = current_x
         (
             current_x,
