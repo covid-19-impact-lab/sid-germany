@@ -13,7 +13,7 @@ def minimize_manfred(
     xtol=None,
     one_sided_confidence_level=0.5,
     momentum_window=3,
-    do_line_search=True,
+    use_line_search=True,
     line_search_frequency=3,
     relative_line_search_bounds=(0.1, 4),
     n_points_per_line_search=5,
@@ -37,9 +37,9 @@ def minimize_manfred(
         momentum_window (int): How many accepted parameters are used to
             determine if a parameter has momentum and we can thus switch
             to one-sided search for that parameter.
-        do_line_search (bool): Whether a linesearch is done after each direct
+        use_line_search (bool): Whether a linesearch is done after each direct
             search step.
-        line_search_frequency (int): If do_line_search is true this number
+        line_search_frequency (int): If use_line_search is true this number
             specifies every how many iterations we do a line search step after
             the direct search step.Line search steps can lead to fast progress
             and/or refined solutions and the number of required function
@@ -57,103 +57,91 @@ def minimize_manfred(
     func_counter = 0
     current_x = x
     last_x = x + 1
-    accepted_history = []
+    history = []
     x_hash = hash_array(current_x)
     cache = {x_hash: {"x": current_x, "evals": [func(current_x)]}}
     n_iter = 0
 
     while func_counter <= max_fun and np.abs(last_x - current_x).max() > xtol:
         last_x = current_x
-        (
-            current_x,
-            cache,
-            accepted_history,
-            func_counter,
-        ) = _do_manfred_direct_search_step(
+        current_x, cache, history, func_counter = do_manfred_direct_search(
             func=func,
             current_x=current_x,
             step_size=step_size,
             cache=cache,
-            accepted_history=accepted_history,
+            history=history,
             func_counter=func_counter,
             one_sided_confidence_level=one_sided_confidence_level,
             momentum_window=momentum_window,
         )
 
-        if do_line_search and (n_iter % line_search_frequency) == 0:
-            (
-                current_x,
-                cache,
-                accepted_history,
-                func_counter,
-            ) = _do_manfred_line_search_step(
+        if use_line_search and (n_iter % line_search_frequency) == 0:
+            current_x, cache, history, func_counter = do_manfred_line_search(
                 func=func,
                 current_x=current_x,
                 step_size=step_size,
                 cache=cache,
                 relative_line_search_bounds=relative_line_search_bounds,
                 n_points_per_line_search=n_points_per_line_search,
-                accepted_history=accepted_history,
+                history=history,
                 func_counter=func_counter,
             )
         n_iter += 1
 
-    history = {"criterion": [], "x": []}
-    for x_hash in accepted_history:
+    out_history = {"criterion": [], "x": []}
+    for x_hash in history:
         cache_entry = cache[x_hash]
-        history["criterion"].append(_aggregate_evaluations(cache_entry["evals"]))
-        history["x"].append(cache_entry["x"])
+        out_history["criterion"].append(_aggregate_evaluations(cache_entry["evals"]))
+        out_history["x"].append(cache_entry["x"])
 
     res = {
         "solution_x": current_x,
         "n_criterion_evaluations": func_counter,
         "n_iterations": n_iter,
-        "history": history,
+        "history": out_history,
     }
 
     return res
 
 
-def _do_manfred_direct_search_step(
+def do_manfred_direct_search(
     func,
     current_x,
     step_size,
     cache,
-    accepted_history,
+    history,
     func_counter,
     one_sided_confidence_level,
     momentum_window,
 ):
     search_strategies = _determine_search_strategies(
-        current_x, cache, one_sided_confidence_level, accepted_history, momentum_window
+        current_x, cache, one_sided_confidence_level, history, momentum_window
     )
-    x_sample = _get_next_x_sample(current_x, step_size, search_strategies)
-    x_sample_hashes = [hash_array(x) for x in x_sample]
-    need_to_evaluate = [
-        x for x, x_hash in zip(x_sample, x_sample_hashes) if x_hash not in cache
-    ]
-    new_evaluations = [func(x) for x in need_to_evaluate]
-    for x, evaluation in zip(need_to_evaluate, new_evaluations):
-        cache = _add_to_cache(x, evaluation, cache)
+    x_sample = _get_direct_search_sample(current_x, step_size, search_strategies)
 
-    all_values = [
-        _aggregate_evaluations(cache[x_hash]["evals"]) for x_hash in x_sample_hashes
-    ]
-    argmin = np.argmin(all_values)
+    evaluations, cache, func_counter = _do_evaluations(
+        func=func,
+        x_sample=x_sample,
+        cache=cache,
+        func_counter=func_counter,
+        return_type="aggregated",
+    )
+
+    argmin = np.argmin(evaluations)
     next_x = x_sample[argmin]
-    func_counter = func_counter + len(need_to_evaluate)
-    accepted_history = accepted_history + [hash_array(next_x)]
-    return next_x, cache, accepted_history, func_counter
+    history = history + [hash_array(next_x)]
+
+    return next_x, cache, history, func_counter
 
 
-def _do_manfred_line_search_step(
+def do_manfred_line_search(
     func,
     current_x,
     step_size,
     cache,
     relative_line_search_bounds,
     n_points_per_line_search,
-    accepted_history,
+    history,
     func_counter,
 ):
     direction = _calculate_manfred_direction(current_x, step_size, cache)
@@ -163,6 +151,22 @@ def _do_manfred_line_search_step(
 
     x_sample = [current_x] + [current_x + step * direction for step in step_grid]
 
+    evaluations, cache, func_counter = _do_evaluations(
+        func=func,
+        x_sample=x_sample,
+        cache=cache,
+        func_counter=func_counter,
+        return_type="aggregated",
+    )
+
+    argmin = np.argmin(evaluations)
+    next_x = x_sample[argmin]
+    history = history + [hash_array(next_x)]
+
+    return next_x, cache, history, func_counter
+
+
+def _do_evaluations(func, x_sample, cache, func_counter, return_type="aggregated"):
     x_sample_hashes = [hash_array(x) for x in x_sample]
     need_to_evaluate = [
         x for x, x_hash in zip(x_sample, x_sample_hashes) if x_hash not in cache
@@ -171,15 +175,14 @@ def _do_manfred_line_search_step(
     for x, evaluation in zip(need_to_evaluate, new_evaluations):
         cache = _add_to_cache(x, evaluation, cache)
 
-    all_values = [
-        _aggregate_evaluations(cache[x_hash]["evals"]) for x_hash in x_sample_hashes
-    ]
-    argmin = np.argmin(all_values)
-    next_x = x_sample[argmin]
-    func_counter = func_counter + len(need_to_evaluate)
-    accepted_history = accepted_history + [hash_array(next_x)]
+    all_results = [cache[x_hash]["evals"] for x_hash in x_sample_hashes]
 
-    return next_x, cache, accepted_history, func_counter
+    if return_type == "aggregated":
+        all_results = [_aggregate_evaluations(res) for res in all_results]
+
+    func_counter += len(need_to_evaluate)
+
+    return all_results, cache, func_counter
 
 
 def _calculate_manfred_direction(current_x, step_size, cache):
@@ -220,7 +223,7 @@ def _get_values_for_pseudo_gradient(current_x, step_size, sign, cache):
 
 
 def _determine_search_strategies(
-    current_x, cache, one_sided_confidence_level, accepted_history, momentum_window
+    current_x, cache, one_sided_confidence_level, history, momentum_window
 ):
     x_hash = hash_array(current_x)
     evals = cache[x_hash]["evals"]
@@ -238,10 +241,10 @@ def _determine_search_strategies(
     else:
         residual_strategies = ["two-sided"] * len(current_x)
 
-    effective_window = min(momentum_window, len(accepted_history))
+    effective_window = min(momentum_window, len(history))
     if effective_window >= 2:
         momentum_history = [
-            cache[x_hash]["x"] for x_hash in accepted_history[-effective_window:]
+            cache[x_hash]["x"] for x_hash in history[-effective_window:]
         ]
         diffs = np.diff(momentum_history, axis=0)
         all_zero = (diffs == 0).all(axis=0)
@@ -260,7 +263,7 @@ def _determine_search_strategies(
     return strategies
 
 
-def _get_next_x_sample(current_x, step_size, search_strategies):
+def _get_direct_search_sample(current_x, step_size, search_strategies):
 
     strategies = {
         "two-sided": lambda x, step: [x - step, x, x + step],
