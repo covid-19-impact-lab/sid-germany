@@ -72,6 +72,7 @@ def task_create_background_characteristics(depends_on, produces):
         seed=1109,
     )
     _check_group_ids(df, **group_id_specs)
+    df.index.name = "index"
     df.to_pickle(produces)
 
 
