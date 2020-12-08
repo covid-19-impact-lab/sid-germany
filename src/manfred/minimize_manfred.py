@@ -104,6 +104,7 @@ def minimize_manfred(
                 not _x_has_changed(state, convergence_criteria)
                 and convergence_direct_search_mode in ("thorough", "very-thorough")
                 and _is_below_max_fun(state, convergence_criteria)
+                and default_direct_search_mode == "fast"
             )
 
             if needs_thorough_search:
@@ -121,6 +122,7 @@ def minimize_manfred(
                 not _x_has_changed(state, convergence_criteria)
                 and convergence_direct_search_mode == "very-thorough"
                 and _is_below_max_fun(state, convergence_criteria)
+                and default_direct_search_mode in ("fast", "thorough")
             )
             if needs_very_thorough_search:
                 current_x, state = do_manfred_direct_search(
