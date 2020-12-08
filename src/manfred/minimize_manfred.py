@@ -63,9 +63,7 @@ def minimize_manfred(
     step_sizes, max_step_sizes = _process_step_sizes(step_sizes, max_step_sizes)
 
     line_search_info = {
-        "active": use_line_search,
         "n_points": n_points_per_line_search,
-        "frequency": line_search_frequency,
     }
 
     direct_search_info = {
@@ -86,7 +84,7 @@ def minimize_manfred(
     current_x = x
     for step_size, max_step_size in zip(step_sizes, max_step_sizes):
         state["inner_iter_counter"] = 0
-        while not _is_converged(state, convergence_criteria):
+        while not _has_converged(state, convergence_criteria):
             current_x, state = do_manfred_direct_search(
                 func=func,
                 current_x=current_x,
@@ -96,15 +94,16 @@ def minimize_manfred(
                 bounds=bounds,
             )
 
-            current_x, state = do_manfred_line_search(
-                func=func,
-                current_x=current_x,
-                step_size=step_size,
-                state=state,
-                info=line_search_info,
-                bounds=bounds,
-                max_step_size=max_step_size,
-            )
+            if use_line_search and (state["iter_counter"] % line_search_frequency) == 0:
+                current_x, state = do_manfred_line_search(
+                    func=func,
+                    current_x=current_x,
+                    step_size=step_size,
+                    state=state,
+                    info=line_search_info,
+                    bounds=bounds,
+                    max_step_size=max_step_size,
+                )
             state["iter_counter"] = state["iter_counter"] + 1
             state["inner_iter_counter"] = state["inner_iter_counter"] + 1
 
@@ -159,22 +158,17 @@ def _process_step_sizes(step_sizes, max_step_sizes):
     return step_sizes, max_step_sizes
 
 
-def _is_converged(state, convergence_criteria):
-    cache = state["cache"]
-    history = state["history"]
+def _has_converged(state, convergence_criteria):
     if state["inner_iter_counter"] > 0:
-        current_x = cache[history[-1]]["x"]
-        last_x = cache[history[-2]]["x"]
-        max_diff = np.abs(last_x - current_x).max()
-        xtol = convergence_criteria["xtol"]
-
-        func_counter = state["func_counter"]
-        max_fun = convergence_criteria["max_fun"]
-
-        converged = func_counter >= max_fun or max_diff <= xtol
+        current_x = state["cache"][state["history"][-1]]["x"]
+        last_x = state["cache"][state["history"][-2]]["x"]
+        has_changed = np.abs(last_x - current_x).max() > convergence_criteria["xtol"]
     else:
-        converged = False
+        has_changed = True
 
+    below_max_fun = state["func_counter"] < convergence_criteria["max_fun"]
+
+    converged = (not has_changed) or (not below_max_fun)
     return converged
 
 
@@ -196,24 +190,21 @@ def do_manfred_direct_search(func, current_x, step_size, state, info, bounds):
 def do_manfred_line_search(
     func, current_x, step_size, state, info, bounds, max_step_size
 ):
-    if info["active"] and (state["iter_counter"] % info["frequency"]) == 0:
-        direction = _calculate_manfred_direction(current_x, step_size, state["cache"])
-        x_sample = _get_line_search_sample(
-            current_x, direction, info, bounds, max_step_size
-        )
+    direction = _calculate_manfred_direction(current_x, step_size, state["cache"])
+    x_sample = _get_line_search_sample(
+        current_x, direction, info, bounds, max_step_size
+    )
 
-        evaluations, state = _do_evaluations(
-            func=func,
-            x_sample=x_sample,
-            state=state,
-            return_type="aggregated",
-        )
+    evaluations, state = _do_evaluations(
+        func=func,
+        x_sample=x_sample,
+        state=state,
+        return_type="aggregated",
+    )
 
-        argmin = np.argmin(evaluations)
-        next_x = x_sample[argmin]
-        state["history"].append(hash_array(next_x))
-    else:
-        next_x = current_x
+    argmin = np.argmin(evaluations)
+    next_x = x_sample[argmin]
+    state["history"].append(hash_array(next_x))
 
     return next_x, state
 
