@@ -3,7 +3,6 @@ import itertools
 from collections import namedtuple
 
 import numpy as np
-from scipy import stats
 
 
 def minimize_manfred(
@@ -12,14 +11,15 @@ def minimize_manfred(
     step_sizes,
     max_fun,
     xtol=0.01,
-    one_sided_confidence_level=0.5,
-    momentum_window=3,
+    direction_window=3,
     use_line_search=True,
     line_search_frequency=3,
     n_points_per_line_search=5,
     lower_bounds=None,
     upper_bounds=None,
     max_step_sizes=None,
+    default_direct_search_mode="fast",
+    convergence_direct_search_mode="thorough",
 ):
     """Minimize func using the MANFRED algorithm.
 
@@ -32,12 +32,7 @@ def minimize_manfred(
         max_fun (int): Maximum number of function evaluations.
         xtol (float): Maximal sum of absolute differences for two
             parameter vectors to be considered equal
-        one_sided_confidence_level (float): Confidence level for a one sided
-            approximate hypothesis test that the residual sum is positive
-            or negative. This only holds asympotically, i.e. for a large
-            number of residuals. If the sign of the residual sum is clearly
-            determined, we switch to one sided search for one iteration.
-        momentum_window (int): How many accepted parameters are used to
+        direction_window (int): How many accepted parameters are used to
             determine if a parameter has momentum and we can thus switch
             to one-sided search for that parameter.
         use_line_search (bool): Whether a linesearch is done after each direct
@@ -67,8 +62,7 @@ def minimize_manfred(
     }
 
     direct_search_info = {
-        "one_sided_confidence_level": one_sided_confidence_level,
-        "momentum_window": momentum_window,
+        "direction_window": direction_window,
     }
 
     state = {
@@ -92,6 +86,7 @@ def minimize_manfred(
                 state=state,
                 info=direct_search_info,
                 bounds=bounds,
+                mode=default_direct_search_mode,
             )
 
             if use_line_search and (state["iter_counter"] % line_search_frequency) == 0:
@@ -104,6 +99,40 @@ def minimize_manfred(
                     bounds=bounds,
                     max_step_size=max_step_size,
                 )
+
+            needs_thorough_search = (
+                not _x_has_changed(state, convergence_criteria)
+                and convergence_direct_search_mode in ("thorough", "very-thorough")
+                and _is_below_max_fun(state, convergence_criteria)
+            )
+
+            if needs_thorough_search:
+                current_x, state = do_manfred_direct_search(
+                    func=func,
+                    current_x=current_x,
+                    step_size=step_size,
+                    state=state,
+                    info=direct_search_info,
+                    bounds=bounds,
+                    mode="thorough",
+                )
+
+            needs_very_thorough_search = (
+                not _x_has_changed(state, convergence_criteria)
+                and convergence_direct_search_mode == "very-thorough"
+                and _is_below_max_fun(state, convergence_criteria)
+            )
+            if needs_very_thorough_search:
+                current_x, state = do_manfred_direct_search(
+                    func=func,
+                    current_x=current_x,
+                    step_size=step_size,
+                    state=state,
+                    info=direct_search_info,
+                    bounds=bounds,
+                    mode="very-thorough",
+                )
+
             state["iter_counter"] = state["iter_counter"] + 1
             state["inner_iter_counter"] = state["inner_iter_counter"] + 1
 
@@ -159,21 +188,28 @@ def _process_step_sizes(step_sizes, max_step_sizes):
 
 
 def _has_converged(state, convergence_criteria):
+    has_changed = _x_has_changed(state, convergence_criteria)
+    below_max_fun = _is_below_max_fun(state, convergence_criteria)
+    converged = (not has_changed) or (not below_max_fun)
+    return converged
+
+
+def _x_has_changed(state, convergence_criteria):
     if state["inner_iter_counter"] > 0:
         current_x = state["cache"][state["history"][-1]]["x"]
         last_x = state["cache"][state["history"][-2]]["x"]
         has_changed = np.abs(last_x - current_x).max() > convergence_criteria["xtol"]
     else:
         has_changed = True
-
-    below_max_fun = state["func_counter"] < convergence_criteria["max_fun"]
-
-    converged = (not has_changed) or (not below_max_fun)
-    return converged
+    return has_changed
 
 
-def do_manfred_direct_search(func, current_x, step_size, state, info, bounds):
-    search_strategies = _determine_search_strategies(current_x, state, info)
+def _is_below_max_fun(state, convergence_criteria):
+    return state["func_counter"] < convergence_criteria["max_fun"]
+
+
+def do_manfred_direct_search(func, current_x, step_size, state, info, bounds, mode):
+    search_strategies = _determine_search_strategies(current_x, state, info, mode)
     x_sample = _get_direct_search_sample(
         current_x, step_size, search_strategies, bounds
     )
@@ -277,45 +313,47 @@ def _get_values_for_pseudo_gradient(current_x, step_size, sign, cache):
     return np.array(values)
 
 
-def _determine_search_strategies(current_x, state, info):
-    one_sided_confidence_level = info["one_sided_confidence_level"]
-    momentum_window = info["momentum_window"]
+def _determine_search_strategies(current_x, state, info, mode):
+    resid_strats = _determine_fast_residual_strategies(current_x, state)
+    hist_strats = _determine_fast_history_strategies(current_x, state, info)
+    strats = [_combine_strategies(s1, s2) for s1, s2 in zip(resid_strats, hist_strats)]
+
+    if mode == "thorough":
+        strats = [s if s != "fixed" else "two-sided" for s in strats]
+    elif mode == "very-thorough":
+        strats = ["two-sided"] * len(strats)
+
+    return strats
+
+
+def _determine_fast_residual_strategies(current_x, state):
     x_hash = hash_array(current_x)
     evals = state["cache"][x_hash]["evals"]
-    residuals = np.array([evaluation["residuals"] for evaluation in evals])
-    residual_mean = residuals.mean()
-    residual_std = residuals.std()
+    residual_sum = np.sum([evaluation["residuals"] for evaluation in evals])
 
-    test_statistic = np.sqrt(len(residuals)) * residual_mean / residual_std
-    critical_value = stats.norm.ppf(one_sided_confidence_level)
-
-    if test_statistic > critical_value:
-        residual_strategies = ["left"] * len(current_x)
-    elif test_statistic < -critical_value:
-        residual_strategies = ["right"] * len(current_x)
+    if residual_sum > 0:
+        strategies = ["left"] * len(current_x)
     else:
-        residual_strategies = ["two-sided"] * len(current_x)
+        strategies = ["right"] * len(current_x)
 
-    effective_window = min(momentum_window, len(state["history"]))
+    return strategies
+
+
+def _determine_fast_history_strategies(current_x, state, info):
+    effective_window = min(info["direction_window"], len(state["history"]))
     if effective_window >= 2:
-        momentum_history = [
+        relevant_history = [
             state["cache"][x_hash]["x"]
             for x_hash in state["history"][-effective_window:]
         ]
-        diffs = np.diff(momentum_history, axis=0)
+        diffs = np.diff(relevant_history, axis=0)
         all_zero = (diffs == 0).all(axis=0)
         left = (diffs <= 0).all(axis=0) & ~all_zero
         right = (diffs >= 0).all(axis=0) & ~all_zero
 
-        momentum_strategies = _bools_to_strategy(left, right)
+        strategies = _bools_to_strategy(left, right)
     else:
-        momentum_strategies = ["two-sided"] * len(current_x)
-
-    strategies = [
-        _combine_strategies(s1, s2)
-        for s1, s2 in zip(residual_strategies, momentum_strategies)
-    ]
-
+        strategies = ["two-sided"] * len(current_x)
     return strategies
 
 
