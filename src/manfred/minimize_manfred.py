@@ -18,6 +18,9 @@ def minimize_manfred(
     line_search_frequency=3,
     relative_line_search_bounds=(0.1, 4),
     n_points_per_line_search=5,
+    lower_bounds=None,
+    upper_bounds=None,
+    max_step_sizes=None,
 ):
     """Minimize func using the MANFRED algorithm.
 
@@ -53,6 +56,9 @@ def minimize_manfred(
         n_points_per_line_search (int): How many points are tried during a line search.
 
     """
+    bounds = _process_bounds(x, lower_bounds, upper_bounds)
+    step_sizes, max_step_sizes = _process_step_sizes(step_sizes, max_step_sizes)
+
     line_search_info = {
         "active": use_line_search,
         "relative_bounds": relative_line_search_bounds,
@@ -75,10 +81,8 @@ def minimize_manfred(
 
     convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
 
-    step_sizes = _process_step_sizes(step_sizes)
-
     current_x = x
-    for step_size in step_sizes:
+    for step_size, max_step_size in zip(step_sizes, max_step_sizes):
         state["inner_iter_counter"] = 0
         while not _is_converged(state, convergence_criteria):
             current_x, state = do_manfred_direct_search(
@@ -87,6 +91,7 @@ def minimize_manfred(
                 step_size=step_size,
                 state=state,
                 info=direct_search_info,
+                bounds=bounds,
             )
 
             current_x, state = do_manfred_line_search(
@@ -95,6 +100,8 @@ def minimize_manfred(
                 step_size=step_size,
                 state=state,
                 info=line_search_info,
+                bounds=bounds,
+                max_step_size=max_step_size,
             )
             state["iter_counter"] = state["iter_counter"] + 1
             state["inner_iter_counter"] = state["inner_iter_counter"] + 1
@@ -115,14 +122,39 @@ def minimize_manfred(
     return res
 
 
-def _process_step_sizes(step_sizes):
+def _process_bounds(x, lower_bounds, upper_bounds):
+    if lower_bounds is None:
+        lower_bounds = np.full(len(x), -np.inf)
+    if upper_bounds is None:
+        upper_bounds = np.full(len(x), np.inf)
+    bounds = {"lower": lower_bounds, "upper": upper_bounds}
+
+    if not _is_in_bounds(x, bounds):
+        raise ValueError("x must be inside the bounds.")
+
+    return bounds
+
+
+def _process_step_sizes(step_sizes, max_step_sizes):
     if isinstance(step_sizes, (list, tuple, np.ndarray)):
         step_sizes = list(step_sizes)
     elif isinstance(step_sizes, (float, int)):
         step_sizes = [float(step_sizes)]
     else:
         raise ValueError("step_sizes must be int, float or list thereof.")
-    return step_sizes
+
+    if max_step_sizes is None:
+        max_step_sizes = [size * 5 for size in step_sizes]
+    elif isinstance(max_step_sizes, (list, tuple, np.ndarray)):
+        max_step_sizes = list(max_step_sizes)
+        assert len(max_step_sizes) == len(step_sizes)
+    elif isinstance(max_step_sizes, (int, float)):
+        max_step_sizes = [max_step_sizes] * len(step_sizes)
+
+    for ss, mss in zip(step_sizes, max_step_sizes):
+        assert ss <= mss
+
+    return step_sizes, max_step_sizes
 
 
 def _is_converged(state, convergence_criteria):
@@ -144,9 +176,11 @@ def _is_converged(state, convergence_criteria):
     return converged
 
 
-def do_manfred_direct_search(func, current_x, step_size, state, info):
+def do_manfred_direct_search(func, current_x, step_size, state, info, bounds):
     search_strategies = _determine_search_strategies(current_x, state, info)
-    x_sample = _get_direct_search_sample(current_x, step_size, search_strategies)
+    x_sample = _get_direct_search_sample(
+        current_x, step_size, search_strategies, bounds
+    )
 
     evaluations, state = _do_evaluations(func, x_sample, state, "aggregated")
 
@@ -157,7 +191,9 @@ def do_manfred_direct_search(func, current_x, step_size, state, info):
     return next_x, state
 
 
-def do_manfred_line_search(func, current_x, step_size, state, info):
+def do_manfred_line_search(
+    func, current_x, step_size, state, info, bounds, max_step_size  # noqa
+):
     if info["active"] and (state["iter_counter"] % info["frequency"]) == 0:
         direction = _calculate_manfred_direction(current_x, step_size, state["cache"])
         lower, upper = np.array(info["relative_bounds"]) * step_size
@@ -280,7 +316,7 @@ def _determine_search_strategies(current_x, state, info):
     return strategies
 
 
-def _get_direct_search_sample(current_x, step_size, search_strategies):
+def _get_direct_search_sample(current_x, step_size, search_strategies, bounds):
 
     strategies = {
         "two-sided": lambda x, step: [x - step, x, x + step],
@@ -294,7 +330,9 @@ def _get_direct_search_sample(current_x, step_size, search_strategies):
         points = strategies[strategy](val, step_size)
         points_per_param.append(points)
 
-    return list(map(np.array, itertools.product(*points_per_param)))
+    raw_sample = map(np.array, itertools.product(*points_per_param))
+    sample = [x for x in raw_sample if _is_in_bounds(x, bounds)]
+    return sample
 
 
 def _aggregate_evaluations(evaluations):
@@ -342,3 +380,24 @@ def hash_array(arr):
 
 def _namedtuple_from_dict(dict_, name):
     return namedtuple(name, dict_)(**dict_)
+
+
+def _is_in_bounds(x, bounds):
+    return (x >= bounds["lower"]).all() and (x <= bounds["upper"]).all()
+
+
+def _find_maximal_line_search_step(x, direction, bounds):
+    max_steps = []
+    for xi, di, lb, ub in zip(x, direction, bounds["lower"], bounds["upper"]):
+        max_steps.append(_find_one_max_step(xi, di, lb, ub))
+    return min(max_steps)
+
+
+def _find_one_max_step(xi, di, lb, ub):
+    if di == 0:
+        max_step = np.inf
+    elif di > 0:
+        max_step = (ub - xi) / di
+    else:
+        max_step = (lb - xi) / di
+    return max_step
