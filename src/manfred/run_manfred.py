@@ -44,9 +44,18 @@ def plot_history(res, x_names=None):
 
 
 if __name__ == "__main__":
+
+    print("Unconstrained Test")  # noqa
     start_x = np.array([-0.2, 0.6, 0.8, -0.6, 0.6, -0.4])
     res = minimize_manfred(
-        func=test_func, x=start_x, step_sizes=[0.05, 0.01], max_fun=1000
+        func=test_func,
+        x=start_x,
+        step_sizes=[0.05, 0.01],
+        max_fun=1000,
+        lower_bounds=-np.ones(len(start_x)),
+        upper_bounds=np.ones(len(start_x)),
+        max_step_sizes=[1, 0.2],
+        n_points_per_line_search=10,
     )
     scipy_res = minimize(scipy_test_func, start_x, method="Nelder-Mead")
 
@@ -57,3 +66,24 @@ if __name__ == "__main__":
     print("Solution:", res["solution_x"].round(3))  # noqa
     print("manfred_n_evaluations:", res["n_criterion_evaluations"])  # noqa
     print("nelder-mead_n_evaluations", scipy_res.nfev)  # noqa
+    print("\n")  # noqa
+
+    print("Constrained Test")  # noqa
+
+    start_x = np.array([0.7, 0.8] * 3)
+    res = minimize_manfred(
+        func=test_func,
+        x=start_x,
+        step_sizes=[0.05, 0.01],
+        max_fun=1000,
+        lower_bounds=np.full(len(start_x), 0.2),
+        upper_bounds=np.ones(len(start_x)),
+        max_step_sizes=[1, 0.2],
+        n_points_per_line_search=10,
+    )
+
+    fig = plot_history(res)
+    fig.savefig(Path(__file__).resolve().parent / "constrained_convergence_plot.png")
+
+    print("Solution:", res["solution_x"].round(3))  # noqa
+    print("manfred_n_evaluations:", res["n_criterion_evaluations"])  # noqa

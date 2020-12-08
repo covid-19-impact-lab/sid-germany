@@ -16,7 +16,6 @@ def minimize_manfred(
     momentum_window=3,
     use_line_search=True,
     line_search_frequency=3,
-    relative_line_search_bounds=(0.1, 4),
     n_points_per_line_search=5,
     lower_bounds=None,
     upper_bounds=None,
@@ -51,9 +50,13 @@ def minimize_manfred(
             is that they make caching more inefficient by leaving the
             grid and that they make it harder to check convergence of the
             direct search with a given step size. 3 seems to be a sweet spot.
-        relative_line_search_bounds (float): lower and upper bound for the line
-            search step size, relative to normal step size.
         n_points_per_line_search (int): How many points are tried during a line search.
+        max_step_sizes (float or list): Maximum step size that can be taken in any
+            direction during the line search step. Needs to be a float or a list of
+            the same length as step_sizes. A large max_step_size can lead to a fast
+            convergence if the approximate gradient approximation is good. This is
+            especially helpful at the beginning. Later, a small max_step limits the
+            search space for the line search and can thus increase precision.
 
     """
     bounds = _process_bounds(x, lower_bounds, upper_bounds)
@@ -61,7 +64,6 @@ def minimize_manfred(
 
     line_search_info = {
         "active": use_line_search,
-        "relative_bounds": relative_line_search_bounds,
         "n_points": n_points_per_line_search,
         "frequency": line_search_frequency,
     }
@@ -192,15 +194,13 @@ def do_manfred_direct_search(func, current_x, step_size, state, info, bounds):
 
 
 def do_manfred_line_search(
-    func, current_x, step_size, state, info, bounds, max_step_size  # noqa
+    func, current_x, step_size, state, info, bounds, max_step_size
 ):
     if info["active"] and (state["iter_counter"] % info["frequency"]) == 0:
         direction = _calculate_manfred_direction(current_x, step_size, state["cache"])
-        lower, upper = np.array(info["relative_bounds"]) * step_size
-
-        step_grid = np.linspace(lower, upper, info["n_points"])
-
-        x_sample = [current_x] + [current_x + step * direction for step in step_grid]
+        x_sample = _get_line_search_sample(
+            current_x, direction, info, bounds, max_step_size
+        )
 
         evaluations, state = _do_evaluations(
             func=func,
@@ -218,14 +218,26 @@ def do_manfred_line_search(
     return next_x, state
 
 
+def _get_line_search_sample(current_x, direction, info, bounds, max_step_size):
+    upper_line_search_bound = _find_maximal_line_search_step(
+        current_x, direction, bounds, max_step_size
+    )
+    grid = np.linspace(0, upper_line_search_bound, info["n_points"] + 1)
+    x_sample = [current_x + step * direction for step in grid]
+    # make absolutely sure the hash of the already evaluated point does not change
+    x_sample[0] = current_x
+    return x_sample
+
+
 def _do_evaluations(func, x_sample, state, return_type="aggregated"):
+    cache = state["cache"]
     x_hashes = [hash_array(x) for x in x_sample]
     need_to_evaluate = [
-        x for x, x_hash in zip(x_sample, x_hashes) if x_hash not in state["cache"]
+        x for x, x_hash in zip(x_sample, x_hashes) if x_hash not in cache
     ]
     new_evaluations = [func(x) for x in need_to_evaluate]
     for x, evaluation in zip(need_to_evaluate, new_evaluations):
-        cache = _add_to_cache(x, evaluation, state["cache"])
+        cache = _add_to_cache(x, evaluation, cache)
 
     all_results = [cache[x_hash]["evals"] for x_hash in x_hashes]
 
@@ -386,9 +398,13 @@ def _is_in_bounds(x, bounds):
     return (x >= bounds["lower"]).all() and (x <= bounds["upper"]).all()
 
 
-def _find_maximal_line_search_step(x, direction, bounds):
+def _find_maximal_line_search_step(x, direction, bounds, max_step_size):
+
+    upper_bounds = np.minimum(x + max_step_size, bounds["upper"])
+    lower_bounds = np.maximum(x - max_step_size, bounds["lower"])
+
     max_steps = []
-    for xi, di, lb, ub in zip(x, direction, bounds["lower"], bounds["upper"]):
+    for xi, di, lb, ub in zip(x, direction, lower_bounds, upper_bounds):
         max_steps.append(_find_one_max_step(xi, di, lb, ub))
     return min(max_steps)
 
