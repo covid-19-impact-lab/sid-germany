@@ -20,6 +20,8 @@ def minimize_manfred(
     max_step_sizes=None,
     default_direct_search_mode="fast",
     convergence_direct_search_mode="thorough",
+    n_evaluations_per_x=1,
+    seed=0,
 ):
     """Minimize func using the MANFRED algorithm.
 
@@ -52,6 +54,19 @@ def minimize_manfred(
             convergence if the approximate gradient approximation is good. This is
             especially helpful at the beginning. Later, a small max_step limits the
             search space for the line search and can thus increase precision.
+        default_direct_search_mode (str): One of "fast", "thorough" and "very-thorough".
+            "fast" means that we search at most in one direction and some parameters
+            are fixed during an iteration. "thorough" means that we search at lesat in
+            one direction per parameter and in two directions for other parameters.
+            "very-thorough" means that we search in both directions for all parameters.
+            This is very expensive even for a small number of parameters.
+        convergence_direct_search_mode (str): Takes the same values as
+            default_direct_search_mode. This search is done when the default direct
+            search model did not yield any progress.
+        n_evaluations_per_x (int): Number of function evaluations per parameter vector.
+            For noisy functions this should be set higher than one.
+        seed (int): Seed for the random number generator. This is used to start a
+            seed sequence. Then each function is evaluated with a different seed.
 
     """
     bounds = _process_bounds(x, lower_bounds, upper_bounds)
@@ -71,6 +86,7 @@ def minimize_manfred(
         "inner_iter_counter": 0,
         "cache": {hash_array(x): {"x": x, "evals": [func(x)]}},
         "history": [],
+        "seed": itertools.count(seed),
     }
 
     convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
@@ -87,6 +103,7 @@ def minimize_manfred(
                 info=direct_search_info,
                 bounds=bounds,
                 mode=default_direct_search_mode,
+                n_evaluations_per_x=n_evaluations_per_x,
             )
 
             if use_line_search and (state["iter_counter"] % line_search_frequency) == 0:
@@ -98,6 +115,7 @@ def minimize_manfred(
                     info=line_search_info,
                     bounds=bounds,
                     max_step_size=max_step_size,
+                    n_evaluations_per_x=n_evaluations_per_x,
                 )
 
             needs_thorough_search = (
@@ -116,6 +134,7 @@ def minimize_manfred(
                     info=direct_search_info,
                     bounds=bounds,
                     mode="thorough",
+                    n_evaluations_per_x=n_evaluations_per_x,
                 )
 
             needs_very_thorough_search = (
@@ -133,6 +152,7 @@ def minimize_manfred(
                     info=direct_search_info,
                     bounds=bounds,
                     mode="very-thorough",
+                    n_evaluations_per_x=n_evaluations_per_x,
                 )
 
             state["iter_counter"] = state["iter_counter"] + 1
@@ -210,13 +230,17 @@ def _is_below_max_fun(state, convergence_criteria):
     return state["func_counter"] < convergence_criteria["max_fun"]
 
 
-def do_manfred_direct_search(func, current_x, step_size, state, info, bounds, mode):
+def do_manfred_direct_search(
+    func, current_x, step_size, state, info, bounds, mode, n_evaluations_per_x
+):
     search_strategies = _determine_search_strategies(current_x, state, info, mode)
     x_sample = _get_direct_search_sample(
         current_x, step_size, search_strategies, bounds
     )
 
-    evaluations, state = _do_evaluations(func, x_sample, state, "aggregated")
+    evaluations, state = _do_evaluations(
+        func, x_sample, state, n_evaluations_per_x, "aggregated"
+    )
 
     argmin = np.argmin(evaluations)
     next_x = x_sample[argmin]
@@ -226,7 +250,14 @@ def do_manfred_direct_search(func, current_x, step_size, state, info, bounds, mo
 
 
 def do_manfred_line_search(
-    func, current_x, step_size, state, info, bounds, max_step_size
+    func,
+    current_x,
+    step_size,
+    state,
+    info,
+    bounds,
+    max_step_size,
+    n_evaluations_per_x,
 ):
     direction = _calculate_manfred_direction(current_x, step_size, state["cache"])
     x_sample = _get_line_search_sample(
@@ -237,6 +268,7 @@ def do_manfred_line_search(
         func=func,
         x_sample=x_sample,
         state=state,
+        n_evaluations_per_x=n_evaluations_per_x,
         return_type="aggregated",
     )
 
@@ -258,7 +290,9 @@ def _get_line_search_sample(current_x, direction, info, bounds, max_step_size):
     return x_sample
 
 
-def _do_evaluations(func, x_sample, state, return_type="aggregated"):
+def _do_evaluations(
+    func, x_sample, state, n_evaluations_per_x, return_type="aggregated"  # noqa
+):
     cache = state["cache"]
     x_hashes = [hash_array(x) for x in x_sample]
     need_to_evaluate = [
