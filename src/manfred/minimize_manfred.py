@@ -84,10 +84,12 @@ def minimize_manfred(
         "func_counter": 0,
         "iter_counter": 0,
         "inner_iter_counter": 0,
-        "cache": {hash_array(x): {"x": x, "evals": [func(x)]}},
+        "cache": {},
         "history": [],
         "seed": itertools.count(seed),
     }
+
+    _do_evaluations(func, [x], state, n_evaluations_per_x)
 
     convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
 
@@ -291,14 +293,22 @@ def _get_line_search_sample(current_x, direction, info, bounds, max_step_size):
 
 
 def _do_evaluations(
-    func, x_sample, state, n_evaluations_per_x, return_type="aggregated"  # noqa
+    func, x_sample, state, n_evaluations_per_x, return_type="aggregated"
 ):
     cache = state["cache"]
     x_hashes = [hash_array(x) for x in x_sample]
-    need_to_evaluate = [
-        x for x, x_hash in zip(x_sample, x_hashes) if x_hash not in cache
-    ]
-    new_evaluations = [func(x) for x in need_to_evaluate]
+    need_to_evaluate = []
+    for x, x_hash in zip(x_sample, x_hashes):
+        n_evals = n_evaluations_per_x
+        if x_hash in cache:
+            n_evals = max(0, n_evals - len(cache[x_hash]["evals"]))
+
+        need_to_evaluate += [x] * n_evals
+
+    arguments = [{"x": x, "seed": next(state["seed"])} for x in need_to_evaluate]
+
+    new_evaluations = [func(**arg) for arg in arguments]
+
     for x, evaluation in zip(need_to_evaluate, new_evaluations):
         cache = _add_to_cache(x, evaluation, cache)
 

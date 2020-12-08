@@ -9,14 +9,15 @@ from scipy.optimize import minimize
 from src.manfred.minimize_manfred import minimize_manfred
 
 
-def test_func(x):
+def test_func(x, seed):
+    np.random.seed(seed)
     value = len(x) * x @ x + x.sum() ** 2
     residuals = x
     return {"residuals": residuals, "value": value}
 
 
 def scipy_test_func(x):
-    return test_func(x)["value"]
+    return test_func(x, 1234)["value"]
 
 
 def plot_history(res, x_names=None):
