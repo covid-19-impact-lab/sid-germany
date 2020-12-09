@@ -13,6 +13,9 @@ Explanation on the coding of the variables
 - https://covid19-de-stats.sourceforge.io/rki-fall-tabelle.html
 
 """
+from datetime import datetime
+from datetime import timedelta
+
 import numpy as np
 import pandas as pd
 import pytask
@@ -64,13 +67,22 @@ def task_prepare_rki_data(depends_on, produces):
         .rename(columns=RENAME_COLUMNS)
     )
 
-    df["age_group"] = (
+    df["age_group_rki"] = (
         df["age_group"].replace(AGE_GROUPS_TO_INTERVALS).astype("category")
     )
+    df = df.drop(columns=["age_group"])
 
     df["is_date_disease_onset"] = df["is_date_disease_onset"].astype(bool)
 
     df["newly_infected"] = df["n_cases"] * df["type_case"].isin([0, 1])
     df["newly_deceased"] = df["n_deaths"] * df["type_death"].isin([0, 1])
 
-    df.to_pickle(produces)
+    gb = df.groupby(["date", "county", "age_group_rki"])
+    summed = gb[["newly_infected", "newly_deceased"]].sum()
+    summed = summed.fillna(0)
+    today = datetime.now().date()
+    one_week_ago = today - timedelta(weeks=1)
+    cropped = summed.loc[:one_week_ago]
+    cropped = cropped.sort_index()
+
+    cropped.to_pickle(produces)
