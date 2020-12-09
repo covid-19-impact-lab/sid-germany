@@ -31,6 +31,8 @@ src/exploration/estimation/
 *.sublime-project
 *.sublime-workspace
 
+*.idea/
+
 src/presentation_notebooks/heterogeneity/homogenous_n_contacts/
 src/presentation_notebooks/heterogeneity/heterogeneous_n_contacts/
 src/exploration/*/*.parquet
