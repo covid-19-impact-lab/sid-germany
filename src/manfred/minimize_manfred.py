@@ -64,13 +64,15 @@ def minimize_manfred(
             default_direct_search_mode. This search is done when the default direct
             search model did not yield any progress.
         n_evaluations_per_x (int): Number of function evaluations per parameter vector.
-            For noisy functions this should be set higher than one.
+            For noisy functions this should be set higher than one. Can be an int or
+            list with the same length as step_sizes.
         seed (int): Seed for the random number generator. This is used to start a
             seed sequence. Then each function is evaluated with a different seed.
 
     """
     bounds = _process_bounds(x, lower_bounds, upper_bounds)
     step_sizes, max_step_sizes = _process_step_sizes(step_sizes, max_step_sizes)
+    n_evaluations_per_x = _process_n_evaluations_per_x(n_evaluations_per_x, step_sizes)
 
     line_search_info = {
         "n_points": n_points_per_line_search,
@@ -89,12 +91,14 @@ def minimize_manfred(
         "seed": itertools.count(seed),
     }
 
-    _do_evaluations(func, [x], state, n_evaluations_per_x)
+    _do_evaluations(func, [x], state, n_evaluations_per_x[0])
 
     convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
 
     current_x = x
-    for step_size, max_step_size in zip(step_sizes, max_step_sizes):
+    for step_size, max_step_size, n_evals in zip(
+        step_sizes, max_step_sizes, n_evaluations_per_x
+    ):
         state["inner_iter_counter"] = 0
         while not _has_converged(state, convergence_criteria):
             current_x, state = do_manfred_direct_search(
@@ -105,7 +109,7 @@ def minimize_manfred(
                 info=direct_search_info,
                 bounds=bounds,
                 mode=default_direct_search_mode,
-                n_evaluations_per_x=n_evaluations_per_x,
+                n_evaluations_per_x=n_evals,
             )
 
             if use_line_search and (state["iter_counter"] % line_search_frequency) == 0:
@@ -117,7 +121,7 @@ def minimize_manfred(
                     info=line_search_info,
                     bounds=bounds,
                     max_step_size=max_step_size,
-                    n_evaluations_per_x=n_evaluations_per_x,
+                    n_evaluations_per_x=n_evals,
                 )
 
             needs_thorough_search = (
@@ -136,7 +140,7 @@ def minimize_manfred(
                     info=direct_search_info,
                     bounds=bounds,
                     mode="thorough",
-                    n_evaluations_per_x=n_evaluations_per_x,
+                    n_evaluations_per_x=n_evals,
                 )
 
             needs_very_thorough_search = (
@@ -154,7 +158,7 @@ def minimize_manfred(
                     info=direct_search_info,
                     bounds=bounds,
                     mode="very-thorough",
-                    n_evaluations_per_x=n_evaluations_per_x,
+                    n_evaluations_per_x=n_evals,
                 )
 
             state["iter_counter"] = state["iter_counter"] + 1
@@ -211,6 +215,18 @@ def _process_step_sizes(step_sizes, max_step_sizes):
     return step_sizes, max_step_sizes
 
 
+def _process_n_evaluations_per_x(n_evaluations_per_x, step_sizes):
+    if isinstance(n_evaluations_per_x, (float, int)):
+        processed = [int(n_evaluations_per_x)] * len(step_sizes)
+    elif isinstance(n_evaluations_per_x, (list, tuple, np.ndarray)):
+        processed = [int(n_evals) for n_evals in n_evaluations_per_x]
+        assert len(processed) == len(step_sizes)
+
+    for n_evals in processed:
+        assert n_evals >= 1
+    return processed
+
+
 def _has_converged(state, convergence_criteria):
     has_changed = _x_has_changed(state, convergence_criteria)
     below_max_fun = _is_below_max_fun(state, convergence_criteria)
@@ -244,8 +260,11 @@ def do_manfred_direct_search(
         func, x_sample, state, n_evaluations_per_x, "aggregated"
     )
 
-    argmin = np.argmin(evaluations)
-    next_x = x_sample[argmin]
+    if evaluations:
+        argmin = np.argmin(evaluations)
+        next_x = x_sample[argmin]
+    else:
+        next_x = current_x
     state["history"].append(hash_array(next_x))
 
     return next_x, state
@@ -274,8 +293,11 @@ def do_manfred_line_search(
         return_type="aggregated",
     )
 
-    argmin = np.argmin(evaluations)
-    next_x = x_sample[argmin]
+    if evaluations:
+        argmin = np.argmin(evaluations)
+        next_x = x_sample[argmin]
+    else:
+        next_x = current_x
     state["history"].append(hash_array(next_x))
 
     return next_x, state
@@ -360,8 +382,8 @@ def _get_values_for_pseudo_gradient(current_x, step_size, sign, cache):
 
 
 def _determine_search_strategies(current_x, state, info, mode):
-    resid_strats = _determine_fast_residual_strategies(current_x, state)
-    hist_strats = _determine_fast_history_strategies(current_x, state, info)
+    resid_strats = _determine_fast_strategies_from_residuals(current_x, state)
+    hist_strats = _determine_fast_strategies_from_history(current_x, state, info)
     strats = [_combine_strategies(s1, s2) for s1, s2 in zip(resid_strats, hist_strats)]
 
     if mode == "thorough":
@@ -372,7 +394,7 @@ def _determine_search_strategies(current_x, state, info, mode):
     return strats
 
 
-def _determine_fast_residual_strategies(current_x, state):
+def _determine_fast_strategies_from_residuals(current_x, state):
     x_hash = hash_array(current_x)
     evals = state["cache"][x_hash]["evals"]
     residual_sum = np.sum([evaluation["residuals"] for evaluation in evals])
@@ -385,7 +407,7 @@ def _determine_fast_residual_strategies(current_x, state):
     return strategies
 
 
-def _determine_fast_history_strategies(current_x, state, info):
+def _determine_fast_strategies_from_history(current_x, state, info):
     effective_window = min(info["direction_window"], len(state["history"]))
     if effective_window >= 2:
         relevant_history = [
