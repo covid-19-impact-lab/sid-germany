@@ -12,7 +12,7 @@ def create_initial_conditions(
     estimation_start,
     undetected_multiplier,
     seed,
-    synthetic_data_path=BLD / "data" / "inital_states.parquet",
+    synthetic_data_path=BLD / "data" / "initial_states.parquet",
     reported_infections_path=BLD / "data" / "processed_time_series" / "rki.pkl",
 ):
     """Create the initial conditions, initial_infections and initial_immunity.
@@ -29,12 +29,8 @@ def create_initial_conditions(
             named "newly_infected".
 
     Returns:
-        initial_infections (pandas.DataFrame): DataFrame with same index as
-            synthetic_data and one column for each day between start and end.
-            Dtype is boolean.
-
-        initial_immunity (pd.Series): Boolean Series with same index as the
-            sythetic data.
+        initial_conditions (dict): dictionary containing the initial infections and
+            initial immunity.
 
     """
     seed = it.count(seed)
@@ -58,4 +54,7 @@ def create_initial_conditions(
         undetected_multiplier=undetected_multiplier,
         seed=next(seed),
     )
-    return initial_infections, initial_immunity
+    return {
+        "initial_infections": initial_infections,
+        "initial_immunity": initial_immunity,
+    }

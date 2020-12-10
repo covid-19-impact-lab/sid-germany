@@ -57,14 +57,18 @@ SUBSET_SPECS = {
 
 OUT_PATH = BLD / "contact_models" / "empirical_distributions"
 
-FIG_SPECS = [
-    (spec, [OUT_PATH / "figures" / f"{name}.png", OUT_PATH / f"{name}.pkl"])
-    for name, spec in SUBSET_SPECS.items()
-]
+PARAM_SPECS = []
+for name, spec in SUBSET_SPECS.items():
+    produce_paths = [OUT_PATH / "figures" / f"{name}.png", OUT_PATH / f"{name}.pkl"]
+    if not spec["recurrent"]:
+        produce_paths.append(
+            BLD / "contact_models" / "age_assort_params" / f"{name}.pkl"
+        )
+    PARAM_SPECS.append((spec, produce_paths))
 
 
 @pytask.mark.depends_on(BLD / "data" / "mossong_2008" / "contact_data.pkl")
-@pytask.mark.parametrize("specs, produces", FIG_SPECS)
+@pytask.mark.parametrize("specs, produces", PARAM_SPECS)
 def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
     name = produces[0].stem.replace("_", " ").title()
     regression_criterion_values = {
@@ -99,6 +103,27 @@ def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
 
     shares = approx_dist / approx_dist.sum()
     shares.to_pickle(produces[1])
+
+    if not specs["recurrent"]:
+        assort_params = _create_assort_params(produces[0].stem, contacts, **specs)
+        assort_params.to_pickle(produces[2])
+
+
+def _create_assort_params(model_name, contacts, places, recurrent, frequency, weekend):
+    df = _get_relevant_contacts_subset(contacts, places, recurrent, frequency, weekend)
+    normalized_cell_counts = pd.crosstab(
+        df["part_age_group"],
+        df["age_group_of_contact"],
+        dropna=False,
+        normalize="index",
+    )
+    normalized_cell_counts = normalized_cell_counts.fillna(0)
+    assort_params = normalized_cell_counts.stack().round(2)
+
+    first_level = f"assortative_matching_{model_name}_age_group"
+    assort_params = pd.concat([assort_params], keys=[first_level], names=["category"])
+    assort_params.index.names = ["category", "subcategory", "name"]
+    return assort_params
 
 
 def _create_n_contacts(contacts, places, recurrent, frequency, weekend):
