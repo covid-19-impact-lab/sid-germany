@@ -13,10 +13,7 @@ from src.contact_models.contact_model_functions import go_to_weekly_meeting
 from src.contact_models.contact_model_functions import go_to_work
 from src.contact_models.contact_model_functions import meet_daily_other_contacts
 from src.contact_models.contact_model_functions import (
-    reduce_non_recurrent_contacts_on_condition,
-)
-from src.contact_models.contact_model_functions import (
-    reduce_recurrent_contacts_on_condition,
+    reduce_contacts_on_condition,
 )
 from src.shared import draw_groups
 
@@ -26,11 +23,11 @@ def params():
     params = pd.DataFrame()
     params["category"] = ["work_non_recurrent"] * 2 + ["other_non_recurrent"] * 2
     params["subcategory"] = [
-        "reduction_when_symptomatic",
-        "reduction_when_positive",
+        "symptomatic_multiplier",
+        "positive_test_multiplier",
     ] * 2
-    params["name"] = ["reduction_when_symptomatic", "reduction_when_positive"] * 2
-    params["value"] = [1.0, 1.0, 1.0, 1.0]
+    params["name"] = ["symptomatic_multiplier", "positive_test_multiplier"] * 2
+    params["value"] = [0.0, 0.0, 0.0, 0.0]
     params.set_index(["category", "subcategory", "name"], inplace=True)
     return params
 
@@ -102,9 +99,9 @@ def a_thursday(states):
 @pytest.fixture
 def no_reduction_params():
     params = pd.DataFrame()
-    params["subcategory"] = ["reduction_when_symptomatic", "reduction_when_positive"]
+    params["subcategory"] = ["symptomatic_multiplier", "positive_test_multiplier"]
     params["name"] = params["subcategory"]
-    params["value"] = 0.0
+    params["value"] = 1.0
     params = params.set_index(["subcategory", "name"])
     return params
 
@@ -157,7 +154,7 @@ def test_go_to_work_weekday(a_thursday, no_reduction_params):
 
 def test_go_to_work_weekday_with_reduction(a_thursday, no_reduction_params):
     reduction_params = no_reduction_params
-    reduction_params["value"] = 1
+    reduction_params["value"] = 0.0
     a_thursday["daily_work_group_id"] = [1, 2, 1, 2, 3, 3, 3, 3, 3] + [-1] * (
         len(a_thursday) - 9
     )
@@ -201,15 +198,15 @@ def params_with_positive():
             "category": ["work_non_recurrent"] * 3,
             "subcategory": [
                 "all",
-                "reduction_when_symptomatic",
-                "reduction_when_positive",
+                "symptomatic_multiplier",
+                "positive_test_multiplier",
             ],
             "name": [
                 2,
-                "reduction_when_symptomatic",
-                "reduction_when_positive",
+                "symptomatic_multiplier",
+                "positive_test_multiplier",
             ],  # nr of contacts
-            "value": [1.0, 1.0, 1.0],  # probability
+            "value": [1.0, 0.0, 0.0],  # probability
         }
     )
     params = params.set_index(["category", "subcategory", "name"])
@@ -255,14 +252,14 @@ def test_non_recurrent_work_contacts_random_with_sick(a_thursday):
         {
             "category": ["work_non_recurrent"] * 4,
             "subcategory": ["all"] * 2
-            + ["reduction_when_symptomatic", "reduction_when_positive"],
+            + ["symptomatic_multiplier", "positive_test_multiplier"],
             "name": [
                 3,
                 2,
-                "reduction_when_symptomatic",
-                "reduction_when_positive",
+                "symptomatic_multiplier",
+                "positive_test_multiplier",
             ],  # nr of contacts
-            "value": [0.5, 0.5, 1.0, 1.0],  # probability
+            "value": [0.5, 0.5, 0.0, 0.0],  # probability
         }
     ).set_index(["category", "subcategory", "name"])
 
@@ -291,15 +288,15 @@ def test_non_recurrent_other_contacts_no_random_no_sick(a_thursday):
             "category": ["other_non_recurrent"] * 3,
             "subcategory": [
                 "all",
-                "reduction_when_symptomatic",
-                "reduction_when_positive",
+                "symptomatic_multiplier",
+                "positive_test_multiplier",
             ],
             "name": [
                 2,
-                "reduction_when_symptomatic",
-                "reduction_when_positive",
+                "symptomatic_multiplier",
+                "positive_test_multiplier",
             ],  # nr of contacts
-            "value": [1.0, 1.0, 1.0],  # probability
+            "value": [1.0, 0.0, 0.0],  # probability
         }
     ).set_index(["category", "subcategory", "name"])
 
@@ -320,15 +317,15 @@ def test_non_recurrent_other_contacts_no_random_with_sick(a_thursday):
             "category": ["other_non_recurrent"] * 3,
             "subcategory": [
                 "all",
-                "reduction_when_symptomatic",
-                "reduction_when_positive",
+                "symptomatic_multiplier",
+                "positive_test_multiplier",
             ],
             "name": [
                 2,
-                "reduction_when_symptomatic",
-                "reduction_when_positive",
+                "symptomatic_multiplier",
+                "positive_test_multiplier",
             ],  # nr of contacts
-            "value": [1.0, 1.0, 1.0],  # probability
+            "value": [1.0, 0.0, 0.0],  # probability
         }
     ).set_index(["category", "subcategory", "name"])
 
@@ -350,14 +347,14 @@ def test_non_recurrent_other_contacts_random_with_sick(a_thursday):
         {
             "category": ["other_non_recurrent"] * 4,
             "subcategory": ["all"] * 2
-            + ["reduction_when_symptomatic", "reduction_when_positive"],
+            + ["symptomatic_multiplier", "positive_test_multiplier"],
             "name": [
                 3,
                 2,
-                "reduction_when_symptomatic",
-                "reduction_when_positive",
+                "symptomatic_multiplier",
+                "positive_test_multiplier",
             ],  # nr of contacts
-            "value": [0.5, 0.5, 1.0, 1.0],  # probability
+            "value": [0.5, 0.5, 0.0, 0.0],  # probability
         }
     ).set_index(["category", "subcategory", "name"])
 
@@ -440,10 +437,15 @@ def test_draw_nr_of_contacts_differ_btw_ages_random(states):
 def test_reduce_non_recurrent_contacts_on_condition(states):
     nr_of_contacts = pd.Series(data=10, index=states.index)
     states["symptomatic"] = [True, True, True] + [False] * (len(states) - 3)
-    factor = 0.5
+    multiplier = 0.5
     expected = pd.Series([5, 5, 5] + [10] * (len(states) - 3))
-    res = reduce_non_recurrent_contacts_on_condition(
-        contacts=nr_of_contacts, states=states, factor=factor, condition="symptomatic"
+    res = reduce_contacts_on_condition(
+        contacts=nr_of_contacts,
+        states=states,
+        multiplier=multiplier,
+        condition="symptomatic",
+        is_recurrent=False,
+        seed=3483,
     )
     assert_series_equal(res, expected, check_dtype=False)
 
@@ -452,17 +454,18 @@ def test_reduce_non_recurrent_contacts_on_condition(states):
 
 
 def test_reduce_recurrent_contacts_on_condition(states):
-    nr_of_contacts = pd.Series(data=10, index=states.index)
+    participating = pd.Series(data=1, index=states.index)
     states["symptomatic"] = [True, True, True] + [False] * (len(states) - 3)
-    factor = 0.5
-    res = reduce_recurrent_contacts_on_condition(
-        contacts=nr_of_contacts,
+    multiplier = 0.5
+    res = reduce_contacts_on_condition(
+        contacts=participating,
         states=states,
-        share=factor,
+        multiplier=multiplier,
         seed=8388,
         condition="symptomatic",
+        is_recurrent=True,
     )
-    expected = pd.Series([10, 0, 0] + [10] * (len(states) - 3))
+    expected = pd.Series([0, 1, 1] + [1] * (len(states) - 3))
     assert_series_equal(res, expected, check_dtype=False)
 
 
@@ -474,9 +477,9 @@ def test_meet_daily_other_contacts():
     states["cd_received_test_result_true"] = -20
 
     params = pd.DataFrame()
-    params["value"] = [1.0, 1.0]
+    params["value"] = [0.0, 0.0]
     params["category"] = "other_recurrent"
-    params["subcategory"] = ["reduction_when_symptomatic", "reduction_when_positive"]
+    params["subcategory"] = ["symptomatic_multiplier", "positive_test_multiplier"]
     params["name"] = params["subcategory"]
     params = params.set_index(["category", "subcategory", "name"])
 

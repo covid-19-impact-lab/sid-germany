@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sid.shared import get_date
 
+from src.policies.single_policy_functions import reduce_recurrent_model
 from src.shared import from_epochs_to_timestamps
 
 
@@ -47,15 +48,16 @@ def go_to_weekly_meeting(states, contact_params, group_col_name, day_of_week, se
     else:
         attends_meeting = (states[group_col_name] != -1).astype(int)
         for params_entry, condition in [
-            ("reduction_when_symptomatic", "symptomatic"),
-            ("reduction_when_positive", IS_POSITIVE_CASE),
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
         ]:
-            attends_meeting = reduce_recurrent_contacts_on_condition(
+            attends_meeting = reduce_contacts_on_condition(
                 attends_meeting,
                 states,
                 contact_params.loc[(params_entry, params_entry), "value"],
                 condition,
                 seed=seed,
+                is_recurrent=True,
             )
     return attends_meeting
 
@@ -86,15 +88,16 @@ def go_to_work(states, contact_params, seed):
             "(occupation == 'working') & (daily_work_group_id != -1)"
         ).astype(int)
         for params_entry, condition in [
-            ("reduction_when_symptomatic", "symptomatic"),
-            ("reduction_when_positive", IS_POSITIVE_CASE),
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
         ]:
-            attends_work = reduce_recurrent_contacts_on_condition(
+            attends_work = reduce_contacts_on_condition(
                 attends_work,
                 states,
                 contact_params.loc[(params_entry, params_entry), "value"],
                 condition,
                 seed=seed,
+                is_recurrent=True,
             )
     return attends_work
 
@@ -102,15 +105,16 @@ def go_to_work(states, contact_params, seed):
 def meet_daily_other_contacts(states, params, seed):
     going = pd.Series(data=1, index=states.index)
     for params_entry, condition in [
-        ("reduction_when_symptomatic", "symptomatic"),
-        ("reduction_when_positive", IS_POSITIVE_CASE),
+        ("symptomatic_multiplier", "symptomatic"),
+        ("positive_test_multiplier", IS_POSITIVE_CASE),
     ]:
-        going = reduce_recurrent_contacts_on_condition(
+        going = reduce_contacts_on_condition(
             going,
             states,
             params.loc[("other_recurrent", params_entry, params_entry), "value"],
             condition,
             seed=seed,
+            is_recurrent=True,
         )
     return going
 
@@ -147,15 +151,16 @@ def attends_educational_facility(states, params, id_column, seed):
             attends_facility, states, params
         )
         for params_entry, condition in [
-            ("reduction_when_symptomatic", "symptomatic"),
-            ("reduction_when_positive", IS_POSITIVE_CASE),
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
         ]:
-            attends_facility = reduce_recurrent_contacts_on_condition(
+            attends_facility = reduce_contacts_on_condition(
                 attends_facility,
                 states,
                 params.loc[(facility, params_entry, params_entry), "value"],
                 condition,
                 seed=seed,
+                is_recurrent=True,
             )
     return attends_facility
 
@@ -176,15 +181,16 @@ def meet_hh_members(states, contact_params, seed):
     """
     meet_hh = pd.Series(1, index=states.index)
     for params_entry, condition in [
-        ("reduction_when_symptomatic", "symptomatic"),
-        ("reduction_when_positive", IS_POSITIVE_CASE),
+        ("symptomatic_multiplier", "symptomatic"),
+        ("positive_test_multiplier", IS_POSITIVE_CASE),
     ]:
-        meet_hh = reduce_recurrent_contacts_on_condition(
+        meet_hh = reduce_contacts_on_condition(
             meet_hh,
             states,
             contact_params.loc[(params_entry, params_entry), "value"],
             condition,
             seed=seed,
+            is_recurrent=True,
         )
     return meet_hh
 
@@ -220,7 +226,7 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
         else:
             is_participating = pd.Series(True, index=states.index)
 
-        distribution = contact_params.query("~subcategory.str.contains('reduction')")[
+        distribution = contact_params.query("~subcategory.str.contains('multiplier')")[
             "value"
         ]
         contacts[is_participating] = _draw_nr_of_contacts(
@@ -230,14 +236,16 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
             seed=seed,
         )
         for params_entry, condition in [
-            ("reduction_when_symptomatic", "symptomatic"),
-            ("reduction_when_positive", IS_POSITIVE_CASE),
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
         ]:
-            contacts = reduce_non_recurrent_contacts_on_condition(
+            contacts = reduce_contacts_on_condition(
                 contacts,
                 states,
                 contact_params.loc[(params_entry, params_entry), "value"],
                 condition,
+                seed=seed,
+                is_recurrent=False,
             )
 
     return contacts
@@ -323,28 +331,9 @@ def _fast_choice(arr, cdf):
 # -------------------------------------------------------------------------------------
 
 
-def reduce_non_recurrent_contacts_on_condition(contacts, states, factor, condition):
-    """Reduce the number of contacts by *factor* for symptomatic indivdiuals.
-
-    Args:
-        contacts (pandas.Series): number of contacts of healthy individuals.
-            Index is the same as states.
-        states (pandas.DataFrame)
-        factor (float): Factor by which the number of contacts are reduced.
-            1 means no contacts for sick individuals, 0 means no change in contacts.
-
-    Returns
-        contacts (pandas.Series): number of contacts, reduced for symptomatic
-            individuals.
-
-    """
-    contacts = contacts.copy(deep=True)
-    factor_sr = 1 - factor * (states.eval(condition))
-    reduced_contacts = factor_sr * contacts
-    return reduced_contacts
-
-
-def reduce_recurrent_contacts_on_condition(contacts, states, share, condition, seed):
+def reduce_contacts_on_condition(
+    contacts, states, multiplier, condition, seed, is_recurrent
+):
     """Reduce contacts for share of population for which condition is fulfilled.
 
     The subset of contacts for which contacts are reduced is specified by the condition
@@ -354,25 +343,24 @@ def reduce_recurrent_contacts_on_condition(contacts, states, share, condition, s
     Args:
         contacts (pandas.Series): The series with contacts.
         states (pandas.DataFrame): The states of one day passed by sid.
-        share (float): The share of people who will reduce their contacts if the
-            condition is true.
+        multiplier (float): The share of people who maintain their contacts
+            despite condition.
         condition (str): Condition which defines the subset of individuals who
             potentially reduce their contacts.
         seed (int)
 
     """
-    contacts = contacts.copy(deep=True)
     np.random.seed(seed)
-    is_condition_true = states.eval(condition) & (contacts > 0)
-    is_complier = np.random.choice(
-        [True, False],
-        size=is_condition_true.sum(),
-        p=[share, 1 - share],
-    )
-    complies = is_condition_true.copy(deep=True)
-    complies[complies] = is_complier
-    contacts.loc[complies] = 0
-    return contacts
+    if is_recurrent:
+        reduced = reduce_recurrent_model(states, contacts, seed, multiplier)
+    else:
+        reduced = multiplier * contacts
+    is_condition_true = states.eval(condition)
+    reduced = reduced.where(is_condition_true, contacts)
+    return reduced
+
+
+# =============================================================================
 
 
 def reduce_contacts_when_symptomatic_case_among_recurrent_contacts(

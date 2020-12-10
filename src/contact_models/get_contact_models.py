@@ -118,7 +118,7 @@ def get_work_daily_contact_model():
     work_daily_contact_model = {
         "work_recurrent_daily": {
             "is_recurrent": True,
-            "assort_by": ["daily_work_group_id"],
+            "assort_by": ["work_daily_group_id"],
             "model": cm_funcs.go_to_work,
             "loc": "work_recurrent_daily",
         },
@@ -172,7 +172,7 @@ def get_other_daily_contact_model():
     other_daily_contact_model = {
         "other_recurrent_daily": {
             "is_recurrent": True,
-            "assort_by": ["daily_other_group_id"],
+            "assort_by": ["other_daily_group_id"],
             "model": cm_funcs.meet_daily_other_contacts,
         }
     }
