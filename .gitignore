@@ -37,5 +37,4 @@ src/exploration/*/*.parquet
 
 
 *.idea/
-src/manfred/convergence_plot.png
-src/manfred/constrained_convergence_plot.png
+src/manfred/*.png

@@ -54,19 +54,49 @@ def plot_history(res, x_names=None):
 if __name__ == "__main__":
     true_x = np.array([0.08, 0.15, 0.22, 0.31, 0.37, 0.28])
     n_params = len(true_x)
+    start_x = np.full(n_params, 0.725)
     lower_bounds = np.zeros(n_params)
     upper_bounds = np.ones(n_params)
-    noise_level = 0.15
 
-    test_func = partial(criterion_function, true_x=true_x, noise_level=noise_level)
-    scipy_test_func = partial(
-        scipy_criterion_function, true_x=true_x, noise_level=noise_level
-    )
-
-    start_x = np.full(n_params, 0.725)
+    scipy_test_func = partial(scipy_criterion_function, true_x=true_x, noise_level=0)
+    test_func = partial(criterion_function, true_x=true_x, noise_level=0)
 
     res = minimize_manfred(
         func=test_func,
+        x=start_x,
+        xtol=0.001,
+        step_sizes=[0.1, 0.05, 0.0125],
+        max_fun=10_000,
+        lower_bounds=lower_bounds,
+        upper_bounds=upper_bounds,
+        max_step_sizes=[1, 0.2, 0.1],
+        n_points_per_line_search=10,
+        convergence_direct_search_mode="fast",
+    )
+
+    scipy_res = minimize(
+        scipy_test_func, start_x, method="Nelder-Mead", options={"maxfev": 100_000}
+    )
+
+    fig = plot_history(res)
+
+    fig.savefig(Path(__file__).resolve().parent / "convergence_plot.png")
+
+    print("Noise Free Test:           ")  # noqa
+    print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa
+    print("True Solution:        ", true_x.round(2))  # noqa
+    print("Nelder Mead Solution: ", scipy_res.x.round(2))  # noqa
+    print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa
+    print("Nelder Mead n_evals:  ", scipy_res.nfev, "\n")  # noqa
+
+    noise_level = 0.15
+    noisy_test_func = partial(
+        criterion_function, true_x=true_x, noise_level=noise_level
+    )
+
+    noise_level = 0.15
+    res = minimize_manfred(
+        func=noisy_test_func,
         x=start_x,
         xtol=0.001,
         step_sizes=[0.1, 0.05, 0.025, 0.0125],
@@ -78,17 +108,11 @@ if __name__ == "__main__":
         n_evaluations_per_x=[50, 75, 75, 150],
     )
 
-    scipy_res = minimize(
-        scipy_test_func, start_x, method="Nelder-Mead", options={"maxfev": 100_000}
-    )
-
     fig = plot_history(res)
 
-    fig.savefig(Path(__file__).resolve().parent / "convergence_plot.png")
+    fig.savefig(Path(__file__).resolve().parent / "noisy_convergence_plot.png")
 
-    print("Unconstrained Test")  # noqa
+    print("Noisy Test:           ")  # noqa
     print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa
     print("True Solution:        ", true_x.round(2))  # noqa
-    print("Nelder Mead Solution: ", scipy_res.x.round(2))  # noqa
     print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa
-    print("Nelder Mead n_evals:  ", scipy_res.nfev, "\n")  # noqa
