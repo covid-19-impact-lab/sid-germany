@@ -72,7 +72,7 @@ def add_contact_model_group_ids(
 
     school_class_ids, updated_occupation = make_educ_group_columns(
         states=df,
-        query="occupation == 'school' & age >= 6",
+        query="occupation == 'school'",
         group_size=23,
         strict_assort_by=["state", "age"],
         weak_assort_by=["county"],
@@ -86,14 +86,14 @@ def add_contact_model_group_ids(
     df["occupation"] = updated_occupation
 
     df["one"] = 1
-    gb = df.groupby("school_group_id")
+    gb = df.groupby("school_group_id_0")
     df["pos_in_group"] = gb["one"].cumsum() - 1
     df["group_size"] = gb["one"].transform("size")
     df["school_group_a"] = df.eval("pos_in_group < group_size / 2").astype(np.uint8)
 
     preschool_class_ids, updated_occupation = make_educ_group_columns(
         states=df,
-        query="3 <= age < 6",
+        query="occupation == 'preschool'",
         group_size=9,
         strict_assort_by=["state"],
         weak_assort_by=["county"],
@@ -108,10 +108,9 @@ def add_contact_model_group_ids(
     )
     df["occupation"] = updated_occupation
 
-    df["attends_nursery"] = _draw_who_attends_nursery(df, next(seed))
     nursery_class_ids, updated_occupation = make_educ_group_columns(
         states=df,
-        query="attends_nursery & (age < 3)",
+        query="occupation == 'nursery'",
         group_size=4,
         strict_assort_by=["state"],
         weak_assort_by=["county"],
@@ -184,7 +183,18 @@ def add_contact_model_group_ids(
         validate="1:1",
     )
 
-    df = df.drop(columns=["pos_in_group", "one", "group_size", "attends_nursery"])
+    cols_with_non_parquet_compatible_categories = (
+        ["work_daily_group_id", "other_daily_group_id"]
+        + weekly_work_ids.columns.tolist()
+        + weekly_other_ids.columns.tolist()
+    )
+    for col in cols_with_non_parquet_compatible_categories:
+        simplified = pd.Series(pd.factorize(df[col])[0], index=df.index)
+        # -1 has a special meaning so it needs to remain
+        df[col] = simplified.where(df[col] != -1, -1)
+        df[col] = df[col].astype("category")
+
+    df = df.drop(columns=["pos_in_group", "one", "group_size"])
     return df
 
 
