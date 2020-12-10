@@ -42,7 +42,7 @@ def plot_history(res, x_names=None):
     for col, ax in zip(plot_data.columns, axes):
         sns.lineplot(
             x=np.arange(len(plot_data)) + 1,
-            y=plot_data[col],
+            y=np.log(plot_data[col]),
             ax=ax,
         )
 
@@ -61,6 +61,8 @@ if __name__ == "__main__":
     scipy_test_func = partial(scipy_criterion_function, true_x=true_x, noise_level=0)
     test_func = partial(criterion_function, true_x=true_x, noise_level=0)
 
+    gradient_weight = 0.6
+
     res = minimize_manfred(
         func=test_func,
         x=start_x,
@@ -72,6 +74,7 @@ if __name__ == "__main__":
         max_step_sizes=[1, 0.2, 0.1],
         n_points_per_line_search=10,
         convergence_direct_search_mode="fast",
+        gradient_weight=gradient_weight,
     )
 
     scipy_res = minimize(
@@ -94,18 +97,46 @@ if __name__ == "__main__":
         criterion_function, true_x=true_x, noise_level=noise_level
     )
 
-    noise_level = 0.15
     res = minimize_manfred(
         func=noisy_test_func,
         x=start_x,
         xtol=0.001,
-        step_sizes=[0.1, 0.05, 0.025, 0.0125],
+        step_sizes=[0.1, 0.05, 0.02],
         max_fun=1_000_000,
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
-        max_step_sizes=[0.3, 0.2, 0.1, 0.05],
-        n_points_per_line_search=15,
-        n_evaluations_per_x=[50, 75, 75, 150],
+        max_step_sizes=[0.3, 0.2, 0.1],
+        n_points_per_line_search=12,
+        n_evaluations_per_x=[60, 90, 120],
+        gradient_weight=gradient_weight,
+    )
+
+    fig = plot_history(res)
+
+    fig.savefig(Path(__file__).resolve().parent / "very_noisy_convergence_plot.png")
+
+    print("Very Noisy Test:           ")  # noqa
+    print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa
+    print("True Solution:        ", true_x.round(2))  # noqa
+    print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa
+
+    noise_level = 0.1
+    noisy_test_func = partial(
+        criterion_function, true_x=true_x, noise_level=noise_level
+    )
+
+    res = minimize_manfred(
+        func=noisy_test_func,
+        x=start_x,
+        xtol=0.001,
+        step_sizes=[0.1, 0.05, 0.01],
+        max_fun=1_000_000,
+        lower_bounds=lower_bounds,
+        upper_bounds=upper_bounds,
+        max_step_sizes=[0.3, 0.2, 0.2],
+        n_points_per_line_search=12,
+        n_evaluations_per_x=[30, 50, 50],
+        gradient_weight=gradient_weight,
     )
 
     fig = plot_history(res)

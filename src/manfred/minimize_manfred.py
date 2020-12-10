@@ -22,6 +22,7 @@ def minimize_manfred(
     convergence_direct_search_mode="thorough",
     n_evaluations_per_x=1,
     seed=0,
+    gradient_weight=0.5,
 ):
     """Minimize func using the MANFRED algorithm.
 
@@ -68,11 +69,14 @@ def minimize_manfred(
             list with the same length as step_sizes.
         seed (int): Seed for the random number generator. This is used to start a
             seed sequence. Then each function is evaluated with a different seed.
+        gradient_weight (float): Weight of the normalized gradient in the calculation
+            of the manfred direction.
 
     """
     bounds = _process_bounds(x, lower_bounds, upper_bounds)
     step_sizes, max_step_sizes = _process_step_sizes(step_sizes, max_step_sizes)
     n_evaluations_per_x = _process_n_evaluations_per_x(n_evaluations_per_x, step_sizes)
+    assert 0 <= gradient_weight <= 1
 
     line_search_info = {
         "n_points": n_points_per_line_search,
@@ -87,7 +91,7 @@ def minimize_manfred(
         "iter_counter": 0,
         "inner_iter_counter": 0,
         "cache": {},
-        "history": [],
+        "history": [hash_array(x)],
         "seed": itertools.count(seed),
     }
 
@@ -122,6 +126,7 @@ def minimize_manfred(
                     bounds=bounds,
                     max_step_size=max_step_size,
                     n_evaluations_per_x=n_evals,
+                    gradient_weight=gradient_weight,
                 )
 
             needs_thorough_search = (
@@ -279,8 +284,11 @@ def do_manfred_line_search(
     bounds,
     max_step_size,
     n_evaluations_per_x,
+    gradient_weight,
 ):
-    direction = _calculate_manfred_direction(current_x, step_size, state["cache"])
+    direction = _calculate_manfred_direction(
+        current_x, step_size, state, gradient_weight
+    )
     x_sample = _get_line_search_sample(
         current_x, direction, info, bounds, max_step_size
     )
@@ -344,7 +352,8 @@ def _do_evaluations(
     return all_results, state
 
 
-def _calculate_manfred_direction(current_x, step_size, cache):
+def _calculate_manfred_direction(current_x, step_size, state, gradient_weight):
+    cache = state["cache"]
     pos_values = _get_values_for_pseudo_gradient(current_x, step_size, 1, cache)
     neg_values = _get_values_for_pseudo_gradient(current_x, step_size, -1, cache)
     f0 = _aggregate_evaluations(cache[hash_array(current_x)]["evals"])
@@ -358,7 +367,22 @@ def _calculate_manfred_direction(current_x, step_size, cache):
     gradient = np.where(np.isnan(gradient), left_gradient, gradient)
     gradient = np.where(np.isnan(gradient), 0, gradient)
 
-    direction = -gradient
+    gradient_direction = _normalize_direction(-gradient)
+
+    last_x = cache[state["history"][-2]]["x"]
+    step_direction = _normalize_direction(current_x - last_x)
+
+    direction = (
+        gradient_weight * gradient_direction + (1 - gradient_weight) * step_direction
+    )
+
+    return direction
+
+
+def _normalize_direction(direction):
+    norm = np.linalg.norm(direction)
+    if norm > 1e-10:
+        direction = direction / norm
     return direction
 
 
