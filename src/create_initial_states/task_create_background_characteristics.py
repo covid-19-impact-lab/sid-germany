@@ -41,7 +41,7 @@ from src.shared import create_age_groups_rki
         / "other_recurrent_weekly.pkl",
     }
 )
-@pytask.mark.produces(BLD / "data" / "initial_states_microcensus.parquet")
+@pytask.mark.produces(BLD / "data" / "initial_states.parquet")
 def task_create_initial_states_microcensus(depends_on, produces):
     mc = pd.read_stata(depends_on["hh_data"])
     mc = _prepare_microcensus(mc)
