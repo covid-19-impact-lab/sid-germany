@@ -1,3 +1,4 @@
+import functools
 import hashlib
 import itertools
 from collections import namedtuple
@@ -5,21 +6,99 @@ from collections import namedtuple
 import numpy as np
 
 
+def minimize_manfred_estimagic(
+    internal_criterion_and_derivative,
+    x,
+    lower_bounds,
+    upper_bounds,
+    convergence_relative_params_tolerance=0.001,
+    convergence_direct_search_mode="thorough",
+    max_criterion_evaluations=100_000,
+    step_sizes=None,
+    max_step_sizes=None,
+    direction_window=3,
+    gradient_weight=0.5,
+    momentum=0.05,
+    linesearch_active=True,
+    linesearch_frequency=3,
+    linesearch_n_points=5,
+    noise_seed=0,
+    noise_n_evaluations_per_x=1,
+    default_direct_search_mode="fast",
+):
+    algo_info = {
+        "primary_criterion_entry": "value_and_residuals",
+        "parallelizes": True,
+        "needs_scaling": False,
+        "name": "manfred",
+    }
+
+    criterion = functools.partial(
+        internal_criterion_and_derivative, algorithm_info=algo_info, task="criterion"
+    )
+
+    options = {
+        "step_sizes": step_sizes,
+        "max_fun": max_criterion_evaluations,
+        "convergence_direct_search_mode": convergence_direct_search_mode,
+        "xtol": convergence_relative_params_tolerance,
+        "direction_window": direction_window,
+        "xtol": convergence_relative_params_tolerance,
+        "use_line_search": linesearch_active,
+        "line_search_frequency": linesearch_frequency,
+        "n_points_per_line_search": linesearch_n_points,
+        "max_step_sizes": max_step_sizes,
+        "default_direct_search_mode": default_direct_search_mode,
+        "n_evaluations_per_x": noise_n_evaluations_per_x,
+        "seed": noise_seed,
+        "gradient_weight": gradient_weight,
+        "momentum": momentum,
+    }
+
+    unit_x = _x_to_unit_cube(x, lower_bounds, upper_bounds)
+
+    def func(x, seed, lower_bounds, upper_bounds):
+        x = _x_from_unit_cube(x, lower_bounds, upper_bounds)
+        np.random.seed(seed)
+        return criterion(x)
+
+    partialed_func = functools.partial(
+        func, lower_bounds=lower_bounds, upper_bounds=upper_bounds
+    )
+
+    res = minimize_manfred(
+        func=partialed_func,
+        x=unit_x,
+        lower_bounds=np.zeros(len(x)),
+        upper_bounds=np.ones(len(x)),
+        **options,
+    )
+    return res
+
+
+def _x_to_unit_cube(x, lower_bounds, upper_bounds):
+    return (x - lower_bounds) / (upper_bounds - lower_bounds)
+
+
+def _x_from_unit_cube(unit_x, lower_bounds, upper_bounds):
+    return unit_x * (upper_bounds - lower_bounds) + lower_bounds
+
+
 def minimize_manfred(
     func,
     x,
     step_sizes,
-    max_fun,
-    xtol=0.01,
+    lower_bounds=None,
+    upper_bounds=None,
+    max_fun=100_000,
+    convergence_direct_search_mode="thorough",
     direction_window=3,
+    xtol=0.01,
     use_line_search=True,
     line_search_frequency=3,
     n_points_per_line_search=5,
-    lower_bounds=None,
-    upper_bounds=None,
     max_step_sizes=None,
     default_direct_search_mode="fast",
-    convergence_direct_search_mode="thorough",
     n_evaluations_per_x=1,
     seed=0,
     gradient_weight=0.5,
@@ -223,8 +302,13 @@ def _process_bounds(x, lower_bounds, upper_bounds):
 
 
 def _process_step_sizes(step_sizes, max_step_sizes):
+    if step_sizes is None:
+        step_sizes = 0.1
     step_sizes = _process_scalar_or_list_arg(step_sizes)
-    max_step_sizes = _process_scalar_or_list_arg(max_step_sizes, len(step_sizes))
+    if max_step_sizes is None:
+        max_step_sizes = [ss * 3 for ss in step_sizes]
+    else:
+        max_step_sizes = _process_scalar_or_list_arg(max_step_sizes, len(step_sizes))
 
     for ss, mss in zip(step_sizes, max_step_sizes):
         assert ss <= mss
@@ -490,7 +574,8 @@ def _get_direct_search_sample(current_x, step_size, search_strategies, bounds):
 
 
 def _aggregate_evaluations(evaluations):
-    return np.mean([evaluation["value"] for evaluation in evaluations])
+    res = np.mean([evaluation["value"] for evaluation in evaluations])
+    return res
 
 
 def _add_to_cache(x, evaluation, cache):

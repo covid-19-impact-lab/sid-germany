@@ -5,9 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.optimize import minimize
+from estimagic import minimize
+from scipy.optimize import minimize as scipy_minimize
 
 from src.manfred.minimize_manfred import minimize_manfred
+from src.manfred.minimize_manfred import minimize_manfred_estimagic
 
 
 def criterion_function(x, seed, true_x, noise_level):
@@ -25,6 +27,12 @@ def criterion_function(x, seed, true_x, noise_level):
 def scipy_criterion_function(x, true_x, noise_level):
     seed = np.random.randint(10000)
     return criterion_function(x, seed, true_x, noise_level)["value"]
+
+
+def estimagic_criterion_function(params, true_x, noise_level):  # noqa
+    seed = np.random.choice(10000)
+    out = criterion_function(params["value"].to_numpy(), seed, true_x, noise_level)
+    return {"value": out["value"], "value_and_residuals": out}
 
 
 def plot_history(res, x_names=None):
@@ -65,6 +73,10 @@ if __name__ == "__main__":
     lower_bounds = np.zeros(n_params)
     upper_bounds = np.ones(n_params)
 
+    # ==================================================================================
+    # Simple test
+    # ==================================================================================
+
     scipy_test_func = partial(scipy_criterion_function, true_x=true_x, noise_level=0)
     test_func = partial(criterion_function, true_x=true_x, noise_level=0)
 
@@ -84,13 +96,17 @@ if __name__ == "__main__":
         gradient_weight=gradient_weight,
     )
 
-    scipy_res = minimize(
+    scipy_res = scipy_minimize(
         scipy_test_func, start_x, method="Nelder-Mead", options={"maxfev": 100_000}
     )
 
     fig = plot_history(res)
 
     fig.savefig(Path(__file__).resolve().parent / "convergence_plot.png")
+
+    # ==================================================================================
+    # Very noisy test
+    # ==================================================================================
 
     print("Noise Free Test:           ")  # noqa
     print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa
@@ -128,6 +144,10 @@ if __name__ == "__main__":
     print("True Solution:        ", true_x.round(2))  # noqa
     print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa
 
+    # ==================================================================================
+    # Noisy test
+    # ==================================================================================
+
     noise_level = 0.1
     noisy_test_func = partial(
         criterion_function, true_x=true_x, noise_level=noise_level
@@ -155,3 +175,38 @@ if __name__ == "__main__":
     print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa
     print("True Solution:        ", true_x.round(2))  # noqa
     print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa
+
+    # ==================================================================================
+    # Simple test with estimagic interface
+    # ==================================================================================
+
+    noise_level = 0
+    params = pd.DataFrame()
+    params["value"] = start_x
+    params["lower_bound"] = lower_bounds
+    params["upper_bound"] = upper_bounds
+
+    estimagic_func = partial(
+        estimagic_criterion_function, true_x=true_x, noise_level=noise_level
+    )
+
+    algo_options = {
+        "step_sizes": [0.1, 0.05, 0.0125],
+        "convergence_direct_search_mode": "fast",
+        "max_step_sizes": [1, 0.2, 0.1],
+        "linesearch_n_points": 10,
+        "gradient_weight": gradient_weight,
+    }
+
+    estimagic_res = minimize(
+        criterion=estimagic_func,
+        params=params,
+        algorithm=minimize_manfred_estimagic,
+        algo_options=algo_options,
+        logging=False,
+    )
+
+    print("Estimagic Test:       ")  # noqa
+    print("Manfred Solution:     ", estimagic_res["solution_x"].round(2))  # noqa
+    print("True Solution:        ", true_x.round(2))  # noqa
+    print("Manfred n_evals:      ", estimagic_res["n_criterion_evaluations"])  # noqa
