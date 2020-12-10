@@ -115,22 +115,19 @@ def meet_daily_other_contacts(states, params, seed):
     return going
 
 
-def attends_educational_facility(states, params, facility, seed):
+def attends_educational_facility(states, params, id_column, seed):
     """Indicate which children go to an educational facility.
 
-    Children go to an educational facility on weekdays. The group is defined by the
-    corresponding id column which is ``f"{facility}_group_id"``.
-
+    Children go to an educational facility on weekdays.
     During vacations, all children do not go to educational facilities.
-
     Furthermore, there is a probability that children stay at home when they experience
-    symptoms.
+    symptoms or receive a positive test result.
 
     Args:
         states (pandas.DataFrame): The states given by sid.
         params (pandas.DataFrame): DataFrame with three category levels,
-        facility (str): The facility is either "school", "preschool", or "nursery" and
-            allows to access the correct set of parameters.
+        id_column (str): name of the column in *states* that identifies
+            which pupils and adults belong to a group.
 
     Returns:
         attends_facility (pandas.Series): It is a series with the same index as states.
@@ -138,10 +135,7 @@ def attends_educational_facility(states, params, facility, seed):
             who do not.
 
     """
-    if facility not in ["school", "preschool", "nursery"]:
-        raise NotImplementedError(f"Unknown educational facility: '{facility}'.")
-
-    id_column = "school_class_id" if facility == "school" else f"{facility}_group_id"
+    facility = id_column.split("_")[0]
 
     date = get_date(states)
     day = date.day_name()
@@ -149,7 +143,7 @@ def attends_educational_facility(states, params, facility, seed):
         attends_facility = pd.Series(data=0, index=states.index)
     else:
         attends_facility = (states[id_column] != -1).astype(int)
-        attends_facility = pupils_having_vacations_do_not_attend(
+        attends_facility = _pupils_having_vacations_do_not_attend(
             attends_facility, states, params
         )
         for params_entry, condition in [
@@ -441,7 +435,7 @@ def reduce_contacts_when_positive_case_among_recurrent_contacts(
     return contacts
 
 
-def pupils_having_vacations_do_not_attend(attends_facility, states, params):
+def _pupils_having_vacations_do_not_attend(attends_facility, states, params):
     """Make pupils stay away from school if their state has vacations."""
     date = get_date(states)
     states_w_vacations = _get_states_w_vacations(date, params)

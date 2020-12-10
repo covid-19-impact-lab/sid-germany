@@ -43,17 +43,23 @@ def get_school_contact_models():
     school_contact_models = {
         "educ_school_0": {
             "is_recurrent": True,
-            "model": partial(cm_funcs.attends_educational_facility, facility="school"),
+            "model": partial(
+                cm_funcs.attends_educational_facility, id_column="school_group_id_0"
+            ),
             "assort_by": ["school_group_id_0"],
         },
         "educ_school_1": {
             "is_recurrent": True,
-            "model": partial(cm_funcs.attends_educational_facility, facility="school"),
+            "model": partial(
+                cm_funcs.attends_educational_facility, id_column="school_group_id_1"
+            ),
             "assort_by": ["school_group_id_1"],
         },
         "educ_school_2": {
             "is_recurrent": True,
-            "model": partial(cm_funcs.attends_educational_facility, facility="school"),
+            "model": partial(
+                cm_funcs.attends_educational_facility, id_column="school_group_id_2"
+            ),
             "assort_by": ["school_group_id_2"],
         },
     }
@@ -65,7 +71,7 @@ def get_preschool_contact_model():
         "educ_preschool": {
             "is_recurrent": True,
             "model": partial(
-                cm_funcs.attends_educational_facility, facility="preschool"
+                cm_funcs.attends_educational_facility, id_column="preschool_group_id_0"
             ),
             "assort_by": ["preschool_group_id_0"],
         }
@@ -77,7 +83,9 @@ def get_nursery_contact_model():
     nursery_contact_model = {
         "educ_nursery": {
             "is_recurrent": True,
-            "model": partial(cm_funcs.attends_educational_facility, facility="nursery"),
+            "model": partial(
+                cm_funcs.attends_educational_facility, id_column="nursery_group_id_0"
+            ),
             "assort_by": ["nursery_group_id_0"],
         },
     }
