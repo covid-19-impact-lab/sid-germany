@@ -40,11 +40,18 @@ def plot_history(res, x_names=None):
     fig, axes = plt.subplots(nrows=n_plots, figsize=(4, n_plots * 2.5))
 
     for col, ax in zip(plot_data.columns, axes):
-        sns.lineplot(
-            x=np.arange(len(plot_data)) + 1,
-            y=np.log(plot_data[col]),
-            ax=ax,
-        )
+        if col == "criterion":
+            sns.lineplot(
+                x=np.arange(len(plot_data)) + 1,
+                y=np.log(plot_data[col]),
+                ax=ax,
+            )
+        else:
+            sns.lineplot(
+                x=np.arange(len(plot_data)) + 1,
+                y=plot_data[col],
+                ax=ax,
+            )
 
     fig.tight_layout()
 
@@ -105,6 +112,7 @@ if __name__ == "__main__":
         max_fun=1_000_000,
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
+        use_line_search=[True, True, False],
         max_step_sizes=[0.3, 0.2, 0.1],
         n_points_per_line_search=12,
         n_evaluations_per_x=[60, 90, 120],

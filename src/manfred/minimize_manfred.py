@@ -23,6 +23,7 @@ def minimize_manfred(
     n_evaluations_per_x=1,
     seed=0,
     gradient_weight=0.5,
+    momentum=0.05,
 ):
     """Minimize func using the MANFRED algorithm.
 
@@ -71,11 +72,20 @@ def minimize_manfred(
             seed sequence. Then each function is evaluated with a different seed.
         gradient_weight (float): Weight of the normalized gradient in the calculation
             of the manfred direction.
+        momentum (float): The search direction is momentum * past search direction +
+            (1 - momentum) * momentum free current search direction. More momentum can
+            help to break out of local minima and to average out noise in the
+            search direction calculation.
 
     """
     bounds = _process_bounds(x, lower_bounds, upper_bounds)
     step_sizes, max_step_sizes = _process_step_sizes(step_sizes, max_step_sizes)
     n_evaluations_per_x = _process_n_evaluations_per_x(n_evaluations_per_x, step_sizes)
+    use_line_search = _process_scalar_or_list_arg(use_line_search, len(step_sizes))
+    line_search_frequency = _process_scalar_or_list_arg(
+        line_search_frequency, len(step_sizes)
+    )
+
     assert 0 <= gradient_weight <= 1
 
     line_search_info = {
@@ -91,7 +101,8 @@ def minimize_manfred(
         "iter_counter": 0,
         "inner_iter_counter": 0,
         "cache": {},
-        "history": [hash_array(x)],
+        "x_history": [hash_array(x)],
+        "direction_history": [],
         "seed": itertools.count(seed),
     }
 
@@ -100,8 +111,12 @@ def minimize_manfred(
     convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
 
     current_x = x
-    for step_size, max_step_size, n_evals in zip(
-        step_sizes, max_step_sizes, n_evaluations_per_x
+    for step_size, max_step_size, n_evals, use_ls, ls_freq in zip(
+        step_sizes,
+        max_step_sizes,
+        n_evaluations_per_x,
+        use_line_search,
+        line_search_frequency,
     ):
         state["inner_iter_counter"] = 0
         while not _has_converged(state, convergence_criteria):
@@ -116,17 +131,26 @@ def minimize_manfred(
                 n_evaluations_per_x=n_evals,
             )
 
-            if use_line_search and (state["iter_counter"] % line_search_frequency) == 0:
+            direction = _calculate_manfred_direction(
+                current_x=current_x,
+                step_size=step_size,
+                state=state,
+                gradient_weight=gradient_weight,
+                momentum=momentum,
+            )
+
+            state["direction_history"].append(direction)
+
+            if use_ls and (state["iter_counter"] % ls_freq) == 0:
                 current_x, state = do_manfred_line_search(
                     func=func,
                     current_x=current_x,
-                    step_size=step_size,
+                    direction=direction,
                     state=state,
                     info=line_search_info,
                     bounds=bounds,
                     max_step_size=max_step_size,
                     n_evaluations_per_x=n_evals,
-                    gradient_weight=gradient_weight,
                 )
 
             needs_thorough_search = (
@@ -170,7 +194,7 @@ def minimize_manfred(
             state["inner_iter_counter"] = state["inner_iter_counter"] + 1
 
     out_history = {"criterion": [], "x": []}
-    for x_hash in state["history"]:
+    for x_hash in state["x_history"]:
         cache_entry = state["cache"][x_hash]
         out_history["criterion"].append(_aggregate_evaluations(cache_entry["evals"]))
         out_history["x"].append(cache_entry["x"])
@@ -199,20 +223,8 @@ def _process_bounds(x, lower_bounds, upper_bounds):
 
 
 def _process_step_sizes(step_sizes, max_step_sizes):
-    if isinstance(step_sizes, (list, tuple, np.ndarray)):
-        step_sizes = list(step_sizes)
-    elif isinstance(step_sizes, (float, int)):
-        step_sizes = [float(step_sizes)]
-    else:
-        raise ValueError("step_sizes must be int, float or list thereof.")
-
-    if max_step_sizes is None:
-        max_step_sizes = [size * 5 for size in step_sizes]
-    elif isinstance(max_step_sizes, (list, tuple, np.ndarray)):
-        max_step_sizes = list(max_step_sizes)
-        assert len(max_step_sizes) == len(step_sizes)
-    elif isinstance(max_step_sizes, (int, float)):
-        max_step_sizes = [max_step_sizes] * len(step_sizes)
+    step_sizes = _process_scalar_or_list_arg(step_sizes)
+    max_step_sizes = _process_scalar_or_list_arg(max_step_sizes, len(step_sizes))
 
     for ss, mss in zip(step_sizes, max_step_sizes):
         assert ss <= mss
@@ -221,14 +233,21 @@ def _process_step_sizes(step_sizes, max_step_sizes):
 
 
 def _process_n_evaluations_per_x(n_evaluations_per_x, step_sizes):
-    if isinstance(n_evaluations_per_x, (float, int)):
-        processed = [int(n_evaluations_per_x)] * len(step_sizes)
-    elif isinstance(n_evaluations_per_x, (list, tuple, np.ndarray)):
-        processed = [int(n_evals) for n_evals in n_evaluations_per_x]
-        assert len(processed) == len(step_sizes)
-
+    processed = _process_scalar_or_list_arg(n_evaluations_per_x, len(step_sizes))
     for n_evals in processed:
         assert n_evals >= 1
+    return processed
+
+
+def _process_scalar_or_list_arg(arg, target_len=None):
+    if isinstance(arg, (list, tuple, np.ndarray)):
+        processed = list(arg)
+        if target_len is not None:
+            assert len(processed) == target_len
+    elif target_len is None:
+        processed = [arg]
+    else:
+        processed = [arg] * target_len
     return processed
 
 
@@ -241,8 +260,8 @@ def _has_converged(state, convergence_criteria):
 
 def _x_has_changed(state, convergence_criteria):
     if state["inner_iter_counter"] > 0:
-        current_x = state["cache"][state["history"][-1]]["x"]
-        last_x = state["cache"][state["history"][-2]]["x"]
+        current_x = state["cache"][state["x_history"][-1]]["x"]
+        last_x = state["cache"][state["x_history"][-2]]["x"]
         has_changed = np.abs(last_x - current_x).max() > convergence_criteria["xtol"]
     else:
         has_changed = True
@@ -270,7 +289,7 @@ def do_manfred_direct_search(
         next_x = x_sample[argmin]
     else:
         next_x = current_x
-    state["history"].append(hash_array(next_x))
+    state["x_history"].append(hash_array(next_x))
 
     return next_x, state
 
@@ -278,17 +297,13 @@ def do_manfred_direct_search(
 def do_manfred_line_search(
     func,
     current_x,
-    step_size,
+    direction,
     state,
     info,
     bounds,
     max_step_size,
     n_evaluations_per_x,
-    gradient_weight,
 ):
-    direction = _calculate_manfred_direction(
-        current_x, step_size, state, gradient_weight
-    )
     x_sample = _get_line_search_sample(
         current_x, direction, info, bounds, max_step_size
     )
@@ -306,7 +321,7 @@ def do_manfred_line_search(
         next_x = x_sample[argmin]
     else:
         next_x = current_x
-    state["history"].append(hash_array(next_x))
+    state["x_history"].append(hash_array(next_x))
 
     return next_x, state
 
@@ -352,7 +367,9 @@ def _do_evaluations(
     return all_results, state
 
 
-def _calculate_manfred_direction(current_x, step_size, state, gradient_weight):
+def _calculate_manfred_direction(
+    current_x, step_size, state, gradient_weight, momentum
+):
     cache = state["cache"]
     pos_values = _get_values_for_pseudo_gradient(current_x, step_size, 1, cache)
     neg_values = _get_values_for_pseudo_gradient(current_x, step_size, -1, cache)
@@ -369,12 +386,16 @@ def _calculate_manfred_direction(current_x, step_size, state, gradient_weight):
 
     gradient_direction = _normalize_direction(-gradient)
 
-    last_x = cache[state["history"][-2]]["x"]
+    last_x = cache[state["x_history"][-2]]["x"]
     step_direction = _normalize_direction(current_x - last_x)
 
     direction = (
         gradient_weight * gradient_direction + (1 - gradient_weight) * step_direction
     )
+
+    dir_hist = state["direction_history"]
+    if momentum > 0 and len(dir_hist) >= 1:
+        direction = momentum * dir_hist[-1] + (1 - momentum) * direction
 
     return direction
 
@@ -407,7 +428,7 @@ def _get_values_for_pseudo_gradient(current_x, step_size, sign, cache):
 
 def _determine_search_strategies(current_x, state, info, mode):
     resid_strats = _determine_fast_strategies_from_residuals(current_x, state)
-    hist_strats = _determine_fast_strategies_from_history(current_x, state, info)
+    hist_strats = _determine_fast_strategies_from_x_history(current_x, state, info)
     strats = [_combine_strategies(s1, s2) for s1, s2 in zip(resid_strats, hist_strats)]
 
     if mode == "thorough":
@@ -431,14 +452,14 @@ def _determine_fast_strategies_from_residuals(current_x, state):
     return strategies
 
 
-def _determine_fast_strategies_from_history(current_x, state, info):
-    effective_window = min(info["direction_window"], len(state["history"]))
+def _determine_fast_strategies_from_x_history(current_x, state, info):
+    effective_window = min(info["direction_window"], len(state["x_history"]))
     if effective_window >= 2:
-        relevant_history = [
+        relevant_x_history = [
             state["cache"][x_hash]["x"]
-            for x_hash in state["history"][-effective_window:]
+            for x_hash in state["x_history"][-effective_window:]
         ]
-        diffs = np.diff(relevant_history, axis=0)
+        diffs = np.diff(relevant_x_history, axis=0)
         all_zero = (diffs == 0).all(axis=0)
         left = (diffs <= 0).all(axis=0) & ~all_zero
         right = (diffs >= 0).all(axis=0) & ~all_zero
