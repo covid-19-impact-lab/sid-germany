@@ -165,6 +165,7 @@ if __name__ == "__main__":
         n_points_per_line_search=12,
         n_evaluations_per_x=[30, 50, 50],
         gradient_weight=gradient_weight,
+        batch_evaluator_options={"n_cores": 4},
     )
 
     fig = plot_history(res)

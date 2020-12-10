@@ -4,6 +4,7 @@ import itertools
 from collections import namedtuple
 
 import numpy as np
+from estimagic.batch_evaluators import joblib_batch_evaluator
 
 
 def minimize_manfred_estimagic(
@@ -25,6 +26,8 @@ def minimize_manfred_estimagic(
     noise_seed=0,
     noise_n_evaluations_per_x=1,
     default_direct_search_mode="fast",
+    batch_evaluator=joblib_batch_evaluator,
+    batch_evaluator_options=None,
 ):
     algo_info = {
         "primary_criterion_entry": "value_and_residuals",
@@ -32,6 +35,8 @@ def minimize_manfred_estimagic(
         "needs_scaling": False,
         "name": "manfred",
     }
+    if batch_evaluator_options is None:
+        batch_evaluator_options = {}
 
     criterion = functools.partial(
         internal_criterion_and_derivative, algorithm_info=algo_info, task="criterion"
@@ -53,6 +58,8 @@ def minimize_manfred_estimagic(
         "seed": noise_seed,
         "gradient_weight": gradient_weight,
         "momentum": momentum,
+        "batch_evaluator": batch_evaluator,
+        "batch_evaluator_options": batch_evaluator_options,
     }
 
     unit_x = _x_to_unit_cube(x, lower_bounds, upper_bounds)
@@ -103,6 +110,8 @@ def minimize_manfred(
     seed=0,
     gradient_weight=0.5,
     momentum=0.05,
+    batch_evaluator=joblib_batch_evaluator,
+    batch_evaluator_options=None,
 ):
     """Minimize func using the MANFRED algorithm.
 
@@ -157,6 +166,9 @@ def minimize_manfred(
             search direction calculation.
 
     """
+    if batch_evaluator_options is None:
+        batch_evaluator_options = {}
+
     bounds = _process_bounds(x, lower_bounds, upper_bounds)
     step_sizes, max_step_sizes = _process_step_sizes(step_sizes, max_step_sizes)
     n_evaluations_per_x = _process_n_evaluations_per_x(n_evaluations_per_x, step_sizes)
@@ -185,7 +197,15 @@ def minimize_manfred(
         "seed": itertools.count(seed),
     }
 
-    _do_evaluations(func, [x], state, n_evaluations_per_x[0])
+    _do_evaluations(
+        func,
+        [x],
+        state,
+        n_evaluations_per_x[0],
+        return_type="aggregated",
+        batch_evaluator=batch_evaluator,
+        batch_evaluator_options=batch_evaluator_options,
+    )
 
     convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
 
@@ -208,6 +228,8 @@ def minimize_manfred(
                 bounds=bounds,
                 mode=default_direct_search_mode,
                 n_evaluations_per_x=n_evals,
+                batch_evaluator=batch_evaluator,
+                batch_evaluator_options=batch_evaluator_options,
             )
 
             direction = _calculate_manfred_direction(
@@ -230,6 +252,8 @@ def minimize_manfred(
                     bounds=bounds,
                     max_step_size=max_step_size,
                     n_evaluations_per_x=n_evals,
+                    batch_evaluator=batch_evaluator,
+                    batch_evaluator_options=batch_evaluator_options,
                 )
 
             needs_thorough_search = (
@@ -249,6 +273,8 @@ def minimize_manfred(
                     bounds=bounds,
                     mode="thorough",
                     n_evaluations_per_x=n_evals,
+                    batch_evaluator=batch_evaluator,
+                    batch_evaluator_options=batch_evaluator_options,
                 )
 
             needs_very_thorough_search = (
@@ -267,6 +293,8 @@ def minimize_manfred(
                     bounds=bounds,
                     mode="very-thorough",
                     n_evaluations_per_x=n_evals,
+                    batch_evaluator=batch_evaluator,
+                    batch_evaluator_options=batch_evaluator_options,
                 )
 
             state["iter_counter"] = state["iter_counter"] + 1
@@ -357,7 +385,16 @@ def _is_below_max_fun(state, convergence_criteria):
 
 
 def do_manfred_direct_search(
-    func, current_x, step_size, state, info, bounds, mode, n_evaluations_per_x
+    func,
+    current_x,
+    step_size,
+    state,
+    info,
+    bounds,
+    mode,
+    n_evaluations_per_x,
+    batch_evaluator,
+    batch_evaluator_options,
 ):
     search_strategies = _determine_search_strategies(current_x, state, info, mode)
     x_sample = _get_direct_search_sample(
@@ -365,7 +402,13 @@ def do_manfred_direct_search(
     )
 
     evaluations, state = _do_evaluations(
-        func, x_sample, state, n_evaluations_per_x, "aggregated"
+        func,
+        x_sample,
+        state,
+        n_evaluations_per_x,
+        "aggregated",
+        batch_evaluator=batch_evaluator,
+        batch_evaluator_options=batch_evaluator_options,
     )
 
     if evaluations:
@@ -387,6 +430,8 @@ def do_manfred_line_search(
     bounds,
     max_step_size,
     n_evaluations_per_x,
+    batch_evaluator,
+    batch_evaluator_options,
 ):
     x_sample = _get_line_search_sample(
         current_x, direction, info, bounds, max_step_size
@@ -398,6 +443,8 @@ def do_manfred_line_search(
         state=state,
         n_evaluations_per_x=n_evaluations_per_x,
         return_type="aggregated",
+        batch_evaluator=batch_evaluator,
+        batch_evaluator_options=batch_evaluator_options,
     )
 
     if evaluations:
@@ -422,7 +469,13 @@ def _get_line_search_sample(current_x, direction, info, bounds, max_step_size):
 
 
 def _do_evaluations(
-    func, x_sample, state, n_evaluations_per_x, return_type="aggregated"
+    func,
+    x_sample,
+    state,
+    n_evaluations_per_x,
+    return_type,
+    batch_evaluator,
+    batch_evaluator_options,
 ):
     cache = state["cache"]
     x_hashes = [hash_array(x) for x in x_sample]
@@ -436,7 +489,12 @@ def _do_evaluations(
 
     arguments = [{"x": x, "seed": next(state["seed"])} for x in need_to_evaluate]
 
-    new_evaluations = [func(**arg) for arg in arguments]
+    new_evaluations = batch_evaluator(
+        func=func,
+        arguments=arguments,
+        unpack_symbol="**",
+        **batch_evaluator_options,
+    )
 
     for x, evaluation in zip(need_to_evaluate, new_evaluations):
         cache = _add_to_cache(x, evaluation, cache)
