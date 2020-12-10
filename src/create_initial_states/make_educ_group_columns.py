@@ -77,7 +77,7 @@ def make_educ_group_columns(
         # skip groups with no participants
         if n_groups > 0:
             n_adults = n_groups * adults_per_group
-            candidate_query = "(occupation == 'working') & (25 <= age <= 75)"
+            candidate_query = "(occupation == 'working') & (25 <= age <= 68)"
             adult_candidates = reduced_states.query(candidate_query).index
             adults = np.random.choice(adult_candidates, size=n_adults, replace=False)
             occupation.loc[adults] = occupation_name

@@ -183,14 +183,14 @@ def add_contact_model_group_ids(
         validate="1:1",
     )
 
-    to_simplify = (
+    cols_with_non_parquet_compatible_categories = (
         ["work_daily_group_id", "other_daily_group_id"]
         + weekly_work_ids.columns.tolist()
         + weekly_other_ids.columns.tolist()
     )
-    for col in to_simplify:
-        # -1 has a special meaning so it needs to remain
+    for col in cols_with_non_parquet_compatible_categories:
         simplified = pd.Series(pd.factorize(df[col])[0], index=df.index)
+        # -1 has a special meaning so it needs to remain
         df[col] = simplified.where(df[col] != -1, -1)
         df[col] = df[col].astype("category")
 

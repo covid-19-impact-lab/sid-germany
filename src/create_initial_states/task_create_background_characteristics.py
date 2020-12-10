@@ -224,12 +224,9 @@ def _check_background_characteristics(df):
         "retired",
     ]
     assert df["occupation"].isin(occupation_categories).all()
-    assert 0.45 < (df["occupation"] == "working").mean()
-    assert 0.55 > (df["occupation"] == "working").mean()
-    assert 0.15 < (df["occupation"] == "retired").mean()
-    assert 0.25 > (df["occupation"] == "retired").mean()
-    assert 0.12 < (df["occupation"] == "stays home").mean()
-    assert 0.18 > (df["occupation"] == "stays home").mean()
+    assert 0.45 < (df["occupation"] == "working").mean() < 0.55
+    assert 0.15 < (df["occupation"] == "retired").mean() < 0.25
+    assert 0.12 < (df["occupation"] == "stays home").mean() < 0.18
     assert (df[df["age"].between(6, 14)]["occupation"] == "school").all()
     assert (df[df["age"].between(3, 5)]["occupation"] == "preschool").all()
     assert df[df["age"] < 3]["occupation"].isin(["nursery", "stays home"]).all()
