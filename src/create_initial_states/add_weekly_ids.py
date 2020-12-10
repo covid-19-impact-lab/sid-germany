@@ -70,8 +70,6 @@ def add_weekly_ids(
         county_assortativeness=county_assortativeness,
         seed=next(seed),
     )
-    weekly_ids = weekly_ids.astype("category")
-
     return weekly_ids
 
 
