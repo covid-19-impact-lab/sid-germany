@@ -74,7 +74,7 @@ def get_school_contact_models():
 
 def get_preschool_contact_model():
     preschool_contact_model = {
-        "educ_preschool": {
+        "educ_preschool_0": {
             "is_recurrent": True,
             "model": partial(
                 cm_funcs.attends_educational_facility,
@@ -89,7 +89,7 @@ def get_preschool_contact_model():
 
 def get_nursery_contact_model():
     nursery_contact_model = {
-        "educ_nursery": {
+        "educ_nursery_0": {
             "is_recurrent": True,
             "model": partial(
                 cm_funcs.attends_educational_facility,

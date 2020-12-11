@@ -85,7 +85,7 @@ def go_to_work(states, contact_params, seed):
         attends_work = pd.Series(data=0, index=states.index)
     else:
         attends_work = states.eval(
-            "(occupation == 'working') & (daily_work_group_id != -1)"
+            "(occupation == 'working') & (work_daily_group_id != -1)"
         ).astype(int)
         for params_entry, condition in [
             ("symptomatic_multiplier", "symptomatic"),
@@ -139,7 +139,8 @@ def attends_educational_facility(states, params, id_column, seed):
             who do not.
 
     """
-    facility = id_column.split("_")[0]
+    facility, _, _, digit = id_column.split("_")
+    model_name = f"educ_{facility}_{digit}"
 
     date = get_date(states)
     day = date.day_name()
@@ -157,7 +158,7 @@ def attends_educational_facility(states, params, id_column, seed):
             attends_facility = reduce_contacts_on_condition(
                 attends_facility,
                 states,
-                params.loc[(facility, params_entry, params_entry), "value"],
+                params.loc[(model_name, params_entry, params_entry), "value"],
                 condition,
                 seed=seed,
                 is_recurrent=True,
