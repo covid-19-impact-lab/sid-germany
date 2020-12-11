@@ -24,11 +24,13 @@ from src.contact_models.get_contact_models import get_all_contact_models
         / "contact_models"
         / "age_assort_params"
         / "work_non_recurrent.pkl",
+        "vacations": BLD / "data" / "vacations.pkl",
     }
 )
 @pytask.mark.produces(BLD / "start_params.pkl")
 def task_create_full_params(depends_on, produces):
     epi_params = get_epidemiological_parameters()
+    vacations = pd.read_pickle(depends_on.pop("vacations"))
 
     distributions = {
         name[5:]: path for name, path in depends_on.items() if name.startswith("dist_")
@@ -53,6 +55,7 @@ def task_create_full_params(depends_on, produces):
     reaction_params = _build_reaction_params(contact_models)
     param_slices = [
         epi_params,
+        vacations,
         dist_params,
         infection_probs,
         assort_params,
