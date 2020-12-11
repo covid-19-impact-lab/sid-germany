@@ -26,7 +26,7 @@ from src.contact_models.get_contact_models import get_all_contact_models
         / "work_non_recurrent.pkl",
     }
 )
-@pytask.mark.produces(BLD / "contact_models" / "params.pkl")
+@pytask.mark.produces(BLD / "start_params.pkl")
 def task_create_full_params(depends_on, produces):
     epi_params = get_epidemiological_parameters()
 
@@ -90,6 +90,7 @@ def _build_infection_probs(names):
     index_tuples = [("infection_prob", mod_name, mod_name) for mod_name in names]
     df = pd.DataFrame(index=pd.MultiIndex.from_tuples(index_tuples))
     df.index.names = ["category", "subcategory", "name"]
+    df = df.reset_index()
     prob_dict = {
         "educ": 0.008,
         "work": 0.025,
@@ -105,23 +106,22 @@ def _build_infection_probs(names):
             mod_name in full_prob_dict
         ), f"No infection probability for {mod_name} specified."
 
-    value_sr = df.index.get_level_values("name").to_series().map(full_prob_dict.get)
-    value_sr.name = "value"
-    df.join(value_sr)
+    df["value"] = df["name"].map(full_prob_dict.get)
+    df = df.set_index(["category", "subcategory", "name"])
     return df
 
 
 def _build_assort_params(contact_models, age_assort_params):
     df = pd.DataFrame(columns=["category", "subcategory", "name", "value"])
-    df = df.set_index(["category", "subcategory", "name"])
+    sr = df.set_index(["category", "subcategory", "name"])["value"]
     for name, model in contact_models.items():
         if not model["is_recurrent"]:
             for var in model["assort_by"]:
                 if var == "county":
-                    df.loc[("assortative_matching", name, var)] = 0.8
+                    sr[("assortative_matching", name, var)] = 0.8
                 else:
-                    df = pd.concat([df, age_assort_params[name]], axis=0)
-    return df
+                    sr = pd.concat([sr, age_assort_params[name]], axis=0)
+    return sr.to_frame()
 
 
 def _build_reaction_params(contact_models):

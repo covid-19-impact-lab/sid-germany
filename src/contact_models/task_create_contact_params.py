@@ -117,12 +117,27 @@ def _create_assort_params(model_name, contacts, places, recurrent, frequency, we
         dropna=False,
         normalize="index",
     )
-    normalized_cell_counts = normalized_cell_counts.fillna(0)
-    assort_params = normalized_cell_counts.stack().round(2)
+    meeting_prob = normalized_cell_counts.fillna(0).round(4)
+    meeting_prob = meeting_prob.where(
+        meeting_prob.sum(axis=1) != 0.0, 1 / len(meeting_prob.columns)
+    )
+    meeting_prob = meeting_prob / meeting_prob.sum(axis=1).to_numpy().reshape(-1, 1)
+    assert (meeting_prob.sum(axis=1) > 0.9999).all() & (
+        meeting_prob.sum(axis=1) < 1.0001
+    ).all(), f"the meeting probabilities of {name} do not add up to one in every row."
+    assert len(meeting_prob.index) == len(
+        meeting_prob.columns
+    ), f"the meeting probabilities of {name} are not square."
+    assert (
+        meeting_prob.index == meeting_prob.columns
+    ).all(), f"the meeting probabilities of {name} are not square."
+
+    assort_params = meeting_prob.stack()
 
     first_level = f"assortative_matching_{model_name}_age_group"
     assort_params = pd.concat([assort_params], keys=[first_level], names=["category"])
     assort_params.index.names = ["category", "subcategory", "name"]
+    assort_params.name = "value"
     return assort_params
 
 
