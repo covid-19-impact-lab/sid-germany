@@ -9,7 +9,8 @@ from src.shared import load_dataset
 
 
 def create_initial_conditions(
-    estimation_start,
+    start,
+    end,
     undetected_multiplier,
     seed,
     synthetic_data_path=BLD / "data" / "initial_states.parquet",
@@ -18,7 +19,10 @@ def create_initial_conditions(
     """Create the initial conditions, initial_infections and initial_immunity.
 
     Args:
-        estimation_start (str): Date from which the estimation is supposed to start.
+        start (str or pd.Timestamp): Start date for collection of initial
+            infections.
+        end (str or pd.Timestamp): End date for collection of initial
+            infections and initial immunity.
         undetected_multiplier (float): Multiplier used to scale up the observed
             infections to account for unknown cases. Must be >=1.
         seed (int)
@@ -40,8 +44,8 @@ def create_initial_conditions(
     initial_infections = create_initial_infections(
         empirical_data=empirical_data,
         synthetic_data=synthetic_data,
-        start=empirical_data.index.get_level_values("date").min(),
-        end=estimation_start,
+        start=start,
+        end=end,
         undetected_multiplier=undetected_multiplier,
         seed=next(seed),
     )
@@ -49,7 +53,7 @@ def create_initial_conditions(
     initial_immunity = create_initial_immunity(
         empirical_data=empirical_data,
         synthetic_data=synthetic_data,
-        date=estimation_start,
+        date=end,
         initial_infections=initial_infections,
         undetected_multiplier=undetected_multiplier,
         seed=next(seed),
