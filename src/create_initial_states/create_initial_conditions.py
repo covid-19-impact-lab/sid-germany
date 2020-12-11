@@ -13,6 +13,7 @@ def create_initial_conditions(
     end,
     undetected_multiplier,
     seed,
+    reporting_delay=0,
     synthetic_data_path=BLD / "data" / "initial_states.parquet",
     reported_infections_path=BLD / "data" / "processed_time_series" / "rki.pkl",
 ):
@@ -26,6 +27,9 @@ def create_initial_conditions(
         undetected_multiplier (float): Multiplier used to scale up the observed
             infections to account for unknown cases. Must be >=1.
         seed (int)
+        reporting_delay (int): Number of days by which the reporting of cases is
+            delayed. If given, later days are used to get the infections of the
+            demanded time frame.
         synthetic_data_path (pathlib.Path or str): Path from which to load the
             snythetic data.
         reported_infections_path (pathlib.Path or str): Path from which to load the
@@ -47,6 +51,7 @@ def create_initial_conditions(
         start=start,
         end=end,
         undetected_multiplier=undetected_multiplier,
+        reporting_delay=reporting_delay,
         seed=next(seed),
     )
 
@@ -56,6 +61,7 @@ def create_initial_conditions(
         date=end,
         initial_infections=initial_infections,
         undetected_multiplier=undetected_multiplier,
+        reporting_delay=reporting_delay,
         seed=next(seed),
     )
     return {

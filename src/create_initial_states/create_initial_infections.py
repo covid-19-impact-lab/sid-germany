@@ -11,6 +11,7 @@ def create_initial_infections(
     end,
     undetected_multiplier,
     seed,
+    reporting_delay=0,
     population_size=POPULATION_GERMANY,
 ):
     """Create a DataFrame with initial infections.
@@ -30,8 +31,11 @@ def create_initial_infections(
         end (str or pd.Timestamp): End date.
         undetected_multiplier (float): Multiplier used to scale up the observed
             infections to account for unknown cases. Must be >=1.
-        population_size (int): Size of the population behind the empirical_data.
         seed (int)
+        reporting_delay (int): Number of days by which the reporting of cases is
+            delayed. If given, later days are used to get the infections of the
+            demanded time frame.
+        population_size (int): Size of the population behind the empirical_data.
 
     Returns:
         pandas.DataFrame: DataFrame with same index as synthetic_data and one column
@@ -40,10 +44,14 @@ def create_initial_infections(
     """
     np.random.seed(seed)
 
+    assert reporting_delay >= 0, "Reporting delay must be >= 0"
+    reporting_delay = pd.Timedelta(days=reporting_delay)
+    start = pd.Timestamp(start) + reporting_delay
+    end = pd.Timestamp(end) + reporting_delay
     assert undetected_multiplier >= 1, "undetected_multiplier must be >= 1."
     index_cols = ["date", "county", "age_group_rki"]
-    right_index = empirical_data.index.names == index_cols
-    assert right_index, f"Your data must have {index_cols} as index levels."
+    correct_index_levels = empirical_data.index.names == index_cols
+    assert correct_index_levels, f"Your data must have {index_cols} as index levels."
     dates = empirical_data.index.get_level_values("date")
     assert start in dates, f"Your start date {start} is not in your empirical data."
     assert end in dates, f"Your end date {end} is not in your empirical data."
@@ -55,7 +63,7 @@ def create_initial_infections(
     assert not duplicates_in_index, "Your index must not have any duplicates."
 
     cases = empirical_data.to_frame().unstack("date")
-    cases.columns = [str(x.date()) for x in cases.columns.droplevel()]
+    cases.columns = [str(x.date() - reporting_delay) for x in cases.columns.droplevel()]
 
     group_infection_probs = _calculate_group_infection_probs(
         cases, population_size, synthetic_data, undetected_multiplier
