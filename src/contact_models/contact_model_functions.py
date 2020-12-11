@@ -111,7 +111,7 @@ def meet_daily_other_contacts(states, params, seed):
         going = reduce_contacts_on_condition(
             going,
             states,
-            params.loc[("other_recurrent", params_entry, params_entry), "value"],
+            params.loc[("other_recurrent_daily", params_entry, params_entry), "value"],
             condition,
             seed=seed,
             is_recurrent=True,

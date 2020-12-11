@@ -26,7 +26,7 @@ def get_household_contact_model():
     household_contact_model = {
         "households": {
             "is_recurrent": True,
-            "model": cm_funcs.meet_hh_members,
+            "model": partial(cm_funcs.meet_hh_members, seed=334),
             "assort_by": ["hh_id"],
             "loc": "households",
         },
@@ -44,21 +44,27 @@ def get_school_contact_models():
         "educ_school_0": {
             "is_recurrent": True,
             "model": partial(
-                cm_funcs.attends_educational_facility, id_column="school_group_id_0"
+                cm_funcs.attends_educational_facility,
+                id_column="school_group_id_0",
+                seed=11,
             ),
             "assort_by": ["school_group_id_0"],
         },
         "educ_school_1": {
             "is_recurrent": True,
             "model": partial(
-                cm_funcs.attends_educational_facility, id_column="school_group_id_1"
+                cm_funcs.attends_educational_facility,
+                id_column="school_group_id_1",
+                seed=22,
             ),
             "assort_by": ["school_group_id_1"],
         },
         "educ_school_2": {
             "is_recurrent": True,
             "model": partial(
-                cm_funcs.attends_educational_facility, id_column="school_group_id_2"
+                cm_funcs.attends_educational_facility,
+                id_column="school_group_id_2",
+                seed=33,
             ),
             "assort_by": ["school_group_id_2"],
         },
@@ -71,7 +77,9 @@ def get_preschool_contact_model():
         "educ_preschool": {
             "is_recurrent": True,
             "model": partial(
-                cm_funcs.attends_educational_facility, id_column="preschool_group_id_0"
+                cm_funcs.attends_educational_facility,
+                id_column="preschool_group_id_0",
+                seed=44,
             ),
             "assort_by": ["preschool_group_id_0"],
         }
@@ -84,7 +92,9 @@ def get_nursery_contact_model():
         "educ_nursery": {
             "is_recurrent": True,
             "model": partial(
-                cm_funcs.attends_educational_facility, id_column="nursery_group_id_0"
+                cm_funcs.attends_educational_facility,
+                id_column="nursery_group_id_0",
+                seed=55,
             ),
             "assort_by": ["nursery_group_id_0"],
         },
@@ -107,7 +117,7 @@ def get_work_non_recurrent_contact_model():
                 cm_funcs.calculate_non_recurrent_contacts_from_empirical_distribution,
                 on_weekends=False,
                 query="occupation == 'working'",
-                loc=("work_non_recurrent", "n_contacts"),
+                seed=66,
             ),
         }
     }
@@ -119,7 +129,7 @@ def get_work_daily_contact_model():
         "work_recurrent_daily": {
             "is_recurrent": True,
             "assort_by": ["work_daily_group_id"],
-            "model": cm_funcs.go_to_work,
+            "model": partial(cm_funcs.go_to_work, seed=122),
             "loc": "work_recurrent_daily",
         },
     }
@@ -140,8 +150,9 @@ def get_work_weekly_contact_models():
                 cm_funcs.go_to_weekly_meeting,
                 day_of_week=weekdays[n % len(weekdays)],
                 group_col_name=col_name,
+                seed=77,
             ),
-            "loc": "weekly_work",
+            "loc": model_name,
         }
         work_weekly_contact_models[model_name] = policy
     return work_weekly_contact_models
@@ -162,6 +173,7 @@ def get_other_non_recurrent_contact_model():
                 cm_funcs.calculate_non_recurrent_contacts_from_empirical_distribution,
                 on_weekends=True,
                 query=None,
+                seed=77,
             ),
         }
     }
@@ -173,7 +185,7 @@ def get_other_daily_contact_model():
         "other_recurrent_daily": {
             "is_recurrent": True,
             "assort_by": ["other_daily_group_id"],
-            "model": cm_funcs.meet_daily_other_contacts,
+            "model": partial(cm_funcs.meet_daily_other_contacts, seed=99),
         }
     }
     return other_daily_contact_model
@@ -201,8 +213,9 @@ def get_other_weekly_contact_models():
                 cm_funcs.go_to_weekly_meeting,
                 day_of_week=days[n % len(days)],
                 group_col_name=col_name,
+                seed=3474,
             ),
-            "loc": "weekly_other",
+            "loc": model_name,
         }
         other_weekly_contact_models[model_name] = policy
     return other_weekly_contact_models
