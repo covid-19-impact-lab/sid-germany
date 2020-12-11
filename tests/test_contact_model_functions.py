@@ -142,7 +142,7 @@ def test_go_to_work_weekend(states, no_reduction_params):
 
 
 def test_go_to_work_weekday(a_thursday, no_reduction_params):
-    a_thursday["daily_work_group_id"] = [1, 2, 1, 2, 3, 3, 3] + [-1] * (
+    a_thursday["work_daily_group_id"] = [1, 2, 1, 2, 3, 3, 3] + [-1] * (
         len(a_thursday) - 7
     )
     res = go_to_work(a_thursday, no_reduction_params, 1309)
@@ -155,7 +155,7 @@ def test_go_to_work_weekday(a_thursday, no_reduction_params):
 def test_go_to_work_weekday_with_reduction(a_thursday, no_reduction_params):
     reduction_params = no_reduction_params
     reduction_params["value"] = 0.0
-    a_thursday["daily_work_group_id"] = [1, 2, 1, 2, 3, 3, 3, 3, 3] + [-1] * (
+    a_thursday["work_daily_group_id"] = [1, 2, 1, 2, 3, 3, 3, 3, 3] + [-1] * (
         len(a_thursday) - 9
     )
     a_thursday.loc[1450:1458, "symptomatic"] = [
@@ -478,7 +478,7 @@ def test_meet_daily_other_contacts():
 
     params = pd.DataFrame()
     params["value"] = [0.0, 0.0]
-    params["category"] = "other_recurrent"
+    params["category"] = "other_recurrent_daily"
     params["subcategory"] = ["symptomatic_multiplier", "positive_test_multiplier"]
     params["name"] = params["subcategory"]
     params = params.set_index(["category", "subcategory", "name"])
