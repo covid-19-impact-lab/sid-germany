@@ -25,7 +25,6 @@ from src.config import BLD
 
 DROPPPED_COLUMNS = [
     "IdBundesland",
-    "Bundesland",
     "Landkreis",
     "Geschlecht",
     "Datenstand",
@@ -39,6 +38,7 @@ RENAME_COLUMNS = {
     "FID": "id",
     "Altersgruppe": "age_group",
     "IdLandkreis": "county",
+    "Bundesland": "state",
     "Refdatum": "date",
     "IstErkrankungsbeginn": "is_date_disease_onset",
     "NeuerFall": "type_case",
@@ -61,11 +61,9 @@ AGE_GROUPS_TO_INTERVALS = {
 @pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "rki.csv")
 @pytask.mark.produces(BLD / "data" / "processed_time_series" / "rki.pkl")
 def task_prepare_rki_data(depends_on, produces):
-    df = (
-        pd.read_csv(depends_on, parse_dates=["Refdatum"])
-        .drop(columns=DROPPPED_COLUMNS)
-        .rename(columns=RENAME_COLUMNS)
-    )
+    df = pd.read_csv(depends_on, parse_dates=["Refdatum"])
+    df = df.drop(columns=DROPPPED_COLUMNS)
+    df = df.rename(columns=RENAME_COLUMNS)
 
     df["age_group_rki"] = (
         df["age_group"].replace(AGE_GROUPS_TO_INTERVALS).astype("category")

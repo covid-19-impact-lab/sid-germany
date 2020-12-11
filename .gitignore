@@ -24,6 +24,7 @@ src/exploration/estimation/
 *.snm
 *.toc
 *.bib.bak
+.sid/
 
 .pytask.sqlite3
 

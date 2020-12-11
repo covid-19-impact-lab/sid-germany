@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from sid.shared import boolean_choices
 
 from src.config import POPULATION_GERMANY
 
@@ -58,35 +57,35 @@ def create_initial_infections(
     cases = empirical_data.to_frame().unstack("date")
     cases.columns = [str(x.date()) for x in cases.columns.droplevel()]
 
-    infection_probs = _calculate_infection_probs(
-        synthetic_data, cases, undetected_multiplier, population_size
+    group_infection_probs = _calculate_group_infection_probs(
+        cases, population_size, synthetic_data, undetected_multiplier
     )
 
-    initial_infections = pd.DataFrame(index=synthetic_data.index)
-    for col in infection_probs:
-        initial_infections[col] = boolean_choices(infection_probs[col].to_numpy())
+    initially_infected = _draw_bools_by_group(
+        synthetic_data=synthetic_data,
+        group_by=["county", "age_group_rki"],
+        probabilities=group_infection_probs,
+    )
+    return initially_infected
 
-    initial_infections = _only_leave_first_true(initial_infections)
-    return initial_infections
 
-
-def _calculate_infection_probs(
-    synthetic_data, cases, undetected_multiplier, population_size
+def _calculate_group_infection_probs(
+    cases, population_size, synthetic_data, undetected_multiplier
 ):
-    """Calculate the infection probabilities from the cases and synthetic data.
+    """Calculate the infection probability for each group and date.
 
     Args:
+        cases (pandas.DataFrame): columns are the dates, the index are counties
+            and age groups.
+        population_size (int): Size of the population from which the cases
+            originate.
         synthetic_data (pandas.DataFrame): Dataset with one row per simulated
             individual. Must contain the columns age_group_rki and county.
-        cases (pandas.DataFrame): DataFrame of cases with dates as columns and
-            age group and county as index levels.
-        undetected_multiplier (float): Multiplier used to scale up the observed
-            infections to account for unknown cases. Must be >=1.
 
     Returns:
-        infection_probs (pandas.DataFrame): Columns are the days given by cases.
-            The index is the same as in synthetic data. The values are the
-            probabilities for each individual to be infected on the particular day.
+        group_infection_probs (pandas.DataFrame): columns are dates, index are
+            counties and age groups. The values are the probabilities to be
+            infected by age group on a particular date.
 
     """
     upscale_factor = population_size / len(synthetic_data)
@@ -102,19 +101,73 @@ def _calculate_infection_probs(
         prob = true_cases / upscaled_group_sizes
         group_infection_probs[col] = prob
 
-    infection_probs = synthetic_data[["county", "age_group_rki"]].merge(
-        group_infection_probs,
-        left_on=["county", "age_group_rki"],
-        right_index=True,
-        validate="m:1",
-    )
-    infection_probs = infection_probs.drop(columns=["county", "age_group_rki"])
-    return infection_probs
+    return group_infection_probs
 
 
-def _only_leave_first_true(df):
-    df = df.copy()
-    for i, col in enumerate(df.columns):
-        for other_col in df.columns[i + 1 :]:  # noqa
-            df[other_col] = df[other_col] & ~df[col]
-    return df
+def _draw_bools_by_group(synthetic_data, group_by, probabilities):
+    """Draw boolean values for each individual in synthetic data.
+
+    Args:
+        synthetic_data (pd.DataFrame): Synthetic data set containing
+            the group_by variables.
+        group_by (list): List of variables according to which the data
+            are grouped.
+        probabilities (pd.DataFrame): The index levels are the
+            group_by variables. There can be several columns with
+            probabilities.
+
+
+    Returns:
+        pandas.DataFrame or pandas.Series
+
+    """
+    group_indices = synthetic_data.groupby(group_by).groups
+    res = pd.DataFrame(False, columns=probabilities.columns, index=synthetic_data.index)
+    for group, indices in group_indices.items():
+        group_size = len(indices)
+        cases = pd.Series(
+            _unbiased_sum_preserving_round(
+                probabilities.loc[group].to_numpy() * group_size
+            ),
+            index=probabilities.columns,
+        ).astype(int)
+        remaining_indices = set(indices)
+        for col, n_cases in cases.items():
+            chosen = np.random.choice(
+                list(remaining_indices), size=n_cases, replace=False
+            )
+            res.loc[chosen, col] = True
+            remaining_indices = remaining_indices - set(chosen)
+
+    return res
+
+
+def _unbiased_sum_preserving_round(arr):
+    """Round values in an array, preserving the sum as good as possible.
+    The function loops over the elements of an array and collects the deviations to the
+    nearest downward adjusted integer. Whenever the collected deviations reach a
+    predefined threshold, +1 is added to the current element and the collected
+    deviations are reduced by 1.
+    Args:
+        arr (numpy.ndarray): 1d numpy array.
+    Returns:
+        numpy.ndarray
+    """
+    arr = arr.copy()
+
+    threshold = np.random.uniform()
+    deviation = 0
+
+    for i in range(len(arr)):
+
+        floor_value = int(arr[i])
+        deviation += arr[i] - floor_value
+
+        if deviation >= threshold:
+            arr[i] = floor_value + 1
+            deviation -= 1
+
+        else:
+            arr[i] = floor_value
+
+    return arr
