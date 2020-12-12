@@ -24,12 +24,12 @@ The individual either ...
 """
 
 
-def go_to_weekly_meeting(states, contact_params, group_col_name, day_of_week, seed):
+def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
     """Return who participates in a weekly meeting.
 
     Args:
         states (pandas.DataFrame): sid states DataFrame
-        contact_params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two category levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
         group_col_name (str): name of the column identifying this contact model's
@@ -54,7 +54,7 @@ def go_to_weekly_meeting(states, contact_params, group_col_name, day_of_week, se
             attends_meeting = reduce_contacts_on_condition(
                 attends_meeting,
                 states,
-                contact_params.loc[(params_entry, params_entry), "value"],
+                params.loc[(params_entry, params_entry), "value"],
                 condition,
                 seed=seed,
                 is_recurrent=True,
@@ -62,7 +62,7 @@ def go_to_weekly_meeting(states, contact_params, group_col_name, day_of_week, se
     return attends_meeting
 
 
-def go_to_work(states, contact_params, seed):
+def go_to_work(states, params, seed):
     """Return which people go to work.
 
     Adults go to work if they are workers, it is a weekday, and they do not show any
@@ -70,7 +70,7 @@ def go_to_work(states, contact_params, seed):
 
     Args:
         states (pandas.DataFrame): sid states DataFrame
-        contact_params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two category levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
 
@@ -94,7 +94,7 @@ def go_to_work(states, contact_params, seed):
             attends_work = reduce_contacts_on_condition(
                 attends_work,
                 states,
-                contact_params.loc[(params_entry, params_entry), "value"],
+                params.loc[(params_entry, params_entry), "value"],
                 condition,
                 seed=seed,
                 is_recurrent=True,
@@ -166,7 +166,7 @@ def attends_educational_facility(states, params, id_column, seed):
     return attends_facility
 
 
-def meet_hh_members(states, contact_params, seed):
+def meet_hh_members(states, params, seed):
     """Meet household members.
 
     As single person households have unique household ids, everyone meets their
@@ -175,7 +175,7 @@ def meet_hh_members(states, contact_params, seed):
 
     Args:
         states (pandas.DataFrame): The states.
-        contact_params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two category levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
 
@@ -188,7 +188,7 @@ def meet_hh_members(states, contact_params, seed):
         meet_hh = reduce_contacts_on_condition(
             meet_hh,
             states,
-            contact_params.loc[(params_entry, params_entry), "value"],
+            params.loc[(params_entry, params_entry), "value"],
             condition,
             seed=seed,
             is_recurrent=True,
@@ -197,13 +197,13 @@ def meet_hh_members(states, contact_params, seed):
 
 
 def calculate_non_recurrent_contacts_from_empirical_distribution(
-    states, contact_params, on_weekends, seed, query=None
+    states, params, on_weekends, seed, query=None
 ):
     """Draw how many non recurrent contacts each person will have today.
 
     Args:
         states (pandas.DataFrame): sid states DataFrame.
-        contact_params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two category levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
         on_weekends (bool): whether to meet on weekends or not.
@@ -227,9 +227,7 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
         else:
             is_participating = pd.Series(True, index=states.index)
 
-        distribution = contact_params.query("~subcategory.str.contains('multiplier')")[
-            "value"
-        ]
+        distribution = params.query("~subcategory.str.contains('multiplier')")["value"]
         contacts[is_participating] = _draw_nr_of_contacts(
             distribution=distribution,
             is_participating=is_participating,
@@ -243,7 +241,7 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
             contacts = reduce_contacts_on_condition(
                 contacts,
                 states,
-                contact_params.loc[(params_entry, params_entry), "value"],
+                params.loc[(params_entry, params_entry), "value"],
                 condition,
                 seed=seed,
                 is_recurrent=False,
@@ -443,6 +441,11 @@ def _get_states_w_vacations(date: pd.Timestamp, params: pd.DataFrame) -> List[st
         # Dates are stored as epochs so that value can be a numeric column.
         vacations["value"] = from_epochs_to_timestamps(vacations["value"])
         vacations = vacations.groupby(vacations.index.names)["value"].first().unstack()
+        latest_vacation_date = vacations["end"].max()
+        assert (
+            date <= latest_vacation_date
+        ), f"Vacations are only known until {latest_vacation_date}"
+
         has_vacations = (vacations["start"] <= date) & (date <= vacations["end"])
         states = (
             vacations.loc[has_vacations].index.get_level_values("subcategory").unique()

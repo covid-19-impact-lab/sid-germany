@@ -124,7 +124,7 @@ def test_go_to_weekly_meeting_right_day(a_thursday, no_reduction_params):
 
     res = go_to_weekly_meeting(
         states=a_thursday,
-        contact_params=no_reduction_params,
+        params=no_reduction_params,
         group_col_name="group_col",
         day_of_week="Thursday",
         seed=3931,
@@ -183,7 +183,7 @@ def test_non_recurrent_work_contacts_weekend(states, params):
     a_saturday = states[states["date"] == pd.Timestamp("2020-04-04 00:00:00")]
     res = calculate_non_recurrent_contacts_from_empirical_distribution(
         states=a_saturday,
-        contact_params=params.loc["work_non_recurrent"],
+        params=params.loc["work_non_recurrent"],
         on_weekends=False,
         query="occupation == 'working'",
         seed=494,
@@ -220,7 +220,7 @@ def test_non_recurrent_work_contacts_no_random_no_sick(
 
     res = calculate_non_recurrent_contacts_from_empirical_distribution(
         states=a_thursday,
-        contact_params=params_with_positive.loc["work_non_recurrent"],
+        params=params_with_positive.loc["work_non_recurrent"],
         on_weekends=False,
         query="occupation == 'working'",
         seed=433,
@@ -236,7 +236,7 @@ def test_non_recurrent_work_contacts_no_random_with_sick(
 ):
     res = calculate_non_recurrent_contacts_from_empirical_distribution(
         states=a_thursday,
-        contact_params=params_with_positive.loc["work_non_recurrent"],
+        params=params_with_positive.loc["work_non_recurrent"],
         on_weekends=False,
         query="occupation == 'working'",
         seed=448,
@@ -265,7 +265,7 @@ def test_non_recurrent_work_contacts_random_with_sick(a_thursday):
 
     res = calculate_non_recurrent_contacts_from_empirical_distribution(
         states=a_thursday,
-        contact_params=params.loc["work_non_recurrent"],
+        params=params.loc["work_non_recurrent"],
         on_weekends=False,
         query="occupation == 'working'",
         seed=338,
@@ -302,7 +302,7 @@ def test_non_recurrent_other_contacts_no_random_no_sick(a_thursday):
 
     res = calculate_non_recurrent_contacts_from_empirical_distribution(
         states=a_thursday,
-        contact_params=params.loc["other_non_recurrent"],
+        params=params.loc["other_non_recurrent"],
         on_weekends=True,
         query=None,
         seed=334,
@@ -331,7 +331,7 @@ def test_non_recurrent_other_contacts_no_random_with_sick(a_thursday):
 
     res = calculate_non_recurrent_contacts_from_empirical_distribution(
         states=a_thursday,
-        contact_params=params.loc["other_non_recurrent"],
+        params=params.loc["other_non_recurrent"],
         on_weekends=True,
         query=None,
         seed=332,
@@ -360,7 +360,7 @@ def test_non_recurrent_other_contacts_random_with_sick(a_thursday):
 
     res = calculate_non_recurrent_contacts_from_empirical_distribution(
         states=a_thursday,
-        contact_params=params.loc["other_non_recurrent"],
+        params=params.loc["other_non_recurrent"],
         on_weekends=True,
         query=None,
         seed=474,
