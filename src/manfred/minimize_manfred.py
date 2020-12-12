@@ -267,56 +267,34 @@ def minimize_manfred(
                     state["x_history"].append(hash_array(current_x))
 
             # if neither the line search nor the first direct search brought any changes
-            if (current_x == last_iteration_x).all() and "thorough" in extra_modes:
-                current_x, state = do_manfred_direct_search(
-                    func=func,
-                    current_x=current_x,
-                    step_size=step_size,
-                    state=state,
-                    info=direct_search_info,
-                    bounds=bounds,
-                    mode="thorough",
-                    n_evaluations_per_x=n_evals,
-                    batch_evaluator=batch_evaluator,
-                    batch_evaluator_options=batch_evaluator_options,
-                )
-
-                if (current_x != last_iteration_x).any():
-                    state["x_history"].append(hash_array(current_x))
-                    direction = _calculate_manfred_direction(
+            # try the more extensive line search modes
+            for mode in extra_modes:
+                if (current_x == last_iteration_x).all():
+                    current_x, state = do_manfred_direct_search(
+                        func=func,
                         current_x=current_x,
                         step_size=step_size,
                         state=state,
-                        gradient_weight=gradient_weight,
-                        momentum=momentum,
+                        info=direct_search_info,
+                        bounds=bounds,
+                        mode=mode,
+                        n_evaluations_per_x=n_evals,
+                        batch_evaluator=batch_evaluator,
+                        batch_evaluator_options=batch_evaluator_options,
                     )
-                    state["direction_history"].append(direction)
 
-            if (current_x == last_iteration_x).all() and "very-thorough" in extra_modes:
-                current_x, state = do_manfred_direct_search(
-                    func=func,
-                    current_x=current_x,
-                    step_size=step_size,
-                    state=state,
-                    info=direct_search_info,
-                    bounds=bounds,
-                    mode="very-thorough",
-                    n_evaluations_per_x=n_evals,
-                    batch_evaluator=batch_evaluator,
-                    batch_evaluator_options=batch_evaluator_options,
-                )
+                    if (current_x != last_iteration_x).any():
+                        state["x_history"].append(hash_array(current_x))
+                        direction = _calculate_manfred_direction(
+                            current_x=current_x,
+                            step_size=step_size,
+                            state=state,
+                            gradient_weight=gradient_weight,
+                            momentum=momentum,
+                        )
+                        state["direction_history"].append(direction)
 
-                if (current_x != last_iteration_x).any():
-                    state["x_history"].append(hash_array(current_x))
-                    direction = _calculate_manfred_direction(
-                        current_x=current_x,
-                        step_size=step_size,
-                        state=state,
-                        gradient_weight=gradient_weight,
-                        momentum=momentum,
-                    )
-                    state["direction_history"].append(direction)
-
+            # cause convergence
             if (current_x == last_iteration_x).all():
                 state["x_history"].append(hash_array(current_x))
 
