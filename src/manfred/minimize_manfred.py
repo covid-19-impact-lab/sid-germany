@@ -225,7 +225,6 @@ def minimize_manfred(
     ):
         state["inner_iter_counter"] = 0
         while not _has_converged(state, convergence_criteria):
-            last_x = last_iteration_x
             current_x, state = do_manfred_direct_search(
                 func=func,
                 current_x=current_x,
@@ -239,8 +238,8 @@ def minimize_manfred(
                 batch_evaluator_options=batch_evaluator_options,
             )
 
-            if (current_x != last_x).any():
-                # state["x_history"].append(hash_array(current_x))
+            if (current_x != last_iteration_x).any():
+                state["x_history"].append(hash_array(current_x))
                 direction = _calculate_manfred_direction(
                     current_x=current_x,
                     step_size=step_size,
@@ -249,7 +248,7 @@ def minimize_manfred(
                     momentum=momentum,
                 )
                 state["direction_history"].append(direction)
-                last_x = current_x
+                after_direct_search_x = current_x
 
             if use_ls and (state["iter_counter"] % ls_freq) == 0:
                 current_x, state = do_manfred_line_search(
@@ -264,8 +263,8 @@ def minimize_manfred(
                     batch_evaluator=batch_evaluator,
                     batch_evaluator_options=batch_evaluator_options,
                 )
-                # if (current_x != last_x).any():
-                #     state["x_history"].append(hash_array(current_x))
+                if (current_x != after_direct_search_x).any():
+                    state["x_history"].append(hash_array(current_x))
 
             # if neither the line search nor the first direct search brought any changes
             if (current_x == last_iteration_x).all() and "thorough" in extra_modes:
@@ -282,6 +281,17 @@ def minimize_manfred(
                     batch_evaluator_options=batch_evaluator_options,
                 )
 
+                if (current_x != last_iteration_x).any():
+                    state["x_history"].append(hash_array(current_x))
+                    direction = _calculate_manfred_direction(
+                        current_x=current_x,
+                        step_size=step_size,
+                        state=state,
+                        gradient_weight=gradient_weight,
+                        momentum=momentum,
+                    )
+                    state["direction_history"].append(direction)
+
             if (current_x == last_iteration_x).all() and "very-thorough" in extra_modes:
                 current_x, state = do_manfred_direct_search(
                     func=func,
@@ -295,6 +305,20 @@ def minimize_manfred(
                     batch_evaluator=batch_evaluator,
                     batch_evaluator_options=batch_evaluator_options,
                 )
+
+                if (current_x != last_iteration_x).any():
+                    state["x_history"].append(hash_array(current_x))
+                    direction = _calculate_manfred_direction(
+                        current_x=current_x,
+                        step_size=step_size,
+                        state=state,
+                        gradient_weight=gradient_weight,
+                        momentum=momentum,
+                    )
+                    state["direction_history"].append(direction)
+
+            if (current_x == last_iteration_x).all():
+                state["x_history"].append(hash_array(current_x))
 
             state["iter_counter"] = state["iter_counter"] + 1
             state["inner_iter_counter"] = state["inner_iter_counter"] + 1
@@ -322,7 +346,7 @@ def _get_extra_direct_search_modes(
     start_index = all_modes.index(default_direct_search_mode)
     stop_index = all_modes.index(convergence_direct_search_mode)
     assert stop_index >= start_index
-    extra_modes = all_modes[start_index + 1 : stop_index + 1]
+    extra_modes = all_modes[start_index + 1 : stop_index + 1]  # noqa
     return extra_modes
 
 
@@ -426,7 +450,6 @@ def do_manfred_direct_search(
         next_x = x_sample[argmin]
     else:
         next_x = current_x
-    state["x_history"].append(hash_array(next_x))
 
     return next_x, state
 
@@ -462,7 +485,6 @@ def do_manfred_line_search(
         next_x = x_sample[argmin]
     else:
         next_x = current_x
-    state["x_history"].append(hash_array(next_x))
 
     return next_x, state
 

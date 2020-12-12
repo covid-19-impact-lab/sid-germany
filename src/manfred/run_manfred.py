@@ -80,7 +80,7 @@ if __name__ == "__main__":
     scipy_test_func = partial(scipy_criterion_function, true_x=true_x, noise_level=0)
     test_func = partial(criterion_function, true_x=true_x, noise_level=0)
 
-    gradient_weight = 0.6
+    gradient_weight = 0.3
 
     res = minimize_manfred(
         func=test_func,
