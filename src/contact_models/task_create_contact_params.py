@@ -9,66 +9,82 @@ from estimagic import minimize
 from src.config import BLD
 
 
-SUBSET_SPECS = {
-    "work_non_recurrent": {
-        "places": ["work"],
-        "recurrent": False,
-        "frequency": None,
-        "weekend": False,
-        "max_contacts": None,
-    },
-    "work_recurrent_daily": {
-        "places": ["work"],
-        "recurrent": True,
-        "frequency": "(almost) daily",
-        "weekend": False,
-        "max_contacts": 15,
-    },
-    "work_recurrent_weekly": {
-        "places": ["work"],
-        "recurrent": True,
-        "frequency": "1-2 times a week",
-        "weekend": False,
-        "max_contacts": 14,
-    },
-    "other_non_recurrent": {
-        "places": ["otherplace", "leisure"],
-        "recurrent": False,
-        "frequency": None,
-        "weekend": None,
-        "max_contacts": None,
-    },
-    "other_recurrent_daily": {
-        "places": ["otherplace", "leisure"],
-        "recurrent": True,
-        "frequency": "(almost) daily",
-        "weekend": None,
-        "max_contacts": 5,
-    },
-    "other_recurrent_weekly": {
-        "places": ["otherplace", "leisure"],
-        "recurrent": True,
-        "frequency": "1-2 times a week",
-        "weekend": None,
-        "max_contacts": 4,
-    },
-}
+def _create_parametrization():
+    """Create the pytask parametrization.
+
+    Each entry includes criteria for which contacts count to a contact type,
+    specified in the data_selection_criteria that maps the type to the
+    criteria that a contact must fulfill to belong to that contact type,
+    as well as potentially the maximal number of contacts allowed.
+
+    The parametrization is a list of tuples where the first entry is the
+    data_selection_criteria entry and the second the list of expected
+    outputs.
+
+    """
+    data_selection_criteria = {
+        "work_non_recurrent": {
+            "places": ["work"],
+            "recurrent": False,
+            "frequency": None,
+            "weekend": False,
+            "max_contacts": None,
+        },
+        "work_recurrent_daily": {
+            "places": ["work"],
+            "recurrent": True,
+            "frequency": "(almost) daily",
+            "weekend": False,
+            "max_contacts": 15,
+        },
+        "work_recurrent_weekly": {
+            "places": ["work"],
+            "recurrent": True,
+            "frequency": "1-2 times a week",
+            "weekend": False,
+            "max_contacts": 14,
+        },
+        "other_non_recurrent": {
+            "places": ["otherplace", "leisure"],
+            "recurrent": False,
+            "frequency": None,
+            "weekend": None,
+            "max_contacts": None,
+        },
+        "other_recurrent_daily": {
+            "places": ["otherplace", "leisure"],
+            "recurrent": True,
+            "frequency": "(almost) daily",
+            "weekend": None,
+            "max_contacts": 5,
+        },
+        "other_recurrent_weekly": {
+            "places": ["otherplace", "leisure"],
+            "recurrent": True,
+            "frequency": "1-2 times a week",
+            "weekend": None,
+            "max_contacts": 4,
+        },
+    }
+
+    out_path = BLD / "contact_models" / "empirical_distributions"
+
+    parametrization = []
+    for name, criteria in data_selection_criteria.items():
+        produce_paths = [out_path / "figures" / f"{name}.png", out_path / f"{name}.pkl"]
+        if not criteria["recurrent"]:
+            produce_paths.append(
+                BLD / "contact_models" / "age_assort_params" / f"{name}.pkl"
+            )
+        parametrization.append((criteria, produce_paths))
+    return parametrization
 
 
-OUT_PATH = BLD / "contact_models" / "empirical_distributions"
-
-PARAM_SPECS = []
-for name, spec in SUBSET_SPECS.items():
-    produce_paths = [OUT_PATH / "figures" / f"{name}.png", OUT_PATH / f"{name}.pkl"]
-    if not spec["recurrent"]:
-        produce_paths.append(
-            BLD / "contact_models" / "age_assort_params" / f"{name}.pkl"
-        )
-    PARAM_SPECS.append((spec, produce_paths))
+PARAMETRIZATION = _create_parametrization()
 
 
 @pytask.mark.depends_on(BLD / "data" / "mossong_2008" / "contact_data.pkl")
-@pytask.mark.parametrize("specs, produces", PARAM_SPECS)
+@pytask.mark.parametrize("specs, produces", PARAMETRIZATION)
 def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
     name = produces[0].stem.replace("_", " ").title()
     regression_criterion_values = {
@@ -124,13 +140,10 @@ def _create_assort_params(model_name, contacts, places, recurrent, frequency, we
     meeting_prob = meeting_prob / meeting_prob.sum(axis=1).to_numpy().reshape(-1, 1)
     assert (meeting_prob.sum(axis=1) > 0.9999).all() & (
         meeting_prob.sum(axis=1) < 1.0001
-    ).all(), f"the meeting probabilities of {name} do not add up to one in every row."
-    assert len(meeting_prob.index) == len(
-        meeting_prob.columns
-    ), f"the meeting probabilities of {name} are not square."
+    ).all(), "meeting probabilities do not add up to 1 in every row."
     assert (
         meeting_prob.index == meeting_prob.columns
-    ).all(), f"the meeting probabilities of {name} are not square."
+    ).all(), "meeting probabilities are not square."
 
     assort_params = meeting_prob.stack()
 
@@ -166,7 +179,12 @@ def _create_n_contacts(contacts, places, recurrent, frequency, weekend):
         query = "participant_occupation == 'working'"
         relevant_ids = contacts.query(query)["id"].unique()
     df = _get_relevant_contacts_subset(contacts, places, recurrent, frequency, weekend)
-    n_contacts = _calculate_n_of_contacts(df, relevant_ids)
+
+    n_contacts = df.groupby("id").size()
+    missing = [x for x in relevant_ids if x not in n_contacts.index]
+    to_append = pd.Series(0, index=missing)
+    n_contacts = n_contacts.append(to_append)
+    n_contacts = n_contacts.sort_index()
     return n_contacts
 
 
@@ -198,28 +216,6 @@ def _get_relevant_contacts_subset(contacts, places, recurrent, frequency, weeken
     if weekend is not None:
         df = df[df["weekend"] == weekend]
     return df
-
-
-def _calculate_n_of_contacts(df, relevant_ids):
-    """Sum up over individuals to get the number of contacts.
-
-    Args:
-        df (pandas.DataFrame): DataFrame reduced to relevant people and contacts.
-        relevant_ids (numpy.ndarray): ids of individuals that were in the original
-            dataset. If we wouldn't expand the contacts back to this we would miss
-            the zero contact individuals.
-
-    Returns:
-        n_contacts (pandas.Series): index are the ids of the individuals, values
-            are the number of contacts the individuals had in the relevant category.
-
-    """
-    n_contacts = df.groupby("id").size()
-    missing = [x for x in relevant_ids if x not in n_contacts.index]
-    to_append = pd.Series(0, index=missing)
-    n_contacts = n_contacts.append(to_append)
-    n_contacts = n_contacts.sort_index()
-    return n_contacts
 
 
 def _reduce_empirical_distribution_to_max_contacts(

@@ -472,17 +472,19 @@ def test_reduce_recurrent_contacts_on_condition(states):
 def test_meet_daily_other_contacts():
     states = pd.DataFrame()
     states["symptomatic"] = [False, False, False, True]
-    states["knows_infectious"] = [False, True, False, False]
+    states["knows_infectious"] = [False, False, False, False]
     states["knows_immune"] = False
     states["cd_received_test_result_true"] = -20
+    states["daily_meeting_id"] = [-1, 2, 2, 2]
 
     params = pd.DataFrame()
     params["value"] = [0.0, 0.0]
-    params["category"] = "other_recurrent_daily"
     params["subcategory"] = ["symptomatic_multiplier", "positive_test_multiplier"]
     params["name"] = params["subcategory"]
-    params = params.set_index(["category", "subcategory", "name"])
+    params = params.set_index(["subcategory", "name"])
 
-    res = meet_daily_other_contacts(states, params, 339)
-    expected = pd.Series([1, 0, 1, 0])
+    res = meet_daily_other_contacts(
+        states, params, group_col_name="daily_meeting_id", seed=339
+    )
+    expected = pd.Series([0, 1, 1, 0])
     assert_series_equal(res, expected)

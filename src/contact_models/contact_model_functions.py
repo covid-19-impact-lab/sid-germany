@@ -102,21 +102,21 @@ def go_to_work(states, contact_params, seed):
     return attends_work
 
 
-def meet_daily_other_contacts(states, params, seed):
-    going = pd.Series(data=1, index=states.index)
+def meet_daily_other_contacts(states, params, group_col_name, seed):
+    attends_meeting = (states[group_col_name] != -1).astype(int)
     for params_entry, condition in [
         ("symptomatic_multiplier", "symptomatic"),
         ("positive_test_multiplier", IS_POSITIVE_CASE),
     ]:
-        going = reduce_contacts_on_condition(
-            going,
+        attends_meeting = reduce_contacts_on_condition(
+            attends_meeting,
             states,
-            params.loc[("other_recurrent_daily", params_entry, params_entry), "value"],
+            params.loc[(params_entry, params_entry), "value"],
             condition,
             seed=seed,
             is_recurrent=True,
         )
-    return going
+    return attends_meeting
 
 
 def attends_educational_facility(states, params, id_column, seed):

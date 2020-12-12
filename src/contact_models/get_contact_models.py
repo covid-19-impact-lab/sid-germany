@@ -1,24 +1,26 @@
 from functools import partial
 
 from src.contact_models import contact_model_functions as cm_funcs
+from src.policies.policy_tools import combine_dictionaries
 
 
 def get_all_contact_models():
-    contact_models = {
-        **get_household_contact_model(),
+    to_combine = [
+        get_household_contact_model(),
         # education
-        **get_school_contact_models(),
-        **get_preschool_contact_model(),
-        **get_nursery_contact_model(),
+        get_school_contact_models(),
+        get_preschool_contact_model(),
+        get_nursery_contact_model(),
         # work
-        **get_work_non_recurrent_contact_model(),
-        **get_work_daily_contact_model(),
-        **get_work_weekly_contact_models(),
+        get_work_non_recurrent_contact_model(),
+        get_work_daily_contact_model(),
+        get_work_weekly_contact_models(),
         # other
-        **get_other_non_recurrent_contact_model(),
-        **get_other_daily_contact_model(),
-        **get_other_weekly_contact_models(),
-    }
+        get_other_non_recurrent_contact_model(),
+        get_other_daily_contact_model(),
+        get_other_weekly_contact_models(),
+    ]
+    contact_models = combine_dictionaries(to_combine)
     return contact_models
 
 
@@ -40,35 +42,21 @@ def get_household_contact_model():
 
 
 def get_school_contact_models():
-    school_contact_models = {
-        "educ_school_0": {
-            "is_recurrent": True,
-            "model": partial(
-                cm_funcs.attends_educational_facility,
-                id_column="school_group_id_0",
-                seed=11,
-            ),
-            "assort_by": ["school_group_id_0"],
-        },
-        "educ_school_1": {
-            "is_recurrent": True,
-            "model": partial(
-                cm_funcs.attends_educational_facility,
-                id_column="school_group_id_1",
-                seed=22,
-            ),
-            "assort_by": ["school_group_id_1"],
-        },
-        "educ_school_2": {
-            "is_recurrent": True,
-            "model": partial(
-                cm_funcs.attends_educational_facility,
-                id_column="school_group_id_2",
-                seed=33,
-            ),
-            "assort_by": ["school_group_id_2"],
-        },
-    }
+    model_list = []
+    for i in range(3):
+        model = {
+            f"educ_school_{i}": {
+                "is_recurrent": True,
+                "model": partial(
+                    cm_funcs.attends_educational_facility,
+                    id_column=f"school_group_id_{i}",
+                    seed=11,
+                ),
+                "assort_by": [f"school_group_id_{i}"],
+            },
+        }
+        model_list.append(model)
+    school_contact_models = combine_dictionaries(model_list)
     return school_contact_models
 
 
@@ -184,8 +172,13 @@ def get_other_daily_contact_model():
     other_daily_contact_model = {
         "other_recurrent_daily": {
             "is_recurrent": True,
+            "loc": "other_recurrent_daily",
             "assort_by": ["other_daily_group_id"],
-            "model": partial(cm_funcs.meet_daily_other_contacts, seed=99),
+            "model": partial(
+                cm_funcs.meet_daily_other_contacts,
+                group_col_name="other_daily_group_id",
+                seed=99,
+            ),
         }
     }
     return other_daily_contact_model

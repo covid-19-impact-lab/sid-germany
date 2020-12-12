@@ -1,9 +1,7 @@
-import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import pytest
 
-from src.contact_models.task_create_contact_params import _calculate_n_of_contacts
 from src.contact_models.task_create_contact_params import _create_n_contacts
 from src.contact_models.task_create_contact_params import _get_relevant_contacts_subset
 from src.contact_models.task_create_contact_params import _make_decreasing
@@ -36,13 +34,6 @@ def test_get_relevant_contacts_subset(mostly_worker):
     pdt.assert_frame_equal(res, expected)
 
 
-def test_calculate_n_of_contacts(mostly_worker):
-    reduced = mostly_worker.loc[[0]]
-    res = _calculate_n_of_contacts(reduced, np.array([0, 1]))
-    expected = pd.Series(data=[1, 0], index=[0, 1])
-    pdt.assert_series_equal(res, expected)
-
-
 def test_create_n_contacts_work(mostly_worker):
     res = _create_n_contacts(
         mostly_worker,
@@ -52,7 +43,7 @@ def test_create_n_contacts_work(mostly_worker):
         weekend=None,
     )
     expected = pd.Series([1, 0], index=[0, 1])
-    pdt.assert_series_equal(res, expected)
+    pdt.assert_series_equal(res, expected, check_names=False, check_dtype=False)
 
 
 def test_create_n_contacts_leisure(mostly_worker):
@@ -64,7 +55,7 @@ def test_create_n_contacts_leisure(mostly_worker):
         weekend=None,
     )
     expected = pd.Series([1, 1, 1], index=[0, 1, 2])
-    pdt.assert_series_equal(res, expected)
+    pdt.assert_series_equal(res, expected, check_names=False, check_dtype=False)
 
 
 def test_make_decreasing_unchanged():

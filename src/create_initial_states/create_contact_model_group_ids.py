@@ -198,18 +198,6 @@ def add_contact_model_group_ids(
     return df
 
 
-def _draw_who_attends_nursery(df, seed):
-    np.random.seed(seed)
-    below_3_yos = df.query("age < 3").index
-    share_of_children_in_nursery = 0.35
-    n_kids_to_draw = int(share_of_children_in_nursery * len(below_3_yos))
-    attend_nursery_indices = np.random.choice(
-        below_3_yos, size=n_kids_to_draw, replace=False
-    )
-    attends_nursery = df.index.isin(attend_nursery_indices)
-    return attends_nursery
-
-
 def _draw_systemically_relevant(occupation, seed):
     """Assign each worker whether (s)he is systemically relevant.
 
