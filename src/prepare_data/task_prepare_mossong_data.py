@@ -59,6 +59,8 @@ def task_prepare_mossong_data(depends_on, produces):
         contacts=contacts, participants=participants, sday=sday, hh=hh
     )
     contacts = _make_columns_in_contact_data_nice(contacts)
+    contacts = contacts[contacts["country"].isin(["LU", "DE_TOT", "BE", "NL"])]
+    contacts = contacts.dropna(how="any")
     contacts.to_pickle(produces["contact_data"])
 
     # household sample for initial states
@@ -234,26 +236,39 @@ def _make_columns_in_contact_data_nice(df):
         }
     )
 
-    drop_cols = [
-        "child_care",
-        "child_care_detail",
-        "problems",
-        "participant_school_year",
-        "part_occupation_detail",
-        "child_nationality",
-        "part_education",
-        "child_relationship",
-        "cnt_age_est_max",
-        "cnt_age_est_min",
-        "diary_how",
-        "type",
+    # drop columns
+    keep_cols = [
+        "age_of_contact",
+        "country",
+        "day",
+        "dayofweek",
+        "duration",
+        "frequency",
+        "gender_of_contact",
+        "hh_id",
+        "hh_size",
+        "home",
+        "id",
+        "leisure",
+        "month",
+        "otherplace",
+        "part_age",
+        "part_gender",
+        "participant_occupation",
+        "phys_contact",
+        "place",
+        "school",
+        "transport",
+        "weekend",
+        "work",
+        "year",
     ]
-    drop_cols += [f"hh_age_{x}" for x in range(5, 21)]  # noqa
-    df.drop(columns=drop_cols, inplace=True)
+    df = df[keep_cols]
 
+    # add columns
     df["part_age_group"] = create_age_groups(df["part_age"])
+    df["part_broad_age_group"] = pd.cut(df["part_age"], [0, 30, 60, 100])
     df["age_group_of_contact"] = create_age_groups(df["age_of_contact"])
-
     df["recurrent"] = df["frequency"].isin(["1-2 times a week", "(almost) daily"])
     return df
 

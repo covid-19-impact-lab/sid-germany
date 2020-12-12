@@ -12,6 +12,7 @@ def create_initial_immunity(
     undetected_multiplier,
     date,
     seed,
+    reporting_delay=0,
     population_size=POPULATION_GERMANY,
 ):
     """Create a Series with initial immunity.
@@ -27,21 +28,26 @@ def create_initial_immunity(
         undetected_multiplier (float): Multiplier used to scale up the observed
             infections to account for unknown cases. Must be >=1.
         seed (int)
+        reporting_delay (int): Number of days by which the reporting of cases is
+            delayed. If given, later days are used to get the infections of the
+            demanded time frame.
+        population_size (int): Size of the population behind the empirical_data.
 
     Returns:
-        pd.Series: Boolean series with same index as synthetic_data
+        pd.Series: Boolean series with same index as synthetic_data.
 
     """
-    empirical_data = empirical_data[: pd.Timestamp(date)].sort_index()
+    date_with_delay = pd.Timestamp(date) + pd.Timedelta(days=reporting_delay)
+    empirical_data = empirical_data[:date_with_delay].sort_index()
 
     initial_before_date = [
-        pd.Timestamp(col) <= pd.Timestamp(date) for col in initial_infections
+        pd.Timestamp(col) <= date_with_delay for col in initial_infections
     ]
     assert all(initial_before_date), f"Initial infections must lie before {date}."
     assert undetected_multiplier >= 1, "undetected_multiplier must be >= 1."
     index_cols = ["date", "county", "age_group_rki"]
-    right_index = empirical_data.index.names == index_cols
-    assert right_index, f"Your data must have {index_cols} as index levels."
+    correct_index_levels = empirical_data.index.names == index_cols
+    assert correct_index_levels, f"Your data must have {index_cols} as index levels."
     duplicates_in_index = empirical_data.index.duplicated().any()
     assert not duplicates_in_index, "Your index must not have any duplicates."
 
