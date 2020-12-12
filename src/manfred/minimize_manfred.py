@@ -209,7 +209,13 @@ def minimize_manfred(
 
     convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
 
+    extra_modes = _get_extra_direct_search_modes(
+        default_direct_search_mode,
+        convergence_direct_search_mode,
+    )
+
     current_x = x
+    last_iteration_x = x + np.nan
     for step_size, max_step_size, n_evals, use_ls, ls_freq in zip(
         step_sizes,
         max_step_sizes,
@@ -219,6 +225,7 @@ def minimize_manfred(
     ):
         state["inner_iter_counter"] = 0
         while not _has_converged(state, convergence_criteria):
+            last_x = last_iteration_x
             current_x, state = do_manfred_direct_search(
                 func=func,
                 current_x=current_x,
@@ -232,15 +239,17 @@ def minimize_manfred(
                 batch_evaluator_options=batch_evaluator_options,
             )
 
-            direction = _calculate_manfred_direction(
-                current_x=current_x,
-                step_size=step_size,
-                state=state,
-                gradient_weight=gradient_weight,
-                momentum=momentum,
-            )
-
-            state["direction_history"].append(direction)
+            if (current_x != last_x).any():
+                # state["x_history"].append(hash_array(current_x))
+                direction = _calculate_manfred_direction(
+                    current_x=current_x,
+                    step_size=step_size,
+                    state=state,
+                    gradient_weight=gradient_weight,
+                    momentum=momentum,
+                )
+                state["direction_history"].append(direction)
+                last_x = current_x
 
             if use_ls and (state["iter_counter"] % ls_freq) == 0:
                 current_x, state = do_manfred_line_search(
@@ -255,15 +264,11 @@ def minimize_manfred(
                     batch_evaluator=batch_evaluator,
                     batch_evaluator_options=batch_evaluator_options,
                 )
+                # if (current_x != last_x).any():
+                #     state["x_history"].append(hash_array(current_x))
 
-            needs_thorough_search = (
-                not _x_has_changed(state, convergence_criteria)
-                and convergence_direct_search_mode in ("thorough", "very-thorough")
-                and _is_below_max_fun(state, convergence_criteria)
-                and default_direct_search_mode == "fast"
-            )
-
-            if needs_thorough_search:
+            # if neither the line search nor the first direct search brought any changes
+            if (current_x == last_iteration_x).all() and "thorough" in extra_modes:
                 current_x, state = do_manfred_direct_search(
                     func=func,
                     current_x=current_x,
@@ -277,13 +282,7 @@ def minimize_manfred(
                     batch_evaluator_options=batch_evaluator_options,
                 )
 
-            needs_very_thorough_search = (
-                not _x_has_changed(state, convergence_criteria)
-                and convergence_direct_search_mode == "very-thorough"
-                and _is_below_max_fun(state, convergence_criteria)
-                and default_direct_search_mode in ("fast", "thorough")
-            )
-            if needs_very_thorough_search:
+            if (current_x == last_iteration_x).all() and "very-thorough" in extra_modes:
                 current_x, state = do_manfred_direct_search(
                     func=func,
                     current_x=current_x,
@@ -314,6 +313,17 @@ def minimize_manfred(
     }
 
     return res
+
+
+def _get_extra_direct_search_modes(
+    default_direct_search_mode, convergence_direct_search_mode
+):
+    all_modes = ["fast", "thorough", "very-thorough"]
+    start_index = all_modes.index(default_direct_search_mode)
+    stop_index = all_modes.index(convergence_direct_search_mode)
+    assert stop_index >= start_index
+    extra_modes = all_modes[start_index + 1 : stop_index + 1]
+    return extra_modes
 
 
 def _process_bounds(x, lower_bounds, upper_bounds):
