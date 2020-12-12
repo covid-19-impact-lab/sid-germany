@@ -180,7 +180,7 @@ def meet_hh_members(states, params, seed):
             to the number of possible columns in the "name" index level.
 
     """
-    meet_hh = pd.Series(1, index=states.index)
+    meet_hh = (states["hh_model_group_id"] != -1).astype(int)
     for params_entry, condition in [
         ("symptomatic_multiplier", "symptomatic"),
         ("positive_test_multiplier", IS_POSITIVE_CASE),

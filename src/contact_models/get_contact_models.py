@@ -29,7 +29,7 @@ def get_household_contact_model():
         "households": {
             "is_recurrent": True,
             "model": cm_funcs.meet_hh_members,
-            "assort_by": ["hh_id"],
+            "assort_by": ["hh_model_group_id"],
             "loc": "households",
         },
     }

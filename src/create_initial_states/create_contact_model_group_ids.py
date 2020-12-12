@@ -194,6 +194,11 @@ def add_contact_model_group_ids(
         df[col] = simplified.where(df[col] != -1, -1)
         df[col] = df[col].astype("category")
 
+    hh_sizes = df.groupby("hh_id")["one"].transform("size")
+    df["hh_model_group_id"] = (
+        df["hh_id"].astype(int).where(hh_sizes > 1, -1).astype("category")
+    )
+
     df = df.drop(columns=["pos_in_group", "one", "group_size"])
     return df
 

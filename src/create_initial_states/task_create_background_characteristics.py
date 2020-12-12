@@ -307,9 +307,9 @@ def _check_educ_group_ids(df):
 
     assert (df["school_group_a"].unique() == [1, 0]).all()
     assert df.query("age < 3")["occupation"].isin(["nursery", "stays home"]).all()
-    assert (df.query("3 <= age <= 14")["nursery_group_id_0"].value_counts() == 1).all()
+    assert (df.query("3 <= age <= 14")["nursery_group_id_0"] == -1).all()
     assert (df.query("3 <= age < 6")["preschool_group_id_0"].value_counts() > 1).all()
-    assert (df.query("6 < age <= 14")["preschool_group_id_0"].value_counts() == 1).all()
+    assert (df.query("6 < age <= 14")["preschool_group_id_0"] == -1).all()
     assert (df.query("6 < age <= 14")["school_group_id_0"].value_counts() > 1).all()
 
     _check_educators(df)
@@ -343,9 +343,8 @@ def _check_educ_group_sizes(df):
     }
     for name, (lower, upper, expected_n_teachers) in name_to_class_bounds.items():
         id_col = f"{name}_group_id_0"
-        class_id_to_size = df.groupby(id_col).size()
-        ids_of_true_classes = class_id_to_size[class_id_to_size > 1].index
-        pupils_and_teachers = df[df[id_col].isin(ids_of_true_classes)]
+
+        pupils_and_teachers = df[df[id_col] != -1]
         class_sizes = pupils_and_teachers[id_col].value_counts().unique()
         assert (class_sizes >= lower).all()
         assert (class_sizes <= upper).all()
@@ -362,9 +361,7 @@ def _check_educ_group_assortativeness(df):
         "school_group_id_0": (7, [2, 3]),
     }
     for col, (max_counties, allowed_n_ages) in col_to_limits.items():
-        class_id_to_size = df.groupby(col).size()
-        ids_of_true_classes = class_id_to_size[class_id_to_size > 1].index
-        pupils_and_teachers = df[df[col].isin(ids_of_true_classes)]
+        pupils_and_teachers = df[df[col] != -1]
         grouped = pupils_and_teachers.groupby(col)
         assert (grouped["state"].nunique() == 1).all()
         assert grouped["county"].nunique().max() <= max_counties
