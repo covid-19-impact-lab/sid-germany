@@ -17,8 +17,8 @@ def _prepare_vacations(path):
         columns={0: "start", 1: "end"}
     )
     dates["end"] = dates["end"].fillna(dates["start"])
-    dates["start"] = pd.to_datetime(dates["start"] + "2020")
-    dates["end"] = pd.to_datetime(dates["end"] + "2020")
+    dates["start"] = pd.to_datetime(dates["start"])
+    dates["end"] = pd.to_datetime(dates["end"])
     vacations = pd.concat([vacations, dates], axis=1).drop(columns="date")
 
     return vacations
