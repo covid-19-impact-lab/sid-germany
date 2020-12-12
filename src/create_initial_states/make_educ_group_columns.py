@@ -127,9 +127,7 @@ def create_balanced_group_column(
     id_participants = _create_group_id_for_participants(
         participants, group_size, strict_assort_by, weak_assort_by
     )
-    id_non_participants = _create_group_id_for_non_participants(
-        non_participants, id_participants.max() + 1
-    )
+    id_non_participants = _create_group_id_for_non_participants(non_participants)
     # sorting brings this in same order as states because we reset the index above
     group_id = pd.concat([id_participants, id_non_participants]).sort_index()
     group_id.index = states.index
@@ -295,6 +293,6 @@ def _get_key_with_shortest_value(dict_):
     return sorted_keys[0]
 
 
-def _create_group_id_for_non_participants(df, start_id):
+def _create_group_id_for_non_participants(df):
     """Create group_id for those not selected by query."""
-    return pd.Series(np.arange(start_id, start_id + len(df)), index=df.index)
+    return pd.Series(-1, index=df.index)
