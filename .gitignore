@@ -24,6 +24,7 @@ src/exploration/estimation/
 *.snm
 *.toc
 *.bib.bak
+.sid/
 
 .pytask.sqlite3
 
@@ -31,10 +32,12 @@ src/exploration/estimation/
 *.sublime-project
 *.sublime-workspace
 
+*.idea/
+
 src/presentation_notebooks/heterogeneity/homogenous_n_contacts/
 src/presentation_notebooks/heterogeneity/heterogeneous_n_contacts/
 src/exploration/*/*.parquet
 
-
 *.idea/
 src/manfred/*.png
+src/original_data/population_structure/microcensus2010_cf.dta
