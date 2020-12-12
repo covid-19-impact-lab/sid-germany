@@ -152,6 +152,6 @@ def test_get_key_with_longest_value_non_unique_solution():
 
 def test_create_group_id_for_non_participants():
     df = pd.DataFrame(index=[2, 3, 4])
-    res = _create_group_id_for_non_participants(df, 20)
-    expected = pd.Series([20, 21, 22], index=[2, 3, 4])
+    res = _create_group_id_for_non_participants(df)
+    expected = pd.Series(-1, index=[2, 3, 4])
     pd.testing.assert_series_equal(res, expected)
