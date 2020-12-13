@@ -171,14 +171,6 @@ def minimize_manfred(
 
     assert 0 <= gradient_weight <= 1
 
-    line_search_info = {
-        "n_points": n_points_per_line_search,
-    }
-
-    direct_search_info = {
-        "direction_window": direction_window,
-    }
-
     state = {
         "func_counter": 0,
         "iter_counter": 0,
@@ -217,7 +209,7 @@ def minimize_manfred(
                 current_x=current_x,
                 step_size=step_size,
                 state=state,
-                info=direct_search_info,
+                direction_window=direction_window,
                 bounds=bounds,
                 mode="fast",
                 n_evaluations_per_x=n_evals,
@@ -243,7 +235,7 @@ def minimize_manfred(
                     current_x=current_x,
                     direction=direction,
                     state=state,
-                    info=line_search_info,
+                    n_points=n_points_per_line_search,
                     bounds=bounds,
                     max_step_size=max_step_size,
                     n_evaluations_per_x=n_evals,
@@ -262,7 +254,7 @@ def minimize_manfred(
                         current_x=current_x,
                         step_size=step_size,
                         state=state,
-                        info=direct_search_info,
+                        direction_window=direction_window,
                         bounds=bounds,
                         mode="thorough",
                         n_evaluations_per_x=n_evals,
@@ -378,14 +370,16 @@ def do_manfred_direct_search(
     current_x,
     step_size,
     state,
-    info,
+    direction_window,
     bounds,
     mode,
     n_evaluations_per_x,
     batch_evaluator,
     batch_evaluator_options,
 ):
-    search_strategies = _determine_search_strategies(current_x, state, info, mode)
+    search_strategies = _determine_search_strategies(
+        current_x, state, direction_window, mode
+    )
     x_sample = _get_direct_search_sample(
         current_x, step_size, search_strategies, bounds
     )
@@ -414,7 +408,7 @@ def do_manfred_line_search(
     current_x,
     direction,
     state,
-    info,
+    n_points,
     bounds,
     max_step_size,
     n_evaluations_per_x,
@@ -422,7 +416,7 @@ def do_manfred_line_search(
     batch_evaluator_options,
 ):
     x_sample = _get_line_search_sample(
-        current_x, direction, info, bounds, max_step_size
+        current_x, direction, n_points, bounds, max_step_size
     )
 
     evaluations, state = _do_evaluations(
@@ -444,11 +438,11 @@ def do_manfred_line_search(
     return next_x, state
 
 
-def _get_line_search_sample(current_x, direction, info, bounds, max_step_size):
+def _get_line_search_sample(current_x, direction, n_points, bounds, max_step_size):
     upper_line_search_bound = _find_maximal_line_search_step(
         current_x, direction, bounds, max_step_size
     )
-    grid = np.linspace(0, upper_line_search_bound, info["n_points"] + 1)
+    grid = np.linspace(0, upper_line_search_bound, n_points + 1)
     x_sample = [current_x + step * direction for step in grid]
     # make absolutely sure the hash of the already evaluated point does not change
     x_sample[0] = current_x
@@ -555,10 +549,12 @@ def _get_values_for_pseudo_gradient(current_x, step_size, sign, cache):
     return np.array(values)
 
 
-def _determine_search_strategies(current_x, state, info, mode):
+def _determine_search_strategies(current_x, state, direction_window, mode):
     if mode == "fast":
-        resid_strats = _determine_fast_strategies_from_residuals(current_x, state)
-        hist_strats = _determine_fast_strategies_from_x_history(current_x, state, info)
+        resid_strats = _determine_strategies_from_residuals(current_x, state)
+        hist_strats = _determine_strategies_from_x_history(
+            current_x, state, direction_window
+        )
         strats = [
             _combine_strategies(s1, s2) for s1, s2 in zip(resid_strats, hist_strats)
         ]
@@ -568,26 +564,22 @@ def _determine_search_strategies(current_x, state, info, mode):
     return strats
 
 
-def _determine_fast_strategies_from_residuals(current_x, state):
+def _determine_strategies_from_residuals(current_x, state):
     x_hash = hash_array(current_x)
     evals = state["cache"][x_hash]["evals"]
     residuals = np.array([evaluation["root_contributions"] for evaluation in evals])
     residual_sum = residuals.sum()
-    residual_std = residuals.std()
 
-    cutoff = 0.15
-    if residual_sum > cutoff * residual_std:
+    if residual_sum > 0:
         strategies = ["left"] * len(current_x)
-    elif residual_sum < -cutoff * residual_std:
-        strategies = ["right"] * len(current_x)
     else:
-        strategies = ["two-sided"] * len(current_x)
+        strategies = ["right"] * len(current_x)
 
     return strategies
 
 
-def _determine_fast_strategies_from_x_history(current_x, state, info):
-    effective_window = min(info["direction_window"], len(state["x_history"]))
+def _determine_strategies_from_x_history(current_x, state, direction_window):
+    effective_window = min(direction_window, len(state["x_history"]))
     if effective_window >= 2:
         relevant_x_history = [
             state["cache"][x_hash]["x"]
