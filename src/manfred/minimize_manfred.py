@@ -163,8 +163,14 @@ def minimize_manfred(
         linesearch_active,
         linesearch_frequency,
     ):
+        if state["func_counter"] >= convergence_criteria["max_fun"]:
+            break
+
         state["inner_iter_counter"] = 0
-        while not _has_converged(state, convergence_criteria):
+        while _x_has_changed(state, convergence_criteria):
+            if state["func_counter"] >= convergence_criteria["max_fun"]:
+                break
+
             current_x, state = do_manfred_direct_search(
                 func=func,
                 current_x=current_x,
@@ -190,6 +196,9 @@ def minimize_manfred(
                 state["direction_history"].append(direction)
                 after_direct_search_x = current_x
 
+            if state["func_counter"] >= convergence_criteria["max_fun"]:
+                break
+
             if use_ls and (state["iter_counter"] % ls_freq) == 0:
                 current_x, state = do_manfred_linesearch(
                     func=func,
@@ -205,6 +214,9 @@ def minimize_manfred(
                 )
                 if (current_x != after_direct_search_x).any():
                     state["x_history"].append(hash_array(current_x))
+
+            if state["func_counter"] >= convergence_criteria["max_fun"]:
+                break
 
             # if neither the line search nor the first direct search brought any changes
             # try the more extensive line search mode
@@ -305,13 +317,6 @@ def _process_scalar_or_list_arg(arg, target_len=None):
     return processed
 
 
-def _has_converged(state, convergence_criteria):
-    has_changed = _x_has_changed(state, convergence_criteria)
-    below_max_fun = _is_below_max_fun(state, convergence_criteria)
-    converged = (not has_changed) or (not below_max_fun)
-    return converged
-
-
 def _x_has_changed(state, convergence_criteria):
     if state["inner_iter_counter"] > 0:
         current_x = state["cache"][state["x_history"][-1]]["x"]
@@ -320,7 +325,3 @@ def _x_has_changed(state, convergence_criteria):
     else:
         has_changed = True
     return has_changed
-
-
-def _is_below_max_fun(state, convergence_criteria):
-    return state["func_counter"] < convergence_criteria["max_fun"]
