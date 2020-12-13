@@ -58,10 +58,18 @@ AGE_GROUPS_TO_INTERVALS = {
 }
 
 
-@pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "rki.csv")
+@pytask.mark.depends_on(
+    {
+        "rki": BLD / "data" / "raw_time_series" / "rki.csv",
+        "share_known_cases": BLD
+        / "data"
+        / "processed_time_series"
+        / "share_known_cases.pkl",
+    }
+)
 @pytask.mark.produces(BLD / "data" / "processed_time_series" / "rki.pkl")
 def task_prepare_rki_data(depends_on, produces):
-    df = pd.read_csv(depends_on, parse_dates=["Refdatum"])
+    df = pd.read_csv(depends_on["rki"], parse_dates=["Refdatum"])
     df = df.drop(columns=DROPPPED_COLUMNS)
     df = df.rename(columns=RENAME_COLUMNS)
 
@@ -82,5 +90,10 @@ def task_prepare_rki_data(depends_on, produces):
     one_week_ago = today - timedelta(weeks=1)
     cropped = summed.loc[:one_week_ago]
     cropped = cropped.sort_index()
+
+    share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
+    undetected_multiplier = 1 / share_known_cases
+    dates = cropped.index.get_level_values("date")
+    cropped["upscaled_newly_infected"] = dates.map(undetected_multiplier.get)
 
     cropped.to_pickle(produces)

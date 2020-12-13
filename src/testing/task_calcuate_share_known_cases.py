@@ -30,7 +30,7 @@ from src.config import SRC
         / "undetected_multiplier.png",
     }
 )
-def task_create_share_known_cases(depends_on, produces):
+def task_calculate_and_plot_share_known_cases(depends_on, produces):
     df = pd.read_csv(depends_on)
 
     share_known_cases = _calculate_share_known_cases(df)
