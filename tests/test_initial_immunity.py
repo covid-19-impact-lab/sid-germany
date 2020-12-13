@@ -130,8 +130,6 @@ def test_create_initial_immunity_lln(synthetic_data):
 
     expected_shares = empirical_data["2020-03-03"] / empirical_group_sizes
 
-    undetected_multiplier = 1.0
-
     initial_infections = pd.DataFrame(index=full_synthetic_data.index)
     to_draw = len(full_synthetic_data)
     initial_infections["2020-03-02"] = np.random.choice(
@@ -145,7 +143,6 @@ def test_create_initial_immunity_lln(synthetic_data):
         synthetic_data=full_synthetic_data,
         initial_infections=initial_infections,
         population_size=population_size,
-        undetected_multiplier=undetected_multiplier,
         date="2020-03-04",
         seed=3399,
     )

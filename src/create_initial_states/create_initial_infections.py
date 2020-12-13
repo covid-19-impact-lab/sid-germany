@@ -9,7 +9,6 @@ def create_initial_infections(
     synthetic_data,
     start,
     end,
-    undetected_multiplier,
     seed,
     reporting_delay=0,
     population_size=POPULATION_GERMANY,
@@ -24,7 +23,8 @@ def create_initial_infections(
 
     Args:
         empirical_data (pandas.Series): Newly infected Series with the index levels
-            ["date", "county", "age_group_rki"].
+            ["date", "county", "age_group_rki"]. Should already be corrected upwards
+            to include undetected cases.
         synthetic_data (pandas.DataFrame): Dataset with one row per simulated
             individual. Must contain the columns age_group_rki and county.
         start (str or pd.Timestamp): Start date.
@@ -49,20 +49,12 @@ def create_initial_infections(
     reporting_delay = pd.Timedelta(days=reporting_delay)
     start = pd.Timestamp(start) + reporting_delay
     end = pd.Timestamp(end) + reporting_delay
-    if isinstance(undetected_multiplier, (float, int)):
-        undetected_multiplier = pd.Series(
-            data=undetected_multiplier, index=pd.date_range(start=start, end=end)
-        )
-
-    undetected_multiplier.name = "undetected_multiplier"
-    assert (undetected_multiplier >= 1).all(), "undetected_multiplier must be >= 1."
     index_cols = ["date", "county", "age_group_rki"]
     correct_index_levels = empirical_data.index.names == index_cols
     assert correct_index_levels, f"Your data must have {index_cols} as index levels."
 
     dates = empirical_data.index.get_level_values("date")
     assert set(pd.date_range(start, end)).issubset(dates)
-    assert set(pd.date_range(start, end)).issubset(undetected_multiplier.index)
 
     empirical_data = empirical_data.loc[pd.Timestamp(start) : pd.Timestamp(end)]  # noqa
     empirical_data.name = "reported_cases"
@@ -71,19 +63,7 @@ def create_initial_infections(
     duplicates_in_index = empirical_data.index.duplicated().any()
     assert not duplicates_in_index, "Your index must not have any duplicates."
 
-    empirical_data = pd.merge(
-        left=empirical_data.to_frame(),
-        right=undetected_multiplier,
-        left_on="date",
-        right_index=True,
-        how="left",
-        validate="m:1",
-    )
-    true_infections = (
-        empirical_data["reported_cases"] * empirical_data["undetected_multiplier"]
-    )
-
-    cases = true_infections.to_frame().unstack("date")
+    cases = empirical_data.to_frame().unstack("date")
     cases.columns = [str(x.date() - reporting_delay) for x in cases.columns.droplevel()]
 
     group_infection_probs = _calculate_group_infection_probs(

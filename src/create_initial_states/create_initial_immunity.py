@@ -9,7 +9,6 @@ def create_initial_immunity(
     empirical_data,
     synthetic_data,
     initial_infections,
-    undetected_multiplier,
     date,
     seed,
     reporting_delay=0,
@@ -19,7 +18,8 @@ def create_initial_immunity(
 
     Args:
         empirical_data (pandas.Series): Newly infected Series with the index levels
-            ["date", "county", "age_group_rki"].
+            ["date", "county", "age_group_rki"]. These must already be corrected to
+            include undetected cases.
         synthetic_data (pandas.DataFrame): Dataset with one row per simulated
             individual. Must contain the columns age_group_rki and county.
         initial_infections (pandas.DataFrame): DataFrame with same index as
@@ -41,24 +41,11 @@ def create_initial_immunity(
     """
     date_with_delay = pd.Timestamp(date) + pd.Timedelta(days=reporting_delay)
     empirical_data = empirical_data[:date_with_delay].sort_index()
-    empirical_data.name = "reported_cases"
 
     initial_before_date = [
         pd.Timestamp(col) <= date_with_delay for col in initial_infections
     ]
     assert all(initial_before_date), f"Initial infections must lie before {date}."
-    start = empirical_data.index.min()[0]
-
-    if isinstance(undetected_multiplier, (float, int)):
-        undetected_multiplier = pd.Series(
-            data=undetected_multiplier,
-            index=pd.date_range(start=start, end=date_with_delay),
-        )
-    undetected_multiplier.name = "undetected_multiplier"
-    assert (undetected_multiplier >= 1).all(), "undetected_multiplier must be >= 1."
-    assert set(pd.date_range(start, date_with_delay)).issubset(
-        undetected_multiplier.index
-    )
 
     index_cols = ["date", "county", "age_group_rki"]
     correct_index_levels = empirical_data.index.names == index_cols
@@ -68,18 +55,7 @@ def create_initial_immunity(
 
     endog_immune = initial_infections.any(axis=1)
 
-    empirical_data = pd.merge(
-        left=empirical_data.to_frame(),
-        right=undetected_multiplier,
-        left_on="date",
-        right_index=True,
-        how="left",
-        validate="m:1",
-    )
-    with_undetected_infections = (
-        empirical_data["reported_cases"] * empirical_data["undetected_multiplier"]
-    )
-    total_immune = with_undetected_infections.groupby(["age_group_rki", "county"]).sum()
+    total_immune = empirical_data.groupby(["age_group_rki", "county"]).sum()
 
     total_immunity_prob = _calculate_total_immunity_prob(
         total_immune,
