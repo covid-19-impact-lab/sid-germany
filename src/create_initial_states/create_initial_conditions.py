@@ -11,7 +11,6 @@ from src.shared import load_dataset
 def create_initial_conditions(
     start,
     end,
-    undetected_multiplier,
     seed,
     reporting_delay=0,
     synthetic_data_path=BLD / "data" / "initial_states.parquet",
@@ -24,8 +23,6 @@ def create_initial_conditions(
             infections.
         end (str or pd.Timestamp): End date for collection of initial
             infections and initial immunity.
-        undetected_multiplier (float): Multiplier used to scale up the observed
-            infections to account for unknown cases. Must be >=1.
         seed (int)
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
@@ -42,15 +39,14 @@ def create_initial_conditions(
 
     """
     seed = it.count(seed)
-    empirical_data = load_dataset(reported_infections_path)["newly_infected"]
-    synthetic_data = load_dataset(synthetic_data_path)
+    empirical_data = load_dataset(reported_infections_path)["upscaled_newly_infected"]
+    synthetic_data = load_dataset(synthetic_data_path)[["county", "age_group_rki"]]
 
     initial_infections = create_initial_infections(
         empirical_data=empirical_data,
         synthetic_data=synthetic_data,
         start=start,
         end=end,
-        undetected_multiplier=undetected_multiplier,
         reporting_delay=reporting_delay,
         seed=next(seed),
     )
@@ -60,7 +56,6 @@ def create_initial_conditions(
         synthetic_data=synthetic_data,
         date=end,
         initial_infections=initial_infections,
-        undetected_multiplier=undetected_multiplier,
         reporting_delay=reporting_delay,
         seed=next(seed),
     )
