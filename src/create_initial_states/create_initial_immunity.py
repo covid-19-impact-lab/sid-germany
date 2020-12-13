@@ -74,6 +74,7 @@ def create_initial_immunity(
         left_on="date",
         right_index=True,
         how="left",
+        validate="m:1",
     )
     with_undetected_infections = (
         empirical_data["reported_cases"] * empirical_data["undetected_multiplier"]

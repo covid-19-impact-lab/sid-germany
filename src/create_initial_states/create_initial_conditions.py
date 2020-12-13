@@ -1,6 +1,8 @@
 import itertools as it
 from pathlib import Path
 
+import pandas as pd
+
 from src.config import BLD
 from src.create_initial_states.create_initial_immunity import create_initial_immunity
 from src.create_initial_states.create_initial_infections import (
@@ -48,9 +50,17 @@ def create_initial_conditions(
     """
     seed = it.count(seed)
     empirical_data = load_dataset(reported_infections_path)["newly_infected"]
-    synthetic_data = load_dataset(synthetic_data_path)
+    synthetic_data = load_dataset(synthetic_data_path)[["county", "age_group_rki"]]
     if isinstance(undetected_multiplier, (Path, str)):
         undetected_multiplier = load_dataset(undetected_multiplier)
+    if isinstance(undetected_multiplier, pd.Series):
+        rki_dates = empirical_data.index.get_level_values("date")
+        # create date_range because some dates are missing in the RKI data.
+        dates = pd.date_range(rki_dates.min(), rki_dates.max())
+        undetected_multiplier = undetected_multiplier.reindex(dates)
+        # fill missing values
+        undetected_multiplier = undetected_multiplier.fillna(method="bfill")
+        undetected_multiplier = undetected_multiplier.fillna(method="ffill")
 
     initial_infections = create_initial_infections(
         empirical_data=empirical_data,

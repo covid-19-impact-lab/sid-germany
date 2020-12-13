@@ -77,12 +77,13 @@ def create_initial_infections(
         left_on="date",
         right_index=True,
         how="left",
+        validate="m:1",
     )
-    with_undetected_infections = (
+    true_infections = (
         empirical_data["reported_cases"] * empirical_data["undetected_multiplier"]
     )
 
-    cases = with_undetected_infections.to_frame().unstack("date")
+    cases = true_infections.to_frame().unstack("date")
     cases.columns = [str(x.date() - reporting_delay) for x in cases.columns.droplevel()]
 
     group_infection_probs = _calculate_group_infection_probs(
