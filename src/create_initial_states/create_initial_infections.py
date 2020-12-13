@@ -29,8 +29,9 @@ def create_initial_infections(
             individual. Must contain the columns age_group_rki and county.
         start (str or pd.Timestamp): Start date.
         end (str or pd.Timestamp): End date.
-        undetected_multiplier (float): Multiplier used to scale up the observed
-            infections to account for unknown cases. Must be >=1.
+        undetected_multiplier (float or pandas.Series):
+            Multiplier used to scale up the observed infections to account for
+            undetected cases. Must be >=1.
         seed (int)
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
@@ -48,25 +49,44 @@ def create_initial_infections(
     reporting_delay = pd.Timedelta(days=reporting_delay)
     start = pd.Timestamp(start) + reporting_delay
     end = pd.Timestamp(end) + reporting_delay
-    assert undetected_multiplier >= 1, "undetected_multiplier must be >= 1."
+    if isinstance(undetected_multiplier, (float, int)):
+        undetected_multiplier = pd.Series(
+            data=undetected_multiplier, index=pd.date_range(start=start, end=end)
+        )
+
+    undetected_multiplier.name = "undetected_multiplier"
+    assert (undetected_multiplier >= 1).all(), "undetected_multiplier must be >= 1."
     index_cols = ["date", "county", "age_group_rki"]
     correct_index_levels = empirical_data.index.names == index_cols
     assert correct_index_levels, f"Your data must have {index_cols} as index levels."
+
     dates = empirical_data.index.get_level_values("date")
-    assert start in dates, f"Your start date {start} is not in your empirical data."
-    assert end in dates, f"Your end date {end} is not in your empirical data."
+    assert set(pd.date_range(start, end)).issubset(dates)
+    assert set(pd.date_range(start, end)).issubset(undetected_multiplier.index)
 
     empirical_data = empirical_data.loc[pd.Timestamp(start) : pd.Timestamp(end)]  # noqa
+    empirical_data.name = "reported_cases"
 
     assert empirical_data.notnull().all().all(), "No NaN allowed in the empirical data"
     duplicates_in_index = empirical_data.index.duplicated().any()
     assert not duplicates_in_index, "Your index must not have any duplicates."
 
-    cases = empirical_data.to_frame().unstack("date")
+    empirical_data = pd.merge(
+        left=empirical_data.to_frame(),
+        right=undetected_multiplier,
+        left_on="date",
+        right_index=True,
+        how="left",
+    )
+    with_undetected_infections = (
+        empirical_data["reported_cases"] * empirical_data["undetected_multiplier"]
+    )
+
+    cases = with_undetected_infections.to_frame().unstack("date")
     cases.columns = [str(x.date() - reporting_delay) for x in cases.columns.droplevel()]
 
     group_infection_probs = _calculate_group_infection_probs(
-        cases, population_size, synthetic_data, undetected_multiplier
+        cases, population_size, synthetic_data
     )
 
     initially_infected = _draw_bools_by_group(
@@ -77,9 +97,7 @@ def create_initial_infections(
     return initially_infected
 
 
-def _calculate_group_infection_probs(
-    cases, population_size, synthetic_data, undetected_multiplier
-):
+def _calculate_group_infection_probs(cases, population_size, synthetic_data):
     """Calculate the infection probability for each group and date.
 
     Args:
@@ -105,8 +123,7 @@ def _calculate_group_infection_probs(
     group_infection_probs = pd.DataFrame(index=upscaled_group_sizes.index)
 
     for col in cases.columns:
-        true_cases = undetected_multiplier * cases[col]
-        prob = true_cases / upscaled_group_sizes
+        prob = cases[col] / upscaled_group_sizes
         group_infection_probs[col] = prob
 
     return group_infection_probs
