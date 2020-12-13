@@ -48,8 +48,7 @@ def test_calculate_group_infection_probs(synthetic_data, cases):
     undetected_multiplier = 1.5
     res = _calculate_group_infection_probs(
         synthetic_data=synthetic_data,
-        cases=cases,
-        undetected_multiplier=undetected_multiplier,
+        cases=undetected_multiplier * cases,
         population_size=pop_size,
     )
     expected_on_synthetic_data = pd.DataFrame(
