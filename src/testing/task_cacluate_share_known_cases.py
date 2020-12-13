@@ -47,7 +47,7 @@ def task_create_share_known_cases(depends_on, produces):
         + "(also Known as Dark Figure or Undetected Multiplier)"
     )
     fig, ax = _plot_time_series(undetected_multiplier, undetected_title)
-    fig.savefig(produces["undetected_multiplier"])
+    fig.savefig(produces["undetected_multiplier_fig"])
 
 
 def _calculate_share_known_cases(df):
