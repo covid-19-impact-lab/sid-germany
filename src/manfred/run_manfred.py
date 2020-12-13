@@ -234,3 +234,44 @@ if __name__ == "__main__":
     print("Manfred Solution:     ", estimagic_res["solution_x"].round(2))  # noqa
     print("True Solution:        ", true_x.round(2))  # noqa
     print("Manfred n_evals:      ", estimagic_res["n_criterion_evaluations"])  # noqa
+
+    # ==================================================================================
+    # Noisy test with estimagic interface
+    # ==================================================================================
+
+    gradient_weight = 0.5
+    noise_level = 0.1
+    params = pd.DataFrame()
+    params["value"] = start_x
+    params["lower_bound"] = lower_bounds
+    params["upper_bound"] = upper_bounds
+
+    estimagic_func = partial(
+        estimagic_criterion_function,
+        true_x=true_x,
+        noise_level=noise_level,
+        data=data,
+    )
+
+    algo_options = {
+        "step_sizes": [0.1, 0.05, 0.02],
+        "max_step_sizes": [0.3, 0.2, 0.2],
+        "linesearch_n_points": 12,
+        "gradient_weight": gradient_weight,
+        "noise_n_evaluations_per_x": [50, 90, 120],
+        "convergence_relative_params_tolerance": 0.001,
+        "direction_window": 3,
+    }
+
+    estimagic_res = minimize(
+        criterion=estimagic_func,
+        params=params,
+        algorithm=minimize_manfred_estimagic,
+        algo_options=algo_options,
+        logging=False,
+    )
+
+    print("Estimagic Test:       ")  # noqa
+    print("Manfred Solution:     ", estimagic_res["solution_x"].round(2))  # noqa
+    print("True Solution:        ", true_x.round(2))  # noqa
+    print("Manfred n_evals:      ", estimagic_res["n_criterion_evaluations"])  # noqa
