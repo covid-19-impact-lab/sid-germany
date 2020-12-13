@@ -9,7 +9,7 @@ from estimagic import minimize
 from scipy.optimize import minimize as scipy_minimize
 
 from src.manfred.minimize_manfred import minimize_manfred
-from src.manfred.minimize_manfred import minimize_manfred_estimagic
+from src.manfred.minimize_manfred_estimagic import minimize_manfred_estimagic
 
 
 def criterion_function(x, seed, true_x, data, noise_level=0):
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
         max_step_sizes=[1, 0.2, 0.1],
-        n_points_per_line_search=12,
+        linesearch_n_points=12,
         gradient_weight=gradient_weight,
     )
 
@@ -143,9 +143,9 @@ if __name__ == "__main__":
         max_fun=1_000_000,
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
-        use_line_search=[True, True, True],
+        linesearch_active=[True, True, True],
         max_step_sizes=[0.3, 0.2, 0.1],
-        n_points_per_line_search=12,
+        linesearch_n_points=12,
         n_evaluations_per_x=[50, 90, 120],
         gradient_weight=gradient_weight,
     )
@@ -181,7 +181,7 @@ if __name__ == "__main__":
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
         max_step_sizes=[0.3, 0.2, 0.2],
-        n_points_per_line_search=12,
+        linesearch_n_points=12,
         n_evaluations_per_x=[50, 90, 120],
         gradient_weight=gradient_weight,
         direction_window=2,
