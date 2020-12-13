@@ -13,7 +13,7 @@ def minimize_manfred_estimagic(
     lower_bounds,
     upper_bounds,
     convergence_relative_params_tolerance=0.001,
-    convergence_direct_search_mode="thorough",
+    convergence_direct_search_mode="fast",
     max_criterion_evaluations=100_000,
     step_sizes=None,
     max_step_sizes=None,
@@ -25,7 +25,6 @@ def minimize_manfred_estimagic(
     linesearch_n_points=5,
     noise_seed=0,
     noise_n_evaluations_per_x=1,
-    default_direct_search_mode="fast",
     batch_evaluator=joblib_batch_evaluator,
     batch_evaluator_options=None,
 ):
@@ -53,7 +52,6 @@ def minimize_manfred_estimagic(
         "line_search_frequency": linesearch_frequency,
         "n_points_per_line_search": linesearch_n_points,
         "max_step_sizes": max_step_sizes,
-        "default_direct_search_mode": default_direct_search_mode,
         "n_evaluations_per_x": noise_n_evaluations_per_x,
         "seed": noise_seed,
         "gradient_weight": gradient_weight,
@@ -99,14 +97,13 @@ def minimize_manfred(
     lower_bounds=None,
     upper_bounds=None,
     max_fun=100_000,
-    convergence_direct_search_mode="thorough",
+    convergence_direct_search_mode="fast",
     direction_window=3,
     xtol=0.01,
     use_line_search=True,
     line_search_frequency=3,
     n_points_per_line_search=5,
     max_step_sizes=None,
-    default_direct_search_mode="fast",
     n_evaluations_per_x=1,
     seed=0,
     gradient_weight=0.5,
@@ -145,15 +142,9 @@ def minimize_manfred(
             convergence if the approximate gradient approximation is good. This is
             especially helpful at the beginning. Later, a small max_step limits the
             search space for the line search and can thus increase precision.
-        default_direct_search_mode (str): One of "fast", "thorough" and "very-thorough".
-            "fast" means that we search at most in one direction and some parameters
-            are fixed during an iteration. "thorough" means that we search at lesat in
-            one direction per parameter and in two directions for other parameters.
-            "very-thorough" means that we search in both directions for all parameters.
-            This is very expensive even for a small number of parameters.
-        convergence_direct_search_mode (str): Takes the same values as
-            default_direct_search_mode. This search is done when the default direct
-            search model did not yield any progress.
+        convergence_direct_search_mode (str): Can be fast or thorough. If thorough,
+            convergence is only declared if a two sided search for all parameters
+            does not yield any improvement.
         n_evaluations_per_x (int): Number of function evaluations per parameter vector.
             For noisy functions this should be set higher than one. Can be an int or
             list with the same length as step_sizes.
@@ -210,11 +201,6 @@ def minimize_manfred(
 
     convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
 
-    extra_modes = _get_extra_direct_search_modes(
-        default_direct_search_mode,
-        convergence_direct_search_mode,
-    )
-
     current_x = x
     last_iteration_x = x + np.nan
     for step_size, max_step_size, n_evals, use_ls, ls_freq in zip(
@@ -233,7 +219,7 @@ def minimize_manfred(
                 state=state,
                 info=direct_search_info,
                 bounds=bounds,
-                mode=default_direct_search_mode,
+                mode="fast",
                 n_evaluations_per_x=n_evals,
                 batch_evaluator=batch_evaluator,
                 batch_evaluator_options=batch_evaluator_options,
@@ -268,8 +254,8 @@ def minimize_manfred(
                     state["x_history"].append(hash_array(current_x))
 
             # if neither the line search nor the first direct search brought any changes
-            # try the more extensive line search modes
-            for mode in extra_modes:
+            # try the more extensive line search mode
+            if convergence_direct_search_mode == "thorough":
                 if (current_x == last_iteration_x).all():
                     current_x, state = do_manfred_direct_search(
                         func=func,
@@ -278,7 +264,7 @@ def minimize_manfred(
                         state=state,
                         info=direct_search_info,
                         bounds=bounds,
-                        mode=mode,
+                        mode="thorough",
                         n_evaluations_per_x=n_evals,
                         batch_evaluator=batch_evaluator,
                         batch_evaluator_options=batch_evaluator_options,
@@ -317,17 +303,6 @@ def minimize_manfred(
     }
 
     return res
-
-
-def _get_extra_direct_search_modes(
-    default_direct_search_mode, convergence_direct_search_mode
-):
-    all_modes = ["fast", "thorough", "very-thorough"]
-    start_index = all_modes.index(default_direct_search_mode)
-    stop_index = all_modes.index(convergence_direct_search_mode)
-    assert stop_index >= start_index
-    extra_modes = all_modes[start_index + 1 : stop_index + 1]  # noqa
-    return extra_modes
 
 
 def _process_bounds(x, lower_bounds, upper_bounds):
@@ -581,14 +556,14 @@ def _get_values_for_pseudo_gradient(current_x, step_size, sign, cache):
 
 
 def _determine_search_strategies(current_x, state, info, mode):
-    resid_strats = _determine_fast_strategies_from_residuals(current_x, state)
-    hist_strats = _determine_fast_strategies_from_x_history(current_x, state, info)
-    strats = [_combine_strategies(s1, s2) for s1, s2 in zip(resid_strats, hist_strats)]
-
-    if mode == "thorough":
-        strats = [s if s != "fixed" else "two-sided" for s in strats]
-    elif mode == "very-thorough":
-        strats = ["two-sided"] * len(strats)
+    if mode == "fast":
+        resid_strats = _determine_fast_strategies_from_residuals(current_x, state)
+        hist_strats = _determine_fast_strategies_from_x_history(current_x, state, info)
+        strats = [
+            _combine_strategies(s1, s2) for s1, s2 in zip(resid_strats, hist_strats)
+        ]
+    else:
+        strats = ["two-sided"] * len(current_x)
 
     return strats
 

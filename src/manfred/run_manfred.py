@@ -107,7 +107,6 @@ if __name__ == "__main__":
         upper_bounds=upper_bounds,
         max_step_sizes=[1, 0.2, 0.1],
         n_points_per_line_search=12,
-        convergence_direct_search_mode="thorough",
         gradient_weight=gradient_weight,
     )
 
@@ -217,7 +216,6 @@ if __name__ == "__main__":
 
     algo_options = {
         "step_sizes": [0.1, 0.05, 0.0125],
-        "convergence_direct_search_mode": "thorough",
         "max_step_sizes": [1, 0.2, 0.1],
         "linesearch_n_points": 12,
         "gradient_weight": gradient_weight,
