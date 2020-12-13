@@ -635,7 +635,6 @@ def _get_direct_search_sample(current_x, step_size, search_strategies, bounds):
         "two-sided": lambda x, step: [x - step, x, x + step],
         "right": lambda x, step: [x, x + step],
         "left": lambda x, step: [x - step, x],
-        "fixed": lambda x, step: [x],
     }
 
     points_per_param = []
@@ -674,14 +673,15 @@ def _bools_to_strategy(left, right):
     return strategies
 
 
-def _combine_strategies(s1, s2):
-    strategies = {s1, s2}
-    if "left" in strategies and "right" in strategies:
-        combined = "fixed"
-    elif len(strategies) == 1:
+def _combine_strategies(resid, hist):
+    strategies = {resid, hist}
+    if len(strategies) == 1:
         combined = list(strategies)[0]
-    else:
+    elif "two-sided" in strategies:
         combined = list(strategies - {"two-sided"})[0]
+    else:
+        combined = hist
+
     return combined
 
 

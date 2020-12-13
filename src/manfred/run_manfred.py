@@ -76,7 +76,7 @@ def plot_history(res, x_names=None):
 if __name__ == "__main__":
     true_x = np.array([0.08, 0.15, 0.22, 0.31, 0.37, 0.28])
     n_params = len(true_x)
-    start_x = np.full(n_params, 0.725)
+    start_x = np.full(n_params, 0.23)
     lower_bounds = np.zeros(n_params)
     upper_bounds = np.ones(n_params)
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     )
     test_func = partial(criterion_function, true_x=true_x, data=data, noise_level=0)
 
-    gradient_weight = 0.5
+    gradient_weight = 0.6
 
     res = minimize_manfred(
         func=test_func,
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     # Noisy test
     # ==================================================================================
 
-    gradient_weight = 0.4
+    gradient_weight = 0.5
     noise_level = 0.1
     noisy_test_func = partial(
         criterion_function,
@@ -201,7 +201,7 @@ if __name__ == "__main__":
     # Simple test with estimagic interface
     # ==================================================================================
 
-    gradient_weight = 0.5
+    gradient_weight = 0.6
     noise_level = 0
     params = pd.DataFrame()
     params["value"] = start_x
