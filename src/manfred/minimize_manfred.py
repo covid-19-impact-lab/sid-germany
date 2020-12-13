@@ -1,8 +1,11 @@
-import hashlib
 import itertools
 
 import numpy as np
 from estimagic.batch_evaluators import joblib_batch_evaluator
+
+from src.manfred.shared import aggregate_evaluations
+from src.manfred.shared import do_evaluations
+from src.manfred.shared import hash_array
 
 
 def minimize_manfred(
@@ -135,7 +138,7 @@ def minimize_manfred(
         "seed": itertools.count(seed),
     }
 
-    _do_evaluations(
+    do_evaluations(
         func,
         [x],
         state,
@@ -238,7 +241,7 @@ def minimize_manfred(
     out_history = {"criterion": [], "x": []}
     for x_hash in state["x_history"]:
         cache_entry = state["cache"][x_hash]
-        out_history["criterion"].append(_aggregate_evaluations(cache_entry["evals"]))
+        out_history["criterion"].append(aggregate_evaluations(cache_entry["evals"]))
         out_history["x"].append(cache_entry["x"])
 
     res = {
@@ -338,7 +341,7 @@ def do_manfred_direct_search(
         current_x, step_size, search_strategies, bounds
     )
 
-    evaluations, state = _do_evaluations(
+    evaluations, state = do_evaluations(
         func,
         x_sample,
         state,
@@ -373,7 +376,7 @@ def do_manfred_linesearch(
         current_x, direction, n_points, bounds, max_step_size
     )
 
-    evaluations, state = _do_evaluations(
+    evaluations, state = do_evaluations(
         func=func,
         x_sample=x_sample,
         state=state,
@@ -403,54 +406,13 @@ def _get_linesearch_sample(current_x, direction, n_points, bounds, max_step_size
     return x_sample
 
 
-def _do_evaluations(
-    func,
-    x_sample,
-    state,
-    n_evaluations_per_x,
-    return_type,
-    batch_evaluator,
-    batch_evaluator_options,
-):
-    cache = state["cache"]
-    x_hashes = [hash_array(x) for x in x_sample]
-    need_to_evaluate = []
-    for x, x_hash in zip(x_sample, x_hashes):
-        n_evals = n_evaluations_per_x
-        if x_hash in cache:
-            n_evals = max(0, n_evals - len(cache[x_hash]["evals"]))
-
-        need_to_evaluate += [x] * n_evals
-
-    arguments = [{"x": x, "seed": next(state["seed"])} for x in need_to_evaluate]
-
-    new_evaluations = batch_evaluator(
-        func=func,
-        arguments=arguments,
-        unpack_symbol="**",
-        **batch_evaluator_options,
-    )
-
-    for x, evaluation in zip(need_to_evaluate, new_evaluations):
-        cache = _add_to_cache(x, evaluation, cache)
-
-    all_results = [cache[x_hash]["evals"] for x_hash in x_hashes]
-
-    if return_type == "aggregated":
-        all_results = [_aggregate_evaluations(res) for res in all_results]
-
-    state["func_counter"] = state["func_counter"] + len(need_to_evaluate)
-
-    return all_results, state
-
-
 def _calculate_manfred_direction(
     current_x, step_size, state, gradient_weight, momentum
 ):
     cache = state["cache"]
     pos_values = _get_values_for_pseudo_gradient(current_x, step_size, 1, cache)
     neg_values = _get_values_for_pseudo_gradient(current_x, step_size, -1, cache)
-    f0 = _aggregate_evaluations(cache[hash_array(current_x)]["evals"])
+    f0 = aggregate_evaluations(cache[hash_array(current_x)]["evals"])
 
     two_sided_gradient = (pos_values - neg_values) / (2 * step_size)
     right_gradient = (pos_values - f0) / step_size
@@ -497,7 +459,7 @@ def _get_values_for_pseudo_gradient(current_x, step_size, sign, cache):
     values = []
     for x_hash in x_hashes:
         if x_hash in cache:
-            values.append(_aggregate_evaluations(cache[x_hash]["evals"]))
+            values.append(aggregate_evaluations(cache[x_hash]["evals"]))
         else:
             values.append(np.nan)
     return np.array(values)
@@ -568,20 +530,6 @@ def _get_direct_search_sample(current_x, step_size, search_strategies, bounds):
     return sample
 
 
-def _aggregate_evaluations(evaluations):
-    res = np.mean([evaluation["value"] for evaluation in evaluations])
-    return res
-
-
-def _add_to_cache(x, evaluation, cache):
-    x_hash = hash_array(x)
-    if x_hash in cache:
-        cache[x_hash]["evals"].append(evaluation)
-    else:
-        cache[x_hash] = {"x": x, "evals": [evaluation]}
-    return cache
-
-
 def _bools_to_strategy(left, right):
     strategies = []
     for i in range(len(left)):
@@ -604,13 +552,6 @@ def _combine_strategies(resid, hist):
         combined = hist
 
     return combined
-
-
-def hash_array(arr):
-    """Create a hashsum for fast comparison of numpy arrays."""
-    # make the array exactly representable as float
-    arr = 1 + arr - 1
-    return hashlib.sha1(arr.tobytes()).hexdigest()
 
 
 def _is_in_bounds(x, bounds):
