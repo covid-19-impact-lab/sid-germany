@@ -74,8 +74,10 @@ def add_weekly_ids(
 
 
 def _create_pairs(states, nr_of_weekly_contacts, county_assortativeness, seed):
-    group_codes_per_individual, _ = factorize_assortative_variables(states, ["county"])
-    indexer = create_group_indexer(states, ["county"])
+    group_codes_per_individual, _ = factorize_assortative_variables(
+        states, ["county"], is_recurrent=False
+    )
+    indexer = create_group_indexer(states, ["county"], is_recurrent=False)
     fake_params = pd.DataFrame(
         data=county_assortativeness,
         columns=["value"],

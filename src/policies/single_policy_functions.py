@@ -15,7 +15,7 @@ All other arguments must be documented.
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
-from sid.shared import get_date
+from sid.time import get_date
 
 
 def shut_down_model(states, contacts, seed):

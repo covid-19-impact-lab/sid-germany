@@ -3,7 +3,7 @@ from typing import List
 import numba as nb
 import numpy as np
 import pandas as pd
-from sid.shared import get_date
+from sid.time import get_date
 
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.shared import from_epochs_to_timestamps

@@ -9,7 +9,6 @@ def create_initial_immunity(
     empirical_data,
     synthetic_data,
     initial_infections,
-    undetected_multiplier,
     date,
     seed,
     reporting_delay=0,
@@ -19,14 +18,14 @@ def create_initial_immunity(
 
     Args:
         empirical_data (pandas.Series): Newly infected Series with the index levels
-            ["date", "county", "age_group_rki"].
+            ["date", "county", "age_group_rki"]. These must already be corrected to
+            include undetected cases.
         synthetic_data (pandas.DataFrame): Dataset with one row per simulated
             individual. Must contain the columns age_group_rki and county.
         initial_infections (pandas.DataFrame): DataFrame with same index as
             synthetic_data and one column for each day until *date*.
-            Dtype is boolean.
-        undetected_multiplier (float): Multiplier used to scale up the observed
-            infections to account for unknown cases. Must be >=1.
+            Dtype is boolean. It is assumed that these already include
+            undetected cases.
         seed (int)
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
@@ -44,7 +43,7 @@ def create_initial_immunity(
         pd.Timestamp(col) <= date_with_delay for col in initial_infections
     ]
     assert all(initial_before_date), f"Initial infections must lie before {date}."
-    assert undetected_multiplier >= 1, "undetected_multiplier must be >= 1."
+
     index_cols = ["date", "county", "age_group_rki"]
     correct_index_levels = empirical_data.index.names == index_cols
     assert correct_index_levels, f"Your data must have {index_cols} as index levels."
@@ -52,12 +51,12 @@ def create_initial_immunity(
     assert not duplicates_in_index, "Your index must not have any duplicates."
 
     endog_immune = initial_infections.any(axis=1)
+
     total_immune = empirical_data.groupby(["age_group_rki", "county"]).sum()
 
     total_immunity_prob = _calculate_total_immunity_prob(
         total_immune,
         synthetic_data,
-        undetected_multiplier,
         population_size,
     )
     endog_immunity_prob = _calculate_endog_immunity_prob(
@@ -87,18 +86,15 @@ def create_initial_immunity(
     return hypothetical_exog_choice.where(~endog_immune, endog_immune)
 
 
-def _calculate_total_immunity_prob(
-    total_immunity, synthetic_data, undetected_multiplier, population_size
-):
+def _calculate_total_immunity_prob(total_immunity, synthetic_data, population_size):
     """Calculate the probability to be immune by county and age group.
 
     Args:
         total_immunity (pandas.Series): index are the county and age group.
-            Values are the total numbers of immune individuals.
+            Values are the total numbers of immune individuals. These must
+            already include undetected cases.
         synthetic_data (pandas.DataFrame): DataFrame of synthetic individuals.
             Must contain age_group_rki and county as columns.
-        undetected_multiplier (float): number of undetected infections per
-            detected infection
         population_size (int): number of individuals in the population from
             which the total_immunity was calculated.
 
@@ -112,7 +108,7 @@ def _calculate_total_immunity_prob(
     synthetic_group_sizes = synthetic_data.groupby(["age_group_rki", "county"]).size()
     upscaled_group_sizes = synthetic_group_sizes * upscale_factor
     total_immunity = total_immunity.reindex(upscaled_group_sizes.index).fillna(0)
-    immunity_prob = (total_immunity / upscaled_group_sizes) * undetected_multiplier
+    immunity_prob = total_immunity / upscaled_group_sizes
     return immunity_prob
 
 

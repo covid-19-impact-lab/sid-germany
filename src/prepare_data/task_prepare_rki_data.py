@@ -16,9 +16,11 @@ Explanation on the coding of the variables
 from datetime import datetime
 from datetime import timedelta
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytask
+import seaborn as sns
 
 from src.config import BLD
 
@@ -58,10 +60,23 @@ AGE_GROUPS_TO_INTERVALS = {
 }
 
 
-@pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "rki.csv")
-@pytask.mark.produces(BLD / "data" / "processed_time_series" / "rki.pkl")
+@pytask.mark.depends_on(
+    {
+        "rki": BLD / "data" / "raw_time_series" / "rki.csv",
+        "share_known_cases": BLD
+        / "data"
+        / "processed_time_series"
+        / "share_known_cases.pkl",
+    }
+)
+@pytask.mark.produces(
+    {
+        "data": BLD / "data" / "processed_time_series" / "rki.pkl",
+        "plot": BLD / "data" / "processed_time_series" / "rki_reported_vs_upscaled.png",
+    }
+)
 def task_prepare_rki_data(depends_on, produces):
-    df = pd.read_csv(depends_on, parse_dates=["Refdatum"])
+    df = pd.read_csv(depends_on["rki"], parse_dates=["Refdatum"])
     df = df.drop(columns=DROPPPED_COLUMNS)
     df = df.rename(columns=RENAME_COLUMNS)
 
@@ -83,4 +98,31 @@ def task_prepare_rki_data(depends_on, produces):
     cropped = summed.loc[:one_week_ago]
     cropped = cropped.sort_index()
 
-    cropped.to_pickle(produces)
+    share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
+    undetected_multiplier = 1 / share_known_cases
+    dates = cropped.index.get_level_values("date")
+    undetected_multiplier = dates.map(undetected_multiplier.get)
+    cropped["upscaled_newly_infected"] = (
+        cropped["newly_infected"] * undetected_multiplier
+    )
+
+    cropped.to_pickle(produces["data"])
+
+    reported_per_day = cropped["newly_infected"].groupby("date").sum()
+    upscaled_per_day = cropped["upscaled_newly_infected"].groupby("date").sum()
+    fig, ax = plt.subplots(figsize=(8, 3))
+    sns.lineplot(
+        x=reported_per_day.index, y=reported_per_day, ax=ax, label="Reported Cases"
+    )
+    sns.lineplot(
+        x=upscaled_per_day.index,
+        y=upscaled_per_day,
+        ax=ax,
+        label="Corrected for Undetected Infections",
+    )
+
+    ax.set_title("Reported Versus Corrected Cases")
+    plt.legend(frameon=False)
+    sns.despine()
+    fig.tight_layout()
+    fig.savefig(produces["plot"])

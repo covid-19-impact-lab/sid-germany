@@ -53,8 +53,7 @@ def test_calculate_total_immunity_prob(synthetic_data):
     expected["prob"] = [4 / 20, 12 / 30, 8 / 30, 8 / 20]
     expected = expected.set_index(["age_group_rki", "county"])["prob"]
     res = _calculate_total_immunity_prob(
-        total_immunity=total_immunity,
-        undetected_multiplier=undetected_multiplier,
+        total_immunity=undetected_multiplier * total_immunity,
         synthetic_data=synthetic_data,
         population_size=population_size,
     )
@@ -131,8 +130,6 @@ def test_create_initial_immunity_lln(synthetic_data):
 
     expected_shares = empirical_data["2020-03-03"] / empirical_group_sizes
 
-    undetected_multiplier = 1.0
-
     initial_infections = pd.DataFrame(index=full_synthetic_data.index)
     to_draw = len(full_synthetic_data)
     initial_infections["2020-03-02"] = np.random.choice(
@@ -141,16 +138,16 @@ def test_create_initial_immunity_lln(synthetic_data):
     initial_infections["2020-03-03"] = np.random.choice(
         a=[True, False], size=to_draw, p=[0.01, 0.99]
     )
-
-    full_synthetic_data["resulting_immune"] = create_initial_immunity(
+    res = create_initial_immunity(
         empirical_data=empirical_data,
         synthetic_data=full_synthetic_data,
         initial_infections=initial_infections,
         population_size=population_size,
-        undetected_multiplier=undetected_multiplier,
         date="2020-03-04",
         seed=3399,
     )
+
+    full_synthetic_data["resulting_immune"] = res
     grouped = full_synthetic_data.groupby(["county", "age_group_rki"])
     resulting_immune_shares = grouped["resulting_immune"].mean()
 
