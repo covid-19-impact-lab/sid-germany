@@ -30,7 +30,7 @@ def minimize_manfred_estimagic(
     batch_evaluator_options=None,
 ):
     algo_info = {
-        "primary_criterion_entry": "value_and_residuals",
+        "primary_criterion_entry": "root_contributions",
         "parallelizes": True,
         "needs_scaling": False,
         "name": "manfred",
@@ -67,7 +67,8 @@ def minimize_manfred_estimagic(
     def func(x, seed, lower_bounds, upper_bounds):
         x = _x_from_unit_cube(x, lower_bounds, upper_bounds)
         np.random.seed(seed)
-        return criterion(x)
+        residuals = criterion(x)
+        return {"root_contributions": residuals, "value": residuals @ residuals}
 
     partialed_func = functools.partial(
         func, lower_bounds=lower_bounds, upper_bounds=upper_bounds
@@ -300,6 +301,7 @@ def minimize_manfred(
 
             state["iter_counter"] = state["iter_counter"] + 1
             state["inner_iter_counter"] = state["inner_iter_counter"] + 1
+            last_iteration_x = current_x
 
     out_history = {"criterion": [], "x": []}
     for x_hash in state["x_history"]:
@@ -594,12 +596,17 @@ def _determine_search_strategies(current_x, state, info, mode):
 def _determine_fast_strategies_from_residuals(current_x, state):
     x_hash = hash_array(current_x)
     evals = state["cache"][x_hash]["evals"]
-    residual_sum = np.sum([evaluation["residuals"] for evaluation in evals])
+    residuals = np.array([evaluation["root_contributions"] for evaluation in evals])
+    residual_sum = residuals.sum()
+    residual_std = residuals.std()
 
-    if residual_sum > 0:
+    cutoff = 0.15
+    if residual_sum > cutoff * residual_std:
         strategies = ["left"] * len(current_x)
-    else:
+    elif residual_sum < -cutoff * residual_std:
         strategies = ["right"] * len(current_x)
+    else:
+        strategies = ["two-sided"] * len(current_x)
 
     return strategies
 

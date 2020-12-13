@@ -12,27 +12,34 @@ from src.manfred.minimize_manfred import minimize_manfred
 from src.manfred.minimize_manfred import minimize_manfred_estimagic
 
 
-def criterion_function(x, seed, true_x, noise_level):
+def criterion_function(x, seed, true_x, data, noise_level=0):
     np.random.seed(seed)
-    sf_sum = 10
-    sf_ind = 20
-    scaled_sum_diff = (x.sum() - true_x.sum()) * sf_sum
-    scaled_individual_diff = (x - true_x) * sf_ind
-    poly = np.abs(scaled_sum_diff ** 3) + (np.abs(scaled_individual_diff ** 3)).sum()
-    clean = 50 + poly
-    noisy = clean + noise_level * clean * np.random.normal()
-    return {"value": noisy, "residuals": x - true_x}
+    true_y_hat = data @ true_x
+    calc_y = data @ x
+    noise = (
+        ((true_y_hat - calc_y) ** 2 + 1)
+        * noise_level
+        * np.random.normal(size=len(data))
+    )
+    true_y = true_y_hat + noise
+    base_residuals = true_y - calc_y
+    residuals = np.abs(base_residuals * 3) ** 1.5 * np.sign(base_residuals)
+
+    value = residuals @ residuals
+    return {"value": value, "root_contributions": residuals}
 
 
-def scipy_criterion_function(x, true_x, noise_level):
+def scipy_criterion_function(x, true_x, data, noise_level):
     seed = np.random.randint(10000)
-    return criterion_function(x, seed, true_x, noise_level)["value"]
+    return criterion_function(x, seed, true_x, data, noise_level)["value"]
 
 
-def estimagic_criterion_function(params, true_x, noise_level):  # noqa
+def estimagic_criterion_function(params, true_x, data, noise_level):  # noqa
     seed = np.random.choice(10000)
-    out = criterion_function(params["value"].to_numpy(), seed, true_x, noise_level)
-    return {"value": out["value"], "value_and_residuals": out}
+    out = criterion_function(
+        params["value"].to_numpy(), seed, true_x, data, noise_level
+    )
+    return out
 
 
 def plot_history(res, x_names=None):
@@ -73,14 +80,22 @@ if __name__ == "__main__":
     lower_bounds = np.zeros(n_params)
     upper_bounds = np.ones(n_params)
 
+    mean = np.zeros(n_params)
+    corr = 0.25
+    cov = np.eye(n_params) * (1 - corr) + np.ones((n_params, n_params)) * corr
+    np.random.seed(1234)
+    data = np.random.multivariate_normal(mean, cov, size=500)
+
     # ==================================================================================
     # Simple test
     # ==================================================================================
 
-    scipy_test_func = partial(scipy_criterion_function, true_x=true_x, noise_level=0)
-    test_func = partial(criterion_function, true_x=true_x, noise_level=0)
+    scipy_test_func = partial(
+        scipy_criterion_function, true_x=true_x, data=data, noise_level=0
+    )
+    test_func = partial(criterion_function, true_x=true_x, data=data, noise_level=0)
 
-    gradient_weight = 0.3
+    gradient_weight = 0.5
 
     res = minimize_manfred(
         func=test_func,
@@ -91,8 +106,8 @@ if __name__ == "__main__":
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
         max_step_sizes=[1, 0.2, 0.1],
-        n_points_per_line_search=10,
-        convergence_direct_search_mode="fast",
+        n_points_per_line_search=12,
+        convergence_direct_search_mode="thorough",
         gradient_weight=gradient_weight,
     )
 
@@ -104,10 +119,6 @@ if __name__ == "__main__":
 
     fig.savefig(Path(__file__).resolve().parent / "convergence_plot.png")
 
-    # ==================================================================================
-    # Very noisy test
-    # ==================================================================================
-
     print("Noise Free Test:           ")  # noqa
     print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa
     print("True Solution:        ", true_x.round(2))  # noqa
@@ -115,10 +126,15 @@ if __name__ == "__main__":
     print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa
     print("Nelder Mead n_evals:  ", scipy_res.nfev, "\n")  # noqa
 
+    # ==================================================================================
+    # Very noisy test
+    # ==================================================================================
     noise_level = 0.15
     noisy_test_func = partial(
-        criterion_function, true_x=true_x, noise_level=noise_level
+        criterion_function, true_x=true_x, data=data, noise_level=noise_level
     )
+
+    gradient_weight = 0.4
 
     res = minimize_manfred(
         func=noisy_test_func,
@@ -128,10 +144,10 @@ if __name__ == "__main__":
         max_fun=1_000_000,
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
-        use_line_search=[True, True, False],
+        use_line_search=[True, True, True],
         max_step_sizes=[0.3, 0.2, 0.1],
         n_points_per_line_search=12,
-        n_evaluations_per_x=[60, 90, 120],
+        n_evaluations_per_x=[50, 90, 120],
         gradient_weight=gradient_weight,
     )
 
@@ -148,24 +164,28 @@ if __name__ == "__main__":
     # Noisy test
     # ==================================================================================
 
+    gradient_weight = 0.4
     noise_level = 0.1
     noisy_test_func = partial(
-        criterion_function, true_x=true_x, noise_level=noise_level
+        criterion_function,
+        true_x=true_x,
+        data=data,
+        noise_level=noise_level,
     )
 
     res = minimize_manfred(
         func=noisy_test_func,
         x=start_x,
         xtol=0.001,
-        step_sizes=[0.1, 0.05, 0.01],
+        step_sizes=[0.1, 0.05, 0.02],
         max_fun=1_000_000,
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
         max_step_sizes=[0.3, 0.2, 0.2],
         n_points_per_line_search=12,
-        n_evaluations_per_x=[30, 50, 50],
+        n_evaluations_per_x=[50, 90, 120],
         gradient_weight=gradient_weight,
-        batch_evaluator_options={"n_cores": 4},
+        direction_window=2,
     )
 
     fig = plot_history(res)
@@ -181,6 +201,7 @@ if __name__ == "__main__":
     # Simple test with estimagic interface
     # ==================================================================================
 
+    gradient_weight = 0.5
     noise_level = 0
     params = pd.DataFrame()
     params["value"] = start_x
@@ -188,15 +209,19 @@ if __name__ == "__main__":
     params["upper_bound"] = upper_bounds
 
     estimagic_func = partial(
-        estimagic_criterion_function, true_x=true_x, noise_level=noise_level
+        estimagic_criterion_function,
+        true_x=true_x,
+        noise_level=noise_level,
+        data=data,
     )
 
     algo_options = {
         "step_sizes": [0.1, 0.05, 0.0125],
-        "convergence_direct_search_mode": "fast",
+        "convergence_direct_search_mode": "thorough",
         "max_step_sizes": [1, 0.2, 0.1],
-        "linesearch_n_points": 10,
+        "linesearch_n_points": 12,
         "gradient_weight": gradient_weight,
+        "convergence_relative_params_tolerance": 0.001,
     }
 
     estimagic_res = minimize(
