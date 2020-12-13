@@ -124,7 +124,9 @@ def minimize_manfred(
 
     bounds = _process_bounds(x, lower_bounds, upper_bounds)
     step_sizes, max_step_sizes = _process_step_sizes(step_sizes, max_step_sizes)
-    n_evaluations_per_x = _process_n_evaluations_per_x(n_evaluations_per_x, step_sizes)
+    n_evaluations_per_x = _process_n_evaluations_per_x(
+        n_evaluations_per_x, len(step_sizes)
+    )
     linesearch_active = _process_scalar_or_list_arg(linesearch_active, len(step_sizes))
     linesearch_frequency = _process_scalar_or_list_arg(
         linesearch_frequency, len(step_sizes)
@@ -271,10 +273,13 @@ def minimize_manfred(
 
 
 def _process_bounds(x, lower_bounds, upper_bounds):
-    if lower_bounds is None:
-        lower_bounds = np.full(len(x), -np.inf)
-    if upper_bounds is None:
-        upper_bounds = np.full(len(x), np.inf)
+    for bounds in [lower_bounds, upper_bounds]:
+        if not np.isfinite(bounds).all():
+            raise ValueError("All bounds need to be finite.")
+
+    if not (lower_bounds < upper_bounds).all():
+        raise ValueError("Lower bounds must be strictly smaller than upper bounds.")
+
     bounds = {"lower": lower_bounds, "upper": upper_bounds}
 
     if not is_in_bounds(x, bounds):
@@ -298,8 +303,8 @@ def _process_step_sizes(step_sizes, max_step_sizes):
     return step_sizes, max_step_sizes
 
 
-def _process_n_evaluations_per_x(n_evaluations_per_x, step_sizes):
-    processed = _process_scalar_or_list_arg(n_evaluations_per_x, len(step_sizes))
+def _process_n_evaluations_per_x(n_evaluations_per_x, target_len):
+    processed = _process_scalar_or_list_arg(n_evaluations_per_x, target_len)
     for n_evals in processed:
         assert n_evals >= 1
     return processed
