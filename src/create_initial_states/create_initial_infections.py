@@ -29,9 +29,6 @@ def create_initial_infections(
             individual. Must contain the columns age_group_rki and county.
         start (str or pd.Timestamp): Start date.
         end (str or pd.Timestamp): End date.
-        undetected_multiplier (float or pandas.Series):
-            Multiplier used to scale up the observed infections to account for
-            undetected cases. Must be >=1.
         seed (int)
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
@@ -57,7 +54,6 @@ def create_initial_infections(
     assert set(pd.date_range(start, end)).issubset(dates)
 
     empirical_data = empirical_data.loc[pd.Timestamp(start) : pd.Timestamp(end)]  # noqa
-    empirical_data.name = "reported_cases"
 
     assert empirical_data.notnull().all().all(), "No NaN allowed in the empirical data"
     duplicates_in_index = empirical_data.index.duplicated().any()

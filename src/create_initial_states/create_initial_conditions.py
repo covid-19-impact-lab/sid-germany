@@ -23,9 +23,6 @@ def create_initial_conditions(
             infections.
         end (str or pd.Timestamp): End date for collection of initial
             infections and initial immunity.
-        undetected_multiplier (float or pandas.Series or pathlib.Path):
-            Multiplier used to scale up the observed infections to account for
-            undetected cases. Must be >=1.
         seed (int)
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the

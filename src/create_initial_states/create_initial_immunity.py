@@ -26,9 +26,6 @@ def create_initial_immunity(
             synthetic_data and one column for each day until *date*.
             Dtype is boolean. It is assumed that these already include
             undetected cases.
-        undetected_multiplier (float or pandas.Series):
-            Multiplier used to scale up the observed infections to account for
-            undetected cases. Must be >=1.
         seed (int)
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
@@ -98,8 +95,6 @@ def _calculate_total_immunity_prob(total_immunity, synthetic_data, population_si
             already include undetected cases.
         synthetic_data (pandas.DataFrame): DataFrame of synthetic individuals.
             Must contain age_group_rki and county as columns.
-        undetected_multiplier (pandas.Series): number of undetected infections per
-            detected infection.
         population_size (int): number of individuals in the population from
             which the total_immunity was calculated.
 
