@@ -19,6 +19,17 @@ def do_manfred_direct_search(
     batch_evaluator,
     batch_evaluator_options,
 ):
+    """Search for better values along coordinates and 45 degree lines.
+
+    For each parameter we try to find the most promising direction based on previous
+    function evaluations and/or the sign of the residuals (if mode == "fast") or search
+    in both directions (if mode == "thorough").
+
+    Moreover, we search over all combination of steps. This makes the step infeasible
+    for high parameter dimensions but robust at a moderate cost for low parameter
+    dimensions.
+
+    """
     search_strategies = _determine_search_strategies(
         current_x, state, direction_window, mode
     )

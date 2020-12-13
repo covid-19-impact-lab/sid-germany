@@ -46,6 +46,9 @@ def minimize_manfred(
     - Presence of substantial true noise, i.e. the criterion function is stochastic
         and the noise is large enough to introduce local minima.
     - Bounds on all parameters are known
+    - Nonlinear least square problems where the residuals are available. Moreover,
+      we assume that all parameters influence the residuals positively over the whole
+      parameter space.
 
     Despite being able to handle small local minima introduced by noise, MANFRED is a
     local optimization algorithm. If you need a global solution in the presence of
