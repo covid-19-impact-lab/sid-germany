@@ -95,10 +95,10 @@ def _build_infection_probs(names):
     df.index.names = ["category", "subcategory", "name"]
     df = df.reset_index()
     prob_dict = {
-        "educ": 0.008,
-        "work": 0.025,
-        "household": 0.05,
-        "other": 0.025,
+        "educ": 0.02,
+        "work": 0.1,
+        "household": 0.2,
+        "other": 0.1,
     }
     full_prob_dict = {}
     for mod_name in names:
