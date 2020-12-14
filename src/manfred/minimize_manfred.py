@@ -157,10 +157,8 @@ def minimize_manfred(
         batch_evaluator_options=batch_evaluator_options,
     )
 
-    convergence_criteria = {"xtol": xtol, "max_fun": max_fun}
-
     current_x = x
-    last_iteration_x = x + np.nan
+    last_iteration_x = x + np.inf
     for step_size, max_step_size, n_evals, use_ls, ls_freq in zip(
         step_sizes,
         max_step_sizes,
@@ -168,12 +166,12 @@ def minimize_manfred(
         linesearch_active,
         linesearch_frequency,
     ):
-        if state["func_counter"] >= convergence_criteria["max_fun"]:
+        if state["func_counter"] >= max_fun:
             break
 
         state["inner_iter_counter"] = 0
-        while _x_has_changed(state, convergence_criteria):
-            if state["func_counter"] >= convergence_criteria["max_fun"]:
+        while True:
+            if state["func_counter"] >= max_fun:
                 break
 
             current_x, state = do_manfred_direct_search(
@@ -201,7 +199,7 @@ def minimize_manfred(
                 state["direction_history"].append(direction)
                 after_direct_search_x = current_x
 
-            if state["func_counter"] >= convergence_criteria["max_fun"]:
+            if state["func_counter"] >= max_fun:
                 break
 
             if use_ls and (state["iter_counter"] % ls_freq) == 0:
@@ -220,13 +218,13 @@ def minimize_manfred(
                 if (current_x != after_direct_search_x).any():
                     state["x_history"].append(hash_array(current_x))
 
-            if state["func_counter"] >= convergence_criteria["max_fun"]:
+            if state["func_counter"] >= max_fun:
                 break
 
             # if neither the line search nor the first direct search brought any changes
             # try the more extensive line search mode
             if convergence_direct_search_mode == "thorough":
-                if (current_x == last_iteration_x).all():
+                if (np.abs(current_x - last_iteration_x) <= xtol).all():
                     current_x, state = do_manfred_direct_search(
                         func=func,
                         current_x=current_x,
@@ -251,12 +249,11 @@ def minimize_manfred(
                         )
                         state["direction_history"].append(direction)
 
-            # cause convergence
-            if (current_x == last_iteration_x).all():
-                state["x_history"].append(hash_array(current_x))
-
             state["iter_counter"] = state["iter_counter"] + 1
             state["inner_iter_counter"] = state["inner_iter_counter"] + 1
+            # cause convergence
+            if (np.abs(current_x - last_iteration_x) <= xtol).all():
+                break
             last_iteration_x = current_x
 
     out_history = {"criterion": [], "x": []}
@@ -323,13 +320,3 @@ def _process_scalar_or_list_arg(arg, target_len=None):
     else:
         processed = [arg] * target_len
     return processed
-
-
-def _x_has_changed(state, convergence_criteria):
-    if state["inner_iter_counter"] > 0:
-        current_x = state["cache"][state["x_history"][-1]]["x"]
-        last_x = state["cache"][state["x_history"][-2]]["x"]
-        has_changed = np.abs(last_x - current_x).max() > convergence_criteria["xtol"]
-    else:
-        has_changed = True
-    return has_changed

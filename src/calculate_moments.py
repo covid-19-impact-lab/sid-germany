@@ -61,8 +61,8 @@ def _smooth_and_scale_daily_outcome_per_individual(
 ):
     scaling_factor = 100_000
     scaled = sr * scaling_factor
-    scaled = scaled.clip(1)
     if take_logs:
+        scaled = scaled.clip(1)
         scaled = np.log(scaled)
     if groupby:
         scaled = scaled.unstack()
