@@ -17,10 +17,17 @@ def _prepare_vacations(path):
         columns={0: "start", 1: "end"}
     )
     dates["end"] = dates["end"].fillna(dates["start"])
-    dates["start"] = pd.to_datetime(dates["start"])
-    dates["end"] = pd.to_datetime(dates["end"])
+    dates["start"] = pd.to_datetime(dates["start"], format="%d.%m.%Y")
+    dates["end"] = pd.to_datetime(dates["end"], format="%d.%m.%Y")
     vacations = pd.concat([vacations, dates], axis=1).drop(columns="date")
-
+    assert (vacations["start"] <= vacations["end"]).all(), "End date before start date."
+    vacations["length"] = vacations["end"] - vacations["start"]
+    long_vacations = vacations[vacations["length"] > pd.Timedelta(days=20)]
+    assert (long_vacations["vacation"] == "Sommerferien").all()
+    assert (
+        vacations["length"] < pd.Timedelta(days=45)
+    ).all(), "No vacation longer than 45 days allowed."
+    vacations = vacations.drop(columns=["length"])
     return vacations
 
 
