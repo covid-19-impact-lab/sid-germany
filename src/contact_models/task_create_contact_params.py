@@ -133,14 +133,23 @@ def _create_assort_params(model_name, contacts, places, recurrent, frequency, we
         dropna=False,
         normalize="index",
     )
+
+    if "work" in model_name:
+        # no work contacts of and with individuals of age groups that don't work.
+        normalized_cell_counts[["0-9", "80-100"]] = 0
+        normalized_cell_counts.loc[["0-9", "80-100"]] = 0
+    elif "other" in model_name:
+        # too few 80-100 year olds in the sample. Set to next younger age group.
+        normalized_cell_counts.loc["80-100"] = normalized_cell_counts.loc["70-79"]
+
     meeting_prob = normalized_cell_counts.fillna(0).round(4)
     meeting_prob = meeting_prob.where(
         meeting_prob.sum(axis=1) != 0.0, 1 / len(meeting_prob.columns)
     )
     meeting_prob = meeting_prob / meeting_prob.sum(axis=1).to_numpy().reshape(-1, 1)
-    assert (meeting_prob.sum(axis=1) > 0.9999).all() & (
-        meeting_prob.sum(axis=1) < 1.0001
-    ).all(), "meeting probabilities do not add up to 1 in every row."
+    assert (
+        meeting_prob.sum(axis=1).between(0.9999, 1.0001).all()
+    ), "meeting probabilities do not add up to 1 in every row."
     assert (
         meeting_prob.index == meeting_prob.columns
     ).all(), "meeting probabilities are not square."
