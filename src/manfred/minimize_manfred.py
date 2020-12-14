@@ -4,8 +4,8 @@ import numpy as np
 from estimagic.batch_evaluators import joblib_batch_evaluator
 
 from src.manfred.direct_search import do_manfred_direct_search
-from src.manfred.linesearch import calculate_manfred_direction
 from src.manfred.linesearch import do_manfred_linesearch
+from src.manfred.search_direction import calculate_manfred_direction
 from src.manfred.shared import aggregate_evaluations
 from src.manfred.shared import do_evaluations
 from src.manfred.shared import hash_array

@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 
 from src.manfred.linesearch import _find_maximal_linesearch_step
-from src.manfred.linesearch import _normalize_direction
+from src.manfred.search_direction import _normalize_direction
 
 
 def test_find_maximal_line_search_step_negative_direction():
