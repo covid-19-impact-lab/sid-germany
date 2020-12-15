@@ -32,7 +32,6 @@ def _get_free_params(params, constraints):
 
 ESTIMATION_START = pd.Timestamp("2020-08-15")
 ESTIMATION_END = pd.Timestamp("2020-12-05")
-ESTIMATION_END = pd.Timestamp("2020-11-05")
 
 INIT_START = ESTIMATION_START - pd.Timedelta(31, unit="D")
 INIT_END = ESTIMATION_START - pd.Timedelta(1, unit="D")
