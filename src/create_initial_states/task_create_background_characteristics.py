@@ -66,29 +66,64 @@ def task_create_initial_states_microcensus(depends_on, produces):
     assert not df.index.duplicated().any()
     df["occupation"] = _create_occupation(df)
 
-    _check_background_characteristics(df)
+    work_daily_dist = pd.read_pickle(depends_on["work_daily_dist"])
+    work_weekly_dist = pd.read_pickle(depends_on["work_weekly_dist"])
+    other_daily_dist = pd.read_pickle(depends_on["other_daily_dist"])
+    other_weekly_dist = pd.read_pickle(depends_on["other_weekly_dist"])
 
-    repeating_contact_distributions = [
-        "work_daily_dist",
-        "work_weekly_dist",
-        "other_daily_dist",
-        "other_weekly_dist",
-    ]
-
-    group_id_specs = {
-        name: pd.read_pickle(depends_on[name])
-        for name in repeating_contact_distributions
-    }
     df = add_contact_model_group_ids(
         df,
-        **group_id_specs,
+        work_daily_dist=work_daily_dist,
+        work_weekly_dist=work_weekly_dist,
+        other_daily_dist=other_daily_dist,
+        other_weekly_dist=other_weekly_dist,
         seed=555,
     )
-    _check_group_ids(df, **group_id_specs)
 
     df.index.name = "index"
     df = df.drop(columns=["index", "work_type"])
     df.to_parquet(produces)
+
+
+@pytask.mark.depends_on(
+    {
+        "initial_states": BLD / "data" / "initial_states.parquet",
+        "work_daily_dist": BLD
+        / "contact_models"
+        / "empirical_distributions"
+        / "work_recurrent_daily.pkl",
+        "work_weekly_dist": BLD
+        / "contact_models"
+        / "empirical_distributions"
+        / "work_recurrent_weekly.pkl",
+        "other_daily_dist": BLD
+        / "contact_models"
+        / "empirical_distributions"
+        / "other_recurrent_daily.pkl",
+        "other_weekly_dist": BLD
+        / "contact_models"
+        / "empirical_distributions"
+        / "other_recurrent_weekly.pkl",
+    }
+)
+def task_check_initial_states(depends_on):
+    df = pd.read_parquet(depends_on["initial_states"])
+    _check_background_characteristics(df)
+
+    work_daily_dist = pd.read_pickle(depends_on["work_daily_dist"])
+    work_weekly_dist = pd.read_pickle(depends_on["work_weekly_dist"])
+    other_daily_dist = pd.read_pickle(depends_on["other_daily_dist"])
+    other_weekly_dist = pd.read_pickle(depends_on["other_weekly_dist"])
+
+    _check_systemically_relevant(df)
+    _check_work_contact_priority(df)
+    _check_educ_group_ids(df)
+    _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
+    _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
+    for i in range(3):
+        col = f"christmas_group_{i}"
+        _check_christmas_groups(df, col)
+    assert (df["christmas_group_0"] != df["christmas_group_1"]).all()
 
 
 def _prepare_microcensus(mc):
@@ -215,6 +250,20 @@ def _check_background_characteristics(df):
     assert df.groupby("hh_id")["female"].any().mean() > 0.75
     assert df.groupby("hh_id")["male"].any().mean() > 0.75
 
+    _check_occupation_column(df)
+
+
+def _check_occupation_column(df):
+    df = df.copy(deep=True)
+    educ_worker_categories = [
+        "school_teacher",
+        "preschool_teacher",
+        "nursery_teacher",
+    ]
+    df["occupation"] = df["occupation"].replace(
+        {cat: "working" for cat in educ_worker_categories}
+    )
+
     occupation_categories = [
         "working",
         "nursery",
@@ -232,20 +281,6 @@ def _check_background_characteristics(df):
     assert df[df["age"] < 3]["occupation"].isin(["nursery", "stays home"]).all()
     assert 0.33 <= (df[df["age"] < 3]["occupation"] == "nursery").mean() <= 0.38
     assert 0.9 < (df[df["age"] > 70]["occupation"] == "retired").mean()
-
-
-def _check_group_ids(
-    df,
-    work_daily_dist,
-    work_weekly_dist,
-    other_daily_dist,
-    other_weekly_dist,
-):
-    _check_systemically_relevant(df)
-    _check_work_contact_priority(df)
-    _check_educ_group_ids(df)
-    _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
-    _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
 
 
 def _check_systemically_relevant(df):
@@ -419,3 +454,17 @@ def _check_other_group_ids(df, daily_dist, weekly_dist):
     goal_o_daily_group_size_shares.index += 1
     diff_btw_o_shares = o_daily_group_size_shares - goal_o_daily_group_size_shares
     assert np.abs(diff_btw_o_shares).max() < 0.1
+
+
+def _check_christmas_groups(df, col):
+    df = df.copy(deep=True)
+    assert df[col].notnull().all(), f"No NaNs allowed in {col}."
+    community_groups = df.query("~private_hh")[col]
+    assert (community_groups == -1).all(), "Only private hhs should be matched"
+    df = df.query("private_hh")
+    df["hh_id"] = df["hh_id"].astype(float)
+    groups_per_hh = df.groupby("hh_id")[col].nunique()
+    assert (groups_per_hh == 1).all(), "Every hh must have one christmas group."
+    hh_per_group = df.groupby(col)["hh_id"].nunique()
+    assert hh_per_group[-1] == 0
+    assert (hh_per_group.drop(-1) == 3).all(), "Not all groups have 3 households."

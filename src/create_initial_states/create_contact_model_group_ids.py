@@ -65,6 +65,7 @@ def add_contact_model_group_ids(
                 - school_group_a
                 - systemically_relevant
                 - work_contact_priority
+                - christmas_group_{0, 1, 2}
 
     """
     seed = itertools.count(seed)
@@ -199,6 +200,10 @@ def add_contact_model_group_ids(
         df["hh_id"].astype(int).where(hh_sizes > 1, -1).astype("category")
     )
 
+    for i in range(3):
+        df[f"christmas_group_{i}"] = _sample_household_groups(
+            df, seed=next(seed), assort_by="state", same_group_probability=0.5, n_hhs=3
+        )
     df = df.drop(columns=["pos_in_group", "one", "group_size"])
     return df
 
