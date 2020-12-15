@@ -242,3 +242,41 @@ def _draw_work_contact_priority(occupation, systemically_relevant, seed):
     work_contact_priority = work_contact_priority.where(is_worker, other=-1)
     work_contact_priority = work_contact_priority.where(~systemically_relevant, 2)
     return work_contact_priority
+
+
+def _sample_household_groups(df, seed, n_hhs=3):
+    """Put groups of households together into groups.
+
+    .. warning::
+        Until now no assortativeness is supported.
+
+    Args:
+        df (pandas.DataFrame): states DataFrame
+        seed (int)
+        n_hhs (int): Number of households to group together.
+
+    Returns:
+        id_col (pandas.Series): Same index as df, dtype category.
+            Individuals of households that were grouped together
+            have the same value.
+    """
+    np.random.seed(seed)
+    id_col = pd.Series(-1, index=df.index)
+    hh_ids = df.query("private_hh")["hh_id"].unique().astype(float)
+
+    # this is inplace
+    np.random.shuffle(hh_ids)
+
+    if not len(hh_ids) % n_hhs == 0:
+        to_append = [np.nan] * (n_hhs - len(hh_ids) % n_hhs)
+        hh_ids = np.append(hh_ids, to_append)
+
+    target_shape = (int(len(hh_ids) / n_hhs), n_hhs)
+    grouped_hh_ids = np.reshape(hh_ids, target_shape)
+    for i, group_hhs in enumerate(grouped_hh_ids):
+        selection = df["hh_id"].isin(group_hhs)
+        id_col[selection] = i
+
+    id_col = id_col.astype("category")
+
+    return id_col
