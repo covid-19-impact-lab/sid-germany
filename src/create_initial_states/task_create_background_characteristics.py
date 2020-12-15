@@ -4,6 +4,7 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
+from src.config import N_HOUSEHOLDS
 from src.config import POPULATION_GERMANY
 from src.config import SRC
 from src.create_initial_states.create_contact_model_group_ids import (
@@ -50,7 +51,7 @@ def task_create_initial_states_microcensus(depends_on, produces):
     equal_probs["hh_id"] = mc["hh_id"].unique()
     equal_probs["probability"] = 1 / len(equal_probs)
 
-    df = _sample_mc_hhs(mc, equal_probs, n_households=1_000_000, seed=4874)
+    df = _sample_mc_hhs(mc, equal_probs, n_households=N_HOUSEHOLDS, seed=4874)
 
     county_probabilities = pd.read_parquet(depends_on["county_probabilities"])
     county_and_state = _draw_counties(
