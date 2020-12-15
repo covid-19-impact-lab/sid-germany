@@ -88,6 +88,7 @@ def task_create_initial_states_microcensus(depends_on, produces):
 
     df.index.name = "index"
     df = df.drop(columns=["index", "work_type"])
+    df = df.sample(frac=1).reset_index(drop=True)
     df.to_parquet(produces)
 
 
@@ -105,7 +106,11 @@ def _prepare_microcensus(mc):
     mc = mc.rename(columns=rename_dict)
     mc = mc[rename_dict.values()]
     mc["private_hh"] = mc["hh_form"] == "bevölkerung in privathaushalten"
-    mc["gender"] = mc["gender"].replace({"männlich": "male", "weiblich": "female"})
+    mc["gender"] = (
+        mc["gender"]
+        .replace({"männlich": "male", "weiblich": "female"})
+        .astype("category")
+    )
 
     mc["age"] = mc["age"].replace({"95 jahre und älter": 96})
     mc["age_group"] = create_age_groups(mc["age"])
