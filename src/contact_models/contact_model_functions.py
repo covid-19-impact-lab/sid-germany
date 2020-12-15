@@ -362,66 +362,6 @@ def reduce_contacts_on_condition(
 # =============================================================================
 
 
-def reduce_contacts_when_symptomatic_case_among_recurrent_contacts(
-    contacts, states, share, group_id, seed
-):
-    """Reduce contacts when there is a symptomatic case among the recurrent contacts.
-
-    Individuals react only to symptomatic cases among their recurrent contacts because
-    it is more likely that they will be notified. (For random contacts, the contact
-    tracing app would be helpful.)
-
-    Since this function is computationally demanding, it is not used at the moment.
-
-    """
-    np.random.seed(seed)
-    contacts = contacts.copy(deep=True)
-    has_symptomatic_case = pd.Series(index=states.index, data=False)
-    s = (
-        states.loc[states.group_id != -1, "symptomatic"]
-        .groupby(group_id)
-        .transform("any")
-    )
-
-    has_symptomatic_case.loc[s.index] = has_symptomatic_case.loc[s.index] | s
-
-    compliers = np.random.choice(
-        [True, False], size=has_symptomatic_case.sum(), p=[share, 1 - share]
-    )
-    contacts.loc[has_symptomatic_case[compliers].index] = 0
-
-    return contacts
-
-
-def reduce_contacts_when_positive_case_among_recurrent_contacts(
-    contacts, states, share, group_id, seed
-):
-    """Reduce contacts when there is a positive case among the recurrent contacts.
-
-    Individuals react only to positive cases among their recurrent contacts because
-    it is more likely that they will be notified. (For random contacts, the contact
-    tracing app would be helpful.)
-
-    Since this function is computationally demanding, it is not used at the moment.
-
-    """
-    np.random.seed(seed)
-    contacts = contacts.copy(deep=True)
-    is_positive_case = states.eval(IS_POSITIVE_CASE)
-    has_positive_case = pd.Series(index=states.index, data=False)
-    valid_group = states.loc[states[group_id] != -1, "group_id"]
-    s = is_positive_case.loc[valid_group.index].groupby(valid_group).transform("any")
-
-    has_positive_case.loc[s.index] = has_positive_case.loc[s.index] | s
-
-    compliers = np.random.choice(
-        [True, False], size=has_positive_case.sum(), p=[share, 1 - share]
-    )
-    contacts.loc[has_positive_case[compliers].index] = 0
-
-    return contacts
-
-
 def _pupils_having_vacations_do_not_attend(attends_facility, states, params):
     """Make pupils stay away from school if their state has vacations."""
     date = get_date(states)

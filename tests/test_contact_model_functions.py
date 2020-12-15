@@ -12,9 +12,7 @@ from src.contact_models.contact_model_functions import (
 from src.contact_models.contact_model_functions import go_to_weekly_meeting
 from src.contact_models.contact_model_functions import go_to_work
 from src.contact_models.contact_model_functions import meet_daily_other_contacts
-from src.contact_models.contact_model_functions import (
-    reduce_contacts_on_condition,
-)
+from src.contact_models.contact_model_functions import reduce_contacts_on_condition
 from src.shared import draw_groups
 
 
