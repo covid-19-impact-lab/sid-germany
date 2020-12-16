@@ -7,6 +7,9 @@ from pandas.testing import assert_series_equal
 
 from src.contact_models.contact_model_functions import _draw_nr_of_contacts
 from src.contact_models.contact_model_functions import (
+    _identify_individuals_with_risk_contacts,
+)
+from src.contact_models.contact_model_functions import (
     calculate_non_recurrent_contacts_from_empirical_distribution,
 )
 from src.contact_models.contact_model_functions import go_to_weekly_meeting
@@ -15,6 +18,9 @@ from src.contact_models.contact_model_functions import holiday_preparation_conta
 from src.contact_models.contact_model_functions import meet_daily_other_contacts
 from src.contact_models.contact_model_functions import meet_on_holidays
 from src.contact_models.contact_model_functions import reduce_contacts_on_condition
+from src.contact_models.contact_model_functions import (
+    reduce_contacts_when_condition_among_recurrent_contacts,
+)
 from src.shared import draw_groups
 
 
@@ -538,3 +544,40 @@ def test_meet_daily_other_contacts():
     )
     expected = pd.Series([0, 1, 1, 0])
     assert_series_equal(res, expected)
+
+
+def test_identify_individuals_with_risk_contacts():
+    states = pd.DataFrame()
+    states["id1"] = [0, 0, 0, 1, 1, 2, 2]
+    states["id2"] = [3, 3, 4, -1, 5, 5, -1]
+    states["symptomatic"] = [True] + [False] * 5 + [True]
+
+    res = _identify_individuals_with_risk_contacts(
+        states, ["id1", "id2"], "symptomatic"
+    )
+
+    expected = pd.Series([False, True, True, False, False, True, False])
+
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_reduce_contacts_when_condition_among_recurrent_contacts():
+    states = pd.DataFrame()
+    states["id1"] = [0, 0, 0, 1, 1, 2, 2]
+    states["id2"] = [3, 3, 4, -1, 5, 5, -1]
+    states["symptomatic"] = [True] + [False] * 5 + [True]
+
+    contacts = 1 + pd.Series(np.arange(7))
+
+    res = reduce_contacts_when_condition_among_recurrent_contacts(
+        contacts=contacts,
+        states=states,
+        seed=333,
+        multiplier=0.1,
+        group_ids=["id1", "id2"],
+        condition="symptomatic",
+        is_recurrent=False,
+    )
+
+    expected = pd.Series([1, 0.2, 0.3, 4, 5, 0.6, 7])
+    pd.testing.assert_series_equal(res, expected)

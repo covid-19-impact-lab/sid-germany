@@ -136,8 +136,8 @@ def _build_reaction_params(contact_models):
         ("symptomatic_multiplier", 0.15, 0.5),
         ("positive_test_multiplier", 0.05, 0.5),
     ]
-    for cm in contact_models:
-        for name, multiplier, hh_multiplier in multipliers:
+    for name, multiplier, hh_multiplier in multipliers:
+        for cm in contact_models:
             if "household" in cm:
                 df.loc[(cm, name, name)] = hh_multiplier
             else:
