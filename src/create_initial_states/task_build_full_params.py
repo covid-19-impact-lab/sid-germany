@@ -52,8 +52,6 @@ def task_create_full_params(depends_on, produces):
 
     non_christmas_contact_models, all_contact_models = _get_contact_models_for_params()
 
-    infection_probs = _build_infection_probs(all_contact_models.keys())
-
     assort_params = _build_assort_params(
         non_christmas_contact_models, age_assort_params
     )
@@ -68,12 +66,11 @@ def task_create_full_params(depends_on, produces):
 
     reaction_params = _build_reaction_params(all_contact_models)
     param_slices = [
+        reaction_params,
+        dist_params,
+        assort_params,
         epi_params,
         vacations,
-        dist_params,
-        infection_probs,
-        assort_params,
-        reaction_params,
     ]
     params = pd.concat(param_slices, axis=0)
     params.to_pickle(produces)
@@ -117,33 +114,6 @@ def _make_mergable_with_params(dist, category):
     dist["name"] = dist.index
     dist = dist.set_index(["category", "subcategory", "name"], drop=True)
     return dist
-
-
-def _build_infection_probs(names):
-    index_tuples = [("infection_prob", mod_name, mod_name) for mod_name in names]
-    df = pd.DataFrame(index=pd.MultiIndex.from_tuples(index_tuples))
-    df.index.names = ["category", "subcategory", "name"]
-    df = df.reset_index()
-    prob_dict = {
-        "educ": 0.02,
-        "work": 0.1,
-        "household": 0.2,
-        "other": 0.1,
-        "christmas": 0.2,
-        "holiday_preparation": 0.1,
-    }
-    full_prob_dict = {}
-    for mod_name in names:
-        for k, v in prob_dict.items():
-            if k in mod_name:
-                full_prob_dict[mod_name] = v
-        assert (
-            mod_name in full_prob_dict
-        ), f"No infection probability for {mod_name} specified."
-
-    df["value"] = df["name"].map(full_prob_dict.get)
-    df = df.set_index(["category", "subcategory", "name"])
-    return df
 
 
 def _build_assort_params(contact_models, age_assort_params):
