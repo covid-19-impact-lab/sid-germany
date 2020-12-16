@@ -60,7 +60,6 @@ def task_simulation_christmas_scenarios(
     params = pd.read_pickle(depends_on["params"])
 
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
-    share_known_cases = share_known_cases[~share_known_cases.index.duplicated()]
 
     df = pd.read_parquet(depends_on["initial_states"])
 
