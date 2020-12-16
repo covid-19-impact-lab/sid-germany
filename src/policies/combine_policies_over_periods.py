@@ -146,7 +146,7 @@ def get_december_to_feb_policies(
 
 def get_christmas_contact_tracing_policies(contact_models, block_info, multiplier):
     """"""
-    # households, educ contact models and christmas models don't get adjustment
+    # households, educ contact models and Christmas models don't get adjustment
     models_with_post_christmas_isolation = [
         cm for cm in contact_models if "work" in cm or "other" in cm
     ]

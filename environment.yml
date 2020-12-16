@@ -2,7 +2,7 @@ name: sid-germany
 
 channels:
   - conda-forge
-  - opensourceeconomics
+  - janosg
   - pytask
 
 dependencies:
@@ -13,7 +13,7 @@ dependencies:
 
   - black
   - dask
-  - estimagic>=0.0.29
+  - estimagic>=0.1.0dev2
   - fastparquet
   - jupyterlab
   - nodejs
