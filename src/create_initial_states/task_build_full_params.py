@@ -166,9 +166,9 @@ def _build_reaction_params(contact_models):
     ]
     for cm in contact_models:
         for name, multiplier, hh_multiplier in multipliers:
-            if "household" in cm or "christmas" in cm:
+            if "household" in cm:
                 df.loc[(cm, name, name)] = hh_multiplier
             else:
-                # this includes the holiday preparation model
+                # this includes the holiday preparation and christmas models
                 df.loc[(cm, name, name)] = multiplier
     return df

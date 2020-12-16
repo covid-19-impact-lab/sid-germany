@@ -126,7 +126,7 @@ def task_check_initial_states(depends_on):
         _check_christmas_groups(df, col)
     assert (df["christmas_group_id_0"] != df["christmas_group_id_1"]).any()
     not_categorical_group_ids = [
-        [col for col in df if "group_id" in col and not is_categorical_dtype(df[col])]
+        col for col in df if "group_id" in col and not is_categorical_dtype(df[col])
     ]
     assert (
         len(not_categorical_group_ids) == 0
@@ -350,9 +350,13 @@ def _check_educ_group_ids(df):
     assert (df["school_group_a"].unique() == [1, 0]).all()
     assert df.query("age < 3")["occupation"].isin(["nursery", "stays home"]).all()
     assert (df.query("3 <= age <= 14")["nursery_group_id_0"] == -1).all()
-    assert (df.query("3 <= age < 6")["preschool_group_id_0"].value_counts() > 1).all()
-    assert (df.query("6 < age <= 14")["preschool_group_id_0"] == -1).all()
-    assert (df.query("6 < age <= 14")["school_group_id_0"].value_counts() > 1).all()
+    preschool_kid_groups = df.query("3 <= age < 6")["preschool_group_id_0"]
+    assert (preschool_kid_groups != -1).all()
+    assert (preschool_kid_groups.value_counts().drop(-1).isin([8, 9, 10])).all()
+    kids = df.query("6 < age <= 14")
+    assert (kids["preschool_group_id_0"] == -1).all()
+    assert (kids["school_group_id_0"] != -1).all()
+    assert (kids["school_group_id_0"].astype(int).value_counts() > 1).all()
 
     _check_educators(df)
     _check_educ_group_sizes(df)
@@ -375,6 +379,7 @@ def _check_educators(df):
 
 
 def _check_educ_group_sizes(df):
+    df = df.copy(deep=True)
     name_to_class_bounds = {
         # school target is 23 pupils + 2 teachers => 20, 31
         "school": (20, 31, 2),
@@ -385,6 +390,7 @@ def _check_educ_group_sizes(df):
     }
     for name, (lower, upper, expected_n_teachers) in name_to_class_bounds.items():
         id_col = f"{name}_group_id_0"
+        df[id_col] = df[id_col].astype(float)
 
         pupils_and_teachers = df[df[id_col] != -1]
         class_sizes = pupils_and_teachers[id_col].value_counts().unique()
@@ -397,12 +403,14 @@ def _check_educ_group_sizes(df):
 
 
 def _check_educ_group_assortativeness(df):
+    df = df.copy(deep=True)
     col_to_limits = {
         "nursery_group_id_0": (3, [2, 3, 4]),
         "preschool_group_id_0": (4, [3, 4, 5]),
         "school_group_id_0": (7, [2, 3]),
     }
     for col, (max_counties, allowed_n_ages) in col_to_limits.items():
+        df[col] = df[col].astype(int)
         pupils_and_teachers = df[df[col] != -1]
         grouped = pupils_and_teachers.groupby(col)
         assert (grouped["state"].nunique() == 1).all()
@@ -464,11 +472,11 @@ def _check_other_group_ids(df, daily_dist, weekly_dist):
 
 
 def _check_christmas_groups(df, col):
-    df = df.copy(deep=True)
     assert df[col].notnull().all(), f"No NaNs allowed in {col}."
     community_groups = df.query("~private_hh")[col]
     assert (community_groups == -1).all(), "Only private hhs should be matched"
-    df = df.query("private_hh")
+
+    df = df.query("private_hh").copy(deep=True)
     df["hh_id"] = df["hh_id"].astype(float)
     groups_per_hh = df.groupby("hh_id")[col].nunique()
     assert (groups_per_hh == 1).all(), "Every hh must have one christmas group."
