@@ -293,7 +293,7 @@ def reduce_contacts_through_private_contact_tracing(
     today = get_date(states)
     days_since_christmas = (today - pd.Timestamp("2020-12-26")).days
     test_condition = f"-{days_since_christmas} <= cd_received_test_result_true <= 0"
-    symptom_condition = f"-{days_since_christmas} <= cd_sympotmatic_true <= 0"
+    symptom_condition = f"-{days_since_christmas} <= cd_symptoms_true <= 0"
     risk_condition = f"({symptom_condition}) | ({test_condition})"
     states["is_known_risk_person"] = states.eval(risk_condition)
 
