@@ -70,13 +70,15 @@ def _calculate_share_known_cases(df):
     share_known_cases = df["known"] / df["total"]
     min_share_until_june = share_known_cases[:"2020-06-01"].min()
     start_date = share_known_cases.index.min()
-    jan_until_start = pd.date_range(start="2020-01-01", end=start_date)
+    jan_until_start = pd.date_range(start="2020-01-01", end=start_date, closed="left")
     extrapolated_share_before_start = pd.Series(
         min_share_until_june, index=jan_until_start
     )
 
     last_share = share_known_cases[-1]
-    end_until_feb = pd.date_range(start=share_known_cases.index.max(), end="2021-02-01")
+    end_until_feb = pd.date_range(
+        start=share_known_cases.index.max(), end="2021-02-01", closed="right"
+    )
     extrapolated_until_feb = pd.Series(last_share, index=end_until_feb)
     extrapolated_until_feb["2020-12-23":"2020-12-26"] *= 0.25
 
@@ -85,7 +87,11 @@ def _calculate_share_known_cases(df):
         share_known_cases,
         extrapolated_until_feb,
     ]
-    share_known_cases = pd.concat(to_concat)
+    share_known_cases = pd.concat(to_concat).sort_index()
+    assert not share_known_cases.index.duplicated().any()
+    assert (
+        share_known_cases.index == pd.date_range(start="2020-01-01", end="2021-02-01")
+    ).all()
     return share_known_cases
 
 
