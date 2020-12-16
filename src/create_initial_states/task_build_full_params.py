@@ -57,12 +57,14 @@ def task_create_full_params(depends_on, produces):
     assort_params = _build_assort_params(
         non_christmas_contact_models, age_assort_params
     )
-    # assortative matching of the holiday preparation by state.
+    # assortative matching of the holiday preparation by county and age_group
     # This is supposed to cover holiday shopping and traveling.
-    # Assume that 80% of additional contacts are with people of the same state.
     assort_params.loc[
-        ("assortative_matching", "holiday_preparation", "state"), "value"
-    ] = 0.8
+        ("assortative_matching", "holiday_preparation", "county"), "value"
+    ] = 0.3
+    assort_params.loc[
+        ("assortative_matching", "holiday_preparation", "age_group"), "value"
+    ] = 0.3
 
     reaction_params = _build_reaction_params(all_contact_models)
     param_slices = [
