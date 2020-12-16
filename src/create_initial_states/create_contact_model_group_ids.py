@@ -201,9 +201,18 @@ def add_contact_model_group_ids(
     )
 
     for i in range(3):
-        df[f"christmas_group_{i}"] = _sample_household_groups(
+        df[f"christmas_group_id_{i}"] = _sample_household_groups(
             df, seed=next(seed), assort_by="state", same_group_probability=0.5, n_hhs=3
         )
+
+    educ_group_cols = [
+        "school_group_id_0",
+        "school_group_id_1",
+        "school_group_id_2",
+        "preschool_group_id_0",
+        "nursery_group_id_0",
+    ]
+    df[educ_group_cols] = df[educ_group_cols].astype("category")
     df = df.drop(columns=["pos_in_group", "one", "group_size"])
     return df
 

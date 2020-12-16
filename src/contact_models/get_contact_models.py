@@ -273,7 +273,7 @@ def get_christmas_contact_models(mode, n_contacts_before):
 
     if mode == "full":
         for i, date in enumerate(dates):
-            col_name = f"christmas_group_{i}"
+            col_name = f"christmas_group_id_{i}"
             contact_model = {
                 "is_recurrent": True,
                 "assort_by": [col_name],
@@ -284,7 +284,7 @@ def get_christmas_contact_models(mode, n_contacts_before):
             christmas_contact_models[f"christmas_{mode}_{i}"] = contact_model
 
     elif mode == "same_group":
-        col_name = "christmas_group_0"
+        col_name = "christmas_group_id_0"
         contact_model = {
             "is_recurrent": True,
             "assort_by": [col_name],
@@ -295,7 +295,7 @@ def get_christmas_contact_models(mode, n_contacts_before):
         christmas_contact_models["christmas_same_group"] = contact_model
 
     elif mode == "meet_twice":
-        col_name = "christmas_group_0"
+        col_name = "christmas_group_id_0"
         contact_model = {
             "is_recurrent": True,
             "assort_by": [col_name],

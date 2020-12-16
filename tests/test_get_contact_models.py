@@ -8,15 +8,15 @@ def test_christmas_mode_full():
     expected = {
         "holiday_preparation": {"n_contacts": 2},
         "christmas_full_0": {
-            "group_col": "christmas_group_0",
+            "group_col": "christmas_group_id_0",
             "dates": [pd.Timestamp("2020-12-24")],
         },
         "christmas_full_1": {
-            "group_col": "christmas_group_1",
+            "group_col": "christmas_group_id_1",
             "dates": [pd.Timestamp("2020-12-25")],
         },
         "christmas_full_2": {
-            "group_col": "christmas_group_2",
+            "group_col": "christmas_group_id_2",
             "dates": [pd.Timestamp("2020-12-26")],
         },
     }
@@ -31,7 +31,7 @@ def test_christmas_mode_same_group():
     expected = {
         "holiday_preparation": {"n_contacts": 2},
         "christmas_same_group": {
-            "group_col": "christmas_group_0",
+            "group_col": "christmas_group_id_0",
             "dates": [
                 pd.Timestamp("2020-12-24"),
                 pd.Timestamp("2020-12-25"),
@@ -50,7 +50,7 @@ def test_christmas_mode_meet_twice():
     expected = {
         "holiday_preparation": {"n_contacts": 3},
         "christmas_meet_twice": {
-            "group_col": "christmas_group_0",
+            "group_col": "christmas_group_id_0",
             "dates": [pd.Timestamp("2020-12-24"), pd.Timestamp("2020-12-25")],
         },
     }

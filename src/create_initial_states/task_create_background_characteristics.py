@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import pytask
+from pandas.api.types import is_categorical_dtype
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
@@ -121,9 +122,15 @@ def task_check_initial_states(depends_on):
     _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
     _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
     for i in range(3):
-        col = f"christmas_group_{i}"
+        col = f"christmas_group_id_{i}"
         _check_christmas_groups(df, col)
-    assert (df["christmas_group_0"] != df["christmas_group_1"]).any()
+    assert (df["christmas_group_id_0"] != df["christmas_group_id_1"]).any()
+    not_categorical_group_ids = [
+        [col for col in df if "group_id" in col and not is_categorical_dtype(df[col])]
+    ]
+    assert (
+        len(not_categorical_group_ids) == 0
+    ), f"There are non categorical group id columns: {not_categorical_group_ids}"
 
 
 def _prepare_microcensus(mc):
