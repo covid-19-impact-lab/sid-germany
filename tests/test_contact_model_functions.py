@@ -12,6 +12,7 @@ from src.contact_models.contact_model_functions import (
 from src.contact_models.contact_model_functions import go_to_weekly_meeting
 from src.contact_models.contact_model_functions import go_to_work
 from src.contact_models.contact_model_functions import meet_daily_other_contacts
+from src.contact_models.contact_model_functions import meet_on_holidays
 from src.contact_models.contact_model_functions import reduce_contacts_on_condition
 from src.shared import draw_groups
 
@@ -102,6 +103,36 @@ def no_reduction_params():
     params["value"] = 1.0
     params = params.set_index(["subcategory", "name"])
     return params
+
+
+# ---------------------------------------------------------------------------------
+
+
+def test_meet_on_holidays_wrong_date(a_thursday, no_reduction_params):
+    a_thursday["group_col"] = 1
+    res = meet_on_holidays(
+        states=a_thursday,
+        params=no_reduction_params,
+        group_col="group_col",
+        dates=["2020-12-24"],
+        seed=311,
+    )
+    expected = pd.Series(0, index=a_thursday.index)
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_meet_on_holidays_right_date(a_thursday, no_reduction_params):
+    a_thursday["group_col"] = [1, 2, 1, 2, 3, 3, 3] + [-1] * (len(a_thursday) - 7)
+    res = meet_on_holidays(
+        states=a_thursday,
+        params=no_reduction_params,
+        group_col="group_col",
+        dates=["2020-04-30"],
+        seed=311,
+    )
+    expected = pd.Series(0, index=a_thursday.index)
+    expected[:7] = 1
+    pd.testing.assert_series_equal(res, expected)
 
 
 def test_go_to_weekly_meeting_wrong_day(a_thursday):

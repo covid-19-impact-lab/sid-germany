@@ -24,14 +24,49 @@ The individual either ...
 """
 
 
+def meet_on_holidays(states, params, group_col, dates, seed):
+    """Meet other households scheduled for Christmas.
+
+    There are three modes:
+
+    Args:
+        states (pandas.DataFrame): sid states DataFrame
+        params (pandas.DataFrame): DataFrame with two category levels,
+            subcategory and name.
+        group_col (str): name of the column identifying groups of
+            individuals that will meet.
+        dates (list): list of dates on which individuals
+            of group_col will meet.
+
+    """
+    today = get_date(states)
+    dates = [pd.Timestamp(date) for date in dates]
+    if today not in dates:
+        attends_meeting = pd.Series(0, index=states.index)
+    else:
+        attends_meeting = (states[group_col] != -1).astype(int)
+        for params_entry, condition in [
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
+        ]:
+            attends_meeting = reduce_contacts_on_condition(
+                attends_meeting,
+                states,
+                params.loc[(params_entry, params_entry), "value"],
+                condition,
+                seed=seed,
+                is_recurrent=True,
+            )
+    return attends_meeting
+
+
 def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
     """Return who participates in a weekly meeting.
 
     Args:
         states (pandas.DataFrame): sid states DataFrame
         params (pandas.DataFrame): DataFrame with two category levels,
-            subcategory and name. has a "value" column that contains the probabilities
-            to the number of possible columns in the "name" index level.
+            subcategory and name.
         group_col_name (str): name of the column identifying this contact model's
             group column.
         day_of_week (str): day of the week on which this model takes place.
