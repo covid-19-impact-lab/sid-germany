@@ -263,7 +263,7 @@ def get_christmas_contact_models(mode, n_contacts_before):
         "holiday_preparation": {
             "is_recurrent": False,
             "loc": "holiday_preparation",
-            "assort_by": ["age_group", "county"],
+            "assort_by": ["state"],
             "model": partial(
                 cm_funcs.holiday_preparation_contacts,
                 n_contacts=n_contacts_before,
