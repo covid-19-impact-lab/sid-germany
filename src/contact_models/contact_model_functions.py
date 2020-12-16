@@ -24,6 +24,32 @@ The individual either ...
 """
 
 
+def holiday_preparation_contacts(states, params, seed, n_contacts):
+    """Have additional meetings directly before the Christmas holidays.
+
+    This is meant to cover things like traveling with public transport
+    or doing holiday shopping.
+
+    """
+    if get_date(states) != pd.Timestamp("2020-12-23"):
+        contacts = pd.Series(0, index=states.index)
+    else:
+        contacts = pd.Series(n_contacts, states.index)
+        for params_entry, condition in [
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
+        ]:
+            contacts = reduce_contacts_on_condition(
+                contacts,
+                states,
+                params.loc[(params_entry, params_entry), "value"],
+                condition,
+                seed=seed,
+                is_recurrent=False,
+            )
+    return contacts
+
+
 def meet_on_holidays(states, params, group_col, dates, seed):
     """Meet other households scheduled for Christmas.
 
