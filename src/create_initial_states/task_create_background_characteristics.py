@@ -123,7 +123,7 @@ def task_check_initial_states(depends_on):
     for i in range(3):
         col = f"christmas_group_{i}"
         _check_christmas_groups(df, col)
-    assert (df["christmas_group_0"] != df["christmas_group_1"]).all()
+    assert (df["christmas_group_0"] != df["christmas_group_1"]).any()
 
 
 def _prepare_microcensus(mc):
