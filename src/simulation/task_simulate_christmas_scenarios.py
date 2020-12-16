@@ -1,11 +1,9 @@
-import pytask
 import pandas as pd
-from src.config import BLD, SRC
+import pytask
 import sid
-from src.contact_models.get_contact_models import (
-    get_all_contact_models,
-    get_christmas_contact_models,
-)
+
+from src.config import BLD
+from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
@@ -49,7 +47,7 @@ PARAMETRIZATIONS = _create_parametrization()
         / "data"
         / "processed_time_series"
         / "share_known_cases.pkl",
-        # TODO: Replace with real states.
+        # !!! Replace with real states.
         "initial_states": BLD / "data" / "debug_initial_states.parquet",
     }
 )
@@ -59,19 +57,13 @@ PARAMETRIZATIONS = _create_parametrization()
 def task_simulation_christmas_scenarios(
     depends_on, christmas_mode, contact_tracing_multiplier, path
 ):
-    # Inputs that will not changes.
     params = pd.read_pickle(depends_on["params"])
 
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
     share_known_cases = share_known_cases[~share_known_cases.index.duplicated()]
 
-    # replace this with the full initial states later on
     df = pd.read_parquet(depends_on["initial_states"])
 
-    # contact_models and policies will change depending on the
-    # scenario in which we are.
-    # Parametrize over 3 christmas_modes and
-    # private_contact_tracing True/False to begin with
     contact_models = get_all_contact_models(
         christmas_mode=christmas_mode, n_extra_contacts_before_christmas=2
     )
@@ -84,7 +76,6 @@ def task_simulation_christmas_scenarios(
         contact_tracing_multiplier=contact_tracing_multiplier,
     )
 
-    # set the infection probabilities
     infection_probs = _build_infection_probs(contact_models.keys())
 
     params = pd.concat([infection_probs, params])
