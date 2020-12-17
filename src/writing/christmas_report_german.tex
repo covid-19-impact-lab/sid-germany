@@ -1,0 +1,201 @@
+\documentclass[a4paper,11pt,leqno,fleqn]{article}
+
+% commands =====================================================================
+\renewcommand{\baselinestretch}{1.25}\normalsize
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\thin}{\thinspace}
+\newcommand{\thick}{\thickspace}
+\newcommand{\N}{\mathrm{N}} %Normal Distribution
+\newcommand{\U}{\mathrm{U}} %Uniform Distribution
+\newcommand{\D}{\mathrm{D}} %Dirichlet Distribution
+\newcommand{\W}{\mathrm{W}} %Wishart Distribution
+\newcommand{\E}{\mbox{E}}   %Expectation
+\newcommand{\Iden}{\mathbb{I}}  %Identity Matrix
+\newcommand{\Ind}{\mathrm{I}}   %Indicator Function
+\newcommand{\var}{\mathrm{var}\thin}
+\newcommand{\plim}{\mathrm{plim}\thin}
+\newcommand{\cov}{\mathrm{cov}\thin}
+\newcommand\indep{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern5mu{#1#2}}}
+\renewcommand{\arraystretch}{1.05}
+\newenvironment{boenumerate}
+{\begin{enumerate}\renewcommand\labelenumi{\textbf{(\theenumi)}}}
+{\end{enumerate}}
+
+% packages ======================================================================
+
+\usepackage{subcaption}
+\usepackage{graphicx}
+
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[natbib=true,giveninits=false,uniquename=false,uniquelist=false,bibencoding=inputenc,bibstyle=authoryear-ibid,citestyle=authoryear-comp,maxcitenames=2,maxbibnames=10,useprefix=false,sortcites=true,backend=biber]{biblatex}
+\AtBeginDocument{\toggletrue{blx@useprefix}}
+\AtBeginBibliography{\togglefalse{blx@useprefix}}
+\usepackage{setspace}
+\usepackage[unicode=true]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    anchorcolor=black,
+    citecolor=black,
+    filecolor=black,
+    menucolor=black,
+    runcolor=black,
+    urlcolor=blue}
+\usepackage{threeparttable}
+\usepackage{lscape}
+\usepackage{float, afterpage, rotating, graphicx}
+\usepackage{epstopdf}
+\usepackage{longtable, booktabs, tabularx}
+\usepackage{amsmath, amsfonts, amsthm, bm, amssymb}
+\usepackage{fancyvrb, moreverb, relsize}
+\usepackage{eurosym, calc, chngcntr}
+\usepackage{caption}
+\usepackage{mdwlist}
+\usepackage{xfrac}
+\usepackage{setspace}
+\usepackage{adjustbox}
+% \usepackage[position=bottom]{subfig}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{fancybox}
+\usepackage{appendix}
+\usepackage{enumerate}
+\usepackage{color,colortbl}
+\usepackage[left=2.5cm, right=3.25cm, top=2cm, bottom=2cm]{geometry}
+\usepackage{placeins}
+
+% colors ======================================================================
+% blues
+\definecolor{lb}{HTML}{3498DB}
+\definecolor{b}{HTML}{1565C0}
+\definecolor{db}{HTML}{002080}
+% greens
+\definecolor{lg}{HTML}{B2EC5D}
+\definecolor{g}{HTML}{55A868}
+\definecolor{dg}{HTML}{2E7D32}
+% yellows
+\definecolor{ly}{HTML}{F9A825}
+\definecolor{y}{HTML}{FF8F00}
+\definecolor{dy}{HTML}{EF6C00}
+% reds
+\definecolor{lr}{HTML}{D84315}
+\definecolor{r}{HTML}{C44E52}
+\definecolor{dr}{HTML}{C62828}
+% violet
+\definecolor{lv}{HTML}{C71585}
+\definecolor{v}{HTML}{9B59B6}
+\definecolor{dv}{HTML}{6A1B9A}
+% grey
+\definecolor{ln}{HTML}{BDBDBD}
+\definecolor{n}{HTML}{757575}
+\definecolor{dn}{HTML}{616161}
+% palettes
+\definecolor{p1}{HTML}{4A6FAC}
+\definecolor{p2}{HTML}{53A465}
+\definecolor{p3}{HTML}{C04C50}
+\definecolor{p4}{HTML}{7E6FAE}
+\definecolor{p5}{HTML}{C8B571}
+\definecolor{p6}{HTML}{62B1C8}
+% brown
+\definecolor{brown}{HTML}{4E342E}
+
+% settings ====================================================================
+\setlength{\skip\footins}{1.0cm}
+
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{2mm}
+
+
+% title =======================================================================
+\title{Die Bedeutung individuellen Verhaltens über den Jahreswechsel für die Weiterentwicklung der Covid-19 Pandemie in Deutschland}
+\date{\today}
+\author{Janoś Gabler, Tobias Raabe, Klara Röhrl, Hans-Martin von Gaudecker}
+
+\addbibresource{refs.bib}
+
+\begin{document}
+
+% titlepage
+\maketitle
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+
+\section{Einleitung}
+
+Um den steigenden Coronafallzahlen zu begegnen, wurde in Deutschland im November ein Lockdown Light durchgeführt.
+Dieser hat jedoch lediglich zu einem Stagnieren der Fallzahlen geführt.
+Deshalb hat die Bundesregierung zusammen mit den Ministerpräsidenten der Bundesländer einen erneuten harten Lockdown ab dem 16. Dezember verhängt, um die Fallzahlen vor den Weihnachtsfeiertagen zu reduzieren und das Infektionsgeschehen wieder unter Kontrolle zu bringen.
+
+Ein sehr wichtiger Faktor hierfür ist, wie sich die Menschen in Deutschland über die Weihnachtsfeiertage verhalten.
+Familienfeiern, wo Menschen intensiv Zeit miteinander verbringen, die sich sonst sehr selten treffen, bergen ein großes Ansteckungsrisiko.
+Je häufiger und je mehr unterschiedliche Haushalte zusammen kommen, umso größer ist das Ansteckungsrisiko.
+Gleichzeitig ist damit zu rechnen, dass über die Feiertage geringere Testkapazitäten zur Verfügung stehen und die Gesundheitsämter noch weniger in der Lage sein werden, Kontaktnachverfolgung in der nötigen Geschwindigkeit zu betreiben.
+Allerdings ist eine private Kontaktnachverfolgung von Familientreffen aufgrund der persönlichen Bekanntschaft viel leichter möglich.
+
+Dieser Bericht zeigt Vorhersagen für die Entwicklung des Infektionsgeschehens in Deutschland für verschieden Szenarien, wie Menschen in Deutschland Weihnachten feiern und in welchem Maße sie in den darauffolgenden Tagen selbstständig Kontaktnachverfolgung und Selbstquarantäne betreiben.
+
+\textcolor{red}{Kurze Zusammenfassung der Ergebnisse}
+
+\section{Das Modell}
+
+Das Modell von Gabler, Raabe und Röhrl\footnote{Eine detaillierte Beschreibung des Modells findet sich unter \url{https://covid-19.iza.org/publications/dp13899/}.} basiert auf agentenbasierten Simulationsmodellen, ersetzt aber die Kontakte zwischen sich bewegenden Teilchen durch Kontakte zwischen Personen, die arbeiten, zur Schule gehen, in einem Haushalt leben und Freizeitaktivitäten ausüben.
+
+Es hat die folgenden Eigenschaften, die es sehr geeignet machen, um die Effekte von Politikmaßnahmen und individuellem Verhalten vorherzusagen:
+
+\begin{enumerate}
+    \item Im  Mittelpunkt des Modells steht die Begegnung von Menschen mit Menschen auf der Grundlage eines Matching-Algorithmus. Das Modell unterscheidet verschiedene Arten von Kontakten, wie beispielsweise Haushalte, Freizeitaktivitäten, Schulen, Kindergärten und verschiedene Arten von Kontakten am Arbeitsplatz. Die Kontaktarten können zufällig oder wiederkehrend sein und variieren in ihrer Häufigkeit and Ansteckungswahrscheinlichkeit.
+    \item Das Modell unterscheidet entdeckte und unentdeckte Infektionen.\footnote{Hierfür nutzen wir Schätzungen des Dunkelziffer Radar Projekts: \url{https://covid19.dunkelzifferradar.de/}}
+    \item Das Modell erlaubt individuelle Verhaltensanpassungen. Beispielsweise können Individuen, die Symptome entwickeln oder einen positiven Test erhalten, ihre Kontakte reduzieren.
+    \item Politikmaßnahmen können im Modell so umgesetzt werden, dass Kontaktarten ganz oder teilweise abgeschaltet werden. Die Reduzierung von Kontakten kann zufällig oder systematisch erfolgen, z.B. um wichtige Arbeitskräfte zu berücksichtigen.
+    \item Das mit der medizinischen Literatur und Kontaktzahlen aus früheren Erhebungen kalibrierte Modell erzielt mit wenigen frei geschätzten Ansteckungswahrscheinlichkeiten eine gute Übereinstimmung mit den deutschen Infektions- und Sterberaten.
+\end{enumerate}
+
+Zu den Hintergrundmerkmalen jedes simulierten Individuums im Modell gehören Alter, Landkreis und Beruf.
+Kontaktmodelle sind Funktionen, die individuelle Merkmale auf eine vorhergesagte Anzahl von Kontakten abbilden.
+Diese Anzahl an Kontakten wird durch einen Matching-Algorithmus in Infektionen übersetzt.
+Es gibt verschiedene Matching-Algorithmen für wiederkehrende Kontakte (z.B. Klassenkameraden, Familienmitglieder) und nicht wiederkehrende Kontakte (z.B. Kunden, Kontakte in Supermärkten).
+Die Infektionswahrscheinlichkeit kann für jeden Kontakttyp unterschiedlich sein.
+Alle Arten von Kontakten können hinsichtlich geografischer und demografischer Merkmale assortativ sein, z.B. sind Arbeitskontakte häufiger mit Menschen aus dem gleichen Landkreis.
+Das Krankheitsmodell berücksichtigt asymptomatische Fälle, leichte Symptome und Symptome, die einen Krankenhausaufenthalt erfordern und Altersgradienten, bspw. in  den  Wahrscheinlichkeiten  für schwere Krankheitsverläufe. Individuen können ihr Verhalten anpassen. Beispielsweise gehen Kinder mit Symptomen in unserem Modell meist nicht zur Schule.
+
+\section{Szenarien für den Jahreswechsel}
+
+Wir variieren das Verhalten der Deutschen über zwei Dimensionen:
+
+\begin{enumerate}
+    \item Die Anzahl und Intensität der Weihnachtstreffen.
+    Ein volles Ausreizen der aktuellen Regulierungen würde bedeuten, dass sich an jedem der drei Feiertage (24., 25. und 26.12.) jeder Haushalt sich mit je zwei weiteren, unterschiedlichen Haushalten trifft. Eine vorsichtigere Variante ist, dass die Menschen die Feiertage in festen Gruppen von drei Haushalten feiern. Um den Effekt der Häufigkeit der Treffen zeigen zu können, schauen wir uns zusätzlich den Fall an, wo sich feste Haushaltsgruppen nur am 24. und 25.12. treffen.
+    \item Der Grad der privaten Kontaktnachverfolgung. Hier unterscheiden wir ein Szenario ohne private Kontaktnachverfolgung, wo Verwandte nicht über Symptome oder Testergebnisse informiert werden. In einem weiteren Szenario nehmen wir an, dass die private Kontaktnachverfolgung die Kontakte von Menschen mit Risikokontakten um 50\% reduziert und ein Szenario wo sie die Kontakte von Menschen mit Risikokontakten um 90\% reduziert.
+\end{enumerate}
+
+Zusätzlich nehmen wir an, dass drei Viertel der Bevölkerung am 23.12. zusätzliche Kontakte durch Vorbereitungen haben. Dies simuliert den Effekt durch beispielsweise Zugfahrten und Weihnachtseinkäufe.
+
+\FloatBarrier
+\section{Ergebnisse}
+
+
+\begin{figure}
+\label{fig:effect_of_christmas_without_contact_tracing}
+\includegraphics[width=\textwidth]{../../bld/simulation/effect_of_christmas_mode_with_None_contact_tracing}
+\caption{
+    Das linke Panel zeigt die Entwicklung der beobachteten Fallzahlen, das rechte die Entwicklung der tatsächlichen Fallzahlen zwischen 1. Dezember 2020 und 10. Januar 2021. Ausgehend von keiner privaten Kontaktnachverfolgung wird das Infektionsgeschehen bei Weihnachtsfeiern mit wechselnden Haushalten (blau), im festen Kreis (gelb) und im festen Kreis im reduzierten Rahmen (rot) gezeigt.
+}
+\end{figure}
+
+
+\begin{figure}
+\label{fig:effect_of_contact_tracing_with_full_christmas}
+\includegraphics[width=\textwidth]{../../bld/simulation/effect_of_private_contact_tracing_full}
+\caption{
+    Das linke Panel zeigt die Entwicklung der beobachteten Fallzahlen, das rechte die Entwicklung der tatsächlichen Fallzahlen zwischen 1. Dezember 2020 und 10. Januar 2021. Ausgehend von Weihnachtsfeiern mit wechselnden Haushalten wird das Infektionsgeschehen bei anschließend nicht statt-findender (blau), 50 prozentiger (gelb) und 90 prozentiger (rot)
+    privater Kontaktnachverfolgung und Kontaktreduktion durch Menschen mit Risikokontakten
+    während der Feiertage gezeigt.
+}
+\end{figure}
+
+
+
+\end{document}
