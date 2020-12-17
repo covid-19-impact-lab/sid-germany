@@ -32,13 +32,6 @@ SIMULATIONS = {entry[:2]: entry[2] for entry in simulation_parametrization}
     }
 )
 def task_plot_effect_of_private_contact_tracing(depends_on, produces):
-    name_to_label = {
-        None: "Without Private Contact Tracing",
-        0.5: "If 50% Follow Private Contact Tracing",
-        0.1: "If 90% Follow Private Contact Tracing",
-    }
-
-    outcome_vars = ["new_known_case", "newly_infected"]
     for christmas_mode in ["full", "same_group", "meet_twice"]:
         contact_tracing_scenarios = {}
         for (mode, ct_str), path in depends_on.items():
@@ -46,23 +39,8 @@ def task_plot_effect_of_private_contact_tracing(depends_on, produces):
                 df = dd.read_parquet(path / "time_series")
                 contact_tracing_scenarios[ct_str] = df
 
-        fig, axes = plt.subplots(
-            ncols=len(outcome_vars), figsize=(12, 5), sharey=True, sharex=True
-        )
-
-        for ax, outcome in zip(axes, outcome_vars):
-            ax.set_title(outcome.replace("_", " ").title())
-            colors = get_colors("ordered", 3)
-            for color, (name, df) in zip(colors, contact_tracing_scenarios.items()):
-                plot_outcome(
-                    df=df,
-                    outcome=outcome,
-                    ax=ax,
-                    label=name_to_label[name],
-                    color=color,
-                )
-        fig.autofmt_xdate()
-        fig.tight_layout()
+        title = "The Importance of Self-Isolation and Private Contact Tracing"
+        fig = plot_scenarios(contact_tracing_scenarios, title=title)
         fig.savefig(produces[christmas_mode])
 
 
@@ -76,12 +54,6 @@ def task_plot_effect_of_private_contact_tracing(depends_on, produces):
     }
 )
 def task_plot_effect_of_christmas_mode(depends_on, produces):
-    name_to_label = {
-        "full": "Meeting Different Households on Each Holiday",
-        "same_group": "Meeting the Same Other Households on Three Holiday",
-        "meet_twice": "Meeting the Same Other Households on Two Holidays",
-    }
-    outcome_vars = ["new_known_case", "newly_infected"]
     for ct_mode in [None, 0.5, 0.1]:
         christmas_scenarios = {}
         for (mode, ct_str), path in depends_on.items():
@@ -89,23 +61,45 @@ def task_plot_effect_of_christmas_mode(depends_on, produces):
                 df = dd.read_parquet(path / "time_series")
                 christmas_scenarios[mode] = df
 
-        fig, axes = plt.subplots(
-            ncols=len(outcome_vars), figsize=(12, 5), sharey=True, sharex=True
-        )
-        for ax, outcome in zip(axes, outcome_vars):
-            ax.set_title(outcome.replace("_", " ").title())
-            colors = get_colors("ordered", 3)
-            for color, (name, df) in zip(colors, christmas_scenarios.items()):
-                plot_outcome(
-                    df=df,
-                    outcome=outcome,
-                    ax=ax,
-                    label=name_to_label[name],
-                    color=color,
-                )
-        fig.autofmt_xdate()
-        fig.tight_layout()
+        title = "The Importance of Celebrating in Small Circles"
+        fig = plot_scenarios(christmas_scenarios, title=title)
         fig.savefig(produces[ct_mode])
+
+
+def plot_scenarios(scenarios, title):
+    name_to_label = {
+        None: "Without Private Contact Tracing",
+        0.5: "If 50% Follow Private Contact Tracing",
+        0.1: "If 90% Follow Private Contact Tracing",
+        "full": "Celebrating With Different Households",
+        "same_group": "Celebrating in Fixed Groups",
+        "meet_twice": "Less Celebrations in Fixed Groups",
+    }
+
+    outcome_vars = [
+        ("new_known_case", "New Reported Cases"),
+        ("newly_infected", "New True Cases"),
+    ]
+    fig, axes = plt.subplots(
+        ncols=len(outcome_vars), figsize=(12, 5), sharey=True, sharex=True
+    )
+
+    for ax, (outcome, title) in zip(axes, outcome_vars):
+        ax.set_title(title)
+        colors = get_colors("ordered", 3)
+        for color, (name, df) in zip(colors, scenarios.items()):
+            plot_outcome(
+                df=df,
+                outcome=outcome,
+                ax=ax,
+                label=name_to_label[name],
+                color=color,
+            )
+    fig.autofmt_xdate()
+    fig.suptitle(title)
+
+    fig.tight_layout()
+    return fig
 
 
 def plot_outcome(
