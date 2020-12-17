@@ -73,7 +73,7 @@ def plot_scenarios(scenarios, title):
         0.1: "Mit 90 prozentiger privater\nKontaktnachverfolgung",
         "full": "Weihnachtsfeiern mit\nwechselnden Haushalten",
         "same_group": "Weihnachtsfeiern\nim festen Kreis",
-        "meet_twice": "Reduzierte Weihnachtsfeiern\nim festen Kreis",
+        "meet_twice": "Weniger Weihnachtsfeiern\nim festen Kreis",
     }
 
     outcome_vars = [
@@ -133,7 +133,7 @@ def plot_outcome(
 
     ax.set_ylabel("Geglättete wöchentliche \nInzidenz pro 100 000")
     ax.set_xlabel("Datum")
-    ax.set_ylim(bottom=0, top=3000)
+    ax.set_ylim(bottom=0, top=1500)
 
     # only have legend in the left plot
     if outcome == "newly_infected":

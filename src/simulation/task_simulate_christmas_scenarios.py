@@ -11,7 +11,7 @@ from src.create_initial_states.create_initial_conditions import (
 from src.policies.combine_policies_over_periods import get_december_to_feb_policies
 
 
-SIMULATION_START = pd.Timestamp("2020-12-01")
+SIMULATION_START = pd.Timestamp("2020-12-02")
 INITIAL_START = SIMULATION_START - pd.Timedelta(days=31)
 SIMULATION_END = pd.Timestamp("2021-01-10")
 
@@ -44,6 +44,7 @@ PARAMETRIZATIONS = create_christmas_parametrization()
 @pytask.mark.depends_on(
     {
         "params": BLD / "start_params.pkl",
+        "estimated_params": SRC / "simulation" / "best_so_far.pkl",
         "share_known_cases": BLD
         / "data"
         / "processed_time_series"
@@ -62,7 +63,6 @@ PARAMETRIZATIONS = create_christmas_parametrization()
 def task_simulation_christmas_scenarios(
     depends_on, christmas_mode, contact_tracing_multiplier, path
 ):
-    params = pd.read_pickle(depends_on["params"])
 
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
 
@@ -74,6 +74,25 @@ def task_simulation_christmas_scenarios(
         christmas_mode=christmas_mode, n_extra_contacts_before_christmas=contact_dist
     )
 
+    # update with the estimated params
+    params = pd.read_pickle(depends_on["params"])
+    estimated_params = pd.read_pickle(depends_on["estimated_params"])
+    rows_to_overwrite = [x for x in estimated_params.index if x in params.index]
+    params.loc[rows_to_overwrite] = estimated_params.loc[rows_to_overwrite]
+    rows_to_add = [x for x in estimated_params.index if x not in params.index]
+    params = pd.concat([params, estimated_params.loc[rows_to_add]])
+    # add christmas infection probs by hand
+    other_non_rec_loc = ("infection_prob", "other_non_recurrent", "other_non_recurrent")
+    holiday_prep_loc = ("infection_prob", "holiday_preparation", "holiday_preparation")
+    params.loc[holiday_prep_loc] = params.loc[other_non_rec_loc]
+    missing_christmas_models = []
+    for x in contact_models:
+        if x not in params.loc["infection_prob"].index.get_level_values("subcategory"):
+            missing_christmas_models.append(x)
+    hh_loc = ("infection_prob", "households", "households")
+    for name in missing_christmas_models:
+        params.loc[("infection_prob", name, name)] = params.loc[hh_loc]
+
     policies = get_december_to_feb_policies(
         contact_models=contact_models,
         pre_christmas_other_multiplier=0.3,
@@ -82,14 +101,10 @@ def task_simulation_christmas_scenarios(
         contact_tracing_multiplier=contact_tracing_multiplier,
     )
 
-    infection_probs = _build_infection_probs(contact_models.keys())
-
-    params = pd.concat([infection_probs, params])
-
     initial_conditions = create_initial_conditions(
         start=INITIAL_START,
         end=SIMULATION_START - pd.Timedelta(days=1),
-        reporting_delay=7,
+        reporting_delay=5,
         seed=99,
     )
 
@@ -104,34 +119,12 @@ def task_simulation_christmas_scenarios(
         path=path,
         events=None,
         seed=384,
+        saved_columns={
+            "time": ["date"],
+            "initial_states": False,
+            "disease_states": ["symptomatic"],
+            "other": ["n_has_infected", "newly_infected", "new_known_case"],
+        },
     )
 
     simulate(params)
-
-
-def _build_infection_probs(names):
-    index_tuples = [("infection_prob", mod_name, mod_name) for mod_name in names]
-    df = pd.DataFrame(index=pd.MultiIndex.from_tuples(index_tuples))
-    df.index.names = ["category", "subcategory", "name"]
-    df = df.reset_index()
-    prob_dict = {
-        "educ": 0.02,
-        "work": 0.1,
-        "household": 0.2,
-        "other": 0.1,
-        "christmas": 0.2,
-        "holiday_preparation": 0.1,
-    }
-    full_prob_dict = {}
-    for mod_name in names:
-        for k, v in prob_dict.items():
-            if k in mod_name:
-                full_prob_dict[mod_name] = v
-        assert (
-            mod_name in full_prob_dict
-        ), f"No infection probability for {mod_name} specified."
-
-    df["value"] = df["name"].map(full_prob_dict.get)
-    df = df.set_index(["category", "subcategory", "name"])
-
-    return df
