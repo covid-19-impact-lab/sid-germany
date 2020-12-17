@@ -71,8 +71,8 @@ def plot_scenarios(scenarios, title):
         None: "Without Private Contact Tracing",
         0.5: "If 50% Follow Private Contact Tracing",
         0.1: "If 90% Follow Private Contact Tracing",
-        "full": "Celebrating With Different Households",
-        "same_group": "Celebrating in Fixed Groups",
+        "full": "Celebrations With Different Households",
+        "same_group": "Celebrations in Fixed Groups",
         "meet_twice": "Less Celebrations in Fixed Groups",
     }
 
@@ -116,7 +116,7 @@ def plot_outcome(
     It's smoothed over the time window and scaled as incidence over 100 000.
 
     """
-    time_series = smoothed_outcome_per_hundred_thousand_sim(
+    daily_incidence = smoothed_outcome_per_hundred_thousand_sim(
         df=df,
         outcome=outcome,
         groupby=None,
@@ -125,12 +125,13 @@ def plot_outcome(
         take_logs=False,
     )
 
-    time_series = time_series.compute().reset_index()
-    upper_lim = max(ax.get_ylim()[1], time_series[outcome].max())
-    sns.lineplot(data=time_series, x="date", y=outcome, ax=ax, label=label, color=color)
+    daily_incidence = daily_incidence.compute()
+    weekly_incidence = 7 * daily_incidence
+    data = weekly_incidence.reset_index()
+    sns.lineplot(data=data, x="date", y=outcome, ax=ax, label=label, color=color)
 
-    ax.set_ylabel("Smoothed Incidence\nper 100 000 ")
-    ax.set_ylim(bottom=0.0, top=upper_lim)
+    ax.set_ylabel("Smoothed Weekly Incidence\nper 100 000 ")
+    ax.set_ylim(bottom=0, top=3000)
 
     date_form = DateFormatter("%d.%m")
     ax.xaxis.set_major_formatter(date_form)
