@@ -261,9 +261,6 @@ def _draw_work_contact_priority(occupation, systemically_relevant, seed):
 def _sample_household_groups(df, seed, assort_by, same_group_probability=None, n_hhs=3):
     """Put groups of households together into groups.
 
-    .. warning::
-        Until now no assortativeness is supported.
-
     Args:
         df (pandas.DataFrame): states DataFrame
         seed (int)
@@ -272,9 +269,10 @@ def _sample_household_groups(df, seed, assort_by, same_group_probability=None, n
         n_hhs (int): Number of households to group together.
 
     Returns:
-        id_col (pandas.Series): Same index as df, dtype category.
+        id_col (pandas.Series): Series with the same index as df.
             Individuals of households that were grouped together
-            have the same value.
+            have the same value. The dtype is categorical.
+
     """
     if assort_by is not None:
         assert (
@@ -349,23 +347,7 @@ def _sample_household_groups(df, seed, assort_by, same_group_probability=None, n
         id_col = expanded["new_group_id"]
 
     id_col = id_col.where(df["private_hh"], -1)
+    assert id_col.notnull().all(), "NaN remain in the Christmas group id column."
     id_col = id_col.astype("category")
 
     return id_col
-
-
-def _draw_other_group(grouped_to_match, group, same_group_probability, seed):
-    np.random.seed(seed)
-    same_group = np.random.binomial(n=1, p=same_group_probability)
-    if len(grouped_to_match[group]) > 0 and same_group == 1:
-        other_group_chosen = group
-    else:
-        other_groups = []
-        for s, other_to_match in grouped_to_match.items():
-            if s != group and len(other_to_match) > 0:
-                other_groups.append(s)
-        if len(other_groups) == 0:
-            other_group_chosen = group
-        else:
-            other_group_chosen = np.random.choice(other_groups)
-    return other_group_chosen

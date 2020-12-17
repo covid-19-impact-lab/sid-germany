@@ -1,6 +1,5 @@
 import pandas as pd
 
-from src.create_initial_states.create_contact_model_group_ids import _draw_other_group
 from src.create_initial_states.create_contact_model_group_ids import (
     _sample_household_groups,
 )
@@ -41,39 +40,3 @@ def test_sample_household_groups_with_assort_by():
     )
     assert (df.groupby("res")["state"].nunique() == 1).all()
     assert (df.groupby("hh_id")["res"].nunique() == 1).all()
-
-
-def test_draw_other_group_empty_group():
-    grouped_to_match = {"a": [], "b": [], "c": [2]}
-    group = "a"
-    same_group_probability = 1.0
-    for i in range(10):
-        res = _draw_other_group(grouped_to_match, group, same_group_probability, i)
-        assert res == "c"
-
-
-def test_draw_other_group_same_group():
-    grouped_to_match = {"a": [3], "b": [], "c": [2]}
-    group = "a"
-    same_group_probability = 1.0
-    for i in range(10):
-        res = _draw_other_group(grouped_to_match, group, same_group_probability, i)
-        assert res == "a"
-
-
-def test_draw_other_group_one_other_group():
-    grouped_to_match = {"a": [3], "b": [], "c": [2]}
-    group = "a"
-    same_group_probability = 0.0
-    for i in range(10):
-        res = _draw_other_group(grouped_to_match, group, same_group_probability, i)
-        assert res == "c"
-
-
-def test_draw_other_group_two_other_groups():
-    grouped_to_match = {"a": [3], "b": [1], "c": [2]}
-    group = "a"
-    same_group_probability = 0.0
-    for i in range(10):
-        res = _draw_other_group(grouped_to_match, group, same_group_probability, i)
-        assert res in ["b", "c"]
