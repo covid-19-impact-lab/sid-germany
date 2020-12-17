@@ -3,6 +3,7 @@ import pytask
 import sid
 
 from src.config import BLD
+from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
@@ -49,6 +50,11 @@ PARAMETRIZATIONS = create_christmas_parametrization()
         / "share_known_cases.pkl",
         # !!! Replace with real states.
         "initial_states": BLD / "data" / "debug_initial_states.parquet",
+        "contact_model_functions": SRC
+        / "contact_models"
+        / "contact_model_functions.py",
+        "get_contact_models": SRC / "contact_models" / "get_contact_models.py",
+        "get_policies": SRC / "policies" / "combine_policies_over_periods.py",
     }
 )
 @pytask.mark.parametrize(
