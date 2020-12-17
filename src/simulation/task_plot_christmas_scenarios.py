@@ -84,8 +84,8 @@ def plot_scenarios(scenarios, title):
         ncols=len(outcome_vars), figsize=(12, 5), sharey=True, sharex=True
     )
 
-    for ax, (outcome, title) in zip(axes, outcome_vars):
-        ax.set_title(title)
+    for ax, (outcome, ax_title) in zip(axes, outcome_vars):
+        ax.set_title(ax_title)
         colors = get_colors("ordered", 3)
         for color, (name, df) in zip(colors, scenarios.items()):
             plot_outcome(
