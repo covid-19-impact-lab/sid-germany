@@ -68,14 +68,12 @@ def _check_background_characteristics(df):
     assert df["gender"].value_counts(normalize=True).between(0.48, 0.52).all()
     young_gender_shares = df.query("age < 18")["gender"].value_counts(normalize=True)
     assert young_gender_shares.between(0.48, 0.52).all()
-    df.groupby("hh_id")["gender"]
     old_women_share = (df.query("70 < age < 80")["gender"] == "female").mean()
     assert old_women_share > 0.53
     old_women_share = (df.query("age > 80")["gender"] == "female").mean()
     assert old_women_share > 0.62
     assert (df.query("occupation == 'working'")["gender"] == "female").mean() < 0.5
-    # given how we assign gender,
-    # men and women should appear in much more than half of households
+    # given couple formation men and women appear in much more than half of households
     assert df.groupby("hh_id")["female"].any().mean() > 0.75
     assert df.groupby("hh_id")["male"].any().mean() > 0.75
 

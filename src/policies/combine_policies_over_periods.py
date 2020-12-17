@@ -71,10 +71,23 @@ def get_december_to_feb_policies(
 
     Args:
         contact_models (dict): sid contact model dictionary.
-        pre_christmas_other_multiplier (float): Factor
+        contact_tracing_multiplier (float, optional):
+            If not None, private contact tracing takes place
+            between the 27.12. and 10.01, i.e. in the two
+            weeks after Christmas. The multiplier is the
+            reduction multiplier for recurrent and non-recurrent
+            contact models.
+        pre_christmas_other_multiplier (float, optional):
+            Other multiplier passed to the lockdown before Christmas.
+        christmas_other_multiplier (float, optional):
+            Other multiplier passed to the lockdown during Christmas.
+        post_christmas_other_multiplier (float, optional):
+            Other multiplier passed to the lockdown after Christmas.
+
+    Returns:
+        policies (dict): policies dictionary.
 
     """
-    reopening_end_multipliers = {"educ": 0.8, "work": 0.6, "other": 0.7}
     to_combine = [
         # 1st December Half
         fpb.get_soft_lockdown(
@@ -84,6 +97,7 @@ def get_december_to_feb_policies(
                 "end_date": "2020-12-15",
                 "prefix": "lockdown_light",
             },
+            # !!! Adjust these multipliers to Janos' multipliers!
             multipliers={"educ": 0.7, "work": 0.5, "other": 0.45},
         ),
         # Until Christmas
@@ -94,7 +108,6 @@ def get_december_to_feb_policies(
                 "end_date": "2020-12-23",
                 "prefix": "pre-christmas-lockdown",
             },
-            # use the start multiplier of reopening
             other_contacts_multiplier=pre_christmas_other_multiplier,
         ),
         # Christmas Holidays
@@ -105,7 +118,6 @@ def get_december_to_feb_policies(
                 "end_date": "2020-12-26",
                 "prefix": "christmas-lockdown",
             },
-            # use the start multiplier of reopening
             other_contacts_multiplier=christmas_other_multiplier,
         ),
         # Christmas Until End of Hard Lockdown
@@ -113,21 +125,10 @@ def get_december_to_feb_policies(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-27",
-                "end_date": "2021-01-10",
+                "end_date": "2021-01-11",
                 "prefix": "post-christmas-lockdown",
             },
-            # use the start multiplier of reopening
             other_contacts_multiplier=post_christmas_multiplier,
-        ),
-        # Return to Reopened After Hard Lockdown
-        fpb.get_soft_lockdown(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2021-01-11",
-                "end_date": "2021-01-31",
-                "prefix": "reopened-january",
-            },
-            multipliers=reopening_end_multipliers,
         ),
     ]
     if contact_tracing_multiplier is not None:

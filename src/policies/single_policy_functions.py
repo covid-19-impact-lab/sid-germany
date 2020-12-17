@@ -310,14 +310,10 @@ def reduce_contacts_through_private_contact_tracing(
 def reduce_contacts_when_condition_among_recurrent_contacts(
     contacts, states, seed, multiplier, group_ids, condition, is_recurrent
 ):
-    """Reduce contacts when there is a symptomatic case among the recurrent contacts.
+    """Reduce contacts when one of your contacts fulfills a condition.
 
     This is akin to private contact tracing, i.e. coworkers or friends informing
     their contacts that they are symptomatic or tested positive.
-
-    Individuals react only to symptomatic cases among their recurrent contacts because
-    it is more likely that they will be notified. (For random contacts, the contact
-    tracing app would be helpful.)
 
     Args:
         contacts (pandas.Series)
