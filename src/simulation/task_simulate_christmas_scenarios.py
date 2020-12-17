@@ -63,8 +63,10 @@ def task_simulation_christmas_scenarios(
 
     df = pd.read_parquet(depends_on["initial_states"])
 
+    # assume 25% 0 contacts. 50% 1 contact. 25% 2 contacts before the holidays
+    contact_dist = pd.Series(data=[0.25, 0.5, 0.25], index=[0, 1, 2])
     contact_models = get_all_contact_models(
-        christmas_mode=christmas_mode, n_extra_contacts_before_christmas=2
+        christmas_mode=christmas_mode, n_extra_contacts_before_christmas=contact_dist
     )
 
     policies = get_december_to_feb_policies(

@@ -31,9 +31,14 @@ def holiday_preparation_contacts(states, params, seed, n_contacts):
     or doing holiday shopping.
 
     """
+    np.random.seed(seed)
     if get_date(states) != pd.Timestamp("2020-12-23"):
         contacts = pd.Series(0, index=states.index)
     else:
+        if isinstance(n_contacts, pd.Series):
+            n_contacts = np.random.choice(
+                a=n_contacts.index, size=len(states), p=n_contacts, replace=True
+            )
         contacts = pd.Series(n_contacts, states.index)
         for params_entry, condition in [
             ("symptomatic_multiplier", "symptomatic"),
@@ -54,6 +59,14 @@ def meet_on_holidays(states, params, group_col, dates, seed):
     """Meet other households scheduled for Christmas.
 
     There are three modes:
+        - If "full", every household meets with a different set of
+          two other households on every of the three holidays.
+        - If "same_group", every household meets the same two other
+          households on every of the three holidays.
+        - If "meet_twice", every household meets the same two other
+          households but only once on the 24th and 25th of December.
+        - If None, no Christmas models are included.
+
 
     Args:
         states (pandas.DataFrame): sid states DataFrame

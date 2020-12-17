@@ -18,9 +18,11 @@ def get_all_contact_models(christmas_mode, n_extra_contacts_before_christmas):
             - If "meet_twice", every household meets the same two other
               households but only once on the 24th and 25th of December.
             - If None, no Christmas models are included.
-        n_extra_contacts_before_christmas (float): Number of additional
-            contacts before Christmas to cover things like holiday
-            shopping and travel.
+        n_extra_contacts_before_christmas (float, pandas.Series):
+            Number of additional contacts before Christmas to cover
+            things like holiday shopping and travel. If it is a Series
+            the index are the number of contacts and the values their
+            probabilities.
 
     Returns:
         contact_models (dict): sid contact model dictionary.
@@ -251,8 +253,8 @@ def get_christmas_contact_models(mode, n_contacts_before):
 
     """
     assert isinstance(
-        n_contacts_before, (float, int)
-    ), "n_contacts_before must be an int or float."
+        n_contacts_before, (float, int, pd.Series)
+    ), "n_contacts_before must be an int, float or pandas.Series."
     dates = pd.date_range("2020-12-24", "2020-12-26")
 
     christmas_contact_models = {
