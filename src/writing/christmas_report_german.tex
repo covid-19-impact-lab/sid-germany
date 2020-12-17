@@ -126,17 +126,17 @@
 
 \section{Einleitung}
 
-Um den steigenden Coronafallzahlen zu begegnen, wurde in Deutschland von November bis Mitte Dezember ein leichter Lockdown durchgeführt.
+Um den steigenden Coronafallzahlen zu begegnen, wurde in Deutschland von November bis Mitte Dezember ein leichter Lockdown verhängt.
 Dieser hat jedoch lediglich zu einem Stagnieren der Fallzahlen geführt.
-Deshalb haben Bundesregierung und Landesregierungen ab dem 16. Dezember einen erneuten harten Lockdown verhängt, um die Fallzahlen zu reduzieren und das Infektionsgeschehen wieder unter Kontrolle zu bringen.
+Deshalb befindet sich Deutschland seit dem 16. Dezember erneut in einem harten Lockdown, um die Fallzahlen zu reduzieren und das Infektionsgeschehen wieder unter Kontrolle zu bringen.
 
 Ein sehr wichtiger Faktor für den Erfolg der Maßnahmen ist, wie sich die Menschen in Deutschland über die Weihnachtsfeiertage verhalten.
 Familienfeiern, wo Menschen intensiv Zeit miteinander verbringen, die sich sonst sehr selten treffen, bergen ein großes Ansteckungsrisiko.
-Je häufiger und je mehr unterschiedliche Haushalte zusammen kommen, umso größer ist das Ansteckungsrisiko.
+Je häufiger und je mehr unterschiedliche Haushalte zusammen kommen, umso größer ist das Potential, dass neue Infektionsketten in Gang gesetzt werden.
 Gleichzeitig ist damit zu rechnen, dass über die Feiertage geringere Testkapazitäten zur Verfügung stehen und die Gesundheitsämter noch weniger in der Lage sein werden, Kontaktnachverfolgung in der nötigen Geschwindigkeit zu betreiben.
-Allerdings ist eine private Kontaktnachverfolgung von Familientreffen aufgrund der persönlichen Bekanntschaft viel leichter möglich.
+Allerdings ist eine private Kontaktnachverfolgung von Familientreffen aufgrund der persönlichen Bekanntschaft viel leichter möglich, was bei konsequenter Kommunikation und Selbstquarantäne einen großen Teil in Gang gesetzte Infektionsketten frühzeitig ersticken könnte.
 
-Dieser Bericht zeigt Vorhersagen für die Entwicklung des Infektionsgeschehens in Deutschland für verschieden Szenarien, wie Menschen in Deutschland Weihnachten feiern und in welchem Maße sie in den darauffolgenden Tagen selbstständig Kontaktnachverfolgung und Selbstquarantäne betreiben.
+Mit Hilfe eines neu entwickelten mikrobasierten Modells simulieren wir die Entwicklung des Infektionsgeschehens in Deutschland für verschieden Szenarien, wie Menschen in Deutschland Weihnachten feiern und in welchem Maße sie in den darauffolgenden Tagen selbstständig Kontaktnachverfolgung und Selbstquarantäne betreiben.
 
 \textcolor{red}{Kurze Zusammenfassung der Ergebnisse}
 
@@ -148,9 +148,9 @@ Es hat die folgenden Eigenschaften, die es sehr geeignet machen, um die Effekte 
 
 \begin{enumerate}
     \item Im  Mittelpunkt des Modells steht die Begegnung von Menschen mit Menschen auf der Grundlage eines Matching-Algorithmus. Das Modell unterscheidet verschiedene Arten von Kontakten, wie beispielsweise Haushalte, Freizeitaktivitäten, Schulen, Kindergärten und verschiedene Arten von Kontakten am Arbeitsplatz. Die Kontaktarten können zufällig oder wiederkehrend sein und variieren in ihrer Häufigkeit and Ansteckungswahrscheinlichkeit.
-    \item Das Modell unterscheidet entdeckte und unentdeckte Infektionen.\footnote{Hierfür nutzen wir Schätzungen des Dunkelziffer Radar Projekts: \url{https://covid19.dunkelzifferradar.de/}}
+    \item Das Modell kann entdeckte und unentdeckte Infektionen unterscheiden.\footnote{Hierfür nutzen wir Schätzungen des Dunkelziffer Radar Projekts: \url{https://covid19.dunkelzifferradar.de/}}
     \item Das Modell erlaubt individuelle Verhaltensanpassungen. Beispielsweise können Individuen, die Symptome entwickeln oder einen positiven Test erhalten, ihre Kontakte reduzieren.
-    \item Politikmaßnahmen können im Modell so umgesetzt werden, dass Kontaktarten ganz oder teilweise abgeschaltet werden. Die Reduzierung von Kontakten kann zufällig oder systematisch erfolgen, z.B. um wichtige Arbeitskräfte zu berücksichtigen.
+    \item Politikmaßnahmen können im Modell so umgesetzt werden, dass Kontaktarten ganz oder teilweise abgeschaltet werden. Die Reduzierung von Kontakten kann zufällig oder systematisch erfolgen, z.B. können Arbeitskontakte so reduziert werden, dass nur noch systemrelevante Berufsgruppen Arbeitskontakte haben.
     \item Das mit der medizinischen Literatur und Kontaktzahlen aus früheren Erhebungen kalibrierte Modell erzielt mit wenigen frei geschätzten Ansteckungswahrscheinlichkeiten eine gute Übereinstimmung mit den deutschen Infektions- und Sterberaten.
 \end{enumerate}
 
@@ -160,7 +160,7 @@ Diese Anzahl an Kontakten wird durch einen Matching-Algorithmus in Infektionen �
 Es gibt verschiedene Matching-Algorithmen für wiederkehrende Kontakte (z.B. Klassenkameraden, Familienmitglieder) und nicht wiederkehrende Kontakte (z.B. Kunden, Kontakte in Supermärkten).
 Die Infektionswahrscheinlichkeit kann für jeden Kontakttyp unterschiedlich sein.
 Alle Arten von Kontakten können hinsichtlich geografischer und demografischer Merkmale assortativ sein, z.B. sind Arbeitskontakte häufiger mit Menschen aus dem gleichen Landkreis.
-Das Krankheitsmodell berücksichtigt asymptomatische Fälle, leichte Symptome und Symptome, die einen Krankenhausaufenthalt erfordern und Altersgradienten, bspw. in  den  Wahrscheinlichkeiten  für schwere Krankheitsverläufe. Individuen können ihr Verhalten anpassen. Beispielsweise gehen Kinder mit Symptomen in unserem Modell meist nicht zur Schule.
+Das Krankheitsmodell berücksichtigt asymptomatische Fälle, leichte Symptome und Symptome, die Behandlung auf einer Intensivstation erfordern und Altersgradienten, bspw. in  den  Wahrscheinlichkeiten für schwere Krankheitsverläufe.
 
 \section{Szenarien für den Jahreswechsel}
 
@@ -168,7 +168,7 @@ Wir variieren das Verhalten der Deutschen über zwei Dimensionen:
 
 \begin{enumerate}
     \item Die Anzahl und Intensität der Weihnachtstreffen.
-    Ein volles Ausreizen der aktuellen Regulierungen würde bedeuten, dass sich an jedem der drei Feiertage (24., 25. und 26.12.) jeder Haushalt sich mit je zwei weiteren, unterschiedlichen Haushalten trifft. Eine vorsichtigere Variante ist, dass die Menschen die Feiertage in festen Gruppen von drei Haushalten feiern. Um den Effekt der Häufigkeit der Treffen zeigen zu können, schauen wir uns zusätzlich den Fall an, wo sich feste Haushaltsgruppen nur am 24. und 25.12. treffen.
+    Ein volles Ausreizen der aktuellen Regulierungen würde bedeuten, dass sich an jedem der drei Feiertage (24., 25. und 26.12.) jeder Haushalt mit je zwei weiteren, unterschiedlichen Haushalten trifft. Eine vorsichtigere Verhaltensweise, die wir simulieren, ist, dass die Menschen die Feiertage in festen Gruppen von drei Haushalten feiern. Um den Effekt der Häufigkeit der Treffen zeigen zu können, schauen wir uns zusätzlich den Fall an, wo sich feste Haushaltsgruppen nur am 24. und 25.12. treffen.
     \item Der Grad der privaten Kontaktnachverfolgung. Hier unterscheiden wir ein Szenario ohne private Kontaktnachverfolgung, wo Verwandte nicht über Symptome oder Testergebnisse informiert werden. In einem weiteren Szenario nehmen wir an, dass die private Kontaktnachverfolgung die Kontakte von Menschen mit Risikokontakten um 50\% reduziert und ein Szenario wo sie die Kontakte von Menschen mit Risikokontakten um 90\% reduziert.
 \end{enumerate}
 

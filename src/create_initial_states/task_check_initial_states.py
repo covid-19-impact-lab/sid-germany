@@ -167,7 +167,7 @@ def _check_educ_group_ids(df):
             check_names=False,
         )
 
-    assert (df["school_group_a"].unique() == [1, 0]).all()
+    assert set(df["school_group_a"].unique()) == {1, 0}
     assert df.query("age < 3")["occupation"].isin(["nursery", "stays home"]).all()
     assert (df.query("3 <= age <= 14")["nursery_group_id_0"] == -1).all()
     preschool_kid_groups = df.query("3 <= age < 6")["preschool_group_id_0"]
@@ -302,4 +302,6 @@ def _check_christmas_groups(df, col):
     assert (groups_per_hh == 1).all(), "Every hh must have one christmas group."
     hh_per_group = df.groupby(col)["hh_id"].nunique()
     assert hh_per_group[-1] == 0
-    assert (hh_per_group.drop(-1) == 3).all(), "Not all groups have 3 households."
+    assert (
+        hh_per_group.drop(-1) == 3
+    ).mean() > 0.9999, "Too many groups don't have 3 households."

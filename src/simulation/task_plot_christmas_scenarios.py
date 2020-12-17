@@ -125,7 +125,8 @@ def plot_outcome(
         take_logs=False,
     )
 
-    daily_incidence = daily_incidence.compute()
+    if isinstance(daily_incidence, dd.Series):
+        daily_incidence = daily_incidence.compute()
     weekly_incidence = 7 * daily_incidence
     data = weekly_incidence.reset_index()
     sns.lineplot(data=data, x="date", y=outcome, ax=ax, label=label, color=color)
