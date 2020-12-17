@@ -23,7 +23,11 @@ def test_christmas_mode_full():
     assert res.keys() == expected.keys()
     for key, expected_kwargs in expected.items():
         res_kwargs = res[key]["model"].keywords
-        assert res_kwargs == expected_kwargs
+        assert res_kwargs.keys() == expected_kwargs.keys()
+        for key, val in res_kwargs.items():
+            if isinstance(val, pd.DatetimeIndex):
+                val = val.tolist()
+            assert val == expected_kwargs[key]
 
 
 def test_christmas_mode_same_group():
@@ -42,7 +46,11 @@ def test_christmas_mode_same_group():
     assert res.keys() == expected.keys()
     for key, expected_kwargs in expected.items():
         res_kwargs = res[key]["model"].keywords
-        assert res_kwargs == expected_kwargs
+        assert res_kwargs.keys() == expected_kwargs.keys()
+        for key, val in res_kwargs.items():
+            if isinstance(val, pd.DatetimeIndex):
+                val = val.tolist()
+            assert val == expected_kwargs[key]
 
 
 def test_christmas_mode_meet_twice():
@@ -57,4 +65,8 @@ def test_christmas_mode_meet_twice():
     assert res.keys() == expected.keys()
     for key, expected_kwargs in expected.items():
         res_kwargs = res[key]["model"].keywords
-        assert res_kwargs == expected_kwargs
+        assert res_kwargs.keys() == expected_kwargs.keys()
+        for key, val in res_kwargs.items():
+            if isinstance(val, pd.DatetimeIndex):
+                val = val.tolist()
+            assert val == expected_kwargs[key]
