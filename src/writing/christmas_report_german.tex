@@ -128,7 +128,7 @@
 
 Um den steigenden Coronafallzahlen zu begegnen, wurde in Deutschland von November bis Mitte Dezember ein leichter Lockdown verhängt.
 Dieser hat jedoch lediglich zu einem Stagnieren der Fallzahlen geführt.
-Deshalb befindet sich Deutschland seit dem 16. Dezember erneut in einem harten Lockdown, um die Fallzahlen zu reduzieren und das Infektionsgeschehen wieder unter Kontrolle zu bringen.
+Deshalb befindet sich Deutschland seit dem 16. Dezember erneut in einem harten Lockdown, um das Infektionsgeschehen wieder unter Kontrolle zu bringen.
 
 Ein sehr wichtiger Faktor für den Erfolg der Maßnahmen ist, wie sich die Menschen in Deutschland über die Weihnachtsfeiertage verhalten.
 Familienfeiern, wo Menschen intensiv Zeit miteinander verbringen, die sich sonst sehr selten treffen, bergen ein großes Ansteckungsrisiko.
@@ -167,9 +167,9 @@ Das Krankheitsmodell berücksichtigt asymptomatische Fälle, leichte Symptome un
 Wir variieren das Verhalten der Deutschen über zwei Dimensionen:
 
 \begin{enumerate}
-    \item Die Anzahl und Intensität der Weihnachtstreffen.
+    \item \textbf{Die Anzahl und Intensität der Weihnachtstreffen.}
     Ein volles Ausreizen der aktuellen Regulierungen würde bedeuten, dass sich an jedem der drei Feiertage (24., 25. und 26.12.) jeder Haushalt mit je zwei weiteren, unterschiedlichen Haushalten trifft. Eine vorsichtigere Verhaltensweise, die wir simulieren, ist, dass die Menschen die Feiertage in festen Gruppen von drei Haushalten feiern. Um den Effekt der Häufigkeit der Treffen zeigen zu können, schauen wir uns zusätzlich den Fall an, wo sich feste Haushaltsgruppen nur am 24. und 25.12. treffen.
-    \item Der Grad der privaten Kontaktnachverfolgung. Hier unterscheiden wir ein Szenario ohne private Kontaktnachverfolgung, wo Verwandte nicht über Symptome oder Testergebnisse informiert werden. In einem weiteren Szenario nehmen wir an, dass die private Kontaktnachverfolgung die Kontakte von Menschen mit Risikokontakten um 50\% reduziert und ein Szenario wo sie die Kontakte von Menschen mit Risikokontakten um 90\% reduziert.
+    \item \textbf{Der Grad der privaten Kontaktnachverfolgung.} Hier unterscheiden wir ein Szenario ohne private Kontaktnachverfolgung, wo Verwandte nicht über Symptome oder Testergebnisse informiert werden. In einem weiteren Szenario nehmen wir an, dass die private Kontaktnachverfolgung die Kontakte von Menschen mit Risikokontakten um 50\% reduziert und ein Szenario, wo sie die Kontakte von Menschen mit Risikokontakten um 90\% reduziert.
 \end{enumerate}
 
 Zusätzlich nehmen wir an, dass drei Viertel der Bevölkerung am 23.12. zusätzliche Kontakte durch Vorbereitungen haben. Dies simuliert den Effekt durch beispielsweise Zugfahrten und Weihnachtseinkäufe.
@@ -177,6 +177,8 @@ Zusätzlich nehmen wir an, dass drei Viertel der Bevölkerung am 23.12. zusätzl
 \FloatBarrier
 \section{Ergebnisse}
 
+
+\subsection{Der Effekt verschiedener Arten, Weihnachten zu feiern}
 
 \begin{figure}
 \label{fig:effect_of_christmas_without_contact_tracing}
@@ -188,10 +190,51 @@ Zusätzlich nehmen wir an, dass drei Viertel der Bevölkerung am 23.12. zusätzl
 
 
 \begin{figure}
+\label{fig:effect_of_christmas_with_mediocre_contact_tracing}
+\includegraphics[width=\textwidth]{../../bld/simulation/effect_of_christmas_mode_with_0.5_contact_tracing}
+\caption{
+    Das linke Panel zeigt die Entwicklung der beobachteten Fallzahlen, das rechte die Entwicklung der tatsächlichen Fallzahlen zwischen 2. Dezember 2020 und 10. Januar 2021. Ausgehend von privater Kontaktnachverfolgung, die die Kontakte von Menschen mit Risikokontakten um 50\% reduziert, wird das Infektionsgeschehen bei Weihnachtsfeiern mit wechselnden Haushalten (blau), im festen Kreis (gelb) und im festen Kreis im reduzierten Rahmen (rot) gezeigt.
+}
+\end{figure}
+
+
+\begin{figure}
+\label{fig:effect_of_christmas_with_good_contact_tracing}
+\includegraphics[width=\textwidth]{../../bld/simulation/effect_of_christmas_mode_with_0.1_contact_tracing}
+\caption{
+    Das linke Panel zeigt die Entwicklung der beobachteten Fallzahlen, das rechte die Entwicklung der tatsächlichen Fallzahlen zwischen 2. Dezember 2020 und 10. Januar 2021. Ausgehend von privater Kontaktnachverfolgung, die die Kontakte von Menschen mit Risikokontakten um 90\% reduziert, wird das Infektionsgeschehen bei Weihnachtsfeiern mit wechselnden Haushalten (blau), im festen Kreis (gelb) und im festen Kreis im reduzierten Rahmen (rot) gezeigt.
+}
+\end{figure}
+
+\FloatBarrier
+\subsection{Der Effekt von privater Kontaktverfolgung und Selbstquarantäne}
+
+
+\begin{figure}
 \label{fig:effect_of_contact_tracing_with_full_christmas}
 \includegraphics[width=\textwidth]{../../bld/simulation/effect_of_private_contact_tracing_full}
 \caption{
-    Das linke Panel zeigt die Entwicklung der beobachteten Fallzahlen, das rechte die Entwicklung der tatsächlichen Fallzahlen zwischen 2. Dezember 2020 und 10. Januar 2021. Ausgehend von Weihnachtsfeiern mit wechselnden Haushalten wird das Infektionsgeschehen bei anschließend nicht statt-findender (blau), 50 prozentiger (gelb) und 90 prozentiger (rot)
+    Das linke Panel zeigt die Entwicklung der beobachteten Fallzahlen, das rechte die Entwicklung der tatsächlichen Fallzahlen zwischen 2. Dezember 2020 und 10. Januar 2021. Ausgehend von Weihnachtsfeiern mit wechselnden Haushaltsgruppen wird das Infektionsgeschehen bei anschließend nicht statt-findender (blau), 50 prozentiger (gelb) und 90 prozentiger (rot)
+    privater Kontaktnachverfolgung und Kontaktreduktion durch Menschen als Reaktion auf Risikokontakte während der Feiertage gezeigt.
+}
+\end{figure}
+
+
+\begin{figure}
+\label{fig:effect_of_contact_tracing_with_same_group_christmas}
+\includegraphics[width=\textwidth]{../../bld/simulation/effect_of_private_contact_tracing_same_group}
+\caption{
+    Das linke Panel zeigt die Entwicklung der beobachteten Fallzahlen, das rechte die Entwicklung der tatsächlichen Fallzahlen zwischen 2. Dezember 2020 und 10. Januar 2021. Ausgehend von drei Weihnachtsfeiern mit gleichbleibenden Haushaltsgruppen wird das Infektionsgeschehen bei anschließend nicht statt-findender (blau), 50 prozentiger (gelb) und 90 prozentiger (rot)
+    privater Kontaktnachverfolgung und Kontaktreduktion durch Menschen als Reaktion auf  Risikokontakte während der Feiertage gezeigt.
+}
+\end{figure}
+
+
+\begin{figure}
+\label{fig:effect_of_contact_tracing_with_meet_twice_christmas}
+\includegraphics[width=\textwidth]{../../bld/simulation/effect_of_private_contact_tracing_meet_twice}
+\caption{
+    Das linke Panel zeigt die Entwicklung der beobachteten Fallzahlen, das rechte die Entwicklung der tatsächlichen Fallzahlen zwischen 2. Dezember 2020 und 10. Januar 2021. Ausgehend von zwei Weihnachtsfeiern mit gleichbleibenden Haushaltsgruppen wird das Infektionsgeschehen bei anschließend nicht statt-findender (blau), 50 prozentiger (gelb) und 90 prozentiger (rot)
     privater Kontaktnachverfolgung und Kontaktreduktion durch Menschen mit Risikokontakten
     während der Feiertage gezeigt.
 }

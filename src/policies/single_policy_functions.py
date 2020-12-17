@@ -354,6 +354,9 @@ def _identify_individuals_with_risk_contacts(states, group_ids, condition):
         from home but have a sick co-worker would still be identified
         as having had a risk contact!
 
+    .. warning::
+        This modifies states inplace!
+
     Args:
         states (pandas.DataFrame)
         group_ids (list): list of columns identifying group memberships.
@@ -368,12 +371,18 @@ def _identify_individuals_with_risk_contacts(states, group_ids, condition):
 
     """
     risk_in_any_group = pd.Series(False, index=states.index)
-    states = states.copy()
-    states["is_known_risk_contact"] = states.eval(condition)
+    today = get_date(states)
+    risk_col = f"is_known_risk_contact_{today}"
+    if risk_col not in states.columns:
+        states[risk_col] = states.eval(condition)
+        old_col = f"is_known_risk_contact_{today - pd.Timedelta(days=1)}"
+        if old_col in states.columns:
+            states.drop(
+                columns=[old_col],
+                inplace=True,
+            )
     for col in group_ids:
-        risk_in_this_group = states.groupby(col)["is_known_risk_contact"].transform(
-            "any"
-        )
+        risk_in_this_group = states.groupby(col)[risk_col].transform("any")
         # those in the -1 group have no contacts
         risk_in_this_group = risk_in_this_group.where(states[col] != -1, False)
         risk_in_any_group = risk_in_any_group | risk_in_this_group
