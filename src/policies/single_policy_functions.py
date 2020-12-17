@@ -75,9 +75,9 @@ def reopen_educ_model_germany(
 
     date = get_date(states)
     if reopening_dates is None:
-        assert pd.Timestamp("2020-04-22") <= date <= pd.Timestamp("2020-09-30"), (
+        assert pd.Timestamp("2020-04-22") <= date <= pd.Timestamp("2020-10-30"), (
             "Default reopening dates assume that policy is applied between 2020-04-22 "
-            "and 2020-09-30"
+            "and 2020-10-30"
         )
         reopening_dates = default_reopening_dates
     assert (

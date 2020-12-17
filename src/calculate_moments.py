@@ -17,6 +17,10 @@ def smoothed_outcome_per_hundred_thousand_sim(
         .mean()
         .fillna(0)
     )
+
+    if not isinstance(df, pd.DataFrame):
+        per_individual = per_individual.compute()
+
     out = _smooth_and_scale_daily_outcome_per_individual(
         per_individual, window, min_periods, groupby, take_logs
     )

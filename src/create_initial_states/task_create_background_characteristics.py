@@ -4,6 +4,7 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
+from src.config import N_HOUSEHOLDS
 from src.config import SRC
 from src.create_initial_states.create_contact_model_group_ids import (
     add_contact_model_group_ids,
@@ -42,7 +43,7 @@ from src.shared import create_age_groups_rki
 )
 @pytask.mark.produces(
     {
-        750_000: BLD / "data" / "initial_states.parquet",
+        N_HOUSEHOLDS: BLD / "data" / "initial_states.parquet",
         100_000: BLD / "data" / "debug_initial_states.parquet",
     }
 )
@@ -110,6 +111,7 @@ def _build_initial_states(
 
     df.index.name = "index"
     df = df.drop(columns=["index", "work_type"])
+    df = df.sample(frac=1).reset_index(drop=True)
     return df
 
 
@@ -127,7 +129,11 @@ def _prepare_microcensus(mc):
     mc = mc.rename(columns=rename_dict)
     mc = mc[rename_dict.values()]
     mc["private_hh"] = mc["hh_form"] == "bevölkerung in privathaushalten"
-    mc["gender"] = mc["gender"].replace({"männlich": "male", "weiblich": "female"})
+    mc["gender"] = (
+        mc["gender"]
+        .replace({"männlich": "male", "weiblich": "female"})
+        .astype("category")
+    )
 
     mc["age"] = mc["age"].replace({"95 jahre und älter": 96})
     mc["age_group"] = create_age_groups(mc["age"])

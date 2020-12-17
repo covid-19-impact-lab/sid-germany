@@ -133,7 +133,7 @@ def _build_reaction_params(contact_models):
     df = pd.DataFrame(columns=["category", "subcategory", "name", "value"])
     df = df.set_index(["category", "subcategory", "name"])
     multipliers = [
-        ("symptomatic_multiplier", 0.15, 0.5),
+        ("symptomatic_multiplier", 0.15, 0.7),
         ("positive_test_multiplier", 0.05, 0.5),
     ]
     for name, multiplier, hh_multiplier in multipliers:
