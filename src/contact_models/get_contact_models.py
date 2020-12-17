@@ -248,8 +248,13 @@ def get_christmas_contact_models(mode, n_contacts_before):
             - If "meet_twice", every household meets the same
               two other households but only once on the 24th and 25th
               of December.
-        n_contacts_before (float): number of contacts people meet
-            before Christmas
+        n_contacts_before (int, float or pandas.Series):
+            number of contacts people meet before Christmas. If it is a
+            Series the index are the number of contacts and
+            the values their probabilities.
+
+    Returns:
+        christmas_contact_models (dict)
 
     """
     assert isinstance(

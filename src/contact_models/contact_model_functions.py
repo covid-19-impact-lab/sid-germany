@@ -30,6 +30,19 @@ def holiday_preparation_contacts(states, params, seed, n_contacts):
     This is meant to cover things like traveling with public transport
     or doing holiday shopping.
 
+    Args:
+        states (pandas.DataFrame): sid states DataFrame
+        params (pandas.DataFrame): DataFrame with two index levels,
+            subcategory and name.
+        seed (int)
+        n_contacts (int, float or pandas.Series): number of contacts.
+            if Series, the index is the support and the values the
+            probabilities of meeting a certain number of people.
+
+    Returns:
+        contacts (pandas.Series): index is the same as states.
+            Values are the number of contacts a person has.
+
     """
     np.random.seed(seed)
     if get_date(states) != pd.Timestamp("2020-12-23"):
@@ -67,15 +80,18 @@ def meet_on_holidays(states, params, group_col, dates, seed):
           households but only once on the 24th and 25th of December.
         - If None, no Christmas models are included.
 
-
     Args:
         states (pandas.DataFrame): sid states DataFrame
-        params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name.
         group_col (str): name of the column identifying groups of
             individuals that will meet.
         dates (list): list of dates on which individuals
             of group_col will meet.
+        seed (int)
+
+    Returns:
+        attends_meeting (pandas.Series)
 
     """
     today = get_date(states)
@@ -104,7 +120,7 @@ def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
 
     Args:
         states (pandas.DataFrame): sid states DataFrame
-        params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name.
         group_col_name (str): name of the column identifying this contact model's
             group column.
@@ -144,7 +160,7 @@ def go_to_work(states, params, seed):
 
     Args:
         states (pandas.DataFrame): sid states DataFrame
-        params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
 
@@ -249,7 +265,7 @@ def meet_hh_members(states, params, seed):
 
     Args:
         states (pandas.DataFrame): The states.
-        params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
 
@@ -281,7 +297,7 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
 
     Args:
         states (pandas.DataFrame): sid states DataFrame.
-        params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
         on_weekends (bool): whether to meet on weekends or not.
