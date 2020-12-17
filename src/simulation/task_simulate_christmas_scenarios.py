@@ -15,7 +15,7 @@ INITIAL_START = SIMULATION_START - pd.Timedelta(weeks=2)
 SIMULATION_END = SIMULATION_START + pd.Timedelta(weeks=4)
 
 
-def _create_parametrization():
+def create_christmas_parametrization():
     parametrizations = []
     for christmas_mode in ["full", "same_group", "meet_twice"]:
         for contact_tracing_multiplier in [None, 0.1]:
@@ -37,7 +37,7 @@ def _create_parametrization():
     return parametrizations
 
 
-PARAMETRIZATIONS = _create_parametrization()
+PARAMETRIZATIONS = create_christmas_parametrization()
 
 
 @pytask.mark.depends_on(

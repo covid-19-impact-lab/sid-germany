@@ -289,13 +289,11 @@ def _interpolate_activity_level(
 def reduce_contacts_through_private_contact_tracing(
     contacts, states, seed, multiplier, group_ids, is_recurrent
 ):
-    states = states.copy()
     today = get_date(states)
     days_since_christmas = (today - pd.Timestamp("2020-12-26")).days
     test_condition = f"-{days_since_christmas} <= cd_received_test_result_true <= 0"
     symptom_condition = f"-{days_since_christmas} <= cd_symptoms_true <= 0"
     risk_condition = f"({symptom_condition}) | ({test_condition})"
-    states["is_known_risk_person"] = states.eval(risk_condition)
 
     reduced = reduce_contacts_when_condition_among_recurrent_contacts(
         contacts=contacts,
@@ -303,7 +301,7 @@ def reduce_contacts_through_private_contact_tracing(
         seed=seed,
         multiplier=multiplier,
         group_ids=group_ids,
-        condition="is_known_risk_person",
+        condition=risk_condition,
         is_recurrent=is_recurrent,
     )
     return reduced
@@ -375,9 +373,11 @@ def _identify_individuals_with_risk_contacts(states, group_ids, condition):
     """
     risk_in_any_group = pd.Series(False, index=states.index)
     states = states.copy()
-    states["condition_true"] = states.eval(condition)
+    states["is_known_risk_contact"] = states.eval(condition)
     for col in group_ids:
-        risk_in_this_group = states.groupby(col)["condition_true"].transform("any")
+        risk_in_this_group = states.groupby(col)["is_known_risk_contact"].transform(
+            "any"
+        )
         # those in the -1 group have no contacts
         risk_in_this_group = risk_in_this_group.where(states[col] != -1, False)
         risk_in_any_group = risk_in_any_group | risk_in_this_group
