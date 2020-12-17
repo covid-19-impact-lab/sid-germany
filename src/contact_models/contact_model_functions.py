@@ -254,19 +254,23 @@ def meet_hh_members(states, params, seed):
             to the number of possible columns in the "name" index level.
 
     """
-    meet_hh = (states["hh_model_group_id"] != -1).astype(int)
-    for params_entry, condition in [
-        ("symptomatic_multiplier", "symptomatic"),
-        ("positive_test_multiplier", IS_POSITIVE_CASE),
-    ]:
-        meet_hh = reduce_contacts_on_condition(
-            meet_hh,
-            states,
-            params.loc[(params_entry, params_entry), "value"],
-            condition,
-            seed=seed,
-            is_recurrent=True,
-        )
+    date = get_date(states)
+    if date in pd.date_range("2020-12-24", "2020-12-26"):
+        meet_hh = pd.Series(0, index=states.index)
+    else:
+        meet_hh = (states["hh_model_group_id"] != -1).astype(int)
+        for params_entry, condition in [
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
+        ]:
+            meet_hh = reduce_contacts_on_condition(
+                meet_hh,
+                states,
+                params.loc[(params_entry, params_entry), "value"],
+                condition,
+                seed=seed,
+                is_recurrent=True,
+            )
     return meet_hh
 
 
