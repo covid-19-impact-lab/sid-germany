@@ -21,7 +21,7 @@ plt.rcParams.update(
 
 
 simulation_parametrization = create_christmas_parametrization()
-SIMULATIONS = {entry[:2]: entry[2] for entry in simulation_parametrization}
+SIMULATIONS = {entry[:2]: entry[3] for entry in simulation_parametrization}
 
 
 @pytask.mark.depends_on(SIMULATIONS)
@@ -36,7 +36,7 @@ def task_plot_effect_of_private_contact_tracing(depends_on, produces):
         contact_tracing_scenarios = {}
         for (mode, ct_str), path in depends_on.items():
             if mode == christmas_mode:
-                df = dd.read_parquet(path / "time_series")
+                df = dd.read_parquet(path)
                 contact_tracing_scenarios[ct_str] = df
 
         title = "The Importance of Self-Isolation and Private Contact Tracing"
@@ -58,7 +58,7 @@ def task_plot_effect_of_christmas_mode(depends_on, produces):
         christmas_scenarios = {}
         for (mode, ct_str), path in depends_on.items():
             if ct_str == ct_mode:
-                df = dd.read_parquet(path / "time_series")
+                df = dd.read_parquet(path)
                 christmas_scenarios[mode] = df
 
         title = "The Importance of Celebrating in Small Circles"

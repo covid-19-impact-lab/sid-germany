@@ -28,7 +28,7 @@ def create_christmas_parametrization():
                 BLD / "simulation" / f"simulation_christmas_mode_{christmas_mode}_"
                 f"{ctm_str}"
             )
-            produces = path / "last_states"
+            produces = path / "time_series"
 
             single_run = (christmas_mode, contact_tracing_multiplier, path, produces)
 
