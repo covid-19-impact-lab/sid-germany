@@ -39,7 +39,7 @@ def task_plot_effect_of_private_contact_tracing(depends_on, produces):
                 df = dd.read_parquet(path)
                 contact_tracing_scenarios[ct_str] = df
 
-        title = "The Importance of Self-Isolation and Private Contact Tracing"
+        title = "Die Bedeutung von privater Kontaktnachverfolgung und Selbstquarantäne"
         fig = plot_scenarios(contact_tracing_scenarios, title=title)
         fig.savefig(produces[christmas_mode])
 
@@ -61,27 +61,27 @@ def task_plot_effect_of_christmas_mode(depends_on, produces):
                 df = dd.read_parquet(path)
                 christmas_scenarios[mode] = df
 
-        title = "The Importance of Celebrating in Small Circles"
+        title = "Die Bedeutung der Form der Weihnachtstreffen"
         fig = plot_scenarios(christmas_scenarios, title=title)
         fig.savefig(produces[ct_mode])
 
 
 def plot_scenarios(scenarios, title):
     name_to_label = {
-        None: "Without Private Contact Tracing",
-        0.5: "If 50% Follow Private Contact Tracing",
-        0.1: "If 90% Follow Private Contact Tracing",
-        "full": "Celebrations With Different Households",
-        "same_group": "Celebrations in Fixed Groups",
-        "meet_twice": "Less Celebrations in Fixed Groups",
+        None: "Ohne private\nKontaktnachverfolgung",
+        0.5: "Mit 50 prozentiger privater\nKontaktnachverfolgung",
+        0.1: "Mit 90 prozentiger privater\nKontaktnachverfolgung",
+        "full": "Weihnachtsfeiern mit\nwechselnden Haushalten",
+        "same_group": "Weihnachtsfeiern\nim festen Kreis",
+        "meet_twice": "Reduzierte Weihnachtsfeiern\nim festen Kreis",
     }
 
     outcome_vars = [
-        ("new_known_case", "New Reported Cases"),
-        ("newly_infected", "New True Cases"),
+        ("new_known_case", "Beobachtete Inzidenz"),
+        ("newly_infected", "Tatsächliche Inzidenz"),
     ]
     fig, axes = plt.subplots(
-        ncols=len(outcome_vars), figsize=(12, 5), sharey=True, sharex=True
+        ncols=len(outcome_vars), figsize=(10, 4), sharey=True, sharex=True
     )
 
     for ax, (outcome, ax_title) in zip(axes, outcome_vars):
@@ -113,7 +113,7 @@ def plot_outcome(
 ):
     """Plot an outcome variable over time.
 
-    It's smoothed over the time window and scaled as incidence over 100 000.
+    It's smoothed over the time window and scaled as weekly incidence over 100 000.
 
     """
     daily_incidence = smoothed_outcome_per_hundred_thousand_sim(
@@ -130,8 +130,13 @@ def plot_outcome(
     data = weekly_incidence.reset_index()
     sns.lineplot(data=data, x="date", y=outcome, ax=ax, label=label, color=color)
 
-    ax.set_ylabel("Smoothed Weekly Incidence\nper 100 000 ")
+    ax.set_ylabel("Geglättete wöchentliche \nInzidenz pro 100 000")
+    ax.set_xlabel("Datum")
     ax.set_ylim(bottom=0, top=3000)
+
+    # only have legend in the left plot
+    if outcome == "newly_infected":
+        ax.get_legend().remove()
 
     date_form = DateFormatter("%d.%m")
     ax.xaxis.set_major_formatter(date_form)
