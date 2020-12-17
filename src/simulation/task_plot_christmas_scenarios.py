@@ -131,8 +131,8 @@ def plot_outcome(
         take_logs=False,
     )
 
-    upper_lim = max(ax.get_ylim()[1], time_series[outcome].max())
     time_series = time_series.compute().reset_index()
+    upper_lim = max(ax.get_ylim()[1], time_series[outcome].max())
     sns.lineplot(data=time_series, x="date", y=outcome, ax=ax, label=label, color=color)
 
     ax.set_ylabel("Smoothed Incidence\nper 100 000 ")
