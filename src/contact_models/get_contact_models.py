@@ -11,13 +11,13 @@ def get_all_contact_models(christmas_mode, n_extra_contacts_before_christmas):
 
     Args:
         christmas_mode (str): one of "full", "same_group", "meet_twice".
-            If "full", every household meets with a different set of
-            two other households on every of the three holidays.
-            If "same_group", every household meets the same two other
-            households on every of the three holidays.
-            If "meet_twice", every household meets the same two other
-            households but only once on the 24th and 25th of December.
-            If None, no Christmas models are included.
+            - If "full", every household meets with a different set of
+              two other households on every of the three holidays.
+            - If "same_group", every household meets the same two other
+              households on every of the three holidays.
+            - If "meet_twice", every household meets the same two other
+              households but only once on the 24th and 25th of December.
+            - If None, no Christmas models are included.
         n_extra_contacts_before_christmas (float): Number of additional
             contacts before Christmas to cover things like holiday
             shopping and travel.
@@ -239,13 +239,13 @@ def get_christmas_contact_models(mode, n_contacts_before):
 
     Args:
         mode (str): one of "full", "same_group", "meet_twice".
-            If "full", every household meets with a different set of
-            two other households on every of the three holidays.
-            If "same_group", every household meets the same two other
-            households on every of the three holidays.
-            If "meet_twice", every household meets the same
-            two other households but only once on the 24th and 25th
-            of December.
+            - If "full", every household meets with a different set of
+              two other households on every of the three holidays.
+            - If "same_group", every household meets the same two other
+              households on every of the three holidays.
+            - If "meet_twice", every household meets the same
+              two other households but only once on the 24th and 25th
+              of December.
         n_contacts_before (float): number of contacts people meet
             before Christmas
 
@@ -253,11 +253,7 @@ def get_christmas_contact_models(mode, n_contacts_before):
     assert isinstance(
         n_contacts_before, (float, int)
     ), "n_contacts_before must be an int or float."
-    dates = [
-        pd.Timestamp("2020-12-24"),
-        pd.Timestamp("2020-12-25"),
-        pd.Timestamp("2020-12-26"),
-    ]
+    dates = pd.date_range("2020-12-24", "2020-12-26")
 
     christmas_contact_models = {
         "holiday_preparation": {

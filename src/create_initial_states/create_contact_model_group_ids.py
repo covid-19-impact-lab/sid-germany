@@ -278,7 +278,7 @@ def _sample_household_groups(df, seed, assort_by, same_group_probability=None, n
     """
     if assort_by is not None:
         assert (
-            0.0 <= same_group_probability <= 1.0
+            0 <= same_group_probability <= 1
         ), "same_group_probability must be a between 0 and 1."
     seed = itertools.count(seed)
 

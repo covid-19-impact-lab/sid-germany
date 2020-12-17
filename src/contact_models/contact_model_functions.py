@@ -66,7 +66,7 @@ def meet_on_holidays(states, params, group_col, dates, seed):
 
     """
     today = get_date(states)
-    dates = [pd.Timestamp(date) for date in dates]
+    dates = pd.to_datetime(dates)
     if today not in dates:
         attends_meeting = pd.Series(0, index=states.index)
     else:
