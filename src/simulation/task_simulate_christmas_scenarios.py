@@ -12,7 +12,7 @@ from src.policies.combine_policies_over_periods import get_december_to_feb_polic
 
 
 SIMULATION_START = pd.Timestamp("2020-12-01")
-INITIAL_START = SIMULATION_START - pd.Timedelta(weeks=2)
+INITIAL_START = SIMULATION_START - pd.Timedelta(days=31)
 SIMULATION_END = pd.Timestamp("2021-01-10")
 
 
@@ -48,8 +48,7 @@ PARAMETRIZATIONS = create_christmas_parametrization()
         / "data"
         / "processed_time_series"
         / "share_known_cases.pkl",
-        # !!! Replace with real states.
-        "initial_states": BLD / "data" / "debug_initial_states.parquet",
+        "initial_states": BLD / "data" / "initial_states.parquet",
         "contact_model_functions": SRC
         / "contact_models"
         / "contact_model_functions.py",

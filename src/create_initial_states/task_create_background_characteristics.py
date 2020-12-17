@@ -42,7 +42,7 @@ from src.shared import create_age_groups_rki
 )
 @pytask.mark.produces(
     {
-        1_000_000: BLD / "data" / "initial_states.parquet",
+        750_000: BLD / "data" / "initial_states.parquet",
         100_000: BLD / "data" / "debug_initial_states.parquet",
     }
 )
