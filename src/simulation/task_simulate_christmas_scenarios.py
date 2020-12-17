@@ -12,17 +12,17 @@ from src.policies.combine_policies_over_periods import get_december_to_feb_polic
 
 SIMULATION_START = pd.Timestamp("2020-12-01")
 INITIAL_START = SIMULATION_START - pd.Timedelta(weeks=2)
-SIMULATION_END = SIMULATION_START + pd.Timedelta(weeks=4)
+SIMULATION_END = pd.Timestamp("2021-02-01")
 
 
 def create_christmas_parametrization():
     parametrizations = []
     for christmas_mode in ["full", "same_group", "meet_twice"]:
-        for contact_tracing_multiplier in [None, 0.1]:
+        for contact_tracing_multiplier in [None, 0.5, 0.1]:
             ctm_str = (
                 "wo_ct"
                 if contact_tracing_multiplier is None
-                else f"w_ct_{contact_tracing_multiplier}"
+                else f"w_ct_{str(contact_tracing_multiplier).replace('.', '_')}"
             )
             path = (
                 BLD / "simulation" / f"simulation_christmas_mode_{christmas_mode}_"
