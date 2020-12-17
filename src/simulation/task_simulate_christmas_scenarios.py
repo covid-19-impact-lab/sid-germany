@@ -13,7 +13,7 @@ from src.policies.combine_policies_over_periods import get_december_to_feb_polic
 
 SIMULATION_START = pd.Timestamp("2020-12-01")
 INITIAL_START = SIMULATION_START - pd.Timedelta(weeks=2)
-SIMULATION_END = pd.Timestamp("2021-02-01")
+SIMULATION_END = pd.Timestamp("2021-01-10")
 
 
 def create_christmas_parametrization():
