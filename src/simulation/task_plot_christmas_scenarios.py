@@ -75,6 +75,8 @@ def task_plot_effect_of_christmas_mode(depends_on, produces):
 
             title = "Die Bedeutung der Form der Weihnachtstreffen"
             fig, axes = plot_scenarios(christmas_scenarios, title=title + "\n" + name)
+            for ax in axes.flatten():
+                ax.grid(axis="y")
             fig.savefig(produces[f"{ct_mode}_{scenario}"], dpi=200, bbox_inches="tight", pad_inces=0.5)
 
 
@@ -103,13 +105,13 @@ def plot_scenarios(scenarios, title):
                 ax=ax,
                 label=name_to_label[name],
                 color=color,
-                window=1,  ### 7,
+                window=3,  ### 7,
             )
 
         ax.fill_between(
             x=[pd.Timestamp("2020-12-24"), pd.Timestamp("2020-12-26")],
             y1=0,
-            y2=1200,
+            y2=2000,
             alpha=0.2,
             label="Weihnachten",
             color=get_colors("ordered", 3)[2],
@@ -117,7 +119,7 @@ def plot_scenarios(scenarios, title):
         ax.fill_between(
             x=[pd.Timestamp("2020-12-16"), pd.Timestamp("2020-12-24")],
             y1=0,
-            y2=1200,
+            y2=2000,
             alpha=0.2,
             label="Harter Lockdown\nvor Weihnachten",
             color=get_colors("ordered", 3)[0],
@@ -179,10 +181,8 @@ def plot_outcome(
     data = weekly_incidence.reset_index()
     sns.lineplot(data=data, x="date", y=outcome, ax=ax, label=label, color=color)
 
-    if outcome == "newly_infected":
-        ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
-    else:
-        ax.set_ylabel("Wöchentliche Neuinfektionen\npro 100 000")
+
+    ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
     ax.set_xlabel("Datum")
 
     ax.grid(axis="y")
