@@ -104,7 +104,7 @@ def plot_scenarios(scenarios, title):
                 ax=ax,
                 label=name_to_label[name],
                 color=color,
-                window=1,  ### 7,
+                window=7,  ### 7,
             )
 
         ax.fill_between(
@@ -139,7 +139,7 @@ def plot_scenarios(scenarios, title):
                 color="k",
                 ax=ax,
             )
-        top = 300 if outcome == "new_known_case" else 1000  ### 850
+        top = 300 if outcome == "new_known_case" else 1200  ### 850
         ax.set_ylim(bottom=50, top=top)
 
     fig.autofmt_xdate()
