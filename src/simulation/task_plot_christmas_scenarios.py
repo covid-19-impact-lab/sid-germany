@@ -30,14 +30,13 @@ SIMULATIONS = {entry[:2]: entry[3] for entry in simulation_parametrization}
 @pytask.mark.produces(
     {
         mode: BLD / "simulation" / f"effect_of_private_contact_tracing_{mode}.png"
-        for mode in ["full", "same_group", "meet_twice"]
+        for mode in ["full", "same_group"]
     }
 )
 def task_plot_effect_of_private_contact_tracing(depends_on, produces):
     named_scenarios = {
         "full": "Weihnachtsfeiern mit wechselnden Haushalten",
         "same_group": "Weihnachtsfeiern im festen Kreis",
-        "meet_twice": "Weniger Weihnachtsfeiern im festen Kreis",
     }
     for christmas_mode, name in named_scenarios.items():
         contact_tracing_scenarios = {}
@@ -87,7 +86,6 @@ def plot_scenarios(scenarios, title):
         0.1: "Mit 90 prozentiger privater\nKontaktnachverfolgung",
         "full": "Weihnachtsfeiern mit\nwechselnden Haushalten",
         "same_group": "Weihnachtsfeiern\nim festen Kreis",
-        "meet_twice": "Weniger Weihnachtsfeiern\nim festen Kreis",
     }
 
     outcome_vars = [
