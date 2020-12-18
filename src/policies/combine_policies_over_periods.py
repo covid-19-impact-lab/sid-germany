@@ -29,11 +29,13 @@ def get_december_to_feb_policies(
         policies (dict): policies dictionary.
     """
     if scenario == "optimistic":
-        hard_lockdown_work_multiplier = 0.45
-        vacation_other_multiplier = 0.5
+        hard_lockdown_work_multiplier = 0.4
+        vacation_other_multiplier = 0.4
+        hard_lockdown_other_multiplier = 0.35
     elif scenario == "pessimistic":
         hard_lockdown_work_multiplier = 0.5
         vacation_other_multiplier = 0.8
+        hard_lockdown_other_multiplier = 0.4
     else:
         raise ValueError(f"Unsupported scenario: {scenario}")
 
@@ -60,7 +62,7 @@ def get_december_to_feb_policies(
             multipliers={
                 "educ": 0.0,
                 "work": hard_lockdown_work_multiplier,
-                "other": 0.4,
+                "other": hard_lockdown_other_multiplier,
             },
         ),
         # until christmas
@@ -74,7 +76,7 @@ def get_december_to_feb_policies(
             multipliers={
                 "educ": 0.0,
                 "work": 0.15,
-                "other": 0.4,
+                "other": hard_lockdown_other_multiplier,
             },
         ),
         # Christmas Holidays
@@ -111,7 +113,7 @@ def get_december_to_feb_policies(
             multipliers={
                 "educ": 0.0,
                 "work": hard_lockdown_work_multiplier,
-                "other": 0.4,
+                "other": hard_lockdown_other_multiplier,
             },
         ),
     ]
