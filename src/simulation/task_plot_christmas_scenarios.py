@@ -104,7 +104,7 @@ def plot_scenarios(scenarios, title):
                 ax=ax,
                 label=name_to_label[name],
                 color=color,
-                window=7,  ### 7,
+                window=1,  ### 7,
             )
 
         ax.fill_between(

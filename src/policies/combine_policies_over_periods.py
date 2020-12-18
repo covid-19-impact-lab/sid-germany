@@ -61,7 +61,7 @@ def get_december_to_feb_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.3,
+                "work": 0.25,
                 "other": 0.4,
             },
         ),
@@ -85,7 +85,7 @@ def get_december_to_feb_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.3,
+                "work": 0.25,
                 "other": 0.8,
             },
         ),
