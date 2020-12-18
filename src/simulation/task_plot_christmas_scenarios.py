@@ -48,7 +48,9 @@ def task_plot_effect_of_private_contact_tracing(depends_on, produces):
 
         title = "Die Bedeutung von privater Kontaktnachverfolgung und Selbstquarantäne"
         fig, axes = plot_scenarios(contact_tracing_scenarios, title=title + "\n" + name)
-        fig.savefig(produces[christmas_mode], dpi=200)
+        fig.savefig(
+            produces[christmas_mode], dpi=200, bbox_inches="tight", pad_inces=0.5
+        )
 
 
 @pytask.mark.depends_on(SIMULATIONS)
@@ -75,7 +77,7 @@ def task_plot_effect_of_christmas_mode(depends_on, produces):
 
         title = "Die Bedeutung der Form der Weihnachtstreffen"
         fig, axes = plot_scenarios(christmas_scenarios, title=title + "\n" + name)
-        fig.savefig(produces[ct_mode], dpi=200)
+        fig.savefig(produces[ct_mode], dpi=200, bbox_inches="tight", pad_inces=0.5)
 
 
 def plot_scenarios(scenarios, title):
