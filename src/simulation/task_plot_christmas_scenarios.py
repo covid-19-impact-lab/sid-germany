@@ -1,5 +1,6 @@
 import dask.dataframe as dd
 import matplotlib.pyplot as plt
+import numpy as np
 import pytask
 import seaborn as sns
 from matplotlib.dates import DateFormatter
@@ -32,7 +33,12 @@ SIMULATIONS = {entry[:2]: entry[3] for entry in simulation_parametrization}
     }
 )
 def task_plot_effect_of_private_contact_tracing(depends_on, produces):
-    for christmas_mode in ["full", "same_group", "meet_twice"]:
+    named_scenarios = {
+        "full": "Weihnachtsfeiern mit wechselnden Haushalten",
+        "same_group": "Weihnachtsfeiern im festen Kreis",
+        "meet_twice": "Weniger Weihnachtsfeiern im festen Kreis",
+    }
+    for christmas_mode, name in named_scenarios.items():
         contact_tracing_scenarios = {}
         for (mode, ct_str), path in depends_on.items():
             if mode == christmas_mode:
@@ -40,7 +46,7 @@ def task_plot_effect_of_private_contact_tracing(depends_on, produces):
                 contact_tracing_scenarios[ct_str] = df
 
         title = "Die Bedeutung von privater Kontaktnachverfolgung und Selbstquarantäne"
-        fig = plot_scenarios(contact_tracing_scenarios, title=title)
+        fig = plot_scenarios(contact_tracing_scenarios, title=title + "\n" + name)
         fig.savefig(produces[christmas_mode], dpi=200)
 
 
@@ -54,7 +60,12 @@ def task_plot_effect_of_private_contact_tracing(depends_on, produces):
     }
 )
 def task_plot_effect_of_christmas_mode(depends_on, produces):
-    for ct_mode in [None, 0.5, 0.1]:
+    named_scenarios = {
+        None: "Ohne private Kontaktnachverfolgung",
+        0.5: "Mit 50 prozentiger privater Kontaktnachverfolgung",
+        0.1: "Mit 90 prozentiger privater Kontaktnachverfolgung",
+    }
+    for ct_mode, name in named_scenarios.items():
         christmas_scenarios = {}
         for (mode, ct_str), path in depends_on.items():
             if ct_str == ct_mode:
@@ -62,7 +73,7 @@ def task_plot_effect_of_christmas_mode(depends_on, produces):
                 christmas_scenarios[mode] = df
 
         title = "Die Bedeutung der Form der Weihnachtstreffen"
-        fig = plot_scenarios(christmas_scenarios, title=title)
+        fig = plot_scenarios(christmas_scenarios, title=title + "\n" + name)
         fig.savefig(produces[ct_mode], dpi=200)
 
 
@@ -80,9 +91,7 @@ def plot_scenarios(scenarios, title):
         ("new_known_case", "Beobachtete Inzidenz"),
         ("newly_infected", "Tatsächliche Inzidenz"),
     ]
-    fig, axes = plt.subplots(
-        ncols=len(outcome_vars), figsize=(8, 3), sharey=True, sharex=True
-    )
+    fig, axes = plt.subplots(ncols=len(outcome_vars), figsize=(8, 4), sharex=True)
 
     for ax, (outcome, ax_title) in zip(axes, outcome_vars):
         ax.set_title(ax_title)
@@ -133,7 +142,9 @@ def plot_outcome(
 
     ax.set_ylabel("Geglättete wöchentliche \nInzidenz pro 100 000")
     ax.set_xlabel("Datum")
-    ax.set_ylim(bottom=0, top=1500)
+    ax.set_ylim(bottom=0)
+    plt.yticks(np.arange(0, weekly_incidence.max(), 100))
+    ax.grid(axis="y")
 
     # only have legend in the left plot
     if outcome == "newly_infected":
