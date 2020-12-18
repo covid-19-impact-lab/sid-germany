@@ -1,11 +1,12 @@
 import dask.dataframe as dd
 import matplotlib.pyplot as plt
-import numpy as np
+import pandas as pd
 import pytask
 import seaborn as sns
 from matplotlib.dates import DateFormatter
 from sid.colors import get_colors
 
+from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
 from src.simulation.task_simulate_christmas_scenarios import (
@@ -46,7 +47,7 @@ def task_plot_effect_of_private_contact_tracing(depends_on, produces):
                 contact_tracing_scenarios[ct_str] = df
 
         title = "Die Bedeutung von privater Kontaktnachverfolgung und Selbstquarantäne"
-        fig = plot_scenarios(contact_tracing_scenarios, title=title + "\n" + name)
+        fig, axes = plot_scenarios(contact_tracing_scenarios, title=title + "\n" + name)
         fig.savefig(produces[christmas_mode], dpi=200)
 
 
@@ -73,7 +74,7 @@ def task_plot_effect_of_christmas_mode(depends_on, produces):
                 christmas_scenarios[mode] = df
 
         title = "Die Bedeutung der Form der Weihnachtstreffen"
-        fig = plot_scenarios(christmas_scenarios, title=title + "\n" + name)
+        fig, axes = plot_scenarios(christmas_scenarios, title=title + "\n" + name)
         fig.savefig(produces[ct_mode], dpi=200)
 
 
@@ -103,12 +104,49 @@ def plot_scenarios(scenarios, title):
                 ax=ax,
                 label=name_to_label[name],
                 color=color,
+                window=7,
             )
+
+        ax.fill_between(
+            x=[pd.Timestamp("2020-12-24"), pd.Timestamp("2020-12-26")],
+            y1=0,
+            y2=850,
+            alpha=0.2,
+            label="Weihnachten",
+            color=get_colors("ordered", 3)[2],
+        )
+        ax.fill_between(
+            x=[pd.Timestamp("2020-12-16"), pd.Timestamp("2020-12-24")],
+            y1=0,
+            y2=850,
+            alpha=0.2,
+            label="Harter Lockdown\nvor Weihnachten",
+            color=get_colors("ordered", 3)[0],
+        )
+        if outcome == "new_known_case":
+            rki_data = pd.read_pickle(
+                BLD / "data" / "processed_time_series" / "rki.pkl"
+            )
+            rki_incidence = 7 * smoothed_outcome_per_hundred_thousand_rki(
+                rki_data, "newly_infected", take_logs=False
+            )
+            rki_incidence = rki_incidence["2020-12-01":].reset_index()
+            sns.lineplot(
+                data=rki_incidence,
+                x="date",
+                y="newly_infected",
+                label="RKI Fallzahlen",
+                color="k",
+                ax=ax,
+            )
+        ax.set_ylim(50, 820)
+
     fig.autofmt_xdate()
-    fig.suptitle(title)
+    fig.suptitle(title, fontsize=14)
 
     fig.tight_layout()
-    return fig
+    axes[0].legend(loc="upper center", bbox_to_anchor=(0.5, -0.5, 1, 0.2), ncol=3)
+    return fig, axes
 
 
 def plot_outcome(
@@ -132,6 +170,7 @@ def plot_outcome(
         window=window,
         min_periods=min_periods,
         take_logs=False,
+        center=outcome == "newly_infected",
     )
 
     if isinstance(daily_incidence, dd.Series):
@@ -140,13 +179,15 @@ def plot_outcome(
     data = weekly_incidence.reset_index()
     sns.lineplot(data=data, x="date", y=outcome, ax=ax, label=label, color=color)
 
-    ax.set_ylabel("Geglättete wöchentliche \nInzidenz pro 100 000")
+    if outcome == "newly_infected":
+        ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
+    else:
+        ax.set_ylabel("Wöchentliche Neuinfektionen\npro 100 000")
     ax.set_xlabel("Datum")
-    ax.set_ylim(bottom=0)
-    plt.yticks(np.arange(0, weekly_incidence.max(), 100))
-    ax.grid(axis="y")
 
-    # only have legend in the left plot
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
+
     if outcome == "newly_infected":
         ax.get_legend().remove()
 
