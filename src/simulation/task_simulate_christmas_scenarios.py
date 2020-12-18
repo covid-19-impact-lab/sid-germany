@@ -13,7 +13,7 @@ from src.policies.combine_policies_over_periods import get_december_to_feb_polic
 
 SIMULATION_START = pd.Timestamp("2020-12-02")
 INITIAL_START = SIMULATION_START - pd.Timedelta(days=31)
-SIMULATION_END = pd.Timestamp("2021-01-10")
+SIMULATION_END = pd.Timestamp("2021-01-08")
 
 
 def create_christmas_parametrization():
@@ -91,7 +91,7 @@ def task_simulation_christmas_scenarios(
             missing_christmas_models.append(x)
     hh_loc = ("infection_prob", "households", "households")
     for name in missing_christmas_models:
-        params.loc[("infection_prob", name, name)] = params.loc[hh_loc]
+        params.loc[("infection_prob", name, name)] = 2 * params.loc[hh_loc]
 
     policies = get_december_to_feb_policies(
         contact_models=contact_models,

@@ -61,7 +61,7 @@ def get_december_to_feb_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.25,
+                "work": 0.15,
                 "other": 0.4,
             },
         ),
@@ -73,7 +73,7 @@ def get_december_to_feb_policies(
                 "end_date": "2020-12-26",
                 "prefix": "christmas-lockdown",
             },
-            other_contacts_multiplier=0.0,
+            other_contacts_multiplier=0.2,
         ),
         # Christmas Until End of Hard Lockdown
         fpb.get_soft_lockdown(
@@ -85,7 +85,7 @@ def get_december_to_feb_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.25,
+                "work": 0.15,
                 "other": 0.8,
             },
         ),

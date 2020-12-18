@@ -139,7 +139,7 @@ def plot_scenarios(scenarios, title):
                 color="k",
                 ax=ax,
             )
-        top = 300 if outcome == "new_known_case" else 1200  ### 850
+        top = 500 if outcome == "new_known_case" else 2000  ### 850
         ax.set_ylim(bottom=50, top=top)
 
     fig.autofmt_xdate()
