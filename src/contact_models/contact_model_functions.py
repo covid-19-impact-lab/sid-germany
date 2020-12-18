@@ -45,7 +45,7 @@ def holiday_preparation_contacts(states, params, seed, n_contacts):
 
     """
     np.random.seed(seed)
-    if get_date(states) != pd.Timestamp("2020-12-23"):
+    if get_date(states) not in pd.date_range("2020-12-21", "2020-12-23"):
         contacts = pd.Series(0, index=states.index)
     else:
         if isinstance(n_contacts, pd.Series):
