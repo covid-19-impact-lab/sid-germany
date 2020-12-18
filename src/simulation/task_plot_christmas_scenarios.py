@@ -106,13 +106,13 @@ def plot_scenarios(scenarios, title):
                 ax=ax,
                 label=name_to_label[name],
                 color=color,
-                window=7,
+                window=1,  ### 7,
             )
 
         ax.fill_between(
             x=[pd.Timestamp("2020-12-24"), pd.Timestamp("2020-12-26")],
             y1=0,
-            y2=850,
+            y2=1200,
             alpha=0.2,
             label="Weihnachten",
             color=get_colors("ordered", 3)[2],
@@ -120,7 +120,7 @@ def plot_scenarios(scenarios, title):
         ax.fill_between(
             x=[pd.Timestamp("2020-12-16"), pd.Timestamp("2020-12-24")],
             y1=0,
-            y2=850,
+            y2=1200,
             alpha=0.2,
             label="Harter Lockdown\nvor Weihnachten",
             color=get_colors("ordered", 3)[0],
@@ -141,7 +141,8 @@ def plot_scenarios(scenarios, title):
                 color="k",
                 ax=ax,
             )
-        ax.set_ylim(50, 820)
+        top = 300 if outcome == "new_known_case" else 1000  ### 850
+        ax.set_ylim(bottom=50, top=top)
 
     fig.autofmt_xdate()
     fig.suptitle(title, fontsize=14)

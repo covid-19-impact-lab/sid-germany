@@ -18,7 +18,7 @@ SIMULATION_END = pd.Timestamp("2021-01-10")
 
 def create_christmas_parametrization():
     parametrizations = []
-    for christmas_mode in ["full", "same_group", "meet_twice"]:
+    for christmas_mode in ["full", "same_group"]:
         for contact_tracing_multiplier in [None, 0.5, 0.1]:
             ctm_str = (
                 "wo_ct"
