@@ -44,7 +44,7 @@ PARAMETRIZATIONS = create_christmas_parametrization()
 @pytask.mark.depends_on(
     {
         "params": BLD / "start_params.pkl",
-        "estimated_params": SRC / "simulation" / "best_so_far.pkl",
+        "estimated_params": SRC / "simulation" / "estimated_params.pkl",
         "share_known_cases": BLD
         / "data"
         / "processed_time_series"
