@@ -95,9 +95,9 @@ def task_simulation_christmas_scenarios(
 
     policies = get_december_to_feb_policies(
         contact_models=contact_models,
-        pre_christmas_other_multiplier=0.3,
+        pre_christmas_multiplier=0.4,
         christmas_other_multiplier=0.0,
-        post_christmas_multiplier=0.3,
+        post_christmas_multiplier=0.4,
         contact_tracing_multiplier=contact_tracing_multiplier,
     )
 
