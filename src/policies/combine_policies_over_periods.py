@@ -2,8 +2,9 @@ from functools import partial
 
 import pandas as pd
 
-import src.policies.full_policy_blocks as fpb
 from src.policies.domain_level_policy_blocks import _get_base_policy
+from src.policies.full_policy_blocks import get_hard_lockdown
+from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 from src.policies.single_policy_functions import (
     reduce_contacts_through_private_contact_tracing,
@@ -13,9 +14,6 @@ from src.policies.single_policy_functions import (
 def get_december_to_feb_policies(
     contact_models,
     contact_tracing_multiplier,
-    pre_christmas_multiplier=0.4,
-    christmas_other_multiplier=0.0,
-    post_christmas_multiplier=0.4,
 ):
     """Get policies from December 2020 to February 2021.
 
@@ -27,65 +25,53 @@ def get_december_to_feb_policies(
             weeks after Christmas. The multiplier is the
             reduction multiplier for recurrent and non-recurrent
             contact models.
-        pre_christmas_other_multiplier (float, optional):
-            Other multiplier passed to the lockdown before Christmas.
-        christmas_other_multiplier (float, optional):
-            Other multiplier passed to the lockdown during Christmas.
-        post_christmas_other_multiplier (float, optional):
-            Other multiplier passed to the lockdown after Christmas.
 
     Returns:
         policies (dict): policies dictionary.
 
     """
+    november_multiplier = {"educ": 0.7, "work": 0.55, "other": 0.4}
+    hard_lockdown_multiplier = {"educ": 0.0, "work": 0.4, "other": 0.4}
     to_combine = [
         # 1st December Half
-        fpb.get_soft_lockdown(
+        get_soft_lockdown(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-01",
                 "end_date": "2020-12-15",
-                "prefix": "lockdown_light",
+                "prefix": "lockdown-light",
             },
-            multipliers={"educ": 0.7, "work": 0.55, "other": 0.4},
+            multipliers=november_multiplier,
         ),
-        # Until Christmas
-        fpb.get_soft_lockdown(
+        # 16.12. - 20.12.
+        get_soft_lockdown(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-16",
-                "end_date": "2020-12-23",
+                "end_date": "2020-12-20",
                 "prefix": "pre-christmas-lockdown",
             },
-            multipliers={
-                "educ": 0.0,
-                "work": pre_christmas_multiplier,
-                "other": pre_christmas_multiplier,
-            },
+            multipliers=hard_lockdown_multiplier,
         ),
-        # Christmas Holidays
-        fpb.get_hard_lockdown(
+        # 21.12. - 03.01.
+        get_hard_lockdown(
             contact_models=contact_models,
             block_info={
-                "start_date": "2020-12-24",
-                "end_date": "2020-12-26",
+                "start_date": "2020-12-21",
+                "end_date": "2021-01-02",
                 "prefix": "christmas-lockdown",
             },
-            other_contacts_multiplier=christmas_other_multiplier,
+            other_contacts_multiplier=0.8,
         ),
-        # Christmas Until End of Hard Lockdown
-        fpb.get_soft_lockdown(
+        # Until End of Hard Lockdown
+        get_soft_lockdown(
             contact_models=contact_models,
             block_info={
-                "start_date": "2020-12-27",
-                "end_date": "2021-01-11",
+                "start_date": "2020-01-03",
+                "end_date": "2021-01-10",
                 "prefix": "post-christmas-lockdown",
             },
-            multipliers={
-                "educ": 0.0,
-                "work": post_christmas_multiplier,
-                "other": post_christmas_multiplier,
-            },
+            multipliers=hard_lockdown_multiplier,
         ),
     ]
     if contact_tracing_multiplier is not None:
