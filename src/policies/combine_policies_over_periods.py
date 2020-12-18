@@ -13,6 +13,7 @@ from src.policies.single_policy_functions import (
 def get_december_to_feb_policies(
     contact_models,
     contact_tracing_multiplier,
+    scenario,
 ):
     """Get policies from December 2020 to February 2021.
     Args:
@@ -23,9 +24,20 @@ def get_december_to_feb_policies(
             weeks after Christmas. The multiplier is the
             reduction multiplier for recurrent and non-recurrent
             contact models.
+        scenario (str): One of "optimistic", "pessimistic"
     Returns:
         policies (dict): policies dictionary.
     """
+    if scenario == "optimistic":
+        hard_lockdown_work_multiplier = 0.45
+        vacation_other_multiplier = 0.5
+    elif scenario == "pessimistic":
+        hard_lockdown_work_multiplier = 0.5
+        vacation_other_multiplier = 0.8
+    else:
+        raise ValueError(f"Unsupported scenario: {scenario}")
+
+
     to_combine = [
         # 1st December Half
         fpb.get_soft_lockdown(
@@ -47,7 +59,7 @@ def get_december_to_feb_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.5,
+                "work": hard_lockdown_work_multiplier,
                 "other": 0.4,
             },
         ),
@@ -86,7 +98,7 @@ def get_december_to_feb_policies(
             multipliers={
                 "educ": 0.0,
                 "work": 0.15,
-                "other": 0.8,
+                "other": vacation_other_multiplier,
             },
         ),
         fpb.get_soft_lockdown(
@@ -98,7 +110,7 @@ def get_december_to_feb_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.5,
+                "work": hard_lockdown_work_multiplier,
                 "other": 0.4,
             },
         ),

@@ -5,6 +5,7 @@ import pytask
 import seaborn as sns
 from matplotlib.dates import DateFormatter
 from sid.colors import get_colors
+import itertools
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
@@ -23,60 +24,58 @@ plt.rcParams.update(
 
 
 simulation_parametrization = create_christmas_parametrization()
-SIMULATIONS = {entry[:2]: entry[3] for entry in simulation_parametrization}
+SIMULATIONS = {entry[:3]: entry[4] for entry in simulation_parametrization}
+
+PRODUCTS = {}
+for mode, scenario in itertools.product(["full", "same_group"], ["optimistic", "pessimistic"]):
+    PRODUCTS[f"{mode}_{scenario}"] = BLD / "simulation" / f"effect_of_private_contact_tracing_{mode}_{scenario}.png"
 
 
 @pytask.mark.depends_on(SIMULATIONS)
-@pytask.mark.produces(
-    {
-        mode: BLD / "simulation" / f"effect_of_private_contact_tracing_{mode}.png"
-        for mode in ["full", "same_group"]
-    }
-)
+@pytask.mark.produces(PRODUCTS)
 def task_plot_effect_of_private_contact_tracing(depends_on, produces):
     named_scenarios = {
         "full": "Weihnachtsfeiern mit wechselnden Haushalten",
         "same_group": "Weihnachtsfeiern im festen Kreis",
     }
-    for christmas_mode, name in named_scenarios.items():
-        contact_tracing_scenarios = {}
-        for (mode, ct_str), path in depends_on.items():
-            if mode == christmas_mode:
-                df = dd.read_parquet(path)
-                contact_tracing_scenarios[ct_str] = df
+    for scenario in ["optimistic", "pessimistic"]:
+        for christmas_mode, name in named_scenarios.items():
+            contact_tracing_scenarios = {}
+            for (mode, ct_str, sc_str), path in depends_on.items():
+                if mode == christmas_mode and sc_str == scenario:
+                    df = dd.read_parquet(path)
+                    contact_tracing_scenarios[ct_str] = df
 
-        title = "Die Bedeutung von privater Kontaktnachverfolgung und Selbstquarantäne"
-        fig, axes = plot_scenarios(contact_tracing_scenarios, title=title + "\n" + name)
-        fig.savefig(
-            produces[christmas_mode], dpi=200, bbox_inches="tight", pad_inces=0.5
-        )
+            title = "Die Bedeutung von privater Kontaktnachverfolgung und Selbstquarantäne"
+            fig, axes = plot_scenarios(contact_tracing_scenarios, title=title + "\n" + name)
+            fig.savefig(
+                produces[f"{christmas_mode}_{scenario}"], dpi=200, bbox_inches="tight", pad_inces=0.5
+            )
 
+
+PRODUCTS = {}
+for ct_mode, scenario in itertools.product([None, 0.5, 0.1], ["optimistic", "pessimistic"]):
+    PRODUCTS[f"{ct_mode}_{scenario}"] = BLD / "simulation" / f"effect_of_christmas_mode_with_{ct_mode}_contact_tracing_{scenario}.png"
 
 @pytask.mark.depends_on(SIMULATIONS)
-@pytask.mark.produces(
-    {
-        ct_mode: BLD
-        / "simulation"
-        / f"effect_of_christmas_mode_with_{ct_mode}_contact_tracing.png"
-        for ct_mode in [None, 0.5, 0.1]
-    }
-)
+@pytask.mark.produces(PRODUCTS)
 def task_plot_effect_of_christmas_mode(depends_on, produces):
     named_scenarios = {
         None: "Ohne private Kontaktnachverfolgung",
         0.5: "Mit 50 prozentiger privater Kontaktnachverfolgung",
         0.1: "Mit 90 prozentiger privater Kontaktnachverfolgung",
     }
-    for ct_mode, name in named_scenarios.items():
-        christmas_scenarios = {}
-        for (mode, ct_str), path in depends_on.items():
-            if ct_str == ct_mode:
-                df = dd.read_parquet(path)
-                christmas_scenarios[mode] = df
+    for scenario in ["optimistic", "pessimistic"]:
+        for ct_mode, name in named_scenarios.items():
+            christmas_scenarios = {}
+            for (mode, ct_str, sc_str), path in depends_on.items():
+                if ct_str == ct_mode and sc_str == scenario:
+                    df = dd.read_parquet(path)
+                    christmas_scenarios[mode] = df
 
-        title = "Die Bedeutung der Form der Weihnachtstreffen"
-        fig, axes = plot_scenarios(christmas_scenarios, title=title + "\n" + name)
-        fig.savefig(produces[ct_mode], dpi=200, bbox_inches="tight", pad_inces=0.5)
+            title = "Die Bedeutung der Form der Weihnachtstreffen"
+            fig, axes = plot_scenarios(christmas_scenarios, title=title + "\n" + name)
+            fig.savefig(produces[f"{ct_mode}_{scenario}"], dpi=200, bbox_inches="tight", pad_inces=0.5)
 
 
 def plot_scenarios(scenarios, title):

@@ -18,22 +18,23 @@ SIMULATION_END = pd.Timestamp("2021-01-08")
 
 def create_christmas_parametrization():
     parametrizations = []
-    for christmas_mode in ["full", "same_group"]:
-        for contact_tracing_multiplier in [None, 0.5, 0.1]:
-            ctm_str = (
-                "wo_ct"
-                if contact_tracing_multiplier is None
-                else f"w_ct_{str(contact_tracing_multiplier).replace('.', '_')}"
-            )
-            path = (
-                BLD / "simulation" / f"simulation_christmas_mode_{christmas_mode}_"
-                f"{ctm_str}"
-            )
-            produces = path / "time_series"
+    for scenario in ["optimistic", "pessimistic"]:
+        for christmas_mode in ["full", "same_group"]:
+            for contact_tracing_multiplier in [None, 0.5, 0.1]:
+                ctm_str = (
+                    "wo_ct"
+                    if contact_tracing_multiplier is None
+                    else f"w_ct_{str(contact_tracing_multiplier).replace('.', '_')}"
+                )
+                path = (
+                    BLD / "simulation" / f"simulation_christmas_mode_{christmas_mode}_"
+                    f"{ctm_str}_{scenario}"
+                )
+                produces = path / "time_series"
 
-            single_run = (christmas_mode, contact_tracing_multiplier, path, produces)
+                single_run = (christmas_mode, contact_tracing_multiplier, scenario, path, produces)
 
-            parametrizations.append(single_run)
+                parametrizations.append(single_run)
 
     return parametrizations
 
@@ -58,10 +59,10 @@ PARAMETRIZATIONS = create_christmas_parametrization()
     }
 )
 @pytask.mark.parametrize(
-    "christmas_mode, contact_tracing_multiplier, path, produces", PARAMETRIZATIONS
+    "christmas_mode, contact_tracing_multiplier, scenario, path, produces", PARAMETRIZATIONS
 )
 def task_simulation_christmas_scenarios(
-    depends_on, christmas_mode, contact_tracing_multiplier, path
+    depends_on, christmas_mode, contact_tracing_multiplier, scenario, path
 ):
 
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
@@ -96,6 +97,7 @@ def task_simulation_christmas_scenarios(
     policies = get_december_to_feb_policies(
         contact_models=contact_models,
         contact_tracing_multiplier=contact_tracing_multiplier,
+        scenario=scenario,
     )
 
     initial_conditions = create_initial_conditions(
