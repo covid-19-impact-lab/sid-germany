@@ -37,17 +37,31 @@ def get_december_to_feb_policies(
             },
             multipliers={"educ": 0.7, "work": 0.55, "other": 0.4},
         ),
-        # Until Christmas
+        # Until start of christmas vacation
         fpb.get_soft_lockdown(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-16",
-                "end_date": "2020-12-23",
-                "prefix": "pre-christmas-lockdown",
+                "end_date": "2020-12-20",
+                "prefix": "pre-christmas-lockdown-first-half",
             },
             multipliers={
                 "educ": 0.0,
                 "work": 0.5,
+                "other": 0.4,
+            },
+        ),
+        # until christmas
+        fpb.get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-12-21",
+                "end_date": "2020-12-23",
+                "prefix": "pre-christmas-lockdown-second-half",
+            },
+            multipliers={
+                "educ": 0.0,
+                "work": 0.3,
                 "other": 0.4,
             },
         ),
