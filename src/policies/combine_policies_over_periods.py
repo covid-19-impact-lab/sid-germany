@@ -29,12 +29,12 @@ def get_december_to_feb_policies(
         policies (dict): policies dictionary.
     """
     if scenario == "optimistic":
-        hard_lockdown_work_multiplier = 0.35
+        hard_lockdown_work_multiplier = 0.3
         vacation_other_multiplier = 0.4
-        hard_lockdown_other_multiplier = 0.35
+        hard_lockdown_other_multiplier = 0.3
     elif scenario == "pessimistic":
         hard_lockdown_work_multiplier = 0.4
-        vacation_other_multiplier = 0.8
+        vacation_other_multiplier = 0.7
         hard_lockdown_other_multiplier = 0.4
     else:
         raise ValueError(f"Unsupported scenario: {scenario}")

@@ -136,7 +136,7 @@ def plot_scenarios(scenarios):
         ("newly_infected", "Tatsächliche Inzidenz"),
         ("new_known_case", "Beobachtete Inzidenz"),
     ]
-    fig, axes = plt.subplots(ncols=len(outcome_vars), figsize=(8, 4), sharex=True)
+    fig, axes = plt.subplots(ncols=len(outcome_vars), figsize=(8, 3), sharex=True)
 
     for ax, (outcome, ax_title) in zip(axes, outcome_vars):
         ax.set_title(ax_title)

@@ -92,7 +92,7 @@ def task_simulation_christmas_scenarios(
             missing_christmas_models.append(x)
     hh_loc = ("infection_prob", "households", "households")
     for name in missing_christmas_models:
-        params.loc[("infection_prob", name, name)] = 2 * params.loc[hh_loc]
+        params.loc[("infection_prob", name, name)] = 1.5 * params.loc[hh_loc]
 
     policies = get_december_to_feb_policies(
         contact_models=contact_models,
