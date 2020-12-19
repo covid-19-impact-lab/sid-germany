@@ -28,28 +28,28 @@ simulation_parametrization = create_christmas_parametrization()
 SIMULATIONS = {entry[:3]: entry[4] for entry in simulation_parametrization}
 
 PRODUCTS = {}
-for mode, scenario in itertools.product(
+for mode, optimism in itertools.product(
     ["full", "same_group"], ["optimistic", "pessimistic"]
 ):
-    PRODUCTS[f"{mode}_{scenario}"] = (
-        BLD / "simulation" / f"effect_of_private_contact_tracing_{mode}_{scenario}.png"
+    PRODUCTS[f"{mode}_{optimism}"] = (
+        BLD / "simulation" / f"effect_of_private_contact_tracing_{mode}_{optimism}.png"
     )
 
 
 @pytask.mark.depends_on(SIMULATIONS)
 @pytask.mark.produces(PRODUCTS)
 def task_plot_effect_of_private_contact_tracing(depends_on, produces):
-    for scenario in ["optimistic", "pessimistic"]:
+    for optimism in ["optimistic", "pessimistic"]:
         for christmas_mode in ["full", "same_group"]:
             contact_tracing_scenarios = {}
-            for (mode, ct_str, sc_str), path in depends_on.items():
-                if mode == christmas_mode and sc_str == scenario:
+            for (mode, ct_str, optim_str), path in depends_on.items():
+                if mode == christmas_mode and optim_str == optimism:
                     df = dd.read_parquet(path)
                     contact_tracing_scenarios[ct_str] = df
 
             fig, axes = plot_scenarios(contact_tracing_scenarios)
             fig.savefig(
-                produces[f"{christmas_mode}_{scenario}"],
+                produces[f"{christmas_mode}_{optimism}"],
                 dpi=200,
                 bbox_inches="tight",
                 pad_inches=0.5,
@@ -57,24 +57,24 @@ def task_plot_effect_of_private_contact_tracing(depends_on, produces):
 
 
 PRODUCTS = {}
-for ct_mode, scenario in itertools.product(
+for ct_mode, optimism in itertools.product(
     [None, 0.5, 0.1], ["optimistic", "pessimistic"]
 ):
-    PRODUCTS[f"{ct_mode}_{scenario}"] = (
+    PRODUCTS[f"{ct_mode}_{optimism}"] = (
         BLD
         / "simulation"
-        / f"effect_of_christmas_mode_with_{ct_mode}_contact_tracing_{scenario}.png"
+        / f"effect_of_christmas_mode_with_{ct_mode}_contact_tracing_{optimism}.png"
     )
 
 
 @pytask.mark.depends_on(SIMULATIONS)
 @pytask.mark.produces(PRODUCTS)
 def task_plot_effect_of_christmas_mode(depends_on, produces):
-    for scenario in ["optimistic", "pessimistic"]:
+    for optimism in ["optimistic", "pessimistic"]:
         for ct_mode in [None, 0.5, 0.1]:
             christmas_scenarios = {}
-            for (mode, ct_str, sc_str), path in depends_on.items():
-                if ct_str == ct_mode and sc_str == scenario:
+            for (mode, ct_str, optimism_str), path in depends_on.items():
+                if ct_str == ct_mode and optimism_str == optimism:
                     df = dd.read_parquet(path)
                     christmas_scenarios[mode] = df
 
@@ -82,7 +82,39 @@ def task_plot_effect_of_christmas_mode(depends_on, produces):
             for ax in axes.flatten():
                 ax.grid(axis="y")
             fig.savefig(
-                produces[f"{ct_mode}_{scenario}"],
+                produces[f"{ct_mode}_{optimism}"],
+                dpi=200,
+                bbox_inches="tight",
+                pad_inches=0.5,
+            )
+
+
+PRODUCTS = {}
+for ct_mode, christmas_mode in itertools.product(
+    [None, 0.5, 0.1], ["full", "same_group"]
+):
+    PRODUCTS[f"{ct_mode}_{christmas_mode}"] = (
+        BLD / "simulation" / f"effect_of_optimism_with_{ct_mode}_contact_tracing_"
+        "and_{christmas_mode}_christmas.png"
+    )
+
+
+@pytask.mark.depends_on(SIMULATIONS)
+@pytask.mark.produces(PRODUCTS)
+def task_plot_effect_of_optimism(depends_on, produces):
+    for christmas_mode in ["full", "same_group"]:
+        for ct_mode in [None, 0.5, 0.1]:
+            scenarios = {}
+            for (mode, ct_str, optimism_str), path in depends_on.items():
+                if ct_str == ct_mode and christmas_mode == mode:
+                    df = dd.read_parquet(path)
+                    scenarios[optimism_str] = df
+
+            fig, axes = plot_scenarios(scenarios)
+            for ax in axes.flatten():
+                ax.grid(axis="y")
+            fig.savefig(
+                produces[f"{ct_mode}_{christmas_mode}"],
                 dpi=200,
                 bbox_inches="tight",
                 pad_inches=0.5,
@@ -96,6 +128,8 @@ def plot_scenarios(scenarios):
         0.1: "Mit 90 prozentiger privater\nKontaktnachverfolgung",
         "full": "Weihnachtsfeiern mit\nwechselnden Personenkreisen",
         "same_group": "Weihnachtsfeiern mit\neinem festen Personenkreis",
+        "optimistic": "Optimistisch",
+        "pessimistic": "Pessimistisch",
     }
 
     outcome_vars = [
@@ -114,7 +148,7 @@ def plot_scenarios(scenarios):
                 ax=ax,
                 label=name_to_label[name],
                 color=color,
-                window=3,  ### 7,
+                window=3,
             )
 
         ax.fill_between(
@@ -149,7 +183,7 @@ def plot_scenarios(scenarios):
                 color="k",
                 ax=ax,
             )
-        top = 500 if outcome == "new_known_case" else 2000  ### 850
+        top = 400 if outcome == "new_known_case" else 1750
         ax.set_ylim(bottom=50, top=top)
 
     fig.autofmt_xdate()
