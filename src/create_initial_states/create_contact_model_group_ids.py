@@ -1,4 +1,4 @@
-import itertools as it
+import itertools
 
 import numpy as np
 import pandas as pd
@@ -65,9 +65,10 @@ def add_contact_model_group_ids(
                 - school_group_a
                 - systemically_relevant
                 - work_contact_priority
+                - christmas_group_{0, 1, 2}
 
     """
-    seed = it.count(seed)
+    seed = itertools.count(seed)
     df = df.copy(deep=True)
 
     school_class_ids, updated_occupation = make_educ_group_columns(
@@ -199,6 +200,19 @@ def add_contact_model_group_ids(
         df["hh_id"].astype(int).where(hh_sizes > 1, -1).astype("category")
     )
 
+    for i in range(3):
+        df[f"christmas_group_id_{i}"] = _sample_household_groups(
+            df, seed=next(seed), assort_by="state", same_group_probability=0.5, n_hhs=3
+        )
+
+    educ_group_cols = [
+        "school_group_id_0",
+        "school_group_id_1",
+        "school_group_id_2",
+        "preschool_group_id_0",
+        "nursery_group_id_0",
+    ]
+    df[educ_group_cols] = df[educ_group_cols].astype("category")
     df = df.drop(columns=["pos_in_group", "one", "group_size"])
     return df
 
@@ -242,3 +256,98 @@ def _draw_work_contact_priority(occupation, systemically_relevant, seed):
     work_contact_priority = work_contact_priority.where(is_worker, other=-1)
     work_contact_priority = work_contact_priority.where(~systemically_relevant, 2)
     return work_contact_priority
+
+
+def _sample_household_groups(df, seed, assort_by, same_group_probability=None, n_hhs=3):
+    """Put groups of households together into groups.
+
+    Args:
+        df (pandas.DataFrame): states DataFrame
+        seed (int)
+        assort_by (str, optional): variable on which to assort by
+        assortativeness (float, optional): values of assortativeness
+        n_hhs (int): Number of households to group together.
+
+    Returns:
+        id_col (pandas.Series): Series with the same index as df.
+            Individuals of households that were grouped together
+            have the same value. The dtype is categorical.
+
+    """
+    if assort_by is not None:
+        assert (
+            0 <= same_group_probability <= 1
+        ), "same_group_probability must be a between 0 and 1."
+    seed = itertools.count(seed)
+
+    hh_ids = df.query("private_hh")["hh_id"].unique().astype(float)
+    if assort_by is None:
+        id_col = pd.Series(np.nan, index=df.index)
+        # this is inplace
+        np.random.shuffle(hh_ids)
+
+        if not len(hh_ids) % n_hhs == 0:
+            to_append = [np.nan] * (n_hhs - len(hh_ids) % n_hhs)
+            hh_ids = np.append(hh_ids, to_append)
+
+        target_shape = (int(len(hh_ids) / n_hhs), n_hhs)
+        grouped_hh_ids = np.reshape(hh_ids, target_shape)
+        for i, group_hhs in enumerate(grouped_hh_ids):
+            selection = df["hh_id"].isin(group_hhs)
+            id_col[selection] = i
+
+    else:
+        id_counter = 0
+        result = pd.Series(np.nan, index=hh_ids, name="new_group_id")
+
+        group_to_hh_ids = df.query("private_hh").groupby(assort_by)["hh_id"].unique()
+        group_to_hh_ids = {
+            group: hh_ids.tolist() for group, hh_ids in group_to_hh_ids.items()
+        }
+        # shuffle is inplace
+        for hh_ids in group_to_hh_ids.values():
+            np.random.shuffle(hh_ids)
+
+        group_to_hh_ids = {
+            group: iter(hh_ids) for group, hh_ids in group_to_hh_ids.items()
+        }
+
+        all_groups = sorted(group_to_hh_ids.keys())
+
+        for i, group in enumerate(all_groups):
+            hh_ids = group_to_hh_ids[group]
+            if i + 1 < len(all_groups):
+                groups_to_choose_from = all_groups[i:]
+                n_other_groups = len(groups_to_choose_from) - 1
+                other_prob = (1 - same_group_probability) / n_other_groups
+                group_probs = [same_group_probability] + [other_prob] * n_other_groups
+            else:
+                groups_to_choose_from = [group]
+                group_probs = [1]
+            for base_hh in hh_ids:
+                result[base_hh] = id_counter
+                for _ in range(n_hhs - 1):
+                    other_hh = None
+                    # to avoid an endless loop
+                    tries = 0
+                    while other_hh is None and tries < 20:
+                        other_group = np.random.choice(
+                            groups_to_choose_from, p=group_probs
+                        )
+                        other_hh = next(group_to_hh_ids[other_group], None)
+                        tries += 1
+                    # this handles if we could not find another hh to match
+                    if other_hh is not None:
+                        result[other_hh] = id_counter
+                id_counter += 1
+
+        expanded = pd.merge(
+            df[["hh_id"]], result, left_on="hh_id", right_index=True, how="left"
+        )
+        id_col = expanded["new_group_id"]
+
+    id_col = id_col.where(df["private_hh"], -1)
+    assert id_col.notnull().all(), "NaN remain in the Christmas group id column."
+    id_col = id_col.astype("category")
+
+    return id_col
