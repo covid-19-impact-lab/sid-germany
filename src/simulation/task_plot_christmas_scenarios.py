@@ -95,7 +95,7 @@ for ct_mode, christmas_mode in itertools.product(
 ):
     PRODUCTS[f"{ct_mode}_{christmas_mode}"] = (
         BLD / "simulation" / f"effect_of_optimism_with_{ct_mode}_contact_tracing_"
-        "and_{christmas_mode}_christmas.png"
+        f"and_{christmas_mode}_christmas.png"
     )
 
 
@@ -148,7 +148,7 @@ def plot_scenarios(scenarios):
                 ax=ax,
                 label=name_to_label[name],
                 color=color,
-                window=3,
+                window=7,
             )
 
         ax.fill_between(
@@ -183,7 +183,7 @@ def plot_scenarios(scenarios):
                 color="k",
                 ax=ax,
             )
-        top = 400 if outcome == "new_known_case" else 1750
+        top = 350 if outcome == "new_known_case" else 1400
         ax.set_ylim(bottom=50, top=top)
 
     fig.autofmt_xdate()
