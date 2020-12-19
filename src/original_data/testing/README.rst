@@ -14,3 +14,6 @@ Explanations
 Probenrückstau
     It is the number of tests which is still waiting to be processed which should be
     comparable to our ``"pending_test"`` column in states.
+
+
+`detected_and_undetected_infections` is scraped from https://covid19.dunkelzifferradar.de/.
