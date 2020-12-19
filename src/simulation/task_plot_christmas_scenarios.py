@@ -95,7 +95,7 @@ for ct_mode, christmas_mode in itertools.product(
 ):
     PRODUCTS[f"{ct_mode}_{christmas_mode}"] = (
         BLD / "simulation" / f"effect_of_optimism_with_{ct_mode}_contact_tracing_"
-        "and_{christmas_mode}_christmas.png"
+        f"and_{christmas_mode}_christmas.png"
     )
 
 
