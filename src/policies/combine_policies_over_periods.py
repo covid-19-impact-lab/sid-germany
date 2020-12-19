@@ -39,7 +39,6 @@ def get_december_to_feb_policies(
     else:
         raise ValueError(f"Unsupported scenario: {scenario}")
 
-
     to_combine = [
         # 1st December Half
         fpb.get_soft_lockdown(
