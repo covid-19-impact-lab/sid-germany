@@ -289,17 +289,18 @@ def get_christmas_contact_models(mode, n_contacts_before):
             christmas_contact_models[model_name] = contact_model
 
     elif mode == "same_group":
-        model_name = "christmas_same_group"
-        col_name = "christmas_group_id_0"
-        contact_model = {
-            "is_recurrent": True,
-            "loc": model_name,
-            "assort_by": [col_name],
-            "model": partial(
-                cm_funcs.meet_on_holidays, group_col=col_name, dates=dates
-            ),
-        }
-        christmas_contact_models[model_name] = contact_model
+        for i, date in enumerate(dates):
+            model_name = f"christmas_same_group_{i}"
+            col_name = "christmas_group_id_0"
+            contact_model = {
+                "is_recurrent": True,
+                "loc": model_name,
+                "assort_by": [col_name],
+                "model": partial(
+                    cm_funcs.meet_on_holidays, group_col=col_name, dates=[date]
+                ),
+            }
+            christmas_contact_models[model_name] = contact_model
 
     elif mode == "meet_twice":
         model_name = "christmas_meet_twice"
