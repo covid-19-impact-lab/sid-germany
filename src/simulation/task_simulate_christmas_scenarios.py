@@ -98,6 +98,7 @@ def task_simulation_christmas_scenarios(
         contact_models=contact_models,
         contact_tracing_multiplier=contact_tracing_multiplier,
         scenario=scenario,
+        path=path,
     )
 
     initial_conditions = create_initial_conditions(
