@@ -121,8 +121,8 @@ def task_simulation_christmas_scenarios(
         saved_columns={
             "time": ["date"],
             "initial_states": False,
-            "disease_states": ["symptomatic"],
-            "other": ["n_has_infected", "newly_infected", "new_known_case"],
+            "disease_states": ["symptomatic", "ever_infected", "newly_infected"],
+            "other": ["n_has_infected", "new_known_case"],
         },
     )
 
