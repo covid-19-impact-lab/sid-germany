@@ -9,37 +9,12 @@ from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
 from src.policies.combine_policies_over_periods import get_december_to_feb_policies
+from src.simulation.spec_christmas_scenarios import create_christmas_parametrization
 
 
 SIMULATION_START = pd.Timestamp("2020-12-02")
 INITIAL_START = SIMULATION_START - pd.Timedelta(days=31)
 SIMULATION_END = pd.Timestamp("2021-01-08")
-
-
-def create_christmas_parametrization():
-    parametrizations = []
-    for scenario in ["optimistic", "pessimistic"]:
-        for christmas_mode in ["full", "same_group"]:
-            for contact_tracing_multiplier in [None, 0.5, 0.1]:
-                ctm_str = (
-                    "wo_ct"
-                    if contact_tracing_multiplier is None
-                    else f"w_ct_{str(contact_tracing_multiplier).replace('.', '_')}"
-                )
-                path = (
-                    BLD / "simulation" / f"simulation_christmas_mode_{christmas_mode}_"
-                    f"{ctm_str}_{scenario}"
-                )
-                produces = path / "time_series"
-
-                single_run = (christmas_mode, contact_tracing_multiplier, scenario, path, produces)
-
-                parametrizations.append(single_run)
-
-    return parametrizations
-
-
-PARAMETRIZATIONS = create_christmas_parametrization()
 
 
 @pytask.mark.depends_on(
@@ -59,7 +34,8 @@ PARAMETRIZATIONS = create_christmas_parametrization()
     }
 )
 @pytask.mark.parametrize(
-    "christmas_mode, contact_tracing_multiplier, scenario, path, produces", PARAMETRIZATIONS
+    "christmas_mode, contact_tracing_multiplier, scenario, path, produces",
+    create_christmas_parametrization(),
 )
 def task_simulation_christmas_scenarios(
     depends_on, christmas_mode, contact_tracing_multiplier, scenario, path

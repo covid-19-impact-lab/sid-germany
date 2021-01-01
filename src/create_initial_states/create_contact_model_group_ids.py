@@ -26,8 +26,8 @@ def add_contact_model_group_ids(
     mixed ages. This hides substantial heterogeneity in attendance with respect to age
     (older children are much more likely to be in day care) and with respect to state
     (East German children are much more likely to attend nurseries). Mean group sizes
-    vary between 3 and 6 between German states. Every group meets their peers and
-    one adult every school day.
+    vary between 3 and 6 between German states. Every group meets their peers and one
+    adult every school day.
 
     Sources:
 

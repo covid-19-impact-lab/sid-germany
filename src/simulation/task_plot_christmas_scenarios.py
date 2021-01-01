@@ -11,8 +11,12 @@ from sid.colors import get_colors
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
-from src.simulation.task_simulate_christmas_scenarios import (
-    create_christmas_parametrization,
+from src.simulation.spec_christmas_scenarios import (
+    SCENARIOS,
+    CHRISTMAS_MODES,
+    CONTACT_TRACING_MULTIPLIERS,
+    create_path_to_time_series,
+    create_path_to_last_states,
 )
 
 plt.rcParams.update(
@@ -24,101 +28,130 @@ plt.rcParams.update(
 )
 
 
-simulation_parametrization = create_christmas_parametrization()
-SIMULATIONS = {entry[:3]: entry[4] for entry in simulation_parametrization}
-
-PRODUCTS = {}
-for mode, optimism in itertools.product(
-    ["full", "same_group"], ["optimistic", "pessimistic"]
-):
-    PRODUCTS[f"{mode}_{optimism}"] = (
-        BLD / "simulation" / f"effect_of_private_contact_tracing_{mode}_{optimism}.png"
-    )
-
-
-@pytask.mark.depends_on(SIMULATIONS)
-@pytask.mark.produces(PRODUCTS)
-def task_plot_effect_of_private_contact_tracing(depends_on, produces):
-    for optimism in ["optimistic", "pessimistic"]:
-        for christmas_mode in ["full", "same_group"]:
-            contact_tracing_scenarios = {}
-            for (mode, ct_str, optim_str), path in depends_on.items():
-                if mode == christmas_mode and optim_str == optimism:
-                    df = dd.read_parquet(path)
-                    contact_tracing_scenarios[ct_str] = df
-
-            fig, axes = plot_scenarios(contact_tracing_scenarios)
-            fig.savefig(
-                produces[f"{christmas_mode}_{optimism}"],
-                dpi=200,
-                bbox_inches="tight",
-                pad_inches=0.5,
-            )
-
-
-PRODUCTS = {}
-for ct_mode, optimism in itertools.product(
-    [None, 0.5, 0.1], ["optimistic", "pessimistic"]
-):
-    PRODUCTS[f"{ct_mode}_{optimism}"] = (
+def _create_path_for_effect_of_contact_tracing(scenario, christmas_mode):
+    return (
         BLD
         / "simulation"
-        / f"effect_of_christmas_mode_with_{ct_mode}_contact_tracing_{optimism}.png"
+        / f"effect_of_private_contact_tracing_{christmas_mode}_{scenario}.png"
     )
 
 
-@pytask.mark.depends_on(SIMULATIONS)
-@pytask.mark.produces(PRODUCTS)
-def task_plot_effect_of_christmas_mode(depends_on, produces):
-    for optimism in ["optimistic", "pessimistic"]:
-        for ct_mode in [None, 0.5, 0.1]:
-            christmas_scenarios = {}
-            for (mode, ct_str, optimism_str), path in depends_on.items():
-                if ct_str == ct_mode and optimism_str == optimism:
-                    df = dd.read_parquet(path)
-                    christmas_scenarios[mode] = df
-
-            fig, axes = plot_scenarios(christmas_scenarios)
-            for ax in axes.flatten():
-                ax.grid(axis="y")
-            fig.savefig(
-                produces[f"{ct_mode}_{optimism}"],
-                dpi=200,
-                bbox_inches="tight",
-                pad_inches=0.5,
-            )
+def _create_parametrization_for_effect_of_private_contact_tracing():
+    return [
+        (
+            scenario,
+            christmas_mode,
+            {
+                ctm: create_path_to_time_series(scenario, christmas_mode, ctm)
+                for ctm in CONTACT_TRACING_MULTIPLIERS
+            },
+            {
+                ctm: create_path_to_last_states(scenario, christmas_mode, ctm)
+                for ctm in CONTACT_TRACING_MULTIPLIERS
+            },
+            _create_path_for_effect_of_contact_tracing(scenario, christmas_mode),
+        )
+        for scenario, christmas_mode in itertools.product(SCENARIOS, CHRISTMAS_MODES)
+    ]
 
 
-PRODUCTS = {}
-for ct_mode, christmas_mode in itertools.product(
-    [None, 0.5, 0.1], ["full", "same_group"]
+@pytask.mark.parametrize(
+    "scenario, christmas_mode, paths, depends_on, produces",
+    _create_parametrization_for_effect_of_private_contact_tracing(),
+)
+def task_plot_effect_of_private_contact_tracing(
+    scenario, christmas_mode, paths, produces
 ):
-    PRODUCTS[f"{ct_mode}_{christmas_mode}"] = (
-        BLD / "simulation" / f"effect_of_optimism_with_{ct_mode}_contact_tracing_"
+    contact_tracing_scenarios = {
+        ctm: dd.read_parquet(path) for ctm, path in paths.items()
+    }
+
+    fig, axes = plot_scenarios(contact_tracing_scenarios)
+    fig.savefig(produces, dpi=200, bbox_inches="tight", pad_inches=0.5)
+
+
+def _create_path_for_effect_of_christmas_model(scenario, ctm):
+    return (
+        BLD
+        / "simulation"
+        / f"effect_of_christmas_mode_with_{ctm}_contact_tracing_{scenario}.png"
+    )
+
+
+def _create_parametrization_for_effect_of_christmas_mode():
+    return [
+        (
+            scenario,
+            ctm,
+            {
+                cm: create_path_to_time_series(scenario, cm, ctm)
+                for cm in CHRISTMAS_MODES
+            },
+            {
+                cm: create_path_to_last_states(scenario, cm, ctm)
+                for cm in CHRISTMAS_MODES
+            },
+            _create_path_for_effect_of_christmas_model(scenario, ctm),
+        )
+        for scenario, ctm in itertools.product(SCENARIOS, CONTACT_TRACING_MULTIPLIERS)
+    ]
+
+
+@pytask.mark.parametrize(
+    "scenario, contact_tracing_multiplier, paths, depends_on, produces",
+    _create_parametrization_for_effect_of_christmas_mode(),
+)
+def task_plot_effect_of_christmas_mode(
+    scenario, contact_tracing_multiplier, paths, produces
+):
+    christmas_mode_scenarios = {
+        cm: dd.read_parquet(path) for cm, path in paths.items()
+    }
+
+    fig, axes = plot_scenarios(christmas_mode_scenarios)
+    for ax in axes.flatten():
+        ax.grid(axis="y")
+    fig.savefig(produces, dpi=200, bbox_inches="tight", pad_inches=0.5)
+
+
+def _create_path_for_effect_of_scenario(christmas_mode, ctm):
+    return (
+        BLD / "simulation" / f"effect_of_optimism_with_{ctm}_contact_tracing_"
         f"and_{christmas_mode}_christmas.png"
     )
 
 
-@pytask.mark.depends_on(SIMULATIONS)
-@pytask.mark.produces(PRODUCTS)
-def task_plot_effect_of_optimism(depends_on, produces):
-    for christmas_mode in ["full", "same_group"]:
-        for ct_mode in [None, 0.5, 0.1]:
-            scenarios = {}
-            for (mode, ct_str, optimism_str), path in depends_on.items():
-                if ct_str == ct_mode and christmas_mode == mode:
-                    df = dd.read_parquet(path)
-                    scenarios[optimism_str] = df
+def _create_parametrization_for_effect_of_scenario():
+    return [
+        (
+            cm, ctm,
+            {
+                scenario: create_path_to_time_series(scenario, cm, ctm)
+                for scenario in SCENARIOS
+            },
+            {
+                scenario: create_path_to_last_states(scenario, cm, ctm)
+                for scenario in SCENARIOS
+            },
+            _create_path_for_effect_of_scenario(cm, ctm),
+        )
+        for cm, ctm in itertools.product(CHRISTMAS_MODES, CONTACT_TRACING_MULTIPLIERS)
+    ]
 
-            fig, axes = plot_scenarios(scenarios)
-            for ax in axes.flatten():
-                ax.grid(axis="y")
-            fig.savefig(
-                produces[f"{ct_mode}_{christmas_mode}"],
-                dpi=200,
-                bbox_inches="tight",
-                pad_inches=0.5,
-            )
+
+@pytask.mark.parametrize(
+    "christmas_mode, contact_tracing_multiplier, paths, depends_on, produces",
+    _create_parametrization_for_effect_of_scenario(),
+)
+def task_plot_effect_of_scenario(
+    christmas_mode, contact_tracing_multiplier, paths, produces
+):
+    scenarios = {ctm: dd.read_parquet(path) for ctm, path in paths.items()}
+
+    fig, axes = plot_scenarios(scenarios)
+    for ax in axes.flatten():
+        ax.grid(axis="y")
+    fig.savefig(produces, dpi=200, bbox_inches="tight", pad_inches=0.5)
 
 
 def plot_scenarios(scenarios):
