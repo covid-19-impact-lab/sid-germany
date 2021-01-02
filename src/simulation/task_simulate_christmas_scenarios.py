@@ -34,11 +34,11 @@ SIMULATION_END = pd.Timestamp("2021-01-08")
     }
 )
 @pytask.mark.parametrize(
-    "christmas_mode, contact_tracing_multiplier, scenario, path, produces",
+    "scenario, christmas_mode, contact_tracing_multiplier, path, produces",
     create_christmas_parametrization(),
 )
 def task_simulation_christmas_scenarios(
-    depends_on, christmas_mode, contact_tracing_multiplier, scenario, path
+    depends_on, scenario, christmas_mode, contact_tracing_multiplier, path
 ):
 
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
