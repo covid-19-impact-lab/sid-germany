@@ -32,14 +32,6 @@ def _named_product(**items):
         yield dict(zip(items.keys(), res))
 
 
-def _create_path_for_effect_of_contact_tracing(scenario, christmas_mode):
-    return (
-        BLD
-        / "simulation"
-        / f"effect_of_private_contact_tracing_{christmas_mode}_{scenario}.png"
-    )
-
-
 def _create_parametrization(effects, path_func, **cross_product):
     effect_name = list(
         {"scenario", "christmas_mode", "contact_tracing_multiplier"}
@@ -61,22 +53,12 @@ def _create_parametrization(effects, path_func, **cross_product):
     ]
 
 
-@pytask.mark.parametrize(
-    "paths, depends_on, produces",
-    _create_parametrization(
-        CONTACT_TRACING_MULTIPLIERS,
-        _create_path_for_effect_of_contact_tracing,
-        scenario=SCENARIOS,
-        christmas_mode=CHRISTMAS_MODES,
-    ),
-)
-def task_plot_effect_of_private_contact_tracing(paths, produces):
-    contact_tracing_scenarios = {
-        ctm: dd.read_parquet(path) for ctm, path in paths.items()
-    }
-
-    fig, axes = plot_scenarios(contact_tracing_scenarios)
-    fig.savefig(produces, dpi=200, bbox_inches="tight", pad_inches=0.5)
+def _create_path_for_effect_of_contact_tracing(scenario, christmas_mode):
+    return (
+        BLD
+        / "simulation"
+        / f"effect_of_private_contact_tracing_{christmas_mode}_{scenario}.png"
+    )
 
 
 def _create_path_for_effect_of_christmas_model(scenario, contact_tracing_multiplier):
@@ -84,24 +66,6 @@ def _create_path_for_effect_of_christmas_model(scenario, contact_tracing_multipl
         BLD / "simulation" / "effect_of_christmas_mode_with_"
         f"{contact_tracing_multiplier}_contact_tracing_{scenario}.png"
     )
-
-
-@pytask.mark.parametrize(
-    "paths, depends_on, produces",
-    _create_parametrization(
-        CHRISTMAS_MODES,
-        _create_path_for_effect_of_christmas_model,
-        scenario=SCENARIOS,
-        contact_tracing_multiplier=CONTACT_TRACING_MULTIPLIERS,
-    ),
-)
-def task_plot_effect_of_christmas_mode(paths, produces):
-    christmas_mode_scenarios = {cm: dd.read_parquet(path) for cm, path in paths.items()}
-
-    fig, axes = plot_scenarios(christmas_mode_scenarios)
-    for ax in axes.flatten():
-        ax.grid(axis="y")
-    fig.savefig(produces, dpi=200, bbox_inches="tight", pad_inches=0.5)
 
 
 def _create_path_for_effect_of_scenario(christmas_mode, contact_tracing_multiplier):
@@ -113,19 +77,31 @@ def _create_path_for_effect_of_scenario(christmas_mode, contact_tracing_multipli
 
 @pytask.mark.parametrize(
     "paths, depends_on, produces",
-    _create_parametrization(
-        SCENARIOS,
-        _create_path_for_effect_of_scenario,
-        christmas_mode=CHRISTMAS_MODES,
-        contact_tracing_multiplier=CONTACT_TRACING_MULTIPLIERS,
+    itertools.chain(
+        _create_parametrization(
+            CONTACT_TRACING_MULTIPLIERS,
+            _create_path_for_effect_of_contact_tracing,
+            scenario=SCENARIOS,
+            christmas_mode=CHRISTMAS_MODES,
+        ),
+        _create_parametrization(
+            CHRISTMAS_MODES,
+            _create_path_for_effect_of_christmas_model,
+            scenario=SCENARIOS,
+            contact_tracing_multiplier=CONTACT_TRACING_MULTIPLIERS,
+        ),
+        _create_parametrization(
+            SCENARIOS,
+            _create_path_for_effect_of_scenario,
+            christmas_mode=CHRISTMAS_MODES,
+            contact_tracing_multiplier=CONTACT_TRACING_MULTIPLIERS,
+        ),
     ),
 )
-def task_plot_effect_of_scenario(paths, produces):
-    scenarios = {ctm: dd.read_parquet(path) for ctm, path in paths.items()}
+def task_plot_one_effect_vs_others(paths, produces):
+    scenarios = {scenario: dd.read_parquet(path) for scenario, path in paths.items()}
 
     fig, axes = plot_scenarios(scenarios)
-    for ax in axes.flatten():
-        ax.grid(axis="y")
     fig.savefig(produces, dpi=200, bbox_inches="tight", pad_inches=0.5)
 
 
@@ -232,7 +208,7 @@ def plot_outcome(
     data = weekly_incidence.reset_index()
     sns.lineplot(data=data, x="date", y=outcome, ax=ax, label=label, color=color)
 
-    ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
+    ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100.000")
     ax.set_xlabel("Datum")
 
     ax.grid(axis="y")
