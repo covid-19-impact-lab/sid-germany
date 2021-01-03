@@ -31,9 +31,9 @@ dependencies:
   - seaborn
   - snakeviz
   - xlrd
+  - virtualenv=20.0.33
 
   - sphinx
-  - pydata-sphinx-theme
   - nbsphinx
   - pip:
     - DFO-LS

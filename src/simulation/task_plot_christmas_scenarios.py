@@ -11,13 +11,11 @@ from sid.colors import get_colors
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
-from src.simulation.spec_christmas_scenarios import (
-    SCENARIOS,
-    CHRISTMAS_MODES,
-    CONTACT_TRACING_MULTIPLIERS,
-    create_path_to_time_series,
-    create_path_to_last_states,
-)
+from src.simulation.spec_christmas_scenarios import CHRISTMAS_MODES
+from src.simulation.spec_christmas_scenarios import CONTACT_TRACING_MULTIPLIERS
+from src.simulation.spec_christmas_scenarios import create_path_to_last_states
+from src.simulation.spec_christmas_scenarios import create_path_to_time_series
+from src.simulation.spec_christmas_scenarios import SCENARIOS
 
 plt.rcParams.update(
     {
@@ -28,6 +26,12 @@ plt.rcParams.update(
 )
 
 
+def _named_product(**items):
+    """Return each value of the product as a dictionary."""
+    for res in itertools.product(*items.values()):
+        yield dict(zip(items.keys(), res))
+
+
 def _create_path_for_effect_of_contact_tracing(scenario, christmas_mode):
     return (
         BLD
@@ -36,32 +40,37 @@ def _create_path_for_effect_of_contact_tracing(scenario, christmas_mode):
     )
 
 
-def _create_parametrization_for_effect_of_private_contact_tracing():
+def _create_parametrization(effects, path_func, **cross_product):
+    effect_name = list(
+        {"scenario", "christmas_mode", "contact_tracing_multiplier"}
+        - set(cross_product)
+    )[0]
     return [
         (
-            scenario,
-            christmas_mode,
             {
-                ctm: create_path_to_time_series(scenario, christmas_mode, ctm)
-                for ctm in CONTACT_TRACING_MULTIPLIERS
+                eff: create_path_to_time_series(**{**kwargs, **{effect_name: eff}})
+                for eff in effects
             },
             {
-                ctm: create_path_to_last_states(scenario, christmas_mode, ctm)
-                for ctm in CONTACT_TRACING_MULTIPLIERS
+                eff: create_path_to_last_states(**{**kwargs, **{effect_name: eff}})
+                for eff in effects
             },
-            _create_path_for_effect_of_contact_tracing(scenario, christmas_mode),
+            path_func(**kwargs),
         )
-        for scenario, christmas_mode in itertools.product(SCENARIOS, CHRISTMAS_MODES)
+        for kwargs in _named_product(**cross_product)
     ]
 
 
 @pytask.mark.parametrize(
-    "scenario, christmas_mode, paths, depends_on, produces",
-    _create_parametrization_for_effect_of_private_contact_tracing(),
+    "paths, depends_on, produces",
+    _create_parametrization(
+        CONTACT_TRACING_MULTIPLIERS,
+        _create_path_for_effect_of_contact_tracing,
+        scenario=SCENARIOS,
+        christmas_mode=CHRISTMAS_MODES,
+    ),
 )
-def task_plot_effect_of_private_contact_tracing(
-    scenario, christmas_mode, paths, produces
-):
+def task_plot_effect_of_private_contact_tracing(paths, produces):
     contact_tracing_scenarios = {
         ctm: dd.read_parquet(path) for ctm, path in paths.items()
     }
@@ -70,43 +79,24 @@ def task_plot_effect_of_private_contact_tracing(
     fig.savefig(produces, dpi=200, bbox_inches="tight", pad_inches=0.5)
 
 
-def _create_path_for_effect_of_christmas_model(scenario, ctm):
+def _create_path_for_effect_of_christmas_model(scenario, contact_tracing_multiplier):
     return (
-        BLD
-        / "simulation"
-        / f"effect_of_christmas_mode_with_{ctm}_contact_tracing_{scenario}.png"
+        BLD / "simulation" / "effect_of_christmas_mode_with_"
+        f"{contact_tracing_multiplier}_contact_tracing_{scenario}.png"
     )
 
 
-def _create_parametrization_for_effect_of_christmas_mode():
-    return [
-        (
-            scenario,
-            ctm,
-            {
-                cm: create_path_to_time_series(scenario, cm, ctm)
-                for cm in CHRISTMAS_MODES
-            },
-            {
-                cm: create_path_to_last_states(scenario, cm, ctm)
-                for cm in CHRISTMAS_MODES
-            },
-            _create_path_for_effect_of_christmas_model(scenario, ctm),
-        )
-        for scenario, ctm in itertools.product(SCENARIOS, CONTACT_TRACING_MULTIPLIERS)
-    ]
-
-
 @pytask.mark.parametrize(
-    "scenario, contact_tracing_multiplier, paths, depends_on, produces",
-    _create_parametrization_for_effect_of_christmas_mode(),
+    "paths, depends_on, produces",
+    _create_parametrization(
+        CHRISTMAS_MODES,
+        _create_path_for_effect_of_christmas_model,
+        scenario=SCENARIOS,
+        contact_tracing_multiplier=CONTACT_TRACING_MULTIPLIERS,
+    ),
 )
-def task_plot_effect_of_christmas_mode(
-    scenario, contact_tracing_multiplier, paths, produces
-):
-    christmas_mode_scenarios = {
-        cm: dd.read_parquet(path) for cm, path in paths.items()
-    }
+def task_plot_effect_of_christmas_mode(paths, produces):
+    christmas_mode_scenarios = {cm: dd.read_parquet(path) for cm, path in paths.items()}
 
     fig, axes = plot_scenarios(christmas_mode_scenarios)
     for ax in axes.flatten():
@@ -114,38 +104,23 @@ def task_plot_effect_of_christmas_mode(
     fig.savefig(produces, dpi=200, bbox_inches="tight", pad_inches=0.5)
 
 
-def _create_path_for_effect_of_scenario(christmas_mode, ctm):
+def _create_path_for_effect_of_scenario(christmas_mode, contact_tracing_multiplier):
     return (
-        BLD / "simulation" / f"effect_of_optimism_with_{ctm}_contact_tracing_"
-        f"and_{christmas_mode}_christmas.png"
+        BLD / "simulation" / f"effect_of_optimism_with_{contact_tracing_multiplier}_"
+        f"contact_tracing_and_{christmas_mode}_christmas.png"
     )
 
 
-def _create_parametrization_for_effect_of_scenario():
-    return [
-        (
-            cm, ctm,
-            {
-                scenario: create_path_to_time_series(scenario, cm, ctm)
-                for scenario in SCENARIOS
-            },
-            {
-                scenario: create_path_to_last_states(scenario, cm, ctm)
-                for scenario in SCENARIOS
-            },
-            _create_path_for_effect_of_scenario(cm, ctm),
-        )
-        for cm, ctm in itertools.product(CHRISTMAS_MODES, CONTACT_TRACING_MULTIPLIERS)
-    ]
-
-
 @pytask.mark.parametrize(
-    "christmas_mode, contact_tracing_multiplier, paths, depends_on, produces",
-    _create_parametrization_for_effect_of_scenario(),
+    "paths, depends_on, produces",
+    _create_parametrization(
+        SCENARIOS,
+        _create_path_for_effect_of_scenario,
+        christmas_mode=CHRISTMAS_MODES,
+        contact_tracing_multiplier=CONTACT_TRACING_MULTIPLIERS,
+    ),
 )
-def task_plot_effect_of_scenario(
-    christmas_mode, contact_tracing_multiplier, paths, produces
-):
+def task_plot_effect_of_scenario(paths, produces):
     scenarios = {ctm: dd.read_parquet(path) for ctm, path in paths.items()}
 
     fig, axes = plot_scenarios(scenarios)

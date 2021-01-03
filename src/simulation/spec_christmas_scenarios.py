@@ -1,4 +1,5 @@
 import itertools
+
 from src.config import BLD
 
 
@@ -8,9 +9,9 @@ CHRISTMAS_MODES = ["full", "same_group"]
 
 CONTACT_TRACING_MULTIPLIERS = [None, 0.5, 0.1]
 
-CARTESIAN_PRODUCT = list(itertools.product(
-    SCENARIOS, CHRISTMAS_MODES, CONTACT_TRACING_MULTIPLIERS
-))
+CARTESIAN_PRODUCT = list(
+    itertools.product(SCENARIOS, CHRISTMAS_MODES, CONTACT_TRACING_MULTIPLIERS)
+)
 
 
 def create_christmas_parametrization():
