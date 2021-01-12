@@ -1,9 +1,11 @@
 import pandas as pd
 import pytask
-from sid import get_epidemiological_parameters
+from sid import load_epidemiological_parameters
 
 from src.config import BLD
 from src.contact_models.get_contact_models import get_all_contact_models
+from src.contact_models.get_contact_models import get_christmas_contact_models
+from src.policies.policy_tools import combine_dictionaries
 
 
 @pytask.mark.depends_on(
@@ -29,7 +31,7 @@ from src.contact_models.get_contact_models import get_all_contact_models
 )
 @pytask.mark.produces(BLD / "start_params.pkl")
 def task_create_full_params(depends_on, produces):
-    epi_params = get_epidemiological_parameters()
+    epi_params = load_epidemiological_parameters()
     vacations = pd.read_pickle(depends_on.pop("vacations"))
 
     distributions = {
@@ -42,27 +44,52 @@ def task_create_full_params(depends_on, produces):
         dist_params.append(dist)
     dist_params = pd.concat(dist_params, axis=0)
 
-    contact_models = get_all_contact_models()
-    infection_probs = _build_infection_probs(contact_models.keys())
-
     age_assort_params = {
         name[7:]: pd.read_pickle(path)
         for name, path in depends_on.items()
         if name.startswith("assort")
     }
-    assort_params = _build_assort_params(contact_models, age_assort_params)
 
-    reaction_params = _build_reaction_params(contact_models)
+    non_christmas_contact_models, all_contact_models = _get_contact_models_for_params()
+
+    assort_params = _build_assort_params(
+        non_christmas_contact_models, age_assort_params
+    )
+    # assortative matching of the holiday preparation by county and age_group
+    # This is supposed to cover holiday shopping and traveling.
+    assort_params.loc[
+        ("assortative_matching", "holiday_preparation", "county"), "value"
+    ] = 0.3
+    assort_params.loc[
+        ("assortative_matching", "holiday_preparation", "age_group"), "value"
+    ] = 0.3
+
+    reaction_params = _build_reaction_params(all_contact_models)
     param_slices = [
+        reaction_params,
+        dist_params,
+        assort_params,
         epi_params,
         vacations,
-        dist_params,
-        infection_probs,
-        assort_params,
-        reaction_params,
     ]
     params = pd.concat(param_slices, axis=0)
     params.to_pickle(produces)
+
+
+def _get_contact_models_for_params():
+    non_christmas_contact_models = get_all_contact_models(None, None)
+    full_christmas = get_christmas_contact_models("full", 2)
+    same_group_christmas = get_christmas_contact_models("same_group", 2)
+    del same_group_christmas["holiday_preparation"]
+    meet_twice_christmas = get_christmas_contact_models("meet_twice", 2)
+    del meet_twice_christmas["holiday_preparation"]
+    christmas_contact_models = combine_dictionaries(
+        [full_christmas, same_group_christmas, meet_twice_christmas]
+    )
+    all_contact_models = combine_dictionaries(
+        [non_christmas_contact_models, christmas_contact_models]
+    )
+    return non_christmas_contact_models, all_contact_models
 
 
 def _make_mergable_with_params(dist, category):
@@ -89,31 +116,6 @@ def _make_mergable_with_params(dist, category):
     return dist
 
 
-def _build_infection_probs(names):
-    index_tuples = [("infection_prob", mod_name, mod_name) for mod_name in names]
-    df = pd.DataFrame(index=pd.MultiIndex.from_tuples(index_tuples))
-    df.index.names = ["category", "subcategory", "name"]
-    df = df.reset_index()
-    prob_dict = {
-        "educ": 0.02,
-        "work": 0.1,
-        "household": 0.2,
-        "other": 0.1,
-    }
-    full_prob_dict = {}
-    for mod_name in names:
-        for k, v in prob_dict.items():
-            if k in mod_name:
-                full_prob_dict[mod_name] = v
-        assert (
-            mod_name in full_prob_dict
-        ), f"No infection probability for {mod_name} specified."
-
-    df["value"] = df["name"].map(full_prob_dict.get)
-    df = df.set_index(["category", "subcategory", "name"])
-    return df
-
-
 def _build_assort_params(contact_models, age_assort_params):
     df = pd.DataFrame(columns=["category", "subcategory", "name", "value"])
     sr = df.set_index(["category", "subcategory", "name"])["value"]
@@ -131,13 +133,14 @@ def _build_reaction_params(contact_models):
     df = pd.DataFrame(columns=["category", "subcategory", "name", "value"])
     df = df.set_index(["category", "subcategory", "name"])
     multipliers = [
-        ("symptomatic_multiplier", 0.15, 0.5),
+        ("symptomatic_multiplier", 0.15, 0.7),
         ("positive_test_multiplier", 0.05, 0.5),
     ]
-    for cm in contact_models:
-        for name, multiplier, hh_multiplier in multipliers:
-            if "educ" in cm or "work" in cm or "other" in cm:
-                df.loc[(cm, name, name)] = multiplier
-            else:
+    for name, multiplier, hh_multiplier in multipliers:
+        for cm in contact_models:
+            if "household" in cm:
                 df.loc[(cm, name, name)] = hh_multiplier
+            else:
+                # this includes the holiday preparation and christmas models
+                df.loc[(cm, name, name)] = multiplier
     return df

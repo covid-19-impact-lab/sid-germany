@@ -75,9 +75,9 @@ def reopen_educ_model_germany(
 
     date = get_date(states)
     if reopening_dates is None:
-        assert pd.Timestamp("2020-04-22") <= date <= pd.Timestamp("2020-09-30"), (
+        assert pd.Timestamp("2020-04-22") <= date <= pd.Timestamp("2020-10-30"), (
             "Default reopening dates assume that policy is applied between 2020-04-22 "
-            "and 2020-09-30"
+            "and 2020-10-30"
         )
         reopening_dates = default_reopening_dates
     assert (
@@ -284,3 +284,125 @@ def _interpolate_activity_level(
     )
     activity = interpolator(date.dayofyear)
     return activity
+
+
+def reduce_contacts_through_private_contact_tracing(
+    contacts, states, seed, multiplier, group_ids, is_recurrent, path
+):
+    today = get_date(states)
+    days_since_christmas = (today - pd.Timestamp("2020-12-26")).days
+    test_condition = f"-{days_since_christmas} <= cd_received_test_result_true <= 0"
+    symptom_condition = f"-{days_since_christmas} <= cd_symptoms_true <= 0"
+    risk_condition = f"({symptom_condition}) | ({test_condition})"
+
+    reduced = reduce_contacts_when_condition_among_recurrent_contacts(
+        contacts=contacts,
+        states=states,
+        seed=seed,
+        multiplier=multiplier,
+        group_ids=group_ids,
+        condition=risk_condition,
+        is_recurrent=is_recurrent,
+        path=path,
+    )
+    return reduced
+
+
+def reduce_contacts_when_condition_among_recurrent_contacts(
+    contacts, states, seed, multiplier, group_ids, condition, is_recurrent, path=None
+):
+    """Reduce contacts when one of your contacts fulfills a condition.
+
+    This is akin to private contact tracing, i.e. coworkers or friends informing
+    their contacts that they are symptomatic or tested positive.
+
+    Args:
+        contacts (pandas.Series)
+        states (pandas.DataFrame)
+        seed (int)
+        multiplier (float): Multiplier, i.e. the share of people that still participate
+            in contact models or the multiplier on the non-recurrent contacts.
+        group_ids (list): list of columns identifying group memberships.
+        condition (str): query/eval string. If any member of any group of an
+            individual fulfills the condition, the individual is marked as having
+            had a risk contact (unless (s)he herself fulfills the condition).
+        is_recurrent (bool): Whether the contact model is recurrent or not.
+        path (str or pathlib.Path): Path to a folder in which information on the
+            contact tracing is stored.
+
+    Returns:
+        reduced (pandas.Series): reduced contacts.
+
+    """
+    with_risk_contacts = _identify_individuals_with_risk_contacts(
+        states, group_ids, condition, path
+    )
+
+    if is_recurrent:
+        all_reduced = reduce_recurrent_model(states, contacts, seed, multiplier)
+    else:
+        all_reduced = multiplier * contacts
+
+    reduced = all_reduced.where(with_risk_contacts, contacts)
+
+    return reduced
+
+
+def _identify_individuals_with_risk_contacts(states, group_ids, condition, path=None):
+    """Identify those in whose groups someone fulfills the condition.
+
+    .. warning::
+        This potentially identifies much more people than those who
+        actually had risk contacts. For example, people who work
+        from home but have a sick co-worker would still be identified
+        as having had a risk contact!
+
+    .. warning::
+        This modifies states inplace!
+
+    Args:
+        states (pandas.DataFrame)
+        group_ids (list): list of columns identifying group memberships.
+        condition (str): query string. If any member of any group
+            fulfills the condition, an individual is marked as having
+            had a risk contact (unless (s)he herself fulfills the condition).
+        path (str or pathlib.Path): Path to a folder in which information on the
+            contact tracing is stored.
+
+    Returns:
+        risk_in_any_group (pandas.Series): boolean Series with same index
+            as states. True for individuals who don't fulfill the condition
+            but have a contact in one of their groups who does.
+
+    """
+    today = get_date(states)
+    risk_col = f"has_known_risk_contact_{today.date()}"
+    if risk_col not in states.columns:
+        old_col = f"has_known_risk_contact_{(today - pd.Timedelta(days=1)).date()}"
+        if old_col in states.columns:
+            states.drop(
+                columns=[old_col],
+                inplace=True,
+            )
+
+        helper = states[group_ids].copy()
+        helper["is_risk_contact"] = states.eval(condition)
+
+        risk_in_any_group = pd.Series(False, index=states.index)
+        for col in group_ids:
+            risk_in_this_group = helper.groupby(col)["is_risk_contact"].transform("any")
+            # those in the -1 group have no contacts
+            risk_in_this_group = risk_in_this_group.where(helper[col] != -1, False)
+            risk_in_any_group = risk_in_any_group | risk_in_this_group
+
+        # individuals who are themselves affected (e.g. symptomatic)
+        # reduce behavior through a different function. We don't want to "double" this.
+        risk_in_any_group = risk_in_any_group.where(~states.eval(condition), False)
+
+        states[risk_col] = risk_in_any_group
+        if path is not None:
+            risk_in_any_group.to_pickle(path / f"{risk_col}.pkl")
+    else:
+        risk_in_any_group = states[risk_col]
+
+    return risk_in_any_group

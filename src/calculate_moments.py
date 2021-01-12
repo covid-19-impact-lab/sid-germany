@@ -9,6 +9,7 @@ def smoothed_outcome_per_hundred_thousand_sim(
     window=14,
     min_periods=1,
     take_logs=True,
+    center=True,
 ):
     df = df.reset_index()
     window, min_periods, groupby = _process_inputs(window, min_periods, groupby)
@@ -17,8 +18,12 @@ def smoothed_outcome_per_hundred_thousand_sim(
         .mean()
         .fillna(0)
     )
+
+    if not isinstance(df, pd.DataFrame):
+        per_individual = per_individual.compute()
+
     out = _smooth_and_scale_daily_outcome_per_individual(
-        per_individual, window, min_periods, groupby, take_logs
+        per_individual, window, min_periods, groupby, take_logs, center=center
     )
     return out
 
@@ -57,7 +62,12 @@ def smoothed_outcome_per_hundred_thousand_rki(
 
 
 def _smooth_and_scale_daily_outcome_per_individual(
-    sr, window, min_periods, groupby, take_logs
+    sr,
+    window,
+    min_periods,
+    groupby,
+    take_logs,
+    center=True,
 ):
     scaling_factor = 100_000
     scaled = sr * scaling_factor
@@ -67,7 +77,7 @@ def _smooth_and_scale_daily_outcome_per_individual(
     if groupby:
         scaled = scaled.unstack()
     smoothed = scaled.rolling(
-        window=window, min_periods=min_periods, center=True
+        window=window, min_periods=min_periods, center=center
     ).mean()
 
     if groupby:

@@ -3,8 +3,14 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
 
+from src.policies.single_policy_functions import (
+    _identify_individuals_with_risk_contacts,
+)
 from src.policies.single_policy_functions import _interpolate_activity_level
 from src.policies.single_policy_functions import implement_a_b_school_system_above_age
+from src.policies.single_policy_functions import (
+    reduce_contacts_when_condition_among_recurrent_contacts,
+)
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany
@@ -193,3 +199,42 @@ def test_reopen_work_model(fake_states):
 
     expected = pd.Series([1] * 7 + [0, 1, 0])
     assert_series_equal(calculated, expected)
+
+
+def test_identify_individuals_with_risk_contacts():
+    states = pd.DataFrame()
+    states["id1"] = [0, 0, 0, 1, 1, 2, 2]
+    states["id2"] = [3, 3, 4, -1, 5, 5, -1]
+    states["symptomatic"] = [True] + [False] * 5 + [True]
+    states["date"] = pd.Timestamp("2020-12-25")
+
+    res = _identify_individuals_with_risk_contacts(
+        states, ["id1", "id2"], "symptomatic"
+    )
+
+    expected = pd.Series([False, True, True, False, False, True, False])
+
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_reduce_contacts_when_condition_among_recurrent_contacts():
+    states = pd.DataFrame()
+    states["id1"] = [0, 0, 0, 1, 1, 2, 2]
+    states["id2"] = [3, 3, 4, -1, 5, 5, -1]
+    states["symptomatic"] = [True] + [False] * 5 + [True]
+    states["date"] = pd.Timestamp("2020-12-25")
+
+    contacts = 1 + pd.Series(np.arange(7))
+
+    res = reduce_contacts_when_condition_among_recurrent_contacts(
+        contacts=contacts,
+        states=states,
+        seed=333,
+        multiplier=0.1,
+        group_ids=["id1", "id2"],
+        condition="symptomatic",
+        is_recurrent=False,
+    )
+
+    expected = pd.Series([1, 0.2, 0.3, 4, 5, 0.6, 7])
+    pd.testing.assert_series_equal(res, expected)

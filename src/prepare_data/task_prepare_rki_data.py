@@ -100,12 +100,14 @@ def task_prepare_rki_data(depends_on, produces):
 
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
     undetected_multiplier = 1 / share_known_cases
-    dates = cropped.index.get_level_values("date")
-    undetected_multiplier = dates.map(undetected_multiplier.get)
+    cropped["date"] = cropped.index.get_level_values("date")
+    cropped["undetected_multiplier"] = cropped["date"].replace(undetected_multiplier)
     cropped["upscaled_newly_infected"] = (
-        cropped["newly_infected"] * undetected_multiplier
+        cropped["newly_infected"] * cropped["undetected_multiplier"]
     )
+    cropped = cropped.drop(columns=["date", "undetected_multiplier"])
 
+    assert cropped.notnull().all().all()
     cropped.to_pickle(produces["data"])
 
     reported_per_day = cropped["newly_infected"].groupby("date").sum()

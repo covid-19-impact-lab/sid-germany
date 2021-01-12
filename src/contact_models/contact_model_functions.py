@@ -24,14 +24,104 @@ The individual either ...
 """
 
 
+def holiday_preparation_contacts(states, params, seed, n_contacts):
+    """Have additional meetings directly before the Christmas holidays.
+
+    This is meant to cover things like traveling with public transport
+    or doing holiday shopping.
+
+    Args:
+        states (pandas.DataFrame): sid states DataFrame
+        params (pandas.DataFrame): DataFrame with two index levels,
+            subcategory and name.
+        seed (int)
+        n_contacts (int, float or pandas.Series): number of contacts.
+            if Series, the index is the support and the values the
+            probabilities of meeting a certain number of people.
+
+    Returns:
+        contacts (pandas.Series): index is the same as states.
+            Values are the number of contacts a person has.
+
+    """
+    np.random.seed(seed)
+    if get_date(states) not in pd.date_range("2020-12-21", "2020-12-23"):
+        contacts = pd.Series(0, index=states.index)
+    else:
+        if isinstance(n_contacts, pd.Series):
+            n_contacts = np.random.choice(
+                a=n_contacts.index, size=len(states), p=n_contacts, replace=True
+            )
+        contacts = pd.Series(n_contacts, states.index)
+        for params_entry, condition in [
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
+        ]:
+            contacts = reduce_contacts_on_condition(
+                contacts,
+                states,
+                params.loc[(params_entry, params_entry), "value"],
+                condition,
+                seed=seed,
+                is_recurrent=False,
+            )
+    return contacts
+
+
+def meet_on_holidays(states, params, group_col, dates, seed):
+    """Meet other households scheduled for Christmas.
+
+    There are three modes:
+        - If "full", every household meets with a different set of
+          two other households on every of the three holidays.
+        - If "same_group", every household meets the same two other
+          households on every of the three holidays.
+        - If "meet_twice", every household meets the same two other
+          households but only once on the 24th and 25th of December.
+        - If None, no Christmas models are included.
+
+    Args:
+        states (pandas.DataFrame): sid states DataFrame
+        params (pandas.DataFrame): DataFrame with two index levels,
+            subcategory and name.
+        group_col (str): name of the column identifying groups of
+            individuals that will meet.
+        dates (list): list of dates on which individuals
+            of group_col will meet.
+        seed (int)
+
+    Returns:
+        attends_meeting (pandas.Series)
+
+    """
+    today = get_date(states)
+    dates = pd.to_datetime(dates)
+    if today not in dates:
+        attends_meeting = pd.Series(0, index=states.index)
+    else:
+        attends_meeting = (states[group_col] != -1).astype(int)
+        for params_entry, condition in [
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
+        ]:
+            attends_meeting = reduce_contacts_on_condition(
+                attends_meeting,
+                states,
+                params.loc[(params_entry, params_entry), "value"],
+                condition,
+                seed=seed,
+                is_recurrent=True,
+            )
+    return attends_meeting
+
+
 def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
     """Return who participates in a weekly meeting.
 
     Args:
         states (pandas.DataFrame): sid states DataFrame
-        params (pandas.DataFrame): DataFrame with two category levels,
-            subcategory and name. has a "value" column that contains the probabilities
-            to the number of possible columns in the "name" index level.
+        params (pandas.DataFrame): DataFrame with two index levels,
+            subcategory and name.
         group_col_name (str): name of the column identifying this contact model's
             group column.
         day_of_week (str): day of the week on which this model takes place.
@@ -70,7 +160,7 @@ def go_to_work(states, params, seed):
 
     Args:
         states (pandas.DataFrame): sid states DataFrame
-        params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
 
@@ -175,24 +265,28 @@ def meet_hh_members(states, params, seed):
 
     Args:
         states (pandas.DataFrame): The states.
-        params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
 
     """
-    meet_hh = (states["hh_model_group_id"] != -1).astype(int)
-    for params_entry, condition in [
-        ("symptomatic_multiplier", "symptomatic"),
-        ("positive_test_multiplier", IS_POSITIVE_CASE),
-    ]:
-        meet_hh = reduce_contacts_on_condition(
-            meet_hh,
-            states,
-            params.loc[(params_entry, params_entry), "value"],
-            condition,
-            seed=seed,
-            is_recurrent=True,
-        )
+    date = get_date(states)
+    if date in pd.date_range("2020-12-24", "2020-12-26"):
+        meet_hh = pd.Series(0, index=states.index)
+    else:
+        meet_hh = (states["hh_model_group_id"] != -1).astype(int)
+        for params_entry, condition in [
+            ("symptomatic_multiplier", "symptomatic"),
+            ("positive_test_multiplier", IS_POSITIVE_CASE),
+        ]:
+            meet_hh = reduce_contacts_on_condition(
+                meet_hh,
+                states,
+                params.loc[(params_entry, params_entry), "value"],
+                condition,
+                seed=seed,
+                is_recurrent=True,
+            )
     return meet_hh
 
 
@@ -203,7 +297,7 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
 
     Args:
         states (pandas.DataFrame): sid states DataFrame.
-        params (pandas.DataFrame): DataFrame with two category levels,
+        params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
         on_weekends (bool): whether to meet on weekends or not.
@@ -360,66 +454,6 @@ def reduce_contacts_on_condition(
 
 
 # =============================================================================
-
-
-def reduce_contacts_when_symptomatic_case_among_recurrent_contacts(
-    contacts, states, share, group_id, seed
-):
-    """Reduce contacts when there is a symptomatic case among the recurrent contacts.
-
-    Individuals react only to symptomatic cases among their recurrent contacts because
-    it is more likely that they will be notified. (For random contacts, the contact
-    tracing app would be helpful.)
-
-    Since this function is computationally demanding, it is not used at the moment.
-
-    """
-    np.random.seed(seed)
-    contacts = contacts.copy(deep=True)
-    has_symptomatic_case = pd.Series(index=states.index, data=False)
-    s = (
-        states.loc[states.group_id != -1, "symptomatic"]
-        .groupby(group_id)
-        .transform("any")
-    )
-
-    has_symptomatic_case.loc[s.index] = has_symptomatic_case.loc[s.index] | s
-
-    compliers = np.random.choice(
-        [True, False], size=has_symptomatic_case.sum(), p=[share, 1 - share]
-    )
-    contacts.loc[has_symptomatic_case[compliers].index] = 0
-
-    return contacts
-
-
-def reduce_contacts_when_positive_case_among_recurrent_contacts(
-    contacts, states, share, group_id, seed
-):
-    """Reduce contacts when there is a positive case among the recurrent contacts.
-
-    Individuals react only to positive cases among their recurrent contacts because
-    it is more likely that they will be notified. (For random contacts, the contact
-    tracing app would be helpful.)
-
-    Since this function is computationally demanding, it is not used at the moment.
-
-    """
-    np.random.seed(seed)
-    contacts = contacts.copy(deep=True)
-    is_positive_case = states.eval(IS_POSITIVE_CASE)
-    has_positive_case = pd.Series(index=states.index, data=False)
-    valid_group = states.loc[states[group_id] != -1, "group_id"]
-    s = is_positive_case.loc[valid_group.index].groupby(valid_group).transform("any")
-
-    has_positive_case.loc[s.index] = has_positive_case.loc[s.index] | s
-
-    compliers = np.random.choice(
-        [True, False], size=has_positive_case.sum(), p=[share, 1 - share]
-    )
-    contacts.loc[has_positive_case[compliers].index] = 0
-
-    return contacts
 
 
 def _pupils_having_vacations_do_not_attend(attends_facility, states, params):
