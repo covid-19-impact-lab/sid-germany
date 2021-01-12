@@ -32,7 +32,13 @@ def create_christmas_parametrization():
                 )
                 produces = path / "time_series"
 
-                single_run = (christmas_mode, contact_tracing_multiplier, scenario, path, produces)
+                single_run = (
+                    christmas_mode,
+                    contact_tracing_multiplier,
+                    scenario,
+                    path,
+                    produces,
+                )
 
                 parametrizations.append(single_run)
 
@@ -59,7 +65,8 @@ PARAMETRIZATIONS = create_christmas_parametrization()
     }
 )
 @pytask.mark.parametrize(
-    "christmas_mode, contact_tracing_multiplier, scenario, path, produces", PARAMETRIZATIONS
+    "christmas_mode, contact_tracing_multiplier, scenario, path, produces",
+    PARAMETRIZATIONS,
 )
 def task_simulation_christmas_scenarios(
     depends_on, christmas_mode, contact_tracing_multiplier, scenario, path

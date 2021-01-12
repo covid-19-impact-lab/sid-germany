@@ -16,7 +16,6 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from sid.time import get_date
-from src.config import BLD
 
 
 def shut_down_model(states, contacts, seed):

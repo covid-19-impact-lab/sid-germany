@@ -1,7 +1,6 @@
 from functools import partial
 
 import pandas as pd
-from src.config import BLD
 
 import src.policies.full_policy_blocks as fpb
 from src.policies.domain_level_policy_blocks import _get_base_policy
@@ -135,17 +134,21 @@ def get_december_to_feb_policies(
     return combine_dictionaries(to_combine)
 
 
-def get_christmas_contact_tracing_policies(contact_models, block_info, multiplier, path=None):
+def get_christmas_contact_tracing_policies(
+    contact_models, block_info, multiplier, path=None
+):
     """"""
     # households, educ contact models and Christmas models don't get adjustment
     models_with_post_christmas_isolation = [
         cm for cm in contact_models if "work" in cm or "other" in cm
     ]
-    christmas_id_groups = list(set([
-        model["assort_by"][0]
-        for name, model in contact_models.items()
-        if "christmas" in name
-    ]))
+    christmas_id_groups = list(
+        {
+            model["assort_by"][0]
+            for name, model in contact_models.items()
+            if "christmas" in name
+        }
+    )
     policies = {}
     for mod in models_with_post_christmas_isolation:
         policy = _get_base_policy(mod, block_info)
