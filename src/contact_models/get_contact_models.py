@@ -314,16 +314,6 @@ def get_christmas_contact_models(mode, n_contacts_before):
             ),
         }
         christmas_contact_models[model_name] = contact_model
-        christmas_contact_models["christmas_meet_twice_hh_on_26"] = {
-            "is_recurrent": True,
-            "loc": model_name,
-            "assort_by": ["hh_model_group_id"],
-            "model": partial(
-                cm_funcs.meet_on_holidays,
-                group_col="hh_model_group_id",
-                dates=dates[2:],
-            ),
-        }
     else:
         raise NotImplementedError(
             "Your mode is not one of 'full', 'same_group', 'meet_twice'"

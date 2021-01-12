@@ -206,6 +206,7 @@ def test_identify_individuals_with_risk_contacts():
     states["id1"] = [0, 0, 0, 1, 1, 2, 2]
     states["id2"] = [3, 3, 4, -1, 5, 5, -1]
     states["symptomatic"] = [True] + [False] * 5 + [True]
+    states["date"] = pd.Timestamp("2020-12-25")
 
     res = _identify_individuals_with_risk_contacts(
         states, ["id1", "id2"], "symptomatic"
@@ -221,6 +222,7 @@ def test_reduce_contacts_when_condition_among_recurrent_contacts():
     states["id1"] = [0, 0, 0, 1, 1, 2, 2]
     states["id2"] = [3, 3, 4, -1, 5, 5, -1]
     states["symptomatic"] = [True] + [False] * 5 + [True]
+    states["date"] = pd.Timestamp("2020-12-25")
 
     contacts = 1 + pd.Series(np.arange(7))
 
