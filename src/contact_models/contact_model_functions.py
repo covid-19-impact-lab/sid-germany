@@ -155,9 +155,6 @@ def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
 def go_to_work(states, params, seed):
     """Return which people go to work.
 
-    Adults go to work if they are workers, it is a weekday, and they do not show any
-    symptoms.
-
     Args:
         states (pandas.DataFrame): sid states DataFrame
         params (pandas.DataFrame): DataFrame with two index levels,
@@ -171,12 +168,13 @@ def go_to_work(states, params, seed):
     """
     date = get_date(states)
     day = date.day_name()
+
+    attends_work = states.eval(
+        "(occupation == 'working') & (work_daily_group_id != -1)"
+    ).astype(int)
     if day in ["Saturday", "Sunday"]:
-        attends_work = pd.Series(data=0, index=states.index)
+        attends_work = attends_work & states[f"work_{day.lower()}"]
     else:
-        attends_work = states.eval(
-            "(occupation == 'working') & (work_daily_group_id != -1)"
-        ).astype(int)
         for params_entry, condition in [
             ("symptomatic_multiplier", "symptomatic"),
             ("positive_test_multiplier", IS_POSITIVE_CASE),

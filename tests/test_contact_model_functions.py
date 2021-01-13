@@ -186,8 +186,11 @@ def test_go_to_weekly_meeting_right_day(a_thursday, no_reduction_params):
 
 def test_go_to_work_weekend(states, no_reduction_params):
     a_saturday = states[states["date"] == pd.Timestamp("2020-04-04 00:00:00")]
+    a_saturday["work_saturday"] = [True, True] + [False] * (len(a_saturday) - 2)
+    a_saturday["work_daily_group_id"] = 333
     res = go_to_work(a_saturday, no_reduction_params, 555)
-    expected = pd.Series(0, index=a_saturday.index)
+    expected = pd.Series(False, index=a_saturday.index)
+    expected[:2] = True
     assert_series_equal(res, expected, check_names=False)
 
 
