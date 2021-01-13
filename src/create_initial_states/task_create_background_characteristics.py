@@ -125,6 +125,8 @@ def _prepare_microcensus(mc):
         "ef31": "hh_form",
         "ef44": "age",
         "ef46": "gender",
+        "ef149": "frequency_work_saturday",
+        "ef150": "frequency_work_sunday",
     }
     mc = mc.rename(columns=rename_dict)
     mc = mc[rename_dict.values()]
@@ -139,10 +141,28 @@ def _prepare_microcensus(mc):
     mc["age_group"] = create_age_groups(mc["age"])
     mc["age_group_rki"] = create_age_groups_rki(mc)
 
+    # 53% no, 21% every now and then, 17% regularly, 9% all the time
+    work_answers = ["ja, ständig", "ja, regelmäßig"]
+    mc["work_saturday"] = mc["frequency_work_saturday"].isin(work_answers)
+    # 72% no, 14% every now and then, 10% regularly, 3% all the time
+    mc["work_sunday"] = mc["frequency_work_sunday"].isin(work_answers)
+
     mc["hh_id"] = mc.apply(_create_mc_hh_id, axis=1)
     mc["hh_id"] = pd.factorize(mc["hh_id"])[0]
     assert len(mc["hh_id"].unique()) == 11_494, "Wrong number of households."
-    mc = mc.drop(columns=["district_id", "east_west", "hh_form", "hh_nr_in_district"])
+
+    keep_cols = [
+        "private_hh",
+        "gender",
+        "age",
+        "age_group",
+        "age_group_rki",
+        "work_type",
+        "work_saturday",
+        "work_sunday",
+        "hh_id",
+    ]
+    mc = mc[keep_cols]
     return mc
 
 
