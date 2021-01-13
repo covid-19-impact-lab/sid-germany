@@ -34,13 +34,17 @@ def test_christmas_mode_same_group():
     res = get_christmas_contact_models("same_group", 2)
     expected = {
         "holiday_preparation": {"n_contacts": 2},
-        "christmas_same_group": {
+        "christmas_same_group_0": {
             "group_col": "christmas_group_id_0",
-            "dates": [
-                pd.Timestamp("2020-12-24"),
-                pd.Timestamp("2020-12-25"),
-                pd.Timestamp("2020-12-26"),
-            ],
+            "dates": [pd.Timestamp("2020-12-24")],
+        },
+        "christmas_same_group_1": {
+            "group_col": "christmas_group_id_0",
+            "dates": [pd.Timestamp("2020-12-25")],
+        },
+        "christmas_same_group_2": {
+            "group_col": "christmas_group_id_0",
+            "dates": [pd.Timestamp("2020-12-26")],
         },
     }
     assert res.keys() == expected.keys()

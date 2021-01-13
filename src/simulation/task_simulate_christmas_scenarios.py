@@ -68,12 +68,13 @@ def task_simulation_christmas_scenarios(
             missing_christmas_models.append(x)
     hh_loc = ("infection_prob", "households", "households")
     for name in missing_christmas_models:
-        params.loc[("infection_prob", name, name)] = 2 * params.loc[hh_loc]
+        params.loc[("infection_prob", name, name)] = 1.5 * params.loc[hh_loc]
 
     policies = get_december_to_feb_policies(
         contact_models=contact_models,
         contact_tracing_multiplier=contact_tracing_multiplier,
         scenario=scenario,
+        path=path,
     )
 
     initial_conditions = create_initial_conditions(
@@ -97,8 +98,8 @@ def task_simulation_christmas_scenarios(
         saved_columns={
             "time": ["date"],
             "initial_states": False,
-            "disease_states": ["symptomatic"],
-            "other": ["n_has_infected", "newly_infected", "new_known_case"],
+            "disease_states": ["symptomatic", "ever_infected", "newly_infected"],
+            "other": ["n_has_infected", "new_known_case"],
         },
     )
 
