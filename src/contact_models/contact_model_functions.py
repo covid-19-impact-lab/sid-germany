@@ -298,7 +298,10 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
         params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
-        on_weekends (bool): whether to meet on weekends or not.
+        on_weekends (bool or str): whether to meet on weekends or not. If it's a string
+            it's interpreted as the prefix of columns identifying who participates
+            in this contact model on weekends. Then, columns of the form
+            "{on_weekends}_saturday" and "{on_weekends}_sunday" must be in states.
         query (str): query string to identify the subset of individuals to which this
             contact model applies.
 
