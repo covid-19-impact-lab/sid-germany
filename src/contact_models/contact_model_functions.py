@@ -152,7 +152,7 @@ def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
     return attends_meeting
 
 
-def go_to_work(states, params, seed):
+def go_to_daily_work_meeting(states, params, seed):
     """Return which people go to work.
 
     Args:

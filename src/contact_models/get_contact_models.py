@@ -143,7 +143,7 @@ def get_work_daily_contact_model():
         "work_recurrent_daily": {
             "is_recurrent": True,
             "assort_by": ["work_daily_group_id"],
-            "model": cm_funcs.go_to_work,
+            "model": cm_funcs.go_to_daily_work_meeting,
             "loc": "work_recurrent_daily",
         },
     }
