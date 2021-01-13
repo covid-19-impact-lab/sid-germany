@@ -130,7 +130,7 @@ def get_work_non_recurrent_contact_model():
             "loc": "work_non_recurrent",
             "model": partial(
                 cm_funcs.calculate_non_recurrent_contacts_from_empirical_distribution,
-                on_weekends=False,
+                on_weekends="work",
                 query="occupation == 'working'",
             ),
         }

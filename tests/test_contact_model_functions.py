@@ -286,6 +286,29 @@ def test_non_recurrent_work_contacts_no_random_no_sick(
     assert_series_equal(res, expected, check_names=False, check_dtype=False)
 
 
+def test_non_recurrent_work_contacts_no_random_no_sick_sat(
+    states, params_with_positive
+):
+    a_saturday = states[states["date"] == pd.Timestamp("2020-04-04 00:00:00")]
+    a_saturday["symptomatic"] = False
+    a_saturday["participates_saturday"] = [True, True, True] + [False] * (
+        len(a_saturday) - 3
+    )
+
+    res = calculate_non_recurrent_contacts_from_empirical_distribution(
+        states=a_saturday,
+        params=params_with_positive.loc["work_non_recurrent"],
+        on_weekends="participates",
+        query="occupation == 'working'",
+        seed=433,
+    )
+
+    expected = pd.Series(0, index=a_saturday.index)
+    expected[:2] = 2
+
+    assert_series_equal(res, expected, check_names=False, check_dtype=False)
+
+
 def test_non_recurrent_work_contacts_no_random_with_sick(
     a_thursday, params_with_positive
 ):
