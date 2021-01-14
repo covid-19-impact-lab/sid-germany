@@ -1,3 +1,38 @@
+"""Simulate different work from home (WFH) scenarios for Oct to mid Dec.
+
+Summary of data on work from home:
+    1. approx. 56% of workers could work from home.
+    2. 27-45% (midpoint: 36%) of workers worked from home during the 1st lockdown.
+    3. in June only 16-28% worked from home.
+    4. in November and December only 14-17% worked from home.
+
+.. warning::
+    Remember, we assume essential workers always go to work.
+    Our work multiplier the share of non-essential workers who still have work
+    contacts.
+
+Our baseline (see ``_get_work_from_home_policies``):
+    - >95% effective work contacts October 1-22
+    - 70% effective work contacts October 23-31
+    - 63% effective work contacts in November and December.
+
+Assuming that there are no changes in hygiene standards and essential workers
+continue to work normally, we can look at what happens when additional workers
+work from home by increasing the threshold by 1.5x the change we want for the
+whole working population. The 1.5x scaling is done by
+``_get_work_from_home_policies``.
+
+Our scenarios:
+    1. baseline: no change
+    2. 1_pct_more: 1 % point more of workers stay home
+    3. return_to_1st_lockdown: Given that ~36% stayed home during the 1st
+       lockdown and only 16% in Nov/Dec that means to return to the 1st lockdown
+       20% points more of workers would have to stay home.
+    4. Fully exploiting the potential for work from home (56%) the difference to
+       what happened in Nov / Dec would be 56-16 = 40% points more workers in
+       home office.
+
+"""
 import pandas as pd
 import pytask
 from sid import get_simulate_func
@@ -12,14 +47,23 @@ from src.policies.full_policy_blocks import get_german_reopening_phase
 from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 
-# additional_work_from_home, seed, time_series path
 WFH_PARAMETRIZATION = []
-WFH_SCENARIO_NAMES = ["baseline", "1pct_more"]
-WFH_SCENARIO_VALUES = [0, 0.01]
-WFH_SEEDS = [10_000, 20_000]
+WFH_SCENARIO_NAMES = [
+    "baseline",
+    "1_pct_more",
+    "return_to_1st_lockdown",
+    "full_potential",
+]
+WFH_SCENARIO_VALUES = [
+    0,
+    0.01,
+    0.2,
+    0.4,
+]
+WFH_SEEDS = [10_000 * i for i in range(30)]
 for name, additional_work_from_home in zip(WFH_SCENARIO_NAMES, WFH_SCENARIO_VALUES):
     for seed in WFH_SEEDS:
-        path = BLD / "work_from_home" / f"{name}_{seed}"
+        path = BLD / "simulations" / "work_from_home" / f"{name}_{seed}" / "time_series"
         spec = (additional_work_from_home, seed, path)
         WFH_PARAMETRIZATION.append(spec)
 
@@ -61,7 +105,7 @@ def task_simulate_work_from_home_scenario(
         christmas_mode=None, n_extra_contacts_before_christmas=None
     )
 
-    estimation_policies = _get_estimation_policies(
+    estimation_policies = _get_work_from_home_policies(
         contact_models, additional_work_from_home
     )
 
@@ -73,7 +117,7 @@ def task_simulate_work_from_home_scenario(
         duration={"start": start_date, "end": end_date},
         initial_conditions=initial_conditions,
         share_known_cases=share_known_cases,
-        path=produces,
+        path=produces.parent,
         seed=seed,
         saved_columns={
             "initial_states": ["age_group_rki"],
@@ -85,7 +129,7 @@ def task_simulate_work_from_home_scenario(
     simulate(params)
 
 
-def _get_estimation_policies(contact_models, additional_work_from_home=0.0):
+def _get_work_from_home_policies(contact_models, additional_work_from_home):
     """Get estimation policies from July to December 20th.
 
     Args:
