@@ -30,7 +30,11 @@ Our scenarios:
        20% points more of workers would have to stay home.
     4. Fully exploiting the potential for work from home (56%) the difference to
        what happened in Nov / Dec would be 56-16 = 40% points more workers in
-       home office.
+       home office. This is not implemented at the moment because it would mean
+       that some multipliers are below 0. This is because we are not separating
+       hygiene measures from staying away from work at the moment and because
+       essential workers are fixed to go to work even though they may well be
+       able to work from home.
 
 """
 import pandas as pd
@@ -52,15 +56,13 @@ WFH_SCENARIO_NAMES = [
     "baseline",
     "1_pct_more",
     "return_to_1st_lockdown",
-    "full_potential",
 ]
 WFH_SCENARIO_VALUES = [
     0,
     0.01,
     0.2,
-    0.4,
 ]
-WFH_SEEDS = [10_000 * i for i in range(30)]
+WFH_SEEDS = [10_000 * i for i in range(2)]
 for name, additional_work_from_home in zip(WFH_SCENARIO_NAMES, WFH_SCENARIO_VALUES):
     for seed in WFH_SEEDS:
         path = BLD / "simulations" / "work_from_home" / f"{name}_{seed}" / "time_series"

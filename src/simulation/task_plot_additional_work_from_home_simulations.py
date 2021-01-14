@@ -105,7 +105,8 @@ def _plot_incidences(incidences, n_single_runs, title):
     fig, ax = plt.subplots(figsize=(5, 3))
     name_to_label = {
         "baseline": "Geschätzter Home Office Anteil",
-        "1pct_more": "1 weiteres Prozent der Arbeiter im Home Office",
+        "1_pct_more": "1 weiteres Prozent der Arbeiter im Home Office",
+        "return_to_1st_lockdown": "Bei gleichem Anteil Home Office wie im 1. Lockdown",
     }
     for name, color in zip(incidences, colors):
         df = incidences[name]
