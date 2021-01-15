@@ -8,7 +8,7 @@ Summary of data on work from home:
 
 .. warning::
     Remember, we assume essential workers always go to work.
-    Our work multiplier the share of non-essential workers who still have work
+    Our work multiplier is the share of non-essential workers who still have work
     contacts.
 
 Our baseline (see ``_get_work_from_home_policies``):
@@ -78,7 +78,8 @@ for name, additional_work_from_home in zip(WFH_SCENARIO_NAMES, WFH_SCENARIO_VALU
         / "processed_time_series"
         / "share_known_cases.pkl",
         "params": SRC / "simulation" / "estimated_params.pkl",
-        "contact_models": SRC / "contact_models" / "get_contact_models.py",
+        "policy_py": SRC / "policies" / "combine_policies_over_periods.py",
+        "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     }
 )
 @pytask.mark.parametrize(
@@ -215,3 +216,47 @@ def _get_work_from_home_policies(contact_models, additional_work_from_home):
     ]
 
     return combine_dictionaries(to_combine)
+
+
+def _calculate_work_multiplier_accounting_for_essential_workers(
+    participation_multiplier, hygiene_multiplier
+):
+    """Calculate the work_multiplier from the participation and hygiene multiplier.
+
+    This assumes the share of essential workers is 0.33.
+
+    Derivation:
+        The work_multiplier is implemented as the share of non-systemically
+        relevant workers that go to work and have (full risk) work contacts.
+        Who goes to work is independent of how many work contacts someone has.
+
+        => the work_multiplier can be interpreted as the share of (full risk)
+           contacts that take place among the non-systemically relevant workers.
+
+        => share_risk_contacts_still_happening = 0.33 + 0.66 * work_multiplier
+
+        Another way to look at it is:
+
+            share_risk_contacts_still_happening =
+                participation_multiplier * hygiene_multiplier
+
+        Combining the two ways of writing this, we get:
+
+        0.33 + 0.66 * work_multiplier = participation_multiplier * hygiene_multiplier
+
+        <=> 0.66 * work_multiplier =
+                (participation_multiplier * hygiene_multiplier) - 0.33
+        <=> work_multiplier =
+                1.5 * (participation_multiplier * hygiene_multiplier) - 0.5
+
+
+    Args:
+        participation_multiplier (float)
+        hygiene_multiplier (float)
+
+    Returns:
+        work_multiplier (float)
+
+    """
+    work_multiplier = 1.5 * (participation_multiplier * hygiene_multiplier) - 0.5
+    return work_multiplier
