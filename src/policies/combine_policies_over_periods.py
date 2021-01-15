@@ -13,19 +13,17 @@ from src.policies.single_policy_functions import (
 
 
 def get_estimation_policies(contact_models):
-    """Get policies from July to December 20th."""
     reopening_start_multipliers = {"educ": 0.8, "work": 0.55, "other": 0.45}
     reopening_end_multipliers = {"educ": 0.8, "work": 0.95, "other": 0.7}
-    anticipate_lockdown_multipliers = {"educ": 0.8, "work": 0.6, "other": 0.5}
+    anticipate_lockdown_multipliers = {"educ": 0.8, "work": 0.55, "other": 0.5}
     lockdown_light_multipliers = {"educ": 0.6, "work": 0.45, "other": 0.4}
-    ### NOT USED IN FITNESS PLOTS NOTEBOOK!
-    lockdown_light_multipliers_with_fatigue = {"educ": 0.6, "work": 0.45, "other": 0.5}
+    lockdown_light_multipliers_with_fatigue = {"educ": 0.6, "work": 0.45, "other": 0.50}
     to_combine = [
         get_german_reopening_phase(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-07-01",
-                "end_date": "2020-10-25",
+                "end_date": "2020-10-22",
                 "prefix": "reopening",
             },
             start_multipliers=reopening_start_multipliers,
@@ -35,7 +33,7 @@ def get_estimation_policies(contact_models):
         get_soft_lockdown(
             contact_models=contact_models,
             block_info={
-                "start_date": "2020-10-26",
+                "start_date": "2020-10-23",
                 "end_date": "2020-11-01",
                 "prefix": "anticipate_lockdown_light",
             },
@@ -50,17 +48,14 @@ def get_estimation_policies(contact_models):
             },
             multipliers=lockdown_light_multipliers,
         ),
-        ### THE FOLLOWING IS DIFFERENT FROM OUR CHRISTMAS SCENARIO POLICIES!
-        ### -> ADJUST ONE / THE OTHER?
-        ### -> PROBABLY SHOULDN'T OVERLAP
         get_soft_lockdown(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-11-23",
-                "end_date": "2020-12-20",
+                "end_date": "2020-12-15",
                 "prefix": "lockdown_light_with_fatigue",
             },
-            multipliers=lockdown_light_multipliers,
+            multipliers=lockdown_light_multipliers_with_fatigue,
         ),
     ]
 
@@ -74,6 +69,7 @@ def get_december_to_feb_policies(
     path=None,
 ):
     """Get policies from December 2020 to February 2021.
+
     Args:
         contact_models (dict): sid contact model dictionary.
         contact_tracing_multiplier (float, optional):
@@ -85,8 +81,10 @@ def get_december_to_feb_policies(
         scenario (str): One of "optimistic", "pessimistic"
         path (str or pathlib.Path): Path to a folder in which information on the
             contact tracing is stored.
+
     Returns:
         policies (dict): policies dictionary.
+
     """
     if scenario == "optimistic":
         hard_lockdown_work_multiplier = 0.3
