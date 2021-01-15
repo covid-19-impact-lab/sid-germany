@@ -9,6 +9,9 @@ from sid.colors import get_colors
 
 from src.config import BLD
 from src.config import SRC
+from src.contact_models.get_contact_models import get_all_contact_models
+from src.policies.combine_policies_over_periods import get_estimation_policies
+
 
 plt.rcParams.update(
     {
@@ -22,13 +25,18 @@ sns.set_palette(get_colors("categorical", 12))
 
 
 @pytask.mark.depends_on(
-    {"data": SRC / "original_data" / "google_mobility_2021-01-08_DE.csv"}
+    {
+        "data": SRC / "original_data" / "google_mobility_2021-01-08_DE.csv",
+        "policy_py": SRC / "policies" / "combine_policies_over_periods.py",
+        "contacts_py": SRC / "contact_models" / "get_contact_models.py",
+    }
 )
 @pytask.mark.produces(
     {
         "by_state": BLD / "policies" / "work_mobility_reduction_by_state.png",
         "de": BLD / "policies" / "work_mobility_reduction_aggregated.png",
         "de_weekdays": BLD / "policies" / "work_mobility_reduction_only_weekdays.png",
+        "decomposition_table": BLD / "policies" / "decomposition_table.csv",
     }
 )
 def task_decompose_work_multiplier(depends_on, produces):
@@ -37,16 +45,58 @@ def task_decompose_work_multiplier(depends_on, produces):
     fig, ax = _visualize_reductions_by_state(df)
     fig.savefig(produces["by_state"], dpi=200, transparent=False, facecolor="w")
 
-    # only whole of Germany
-    df = df[df["sub_region_1"].isnull()]
-    df["workplaces_smoothed"] = df["workplaces"].rolling(window=7).mean()
-    assert not df["date"].duplicated().any()
-    fig, ax = _plot_time_series(df, y="workplaces", x="date")
+    de_df = df[df["sub_region_1"].isnull()]  # only whole of Germany
+    de_df["workplaces_smoothed"] = de_df["workplaces"].rolling(window=7).mean()
+    assert not de_df["date"].duplicated().any()
+    fig, ax = _plot_time_series(de_df, y="workplaces", x="date")
     fig.savefig(produces["de"], dpi=200, transparent=False, facecolor="w")
 
-    work_days = df[~df["date"].dt.day_name().isin(["Saturday", "Sunday"])]
+    work_days = de_df[~de_df["date"].dt.day_name().isin(["Saturday", "Sunday"])]
     fig, ax = _plot_time_series(work_days)
     fig.savefig(produces["de_weekdays"], dpi=200, transparent=False, facecolor="w")
+
+    contact_models = get_all_contact_models(None, None)
+    policies = get_estimation_policies(contact_models=contact_models)
+    google_data = work_days.set_index("date")
+
+    decomposition = _build_decomposition_table(
+        policies=policies, google_data=google_data
+    )
+    decomposition.to_csv(produces["decomposition_table"])
+
+
+def _build_decomposition_table(policies, google_data):
+    cols = [
+        "period",
+        "contact_type",
+        "work_multiplier",
+        "participation_multiplier",
+        "hygiene_multiplier",
+    ]
+    df = pd.DataFrame(columns=cols).set_index(["period", "contact_type"])
+
+    for name, policy_block in policies.items():
+        if "work" in name:
+            kwargs = policy_block["policy"].keywords
+            if "multiplier" in kwargs:
+                (
+                    participation_multiplier,
+                    hygiene_multiplier,
+                ) = decompose_work_multiplier(
+                    google_data=google_data,
+                    work_multiplier=kwargs["multiplier"],
+                    start_date=policy_block["start"],
+                    end_date=policy_block["end"],
+                )
+                row = pd.Series(
+                    {
+                        "work_multiplier": kwargs["multiplier"],
+                        "participation_multiplier": participation_multiplier,
+                        "hygiene_multiplier": hygiene_multiplier,
+                    }
+                )
+                df.loc[(tuple(name.split("_work_"))), :] = row
+    return df
 
 
 def _prepare_mobility_data(df):
@@ -105,7 +155,8 @@ def decompose_work_multiplier(work_multiplier, start_date, end_date, google_data
 
     """
     data = google_data.loc[start_date:end_date]
-    participation_multiplier = 1 - data["workplaces"].mean() / 100
+    mobility_increase_to_baseline = data["workplaces"].mean() / 100
+    participation_multiplier = 1 + mobility_increase_to_baseline
     hygiene_multiplier = (0.33 + 0.66 * work_multiplier) / participation_multiplier
     return participation_multiplier, hygiene_multiplier
 
