@@ -9,45 +9,32 @@ from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
 from src.policies.combine_policies_over_periods import get_december_to_feb_policies
-
+from src.simulation.spec_christmas_scenarios import CARTESIAN_PRODUCT
+from src.simulation.spec_christmas_scenarios import create_output_path_for_simulation
+from src.simulation.spec_christmas_scenarios import create_path_to_last_states
 
 SIMULATION_START = pd.Timestamp("2020-12-02")
 INITIAL_START = SIMULATION_START - pd.Timedelta(days=31)
 SIMULATION_END = pd.Timestamp("2021-01-08")
 
 
-def create_christmas_parametrization():
-    parametrizations = []
-    for scenario in ["optimistic", "pessimistic"]:
-        for christmas_mode in ["full", "same_group"]:
-            for contact_tracing_multiplier in [None, 0.5, 0.1]:
-                ctm_str = (
-                    "wo_ct"
-                    if contact_tracing_multiplier is None
-                    else f"w_ct_{str(contact_tracing_multiplier).replace('.', '_')}"
-                )
-                path = (
-                    BLD / "simulation" / f"simulation_christmas_mode_{christmas_mode}_"
-                    f"{ctm_str}_{scenario}"
-                )
-                produces = path / "time_series"
+def _create_christmas_parametrization():
+    """Create the parametrization for the simulation of the Christmas scenarios.
 
-                single_run = (
-                    christmas_mode,
-                    contact_tracing_multiplier,
-                    scenario,
-                    path,
-                    produces,
-                )
+    Returns:
+        out (list): List of specification tuples. Each tuple is composed of:
+            (scenario, christmas_mode, contact_tracing_multiplier, path, produces).
+            path is the directory where sid saves all results.
+            produces is the path to the last states.
 
-                parametrizations.append(single_run)
+    """
+    paths = [create_output_path_for_simulation(*args) for args in CARTESIAN_PRODUCT]
+    produces = [create_path_to_last_states(*args) for args in CARTESIAN_PRODUCT]
 
-    return parametrizations
+    return zip(*zip(*CARTESIAN_PRODUCT), paths, produces)
 
 
-PARAMETRIZATIONS = create_christmas_parametrization()
-
-
+@pytask.mark.persist
 @pytask.mark.depends_on(
     {
         "params": BLD / "start_params.pkl",
@@ -65,11 +52,11 @@ PARAMETRIZATIONS = create_christmas_parametrization()
     }
 )
 @pytask.mark.parametrize(
-    "christmas_mode, contact_tracing_multiplier, scenario, path, produces",
-    PARAMETRIZATIONS,
+    "scenario, christmas_mode, contact_tracing_multiplier, path, produces",
+    _create_christmas_parametrization(),
 )
 def task_simulation_christmas_scenarios(
-    depends_on, christmas_mode, contact_tracing_multiplier, scenario, path
+    depends_on, scenario, christmas_mode, contact_tracing_multiplier, path
 ):
 
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])

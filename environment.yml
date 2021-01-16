@@ -14,7 +14,7 @@ dependencies:
   - black
   - dask
   - estimagic>=0.1.0dev2
-  - fastparquet
+  - fastparquet<0.5
   - jupyterlab
   - nodejs
   - numba
@@ -22,7 +22,7 @@ dependencies:
   - pandas>=1,<1.1
   - pdbpp
   - pre-commit
-  - pytask >=0.0.9
+  - pytask>=0.0.9
   - pytask-parallel
   - pytask-latex
   - pytest
@@ -31,9 +31,9 @@ dependencies:
   - seaborn
   - snakeviz
   - xlrd
+  - virtualenv=20.0.33
 
   - sphinx
-  - pydata-sphinx-theme
   - nbsphinx
   - pip:
     - DFO-LS
