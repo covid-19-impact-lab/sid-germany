@@ -47,6 +47,7 @@ NAME_TO_LABEL = {
 }
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(SIMULATIONS)
 @pytask.mark.produces(PRODUCTS)
 def task_plot_effect_of_private_contact_tracing(depends_on, produces):

@@ -48,6 +48,7 @@ def create_christmas_parametrization():
 PARAMETRIZATIONS = create_christmas_parametrization()
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(
     {
         "params": BLD / "start_params.pkl",
