@@ -41,6 +41,8 @@ from src.policies.full_policy_blocks import get_german_reopening_phase
 from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 
+WFH_SEEDS = [10_000 * i for i in range(10)]
+
 WFH_PARAMETRIZATION = []
 WFH_SCENARIO_NAMES = [
     "baseline",
@@ -52,7 +54,6 @@ WFH_WORK_MULTIPLIER_REDUCTIONS = [
     0.2,
     0.3,
 ]
-WFH_SEEDS = [10_000 * i for i in range(2)]  ###
 for name, wfh_reduction in zip(WFH_SCENARIO_NAMES, WFH_WORK_MULTIPLIER_REDUCTIONS):
     for seed in WFH_SEEDS:
         path = BLD / "simulations" / "work_from_home" / f"{name}_{seed}" / "time_series"
@@ -62,7 +63,7 @@ for name, wfh_reduction in zip(WFH_SCENARIO_NAMES, WFH_WORK_MULTIPLIER_REDUCTION
 
 @pytask.mark.depends_on(
     {
-        "initial_states": BLD / "data" / "debug_initial_states.parquet",  ###
+        "initial_states": BLD / "data" / "initial_states.parquet",
         "share_known_cases": BLD
         / "data"
         / "processed_time_series"

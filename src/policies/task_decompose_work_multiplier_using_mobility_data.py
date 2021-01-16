@@ -26,7 +26,7 @@ sns.set_palette(get_colors("categorical", 12))
 
 @pytask.mark.depends_on(
     {
-        "data": SRC / "original_data" / "google_mobility_2021-01-08_DE.csv",
+        "data": SRC / "original_data" / "google_mobility_2021-01-14_DE.csv",
         "policy_py": SRC / "policies" / "combine_policies_over_periods.py",
         "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     }
@@ -37,6 +37,7 @@ sns.set_palette(get_colors("categorical", 12))
         "de": BLD / "policies" / "work_mobility_reduction_aggregated.png",
         "de_weekdays": BLD / "policies" / "work_mobility_reduction_only_weekdays.png",
         "decomposition_table": BLD / "policies" / "decomposition_table.csv",
+        "work_days": BLD / "policies" / "google_workday_data.csv",
     }
 )
 def task_decompose_work_multiplier(depends_on, produces):
@@ -52,6 +53,7 @@ def task_decompose_work_multiplier(depends_on, produces):
     fig.savefig(produces["de"], dpi=200, transparent=False, facecolor="w")
 
     work_days = de_df[~de_df["date"].dt.day_name().isin(["Saturday", "Sunday"])]
+    work_days.to_csv(produces["work_days"])
     fig, ax = _plot_time_series(work_days)
     fig.savefig(produces["de_weekdays"], dpi=200, transparent=False, facecolor="w")
 
