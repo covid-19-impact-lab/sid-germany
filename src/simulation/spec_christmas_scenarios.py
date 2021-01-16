@@ -14,13 +14,6 @@ CARTESIAN_PRODUCT = list(
 )
 
 
-def create_christmas_parametrization():
-    paths = [create_output_path_for_simulation(*args) for args in CARTESIAN_PRODUCT]
-    produces = [create_path_to_last_states(*args) for args in CARTESIAN_PRODUCT]
-
-    return zip(*zip(*CARTESIAN_PRODUCT), paths, produces)
-
-
 def create_output_path_for_simulation(
     scenario, christmas_mode, contact_tracing_multiplier
 ):

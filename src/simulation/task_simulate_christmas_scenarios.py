@@ -9,12 +9,28 @@ from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
 from src.policies.combine_policies_over_periods import get_december_to_feb_policies
-from src.simulation.spec_christmas_scenarios import create_christmas_parametrization
-
+from src.simulation.spec_christmas_scenarios import create_output_path_for_simulation, CARTESIAN_PRODUCT, \
+    create_path_to_last_states
 
 SIMULATION_START = pd.Timestamp("2020-12-02")
 INITIAL_START = SIMULATION_START - pd.Timedelta(days=31)
 SIMULATION_END = pd.Timestamp("2021-01-08")
+
+
+def _create_christmas_parametrization():
+    """Create the parametrization for the simulation of the Christmas scenarios.
+
+    Returns:
+        out (list): List of specification tuples. Each tuple is composed of:
+            (scenario, christmas_mode, contact_tracing_multiplier, path, produces).
+            path is the directory where sid saves all results.
+            produces is the path to the last states.
+
+    """
+    paths = [create_output_path_for_simulation(*args) for args in CARTESIAN_PRODUCT]
+    produces = [create_path_to_last_states(*args) for args in CARTESIAN_PRODUCT]
+
+    return zip(*zip(*CARTESIAN_PRODUCT), paths, produces)
 
 
 @pytask.mark.depends_on(
@@ -35,7 +51,7 @@ SIMULATION_END = pd.Timestamp("2021-01-08")
 )
 @pytask.mark.parametrize(
     "scenario, christmas_mode, contact_tracing_multiplier, path, produces",
-    create_christmas_parametrization(),
+    _create_christmas_parametrization(),
 )
 def task_simulation_christmas_scenarios(
     depends_on, scenario, christmas_mode, contact_tracing_multiplier, path
