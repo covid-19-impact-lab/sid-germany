@@ -10,6 +10,12 @@ from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
 from src.simulation.task_simulate_additional_work_from_home import WFH_SCENARIO_NAMES
 from src.simulation.task_simulate_additional_work_from_home import WFH_SEEDS
+from src.simulation.task_simulate_additional_work_from_home_future import (
+    FUTURE_WFH_SCENARIO_NAMES,
+)
+from src.simulation.task_simulate_additional_work_from_home_future import (
+    FUTURE_WFH_SEEDS,
+)
 
 
 plt.rcParams.update(
@@ -46,6 +52,44 @@ def task_plot_work_from_home_simulations(depends_on, outcome, title, produces):
     # load simulation runs
     results = {}
     for name in WFH_SCENARIO_NAMES:
+        result_paths = [path for path in depends_on.values() if name in str(path)]
+        results[name] = [dd.read_parquet(path) for path in result_paths]
+
+    # calculate incidences
+    incidences = {}
+    for name, simulation_runs in results.items():
+        incidences[name] = _weekly_incidences_from_results(simulation_runs, outcome)
+
+    fig, ax = _plot_incidences(incidences, 15, title)
+    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+
+
+WFH_FUTURE_SIMULATION_PATHS = [
+    BLD / "simulations" / "work_from_home_future" / f"{name}_{seed}" / "time_series"
+    for name in FUTURE_WFH_SCENARIO_NAMES
+    for seed in FUTURE_WFH_SEEDS
+]
+
+WFH_PLOT_PARAMETRIZATION = [
+    (
+        "new_known_case",
+        "Beobachtete Inzidenz",
+        BLD / "simulations" / "work_from_home_future" / "reported.png",
+    ),
+    (
+        "newly_infected",
+        "Tatsächliche Inzidenz",
+        BLD / "simulations" / "work_from_home_future" / "all_infected.png",
+    ),
+]
+
+
+@pytask.mark.depends_on(WFH_FUTURE_SIMULATION_PATHS)
+@pytask.mark.parametrize("outcome, title, produces", WFH_PLOT_PARAMETRIZATION)
+def task_plot_work_from_home_future_simulations(depends_on, outcome, title, produces):
+    # load simulation runs
+    results = {}
+    for name in FUTURE_WFH_SCENARIO_NAMES:
         result_paths = [path for path in depends_on.values() if name in str(path)]
         results[name] = [dd.read_parquet(path) for path in result_paths]
 
