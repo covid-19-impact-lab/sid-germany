@@ -77,7 +77,7 @@ def _calculate_share_known_cases(df):
 
     last_available_date = share_known_cases.index.max()
     last_share = share_known_cases[last_available_date]
-    extrapolation_end_date = last_available_date + pd.Timedelta(weeks=6)
+    extrapolation_end_date = last_available_date + pd.Timedelta(weeks=8)
     six_weeks_into_future = pd.date_range(
         start=last_available_date, end=extrapolation_end_date, closed="right"
     )
