@@ -9,8 +9,9 @@ from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
 from src.policies.combine_policies_over_periods import get_december_to_feb_policies
-from src.simulation.spec_christmas_scenarios import create_output_path_for_simulation, CARTESIAN_PRODUCT, \
-    create_path_to_last_states
+from src.simulation.spec_christmas_scenarios import CARTESIAN_PRODUCT
+from src.simulation.spec_christmas_scenarios import create_output_path_for_simulation
+from src.simulation.spec_christmas_scenarios import create_path_to_last_states
 
 SIMULATION_START = pd.Timestamp("2020-12-02")
 INITIAL_START = SIMULATION_START - pd.Timedelta(days=31)
@@ -33,6 +34,7 @@ def _create_christmas_parametrization():
     return zip(*zip(*CARTESIAN_PRODUCT), paths, produces)
 
 
+@pytask.mark.persist
 @pytask.mark.depends_on(
     {
         "params": BLD / "start_params.pkl",
