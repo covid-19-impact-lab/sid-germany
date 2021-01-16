@@ -68,29 +68,31 @@ def _calculate_share_known_cases(df):
     df = df.rename(columns={"gemeldet": "known", "ungemeldet": "undetected"})
     df["total"] = df.sum(axis=1)
     share_known_cases = df["known"] / df["total"]
-    min_share_until_june = share_known_cases[:"2020-06-01"].min()
+    min_share_until_june = share_known_cases[: pd.Timestamp("2020-06-01")].min()
     start_date = share_known_cases.index.min()
     jan_until_start = pd.date_range(start="2020-01-01", end=start_date, closed="left")
     extrapolated_share_before_start = pd.Series(
         min_share_until_june, index=jan_until_start
     )
 
-    last_share = share_known_cases[-1]
-    end_until_feb = pd.date_range(
-        start=share_known_cases.index.max(), end="2021-02-01", closed="right"
+    last_available_date = share_known_cases.index.max()
+    last_share = share_known_cases[last_available_date]
+    extrapolation_end_date = last_available_date + pd.Timedelta(weeks=6)
+    six_weeks_into_future = pd.date_range(
+        start=last_available_date, end=extrapolation_end_date, closed="right"
     )
-    extrapolated_until_feb = pd.Series(last_share, index=end_until_feb)
-    extrapolated_until_feb["2020-12-23":"2020-12-26"] *= 0.25
+    extrapolated_into_future = pd.Series(last_share, index=six_weeks_into_future)
 
     to_concat = [
         extrapolated_share_before_start,
         share_known_cases,
-        extrapolated_until_feb,
+        extrapolated_into_future,
     ]
     share_known_cases = pd.concat(to_concat).sort_index()
     assert not share_known_cases.index.duplicated().any()
     assert (
-        share_known_cases.index == pd.date_range(start="2020-01-01", end="2021-02-01")
+        share_known_cases.index
+        == pd.date_range(start="2020-01-01", end=extrapolation_end_date)
     ).all()
     return share_known_cases
 
