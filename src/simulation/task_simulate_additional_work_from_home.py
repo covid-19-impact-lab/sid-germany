@@ -1,25 +1,11 @@
 """Simulate different work from home (WFH) scenarios for November to mid December.
 
 Summary of data on work from home:
-    1. approx. 56% of workers could work from home.
-    2. 27-45% (midpoint: 36%) of workers worked from home during the 1st lockdown.
-    3. in June only 16-28% worked from home.
-    4. in November and December only 14-17% worked from home.
-
-The 2nd scenario is a return to the 1st lockdown. Then ~35% of workers
-worked from home. Assuming 4.5% did not work for other reasons (restaurants...),
-we get a stay_home_share = 0.40.
-
-The 3rd scenario is fully exploiting the work from home potential of 56% plus
-approx. 4.5% of employees staying home because of closed businesses we arrive at
-a stay_home_share = 0.60.
+    1. in November and December only 14-17% worked from home.
+    2. 25-35% of workers worked from home during the 1st lockdown.
+    3. approx. 56% of workers could work from home.
 
 work_multiplier = (1 - stay_home_share * 1.5) * 0.95
-
-Thus, our work_multipliers are:
-
-"1st_lockdown": 0.4 * 0.95
-"full_potential": 0.1 * 0.95
 
 """
 import pandas as pd
@@ -35,18 +21,22 @@ from src.create_initial_states.create_initial_conditions import (  # noqa
 from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 
-WFH_SEEDS = [10_000 * i for i in range(8)]
+WFH_SEEDS = [1_000_000 * i for i in range(24)]
 
 WFH_PARAMETRIZATION = []
 WFH_SCENARIO_NAMES = [
     "baseline",
-    "1st_lockdown",
+    "1_pct_more",
+    "1st_lockdown_weak",
+    "1st_lockdown_strict",
     "full_potential",
 ]
 WFH_WORK_MULTIPLIERS = [
     (0.73, 0.76),
-    (0.4, 0.4),
-    (0.1, 0.1),
+    (0.715, 0.745),  # 1 pct more
+    (0.625, 0.625),  # 1st lockdown weak
+    (0.475, 0.475),  # 1st lockdown strict
+    (0.1, 0.1),  # full potential
 ]
 for name, work_multipliers in zip(WFH_SCENARIO_NAMES, WFH_WORK_MULTIPLIERS):
     for seed in WFH_SEEDS:
