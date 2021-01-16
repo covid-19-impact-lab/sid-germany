@@ -45,7 +45,7 @@ def task_decompose_work_multiplier(depends_on, produces):
     fig, ax = _visualize_reductions_by_state(df)
     fig.savefig(produces["by_state"], dpi=200, transparent=False, facecolor="w")
 
-    de_df = df[df["sub_region_1"].isnull()]  # only whole of Germany
+    de_df = df[df["sub_region_1"].isnull()].copy()  # only whole of Germany
     de_df["workplaces_smoothed"] = de_df["workplaces"].rolling(window=7).mean()
     assert not de_df["date"].duplicated().any()
     fig, ax = _plot_time_series(de_df, y="workplaces", x="date")
