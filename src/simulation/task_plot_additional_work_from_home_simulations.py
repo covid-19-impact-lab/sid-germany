@@ -102,7 +102,7 @@ def _plot_incidences(incidences, n_single_runs, title):
 
     """
     colors = get_colors("ordered", len(incidences))
-    fig, ax = plt.subplots(figsize=(5, 3))
+    fig, ax = plt.subplots(figsize=(6, 4))
     name_to_label = {
         "baseline": "Baseline",
         "1_pct_more": "1 weiteres Prozent der Arbeiter im Home Office",
@@ -140,6 +140,7 @@ def _plot_incidences(incidences, n_single_runs, title):
     ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
     ax.grid(axis="y")
     ax.set_title(title)
+    ax.legend(loc="upper center", bbox_to_anchor=(-0.1, -0.5, 1, 0.2))
     fig.tight_layout()
 
     return fig, ax
