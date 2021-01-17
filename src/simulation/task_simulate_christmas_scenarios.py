@@ -56,7 +56,7 @@ PARAMETRIZATIONS = create_christmas_parametrization()
         "share_known_cases": BLD
         / "data"
         / "processed_time_series"
-        / "share_known_cases_until_christmas.pkl",
+        / "share_known_cases.pkl",
         "initial_states": BLD / "data" / "initial_states.parquet",
         "contact_model_functions": SRC
         / "contact_models"

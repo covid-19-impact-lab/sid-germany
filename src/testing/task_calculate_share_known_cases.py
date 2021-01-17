@@ -21,14 +21,10 @@ from src.config import SRC
 )
 @pytask.mark.produces(
     {
-        "share_known_cases_until_christmas": BLD
+        "share_known_cases": BLD
         / "data"
         / "processed_time_series"
-        / "share_known_cases_until_christmas.pkl",
-        "share_known_cases_since_christmas": BLD
-        / "data"
-        / "processed_time_series"
-        / "share_known_cases_since_christmas.pkl",
+        / "share_known_cases.pkl",
         "share_known_cases_fig": BLD
         / "data"
         / "processed_time_series"
@@ -37,20 +33,16 @@ from src.config import SRC
 )
 def task_calculate_and_plot_share_known_cases(depends_on, produces):
     df_old = pd.read_csv(depends_on["old"])
-    old_share_known = _calculate_share_known_cases(df_old)
-    share_known_until_christmas = old_share_known[:"2020-12-24"]
-    share_known_until_christmas.to_pickle(produces["share_known_cases_until_christmas"])
+    old_share_known = _calculate_share_known_cases(df_old)[:"2020-12-24"]
 
     df_new = pd.read_csv(depends_on["new"])
-    new_share_known = _calculate_share_known_cases(df_new)
-    share_known_since_christmas = new_share_known["2021-01-01":]
-    share_known_since_christmas.to_pickle(produces["share_known_cases_since_christmas"])
+    new_share_known = _calculate_share_known_cases(df_new)["2020-12-25":]
+    share_known = pd.concat([old_share_known, new_share_known])
+    assert not share_known.index.duplicated().any()
+    share_known.to_pickle(produces["share_known_cases"])
 
-    share_known_cases = pd.concat(
-        [share_known_until_christmas, share_known_since_christmas]
-    )
-
-    fig, ax = _plot_time_series(share_known_cases, title="Share of Known Cases")
+    fig, ax = _plot_time_series(share_known, title="Share of Known Cases")
+    ax.axvline(pd.Timestamp("2020-12-24"))
     fig.savefig(produces["share_known_cases_fig"])
 
 

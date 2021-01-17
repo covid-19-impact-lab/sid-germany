@@ -59,7 +59,7 @@ for name, work_multipliers in zip(WFH_SCENARIO_NAMES, WFH_WORK_MULTIPLIERS):
         "share_known_cases": BLD
         / "data"
         / "processed_time_series"
-        / "share_known_cases_until_christmas.pkl",
+        / "share_known_cases.pkl",
         "params": SRC / "simulation" / "estimated_params.pkl",
         "policy_py": SRC / "policies" / "combine_policies_over_periods.py",
         "contacts_py": SRC / "contact_models" / "get_contact_models.py",
