@@ -129,6 +129,7 @@ def _weekly_incidences_from_results(results, outcome):
                 outcome=outcome,
                 take_logs=False,
                 window=7,
+                center=False,
             )
             * 7
         )

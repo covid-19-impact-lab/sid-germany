@@ -29,7 +29,7 @@ from src.create_initial_states.create_initial_conditions import (  # noqa
 from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 
-WFH_SEEDS = [1_000_000 * i for i in range(4)]
+WFH_SEEDS = [1_000_000 * i for i in range(24)]
 
 WFH_PARAMETRIZATION = []
 WFH_SCENARIO_NAMES = [
