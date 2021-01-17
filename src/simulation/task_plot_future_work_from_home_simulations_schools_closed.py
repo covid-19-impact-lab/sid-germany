@@ -9,10 +9,10 @@ from src.simulation.task_plot_additional_work_from_home_simulations import (
 from src.simulation.task_plot_additional_work_from_home_simulations import (
     weekly_incidences_from_results,
 )
-from src.simulation.task_simulate_additional_work_from_home_future_schools_open import (
+from src.simulation.task_simulate_additional_work_from_home_future_schools_closed import (  # noqa: E501
     FUTURE_WFH_SCENARIO_NAMES,
 )
-from src.simulation.task_simulate_additional_work_from_home_future_schools_open import (
+from src.simulation.task_simulate_additional_work_from_home_future_schools_closed import (  # noqa: E501
     FUTURE_WFH_SEEDS,
 )
 
@@ -29,7 +29,7 @@ plt.rcParams.update(
 WFH_FUTURE_SIMULATION_PATHS = [
     BLD
     / "simulations"
-    / "work_from_home_future_schools_open"
+    / "work_from_home_future_schools_closed"
     / f"{name}_{seed}"
     / "time_series"
     for name in FUTURE_WFH_SCENARIO_NAMES
@@ -39,7 +39,7 @@ WFH_FUTURE_SIMULATION_PATHS = [
 reported_series = {
     name: BLD
     / "simulations"
-    / "work_from_home_future_schools_open"
+    / "work_from_home_future_schools_closed"
     / f"{name}_reported.pkl"
     for name in FUTURE_WFH_SCENARIO_NAMES
 }
@@ -47,7 +47,7 @@ reported_series = {
 all_infected_series = {
     name: BLD
     / "simulations"
-    / "work_from_home_future_schools_open"
+    / "work_from_home_future_schools_closed"
     / f"{name}_all_infected.pkl"
     for name in FUTURE_WFH_SCENARIO_NAMES
 }
@@ -60,7 +60,7 @@ WFH_PLOT_PARAMETRIZATION = [
         {
             "fig": BLD
             / "simulations"
-            / "work_from_home_future_schools_open"
+            / "work_from_home_future_schools_closed"
             / "reported.png",
             **reported_series,
         },
@@ -71,7 +71,7 @@ WFH_PLOT_PARAMETRIZATION = [
         {
             "fig": BLD
             / "simulations"
-            / "work_from_home_future_schools_open"
+            / "work_from_home_future_schools_closed"
             / "all_infected.png",
             **all_infected_series,
         },
@@ -81,7 +81,7 @@ WFH_PLOT_PARAMETRIZATION = [
 
 @pytask.mark.depends_on(WFH_FUTURE_SIMULATION_PATHS)
 @pytask.mark.parametrize("outcome, title, produces", WFH_PLOT_PARAMETRIZATION)
-def task_plot_work_from_home_schools_open_future_simulations(
+def task_plot_work_from_home_schools_closed_future_simulations(
     depends_on, outcome, title, produces
 ):
     # load simulation runs

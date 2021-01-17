@@ -19,8 +19,8 @@ from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
-from src.policies.full_policy_blocks import get_soft_lockdown
-from src.policies.policy_tools import combine_dictionaries
+from src.simulation.get_future_policies import get_future_policies
+
 
 # ----------------------- To be configured ------------------------------
 
@@ -54,7 +54,7 @@ for name, work_multiplier, other_multiplier in zip(
         path = (
             BLD
             / "simulations"
-            / "work_from_home_future"
+            / "work_from_home_future_schools_open"
             / f"{name}_{seed}"
             / "time_series"
         )
@@ -70,7 +70,6 @@ for name, work_multiplier, other_multiplier in zip(
         / "processed_time_series"
         / "share_known_cases.pkl",
         "params": SRC / "simulation" / "estimated_params.pkl",
-        "work_days": BLD / "policies" / "google_workday_data.csv",
         "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     }
 )
@@ -86,8 +85,6 @@ def task_simulate_work_from_home_scenario(
     initial_states = pd.read_parquet(depends_on["initial_states"])
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
     params = pd.read_pickle(depends_on["params"])
-    google_data = pd.read_csv(depends_on["work_days"])
-    google_data.index = pd.DatetimeIndex(google_data["date"])
 
     initial_conditions = create_initial_conditions(
         start=init_start,
@@ -99,10 +96,11 @@ def task_simulate_work_from_home_scenario(
     contact_models = get_all_contact_models(
         christmas_mode=None, n_extra_contacts_before_christmas=None
     )
-    estimation_policies = _get_future_policies(
+    estimation_policies = get_future_policies(
         contact_models=contact_models,
         work_multiplier=work_multiplier,
         other_multiplier=other_multiplier,
+        schools_open=True,
     )
 
     simulate = get_simulate_func(
@@ -123,79 +121,3 @@ def task_simulate_work_from_home_scenario(
         },
     )
     simulate(params)
-
-
-def _get_future_policies(contact_models, work_multiplier, other_multiplier):
-    """Get future policy scenario.
-
-    Args:
-        contact_models (dict)
-        work_multiplier (float): work multiplier used starting January 12th
-        other_multiplier (float): other multiplier used starting January 12th
-
-    Returns:
-        policies (dict):
-
-    """
-    to_combine = [
-        get_soft_lockdown(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2021-01-04",
-                "end_date": "2021-01-11",
-                "prefix": "after-christmas-vacation",
-            },
-            multipliers={
-                "educ": 0.0,
-                # google mobility data says work mobility -40%
-                "work": 0.95 * 0.4,
-                "other": other_multiplier,
-            },
-        ),
-        # schools reopen 1st of February
-        # BW: https://tinyurl.com/y2clplul
-        # BY: https://tinyurl.com/y49q2uys
-        # NRW: https://tinyurl.com/y4rlx37z
-        get_soft_lockdown(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2021-01-12",
-                "end_date": "2021-01-23",
-                "prefix": "mid_of_january",
-            },
-            multipliers={
-                "educ": 0.0,
-                # google mobility data from autumn vacation.
-                "work": 0.95 * 0.55,
-                "other": other_multiplier,
-            },
-        ),
-
-        get_soft_lockdown(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2021-01-24",
-                "end_date": "2021-01-31",
-                "prefix": "last_january_week",
-            },
-            multipliers={
-                "educ": 0.0,
-                "work": 0.95 * min(0.55, work_multiplier),
-                "other": other_multiplier,
-            },
-        ),
-        get_soft_lockdown(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2021-02-01",
-                "end_date": "2021-05-01",
-                "prefix": "from_feb_onward",
-            },
-            multipliers={
-                "educ": 0.6,
-                "work": 0.95 * work_multiplier,
-                "other": other_multiplier,
-            },
-        ),
-    ]
-    return combine_dictionaries(to_combine)
