@@ -21,7 +21,7 @@ from src.create_initial_states.create_initial_conditions import (  # noqa
 from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 
-WFH_SEEDS = [1_000_000 * i for i in range(24)]
+WFH_SEEDS = [1_000_000 * i for i in range(48)]
 
 WFH_PARAMETRIZATION = []
 WFH_SCENARIO_NAMES = [
@@ -59,7 +59,7 @@ for name, work_multipliers in zip(WFH_SCENARIO_NAMES, WFH_WORK_MULTIPLIERS):
 )
 @pytask.mark.parametrize("work_multipliers, seed, produces", WFH_PARAMETRIZATION)
 def task_simulate_work_from_home_scenario(depends_on, work_multipliers, seed, produces):
-    start_date = pd.Timestamp("2020-11-01")
+    start_date = pd.Timestamp("2020-10-01")
     end_date = pd.Timestamp("2020-12-15")
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
@@ -103,22 +103,46 @@ def task_simulate_work_from_home_scenario(depends_on, work_multipliers, seed, pr
 
 def _get_work_from_home_policies(contact_models, work_multipliers):
     """Get estimation policies from November to December 15th."""
-    lockdown_light_multipliers = {
-        "educ": 0.6,
-        "work": 0.95 * work_multipliers[0],
-        "other": 0.4,
-    }
-    lockdown_light_multipliers_with_fatigue = {
-        "educ": 0.6,
-        "work": 0.95 * work_multipliers[1],
-        "other": 0.50,
-    }
-
+    pre_fall_vacation_multipliers = {"educ": 0.8, "work": 0.775, "other": 0.75}
+    fall_vacation_multipliers = {"educ": 0.8, "work": 0.63, "other": 1.0}
+    post_fall_vacation_multipliers = {"educ": 0.8, "work": 0.775, "other": 0.65}
+    # anticipate_lockdown_multipliers = {"educ": 0.8, "work": 0.55, "other": 0.5}
+    lockdown_light_multipliers = {"educ": 0.6, "work": work_multipliers[0] * 0.95, "other": 0.45}
+    print(work_multipliers)
+    print(lockdown_light_multipliers)
+    lockdown_light_multipliers_with_fatigue = {"educ": 0.6, "work": work_multipliers[1] * 0.95, "other": 0.55}
     to_combine = [
         get_soft_lockdown(
             contact_models=contact_models,
             block_info={
-                "start_date": "2020-11-01",
+                "start_date": "2020-10-01",
+                "end_date": "2020-10-09",
+                "prefix": "pre_fall_vacation",
+            },
+            multipliers=pre_fall_vacation_multipliers,
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-10-10",
+                "end_date": "2020-10-23",
+                "prefix": "fall_vacation",
+            },
+            multipliers=fall_vacation_multipliers,
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-10-24",
+                "end_date": "2020-11-01",
+                "prefix": "post_fall_vacation",
+            },
+            multipliers=post_fall_vacation_multipliers,
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-11-02",
                 "end_date": "2020-11-22",
                 "prefix": "lockdown_light",
             },
@@ -128,11 +152,12 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-11-23",
-                "end_date": "2020-12-15",
+                "end_date": "2020-12-24",
                 "prefix": "lockdown_light_with_fatigue",
             },
             multipliers=lockdown_light_multipliers_with_fatigue,
         ),
     ]
+
 
     return combine_dictionaries(to_combine)
