@@ -53,6 +53,7 @@ for name, work_multipliers in zip(WFH_SCENARIO_NAMES, WFH_WORK_MULTIPLIERS):
         WFH_PARAMETRIZATION.append(spec)
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(
     {
         "initial_states": BLD / "data" / "initial_states.parquet",
