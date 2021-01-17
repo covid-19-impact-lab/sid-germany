@@ -40,9 +40,9 @@ WORK_MULTIPLIERS = [
 ]
 
 
-OTHER_MULTIPLIERS = [0.55] * len(WORK_MULTIPLIERS)
+OTHER_MULTIPLIERS = [0.5] * len(WORK_MULTIPLIERS)
 START_DATE = pd.Timestamp("2021-01-05")
-END_DATE = pd.Timestamp("2021-02-15")
+END_DATE = pd.Timestamp("2021-03-15")
 
 # ------------------------------------------------------------------------
 
@@ -160,13 +160,27 @@ def _get_future_policies(contact_models, work_multiplier, other_multiplier):
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-01-12",
-                "end_date": "2021-01-31",
-                "prefix": "2nd_half_january",
+                "end_date": "2021-01-23",
+                "prefix": "mid_of_january",
             },
             multipliers={
                 "educ": 0.0,
                 # google mobility data from autumn vacation.
                 "work": 0.95 * 0.55,
+                "other": other_multiplier,
+            },
+        ),
+
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-01-24",
+                "end_date": "2021-01-31",
+                "prefix": "last_january_week",
+            },
+            multipliers={
+                "educ": 0.0,
+                "work": 0.95 * min(0.55, work_multiplier),
                 "other": other_multiplier,
             },
         ),
