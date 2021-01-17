@@ -1,11 +1,19 @@
 """Simulate different work from home (WFH) scenarios for November to mid December.
 
 Summary of data on work from home:
-    1. in November and December only 14-17% worked from home.
+    1. in November and December only 14% worked from home.
     2. 25-35% of workers worked from home during the 1st lockdown.
-    3. approx. 56% of workers could work from home.
+    3. approx. 55% of workers could work from home.
 
++3% of individuals who can't work because of restaurant closures etc.:
 work_multiplier = (1 - stay_home_share * 1.5) * 0.95
+
+=> wfh_share    stay_home_share     work_multiplier
+   15/13%         (+3%) 18/16%        0.76, 0.73
+   16/14          (+3%) 19/17%        0.715, 0.745
+   25%            (+3%) 28%           0.58
+   35%            (+3%) 38%           0.43
+   55%            (+3%) 58%           0.13
 
 """
 import pandas as pd
@@ -21,7 +29,7 @@ from src.create_initial_states.create_initial_conditions import (  # noqa
 from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 
-WFH_SEEDS = [1_000_000 * i for i in range(48)]
+WFH_SEEDS = [1_000_000 * i for i in range(4)]
 
 WFH_PARAMETRIZATION = []
 WFH_SCENARIO_NAMES = [
@@ -34,9 +42,9 @@ WFH_SCENARIO_NAMES = [
 WFH_WORK_MULTIPLIERS = [
     (0.73, 0.76),
     (0.715, 0.745),  # 1 pct more
-    (0.625, 0.625),  # 1st lockdown weak
-    (0.475, 0.475),  # 1st lockdown strict
-    (0.1, 0.1),  # full potential
+    (0.58, 0.58),  # 1st lockdown weak
+    (0.43, 0.43),  # 1st lockdown strict
+    (0.13, 0.13),  # full potential
 ]
 for name, work_multipliers in zip(WFH_SCENARIO_NAMES, WFH_WORK_MULTIPLIERS):
     for seed in WFH_SEEDS:
@@ -59,7 +67,7 @@ for name, work_multipliers in zip(WFH_SCENARIO_NAMES, WFH_WORK_MULTIPLIERS):
 )
 @pytask.mark.parametrize("work_multipliers, seed, produces", WFH_PARAMETRIZATION)
 def task_simulate_work_from_home_scenario(depends_on, work_multipliers, seed, produces):
-    start_date = pd.Timestamp("2020-10-01")
+    start_date = pd.Timestamp("2020-11-01")
     end_date = pd.Timestamp("2020-12-15")
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
@@ -106,11 +114,16 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
     pre_fall_vacation_multipliers = {"educ": 0.8, "work": 0.775, "other": 0.75}
     fall_vacation_multipliers = {"educ": 0.8, "work": 0.63, "other": 1.0}
     post_fall_vacation_multipliers = {"educ": 0.8, "work": 0.775, "other": 0.65}
-    # anticipate_lockdown_multipliers = {"educ": 0.8, "work": 0.55, "other": 0.5}
-    lockdown_light_multipliers = {"educ": 0.6, "work": work_multipliers[0] * 0.95, "other": 0.45}
-    print(work_multipliers)
-    print(lockdown_light_multipliers)
-    lockdown_light_multipliers_with_fatigue = {"educ": 0.6, "work": work_multipliers[1] * 0.95, "other": 0.55}
+    lockdown_light_multipliers = {
+        "educ": 0.6,
+        "work": work_multipliers[0] * 0.95,
+        "other": 0.45,
+    }
+    lockdown_light_multipliers_with_fatigue = {
+        "educ": 0.6,
+        "work": work_multipliers[1] * 0.95,
+        "other": 0.55,
+    }
     to_combine = [
         get_soft_lockdown(
             contact_models=contact_models,
@@ -158,6 +171,5 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
             multipliers=lockdown_light_multipliers_with_fatigue,
         ),
     ]
-
 
     return combine_dictionaries(to_combine)

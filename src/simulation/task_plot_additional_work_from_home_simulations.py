@@ -8,7 +8,6 @@ from sid.colors import get_colors
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
-from src.simulation.task_simulate_additional_work_from_home import WFH_SCENARIO_NAMES
 from src.simulation.task_simulate_additional_work_from_home import WFH_SEEDS
 from src.simulation.task_simulate_additional_work_from_home_future import (
     FUTURE_WFH_SCENARIO_NAMES,
@@ -25,6 +24,14 @@ plt.rcParams.update(
         "legend.frameon": False,
     }
 )
+
+WFH_SCENARIO_NAMES = [
+    "baseline",
+    "1st_lockdown_weak",
+    "1st_lockdown_strict",
+    "full_potential",
+]
+
 
 WFH_SIMULATION_PATHS = [
     BLD / "simulations" / "work_from_home" / f"{name}_{seed}" / "time_series"
@@ -148,10 +155,10 @@ def _plot_incidences(incidences, n_single_runs, title):
     colors = get_colors("ordered", len(incidences))
     fig, ax = plt.subplots(figsize=(6, 4))
     name_to_label = {
-        "baseline": "Baseline",
+        "baseline": "Tatsächliche Home Office-Quote (14%)",
         "1_pct_more": "1 Prozent Mehr Home Office",
-        "1st_lockdown_weak": "Home Office wie im 1. Lockdown (25%)",
-        "1st_lockdown_strict": "Home Office wie im 1. Lockdown (35%)",
+        "1st_lockdown_weak": "Home Office wie im Frühjarhrslockdown, untere Grenze (25%)",  # noqa: E501
+        "1st_lockdown_strict": "Home Office wie im Frühjarhrslockdown, obere Grenze (35%)",  # noqa: E501
         "full_potential": "Volles Ausreizen des Home Office Potentials (55%)",
     }
     for name, color in zip(incidences, colors):
