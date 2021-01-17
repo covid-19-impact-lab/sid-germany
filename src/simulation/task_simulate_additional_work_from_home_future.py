@@ -1,4 +1,14 @@
-"""Simulate different work from home scenarios into the future."""
+"""Simulate different work from home scenarios into the future.
+
+=> wfh_share    stay_home_share     work_multiplier
+   15%            (+5%) 20%             0.70
+   25%            (+5%) 30%             0.55
+   35%            (+5%) 40%             0.40
+   55%            (+5%) 60%             0.10
+
+
+
+"""
 import pandas as pd
 import pytask
 from sid import get_simulate_func
@@ -14,12 +24,25 @@ from src.policies.policy_tools import combine_dictionaries
 
 # ----------------------- To be configured ------------------------------
 
-FUTURE_WFH_SEEDS = [15_000 + i for i in range(1)]
-FUTURE_WFH_SCENARIO_NAMES = ["baseline"]
-WORK_MULTIPLIERS = [0.4]
-OTHER_MULTIPLIERS = [0.4]
-START_DATE = pd.Timestamp("2021-01-01")
-END_DATE = pd.Timestamp("2021-01-15")
+FUTURE_WFH_SEEDS = [800_000 * i for i in range(6)]
+FUTURE_WFH_SCENARIO_NAMES = [
+    "november_baseline",
+    "mobility_data_baseline",
+    "1st_lockdown_strict",
+    "full_potential",
+]
+
+WORK_MULTIPLIERS = [
+    0.70,
+    0.55,
+    0.40,
+    0.10,
+]
+
+
+OTHER_MULTIPLIERS = [0.55] * len(WORK_MULTIPLIERS)
+START_DATE = pd.Timestamp("2021-01-05")
+END_DATE = pd.Timestamp("2021-02-15")
 
 # ------------------------------------------------------------------------
 
@@ -80,9 +103,6 @@ def task_simulate_work_from_home_scenario(
         contact_models=contact_models,
         work_multiplier=work_multiplier,
         other_multiplier=other_multiplier,
-        start_date=START_DATE,
-        end_date=END_DATE,
-        google_data=google_data,
     )
 
     simulate = get_simulate_func(
@@ -105,45 +125,19 @@ def task_simulate_work_from_home_scenario(
     simulate(params)
 
 
-def _get_future_policies(
-    contact_models, work_multiplier, other_multiplier, google_data
-):
+def _get_future_policies(contact_models, work_multiplier, other_multiplier):
     """Get future policy scenario.
 
     Args:
         contact_models (dict)
         work_multiplier (float): work multiplier used starting January 12th
         other_multiplier (float): other multiplier used starting January 12th
-        google_data (pandas.DataFrame): google data to get the work multiplier
-            of the 2nd January week.
 
     Returns:
         policies (dict):
 
     """
-    work_change = google_data.loc["2021-01-04":"2021-01-11", "workplaces"].mean()
-    second_jan_week_work_multiplier = 1 + work_change / 100
-    multipliers = {
-        "educ": 0.6,
-        "work": work_multiplier,
-        "other": other_multiplier,
-    }
-
     to_combine = [
-        get_soft_lockdown(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2020-12-27",
-                "end_date": "2021-01-03",
-                "prefix": "post-christmas-lockdown",
-            },
-            multipliers={
-                "educ": 0.0,
-                "work": 0.15,
-                # vacation_other_multiplier was 0.4 or 0.7
-                "other": 0.5,
-            },
-        ),
         get_soft_lockdown(
             contact_models=contact_models,
             block_info={
@@ -151,13 +145,17 @@ def _get_future_policies(
                 "end_date": "2021-01-11",
                 "prefix": "after-christmas-vacation",
             },
-            # hard_lockdown_multipliers were 0.3 or 0.4
             multipliers={
                 "educ": 0.0,
-                "work": second_jan_week_work_multiplier,
-                "other": 0.35,
+                # google mobility data says work mobility -40%
+                "work": 0.95 * 0.4,
+                "other": other_multiplier,
             },
         ),
+        # schools reopen 1st of February
+        # BW: https://tinyurl.com/y2clplul
+        # BY: https://tinyurl.com/y49q2uys
+        # NRW: https://tinyurl.com/y4rlx37z
         get_soft_lockdown(
             contact_models=contact_models,
             block_info={
@@ -167,8 +165,9 @@ def _get_future_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": work_multiplier,
-                "other": "other_multiplier",
+                # google mobility data from autumn vacation.
+                "work": 0.95 * 0.55,
+                "other": other_multiplier,
             },
         ),
         get_soft_lockdown(
@@ -178,7 +177,11 @@ def _get_future_policies(
                 "end_date": "2021-05-01",
                 "prefix": "from_feb_onward",
             },
-            multipliers=multipliers,
+            multipliers={
+                "educ": 0.6,
+                "work": 0.95 * work_multiplier,
+                "other": other_multiplier,
+            },
         ),
     ]
     return combine_dictionaries(to_combine)

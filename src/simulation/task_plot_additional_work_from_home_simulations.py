@@ -162,6 +162,8 @@ def _plot_incidences(incidences, n_single_runs, title):
         "1st_lockdown_weak": "Home Office wie im Frühjarhrslockdown, untere Grenze (25%)",  # noqa: E501
         "1st_lockdown_strict": "Home Office wie im Frühjarhrslockdown, obere Grenze (35%)",  # noqa: E501
         "full_potential": "Volles Ausreizen des Home Office Potentials (55%)",
+        "november_baseline": "Home Office auf dem Niveau von November",
+        "mobility_data_baseline": "Home Office auf dem Niveau von Anfang Januar",
     }
     for name, color in zip(incidences, colors):
         df = incidences[name]
