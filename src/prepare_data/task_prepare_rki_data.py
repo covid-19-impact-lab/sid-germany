@@ -63,10 +63,14 @@ AGE_GROUPS_TO_INTERVALS = {
 @pytask.mark.depends_on(
     {
         "rki": BLD / "data" / "raw_time_series" / "rki.csv",
-        "share_known_cases": BLD
+        "share_known_cases_until_christmas": BLD
         / "data"
         / "processed_time_series"
-        / "share_known_cases.pkl",
+        / "share_known_cases_until_christmas.pkl",
+        "share_known_cases_since_christmas": BLD
+        / "data"
+        / "processed_time_series"
+        / "share_known_cases_since_christmas.pkl",
     }
 )
 @pytask.mark.produces(
@@ -79,14 +83,18 @@ def task_prepare_rki_data(depends_on, produces):
     df = pd.read_csv(depends_on["rki"], parse_dates=["Refdatum"])
     df = df.drop(columns=DROPPPED_COLUMNS)
     df = df.rename(columns=RENAME_COLUMNS)
+    share_known_until_christmas = pd.read_pickle(
+        depends_on["share_known_cases_until_christmas"]
+    )
+    share_known_after_christmas = pd.read_pickle(
+        depends_on["share_known_cases_since_christmas"]
+    )
 
     df["age_group_rki"] = (
         df["age_group"].replace(AGE_GROUPS_TO_INTERVALS).astype("category")
     )
     df = df.drop(columns=["age_group"])
-
     df["is_date_disease_onset"] = df["is_date_disease_onset"].astype(bool)
-
     df["newly_infected"] = df["n_cases"] * df["type_case"].isin([0, 1])
     df["newly_deceased"] = df["n_deaths"] * df["type_death"].isin([0, 1])
 
@@ -98,16 +106,22 @@ def task_prepare_rki_data(depends_on, produces):
     cropped = summed.loc[:one_week_ago]
     cropped = cropped.sort_index()
 
-    share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
+    # build share known cases.
+    dates = cropped.index.get_level_values("date")
+    share_known_cases = pd.Series(index=dates.unique())
+    share_known_cases = share_known_cases.fillna(share_known_until_christmas)
+    share_known_cases = share_known_cases.fillna(share_known_after_christmas)
     undetected_multiplier = 1 / share_known_cases
-    cropped["date"] = cropped.index.get_level_values("date")
+
+    cropped["date"] = dates
     cropped["undetected_multiplier"] = cropped["date"].replace(undetected_multiplier)
+    cropped["undetected_multiplier"] = cropped["undetected_multiplier"].astype(float)
     cropped["upscaled_newly_infected"] = (
         cropped["newly_infected"] * cropped["undetected_multiplier"]
     )
     cropped = cropped.drop(columns=["date", "undetected_multiplier"])
 
-    assert cropped.notnull().all().all()
+    assert cropped["newly_infected"].notnull().all()
     cropped.to_pickle(produces["data"])
 
     reported_per_day = cropped["newly_infected"].groupby("date").sum()

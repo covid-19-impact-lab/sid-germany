@@ -8,46 +8,50 @@ from src.config import SRC
 
 
 @pytask.mark.depends_on(
-    SRC / "original_data" / "testing" / "detected_and_undetected_infections.csv"
+    {
+        "old": SRC
+        / "original_data"
+        / "testing"
+        / "detected_and_undetected_infections.csv",
+        "new": SRC
+        / "original_data"
+        / "testing"
+        / "detected_and_undetected_infections_new.csv",
+    }
 )
 @pytask.mark.produces(
     {
-        "share_known_cases": BLD
+        "share_known_cases_until_christmas": BLD
         / "data"
         / "processed_time_series"
-        / "share_known_cases.pkl",
-        "undetected_multiplier": BLD
+        / "share_known_cases_until_christmas.pkl",
+        "share_known_cases_since_christmas": BLD
         / "data"
         / "processed_time_series"
-        / "undetected_multiplier.pkl",
+        / "share_known_cases_since_christmas.pkl",
         "share_known_cases_fig": BLD
         / "data"
         / "processed_time_series"
         / "share_known_cases.png",
-        "undetected_multiplier_fig": BLD
-        / "data"
-        / "processed_time_series"
-        / "undetected_multiplier.png",
     }
 )
 def task_calculate_and_plot_share_known_cases(depends_on, produces):
-    df = pd.read_csv(depends_on)
+    df_old = pd.read_csv(depends_on["old"])
+    old_share_known = _calculate_share_known_cases(df_old)
+    share_known_until_christmas = old_share_known[:"2020-12-24"]
+    share_known_until_christmas.to_pickle(produces["share_known_cases_until_christmas"])
 
-    share_known_cases = _calculate_share_known_cases(df)
-    share_known_cases.to_pickle(produces["share_known_cases"])
-    undetected_multiplier = 1 / share_known_cases
-    undetected_multiplier.to_pickle(produces["undetected_multiplier"])
+    df_new = pd.read_csv(depends_on["new"])
+    new_share_known = _calculate_share_known_cases(df_new)
+    share_known_since_christmas = new_share_known["2021-01-01":]
+    share_known_since_christmas.to_pickle(produces["share_known_cases_since_christmas"])
 
-    fig, ax = _plot_time_series(
-        share_known_cases, title="Share of Known Cases in All Cases"
+    share_known_cases = pd.concat(
+        [share_known_until_christmas, share_known_since_christmas]
     )
+
+    fig, ax = _plot_time_series(share_known_cases, title="Share of Known Cases")
     fig.savefig(produces["share_known_cases_fig"])
-    undetected_title = (
-        "Infection to Reported Cases Ratio\n"
-        + "(also Known as Dark Figure or Undetected Multiplier)"
-    )
-    fig, ax = _plot_time_series(undetected_multiplier, undetected_title)
-    fig.savefig(produces["undetected_multiplier_fig"])
 
 
 def _calculate_share_known_cases(df):
@@ -78,10 +82,10 @@ def _calculate_share_known_cases(df):
     last_available_date = share_known_cases.index.max()
     last_share = share_known_cases[last_available_date]
     extrapolation_end_date = last_available_date + pd.Timedelta(weeks=8)
-    six_weeks_into_future = pd.date_range(
+    future_dates = pd.date_range(
         start=last_available_date, end=extrapolation_end_date, closed="right"
     )
-    extrapolated_into_future = pd.Series(last_share, index=six_weeks_into_future)
+    extrapolated_into_future = pd.Series(last_share, index=future_dates)
 
     to_concat = [
         extrapolated_share_before_start,
