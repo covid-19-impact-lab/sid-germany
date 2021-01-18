@@ -1,8 +1,10 @@
 import dask.dataframe as dd
 import matplotlib.pyplot as plt
+import pandas as pd
 import pytask
 
 from src.config import BLD
+from src.config import SRC
 from src.simulation.task_plot_additional_work_from_home_simulations import (
     plot_incidences,
 )
@@ -79,7 +81,10 @@ WFH_PLOT_PARAMETRIZATION = [
 ]
 
 
-@pytask.mark.depends_on(WFH_FUTURE_SIMULATION_PATHS)
+@pytask.mark.depends_on(
+    WFH_FUTURE_SIMULATION_PATHS
+    + [SRC / "simulation" / "task_plot_additional_work_from_home_simulations.py"]
+)
 @pytask.mark.parametrize("outcome, title, produces", WFH_PLOT_PARAMETRIZATION)
 def task_plot_work_from_home_schools_open_future_simulations(
     depends_on, outcome, title, produces
@@ -98,4 +103,8 @@ def task_plot_work_from_home_schools_open_future_simulations(
         incidences[name] = time_series_df
 
     fig, ax = plot_incidences(incidences, 15, title)
+    if title == "Beobachtete Inzidenz":
+        ax.set_ylim(0, 180)
+    ax.set_xlim(pd.Timestamp("2021-01-04"), pd.Timestamp("2021-03-02"))
+    ax.set_xlabel("")
     fig.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
