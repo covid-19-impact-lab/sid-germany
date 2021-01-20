@@ -18,6 +18,7 @@ INITIAL_START = SIMULATION_START - pd.Timedelta(days=31)
 SIMULATION_END = pd.Timestamp("2021-01-08")
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(
     {
         "params": BLD / "start_params.pkl",

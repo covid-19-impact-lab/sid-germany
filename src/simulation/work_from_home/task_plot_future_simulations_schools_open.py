@@ -81,6 +81,7 @@ WFH_PLOT_PARAMETRIZATION = [
 ]
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(
     WFH_FUTURE_SIMULATION_PATHS + [SRC / "simulation" / "plotting.py"]
 )

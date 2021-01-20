@@ -53,6 +53,7 @@ WFH_PLOT_PARAMETRIZATION = [
 ]
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(WFH_SIMULATION_PATHS)
 @pytask.mark.parametrize("outcome, title, produces", WFH_PLOT_PARAMETRIZATION)
 def task_plot_work_from_home_nov_and_dec_simulations(

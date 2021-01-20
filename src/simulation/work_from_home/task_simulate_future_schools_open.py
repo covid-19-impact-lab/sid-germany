@@ -22,8 +22,6 @@ from src.create_initial_states.create_initial_conditions import (  # noqa
 from src.simulation.work_from_home.get_future_policies import get_future_policies
 
 
-# ----------------------- To be configured ------------------------------
-
 FUTURE_WFH_SEEDS = [800_000 * i for i in range(6)]
 FUTURE_WFH_SCENARIO_NAMES = [
     "november_baseline",
@@ -44,8 +42,6 @@ OTHER_MULTIPLIERS = [0.5] * len(WORK_MULTIPLIERS)
 START_DATE = pd.Timestamp("2021-01-05")
 END_DATE = pd.Timestamp("2021-03-15")
 
-# ------------------------------------------------------------------------
-
 WFH_PARAMETRIZATION = []
 for name, work_multiplier, other_multiplier in zip(
     FUTURE_WFH_SCENARIO_NAMES, WORK_MULTIPLIERS, OTHER_MULTIPLIERS
@@ -62,6 +58,7 @@ for name, work_multiplier, other_multiplier in zip(
         WFH_PARAMETRIZATION.append(spec)
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(
     {
         "initial_states": BLD / "data" / "initial_states.parquet",
