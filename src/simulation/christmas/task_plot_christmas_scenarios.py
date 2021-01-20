@@ -12,7 +12,7 @@ from sid.colors import get_colors
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
-from src.simulation.task_simulate_christmas_scenarios import (
+from src.simulation.christmas.task_simulate_christmas_scenarios import (
     create_christmas_parametrization,
 )
 
@@ -47,7 +47,6 @@ NAME_TO_LABEL = {
 }
 
 
-@pytask.mark.skip
 @pytask.mark.depends_on(SIMULATIONS)
 @pytask.mark.produces(PRODUCTS)
 def task_plot_effect_of_private_contact_tracing(depends_on, produces):

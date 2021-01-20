@@ -19,7 +19,7 @@ from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
-from src.simulation.get_future_policies import get_future_policies
+from src.simulation.work_from_home.get_future_policies import get_future_policies
 
 
 # ----------------------- To be configured ------------------------------
@@ -54,7 +54,7 @@ for name, work_multiplier, other_multiplier in zip(
         path = (
             BLD
             / "simulations"
-            / "work_from_home_future_schools_open"
+            / "work_from_home_future_schools_closed"
             / f"{name}_{seed}"
             / "time_series"
         )
@@ -76,7 +76,7 @@ for name, work_multiplier, other_multiplier in zip(
 @pytask.mark.parametrize(
     "work_multiplier, other_multiplier, seed, produces", WFH_PARAMETRIZATION
 )
-def task_simulate_work_from_home_scenario(
+def task_simulate_work_from_home_schools_closed_scenario(
     depends_on, work_multiplier, other_multiplier, seed, produces
 ):
     init_start = START_DATE - pd.Timedelta(31, unit="D")
@@ -100,7 +100,7 @@ def task_simulate_work_from_home_scenario(
         contact_models=contact_models,
         work_multiplier=work_multiplier,
         other_multiplier=other_multiplier,
-        schools_open=True,
+        schools_open=False,
     )
 
     simulate = get_simulate_func(

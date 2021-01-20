@@ -5,13 +5,9 @@ import pytask
 
 from src.config import BLD
 from src.config import SRC
-from src.simulation.task_plot_additional_work_from_home_simulations import (
-    plot_incidences,
-)
-from src.simulation.task_plot_additional_work_from_home_simulations import (
-    weekly_incidences_from_results,
-)
-from src.simulation.task_simulate_additional_work_from_home_future_schools_closed import (  # noqa: E501
+from src.simulation.plotting import plot_incidences
+from src.simulation.plotting import weekly_incidences_from_results
+from src.simulation.work_from_home.task_simulate_future_schools_closed import (
     FUTURE_WFH_SEEDS,
 )
 
@@ -85,8 +81,7 @@ WFH_PLOT_PARAMETRIZATION = [
 
 
 @pytask.mark.depends_on(
-    WFH_FUTURE_SIMULATION_PATHS
-    + [SRC / "simulation" / "task_plot_additional_work_from_home_simulations.py"]
+    WFH_FUTURE_SIMULATION_PATHS + [SRC / "simulation" / "plotting.py"]
 )
 @pytask.mark.parametrize("outcome, title, produces", WFH_PLOT_PARAMETRIZATION)
 def task_plot_work_from_home_schools_closed_future_simulations(
