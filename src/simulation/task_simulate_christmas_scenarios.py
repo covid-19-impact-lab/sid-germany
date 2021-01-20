@@ -34,7 +34,7 @@ def _create_christmas_parametrization():
     return zip(*zip(*CARTESIAN_PRODUCT), paths, produces)
 
 
-@pytask.mark.persist
+@pytask.mark.skip
 @pytask.mark.depends_on(
     {
         "params": BLD / "start_params.pkl",

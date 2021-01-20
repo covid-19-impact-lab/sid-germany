@@ -4,10 +4,62 @@ import pandas as pd
 
 import src.policies.full_policy_blocks as fpb
 from src.policies.domain_level_policy_blocks import _get_base_policy
+from src.policies.full_policy_blocks import get_german_reopening_phase
+from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 from src.policies.single_policy_functions import (
     reduce_contacts_through_private_contact_tracing,
 )
+
+
+def get_estimation_policies(contact_models):
+    reopening_start_multipliers = {"educ": 0.8, "work": 0.55, "other": 0.45}
+    reopening_end_multipliers = {"educ": 0.8, "work": 0.95, "other": 0.7}
+    anticipate_lockdown_multipliers = {"educ": 0.8, "work": 0.55, "other": 0.5}
+    lockdown_light_multipliers = {"educ": 0.6, "work": 0.45, "other": 0.4}
+    lockdown_light_multipliers_with_fatigue = {"educ": 0.6, "work": 0.45, "other": 0.50}
+    to_combine = [
+        get_german_reopening_phase(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-07-01",
+                "end_date": "2020-10-22",
+                "prefix": "reopening",
+            },
+            start_multipliers=reopening_start_multipliers,
+            end_multipliers=reopening_end_multipliers,
+            educ_switching_date="2020-08-01",
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-10-23",
+                "end_date": "2020-11-01",
+                "prefix": "anticipate_lockdown_light",
+            },
+            multipliers=anticipate_lockdown_multipliers,
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-11-02",
+                "end_date": "2020-11-22",
+                "prefix": "lockdown_light",
+            },
+            multipliers=lockdown_light_multipliers,
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-11-23",
+                "end_date": "2020-12-15",
+                "prefix": "lockdown_light_with_fatigue",
+            },
+            multipliers=lockdown_light_multipliers_with_fatigue,
+        ),
+    ]
+
+    return combine_dictionaries(to_combine)
 
 
 def get_december_to_feb_policies(
@@ -17,6 +69,7 @@ def get_december_to_feb_policies(
     path=None,
 ):
     """Get policies from December 2020 to February 2021.
+
     Args:
         contact_models (dict): sid contact model dictionary.
         contact_tracing_multiplier (float, optional):
@@ -28,8 +81,10 @@ def get_december_to_feb_policies(
         scenario (str): One of "optimistic", "pessimistic"
         path (str or pathlib.Path): Path to a folder in which information on the
             contact tracing is stored.
+
     Returns:
         policies (dict): policies dictionary.
+
     """
     if scenario == "optimistic":
         hard_lockdown_work_multiplier = 0.3
@@ -120,7 +175,7 @@ def get_december_to_feb_policies(
         ),
     ]
     if contact_tracing_multiplier is not None:
-        contact_tracing_policies = get_christmas_contact_tracing_policies(
+        contact_tracing_policies = _get_christmas_contact_tracing_policies(
             contact_models=contact_models,
             block_info={
                 "start_date": pd.Timestamp("2020-12-27"),
@@ -134,7 +189,7 @@ def get_december_to_feb_policies(
     return combine_dictionaries(to_combine)
 
 
-def get_christmas_contact_tracing_policies(
+def _get_christmas_contact_tracing_policies(
     contact_models, block_info, multiplier, path=None
 ):
     """"""
