@@ -10,7 +10,7 @@ from sid.colors import get_colors
 from src.config import BLD
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
-from src.policies.combine_policies_over_periods import get_estimation_policies
+from src.policies.combine_policies_over_periods import get_october_to_christmas_policies
 
 
 plt.rcParams.update(
@@ -58,7 +58,7 @@ def task_decompose_work_multiplier(depends_on, produces):
     fig.savefig(produces["de_weekdays"], dpi=200, transparent=False, facecolor="w")
 
     contact_models = get_all_contact_models(None, None)
-    policies = get_estimation_policies(contact_models=contact_models)
+    policies = get_october_to_christmas_policies(contact_models=contact_models)
     google_data = work_days.set_index("date")
 
     decomposition = _build_decomposition_table(
