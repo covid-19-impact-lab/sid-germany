@@ -80,6 +80,7 @@ for ct_mode, optimism in itertools.product(
     )
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(SIMULATIONS)
 @pytask.mark.produces(PRODUCTS)
 def task_plot_effect_of_christmas_mode(depends_on, produces):
@@ -112,6 +113,7 @@ for ct_mode, christmas_mode in itertools.product(
     )
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(SIMULATIONS)
 @pytask.mark.produces(PRODUCTS)
 def task_plot_effect_of_optimism(depends_on, produces):
@@ -134,6 +136,7 @@ def task_plot_effect_of_optimism(depends_on, produces):
             )
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(SIMULATIONS)
 @pytask.mark.produces(BLD / "simulation" / "figure2.png")
 def task_plot_figure_two(depends_on, produces):
@@ -153,7 +156,7 @@ def task_plot_figure_two(depends_on, produces):
     scenarios = {}
     for (christmas_mode, optimism) in scenario_tuples:
         label = f"{label_dict[christmas_mode]},\n{label_dict[optimism]}"
-        scenarios[label] = dd.read_parquet(depends_on[(christmas_mode, None, optimism)])
+        scenarios[label] = dd.read_parquet(depends_on[(optimism, christmas_mode, None)])
 
     colors = get_colors("ordered", 3)[:2] * 2  # color identifies christmas mode
     linestyles = ["-", "-", "--", "--"]  # line style gives optimism
@@ -256,7 +259,9 @@ def plot_scenarios(scenarios, colors=DEFAULT_COLORS, linestyles=None):
 
     fig.tight_layout()
     axes[1].legend(loc="upper center", bbox_to_anchor=(-0.8, -0.5, 1, 0.2), ncol=3)
-    axes[0].get_legend().remove()
+    legend_to_remove = axes[0].get_legend()
+    if legend_to_remove is not None:
+        legend_to_remove.remove()
     loc = AutoDateLocator(minticks=5, maxticks=8)
     for ax in axes:
         ax.xaxis.set_major_locator(loc)
