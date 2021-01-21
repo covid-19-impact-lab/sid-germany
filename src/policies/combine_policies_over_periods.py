@@ -2,6 +2,67 @@ from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 
 
+def get_jan_and_feb_2021_policies(contact_models, other_multiplier=0.5):
+    "Get policies for January and February 2021."
+    to_combine = [
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-12-27",
+                "end_date": "2021-01-03",
+                "prefix": "post-christmas-lockdown",
+            },
+            multipliers={
+                "educ": 0.0,
+                "work": 0.15,
+                "other": other_multiplier,
+            },
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-01-04",
+                "end_date": "2021-01-11",
+                "prefix": "after-christmas-vacation",
+            },
+            multipliers={
+                "educ": 0.0,
+                # google mobility data says work mobility -40%
+                "work": 0.95 * 0.4,
+                "other": other_multiplier,
+            },
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-01-12",
+                "end_date": "2021-02-14",
+                "prefix": "mid_jan_to_mid_feb",
+            },
+            multipliers={
+                "educ": 0.0,
+                # google mobility data from autumn vacation.
+                "work": 0.95 * 0.55,
+                "other": other_multiplier,
+            },
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-02-15",
+                "end_date": "2021-03-01",
+                "prefix": "2nd_feb_half",
+            },
+            multipliers={
+                "educ": 0.6,  # old school multiplier
+                "work": 0.95 * 0.55,
+                "other": other_multiplier,
+            },
+        ),
+    ]
+    return combine_dictionaries(to_combine)
+
+
 def get_october_to_christmas_policies(contact_models):
     """Policies from October 1st 2020 until Christmas 2020. """
     pre_fall_vacation_multipliers = {"educ": 0.8, "work": 0.775, "other": 0.75}
