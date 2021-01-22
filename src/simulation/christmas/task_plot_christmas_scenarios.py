@@ -33,7 +33,10 @@ for mode, optimism in itertools.product(
     ["full", "same_group"], ["optimistic", "pessimistic"]
 ):
     PRODUCTS[f"{mode}_{optimism}"] = (
-        BLD / "simulation" / f"effect_of_private_contact_tracing_{mode}_{optimism}.png"
+        BLD
+        / "simulations"
+        / "christmas"
+        / f"effect_of_private_contact_tracing_{mode}_{optimism}.png"
     )
 
 NAME_TO_LABEL = {
@@ -75,7 +78,8 @@ for ct_mode, optimism in itertools.product(
 ):
     PRODUCTS[f"{ct_mode}_{optimism}"] = (
         BLD
-        / "simulation"
+        / "simulations"
+        / "christmas"
         / f"effect_of_christmas_mode_with_{ct_mode}_contact_tracing_{optimism}.png"
     )
 
@@ -108,7 +112,10 @@ for ct_mode, christmas_mode in itertools.product(
     [None, 0.5, 0.1], ["full", "same_group"]
 ):
     PRODUCTS[f"{ct_mode}_{christmas_mode}"] = (
-        BLD / "simulation" / f"effect_of_optimism_with_{ct_mode}_contact_tracing_"
+        BLD
+        / "simulations"
+        / "christmas"
+        / f"effect_of_optimism_with_{ct_mode}_contact_tracing_"
         f"and_{christmas_mode}_christmas.png"
     )
 

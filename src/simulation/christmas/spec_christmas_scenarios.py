@@ -39,7 +39,7 @@ def create_output_path_for_simulation(
         else f"w_ct_{str(contact_tracing_multiplier).replace('.', '_')}"
     )
     path = (
-        BLD / "simulation" / f"simulation_christmas_mode_{christmas_mode}_"
+        BLD / "simulations" / "christmas" / f"{christmas_mode}_mode"
         f"{ctm_str}_{scenario}"
     )
 
