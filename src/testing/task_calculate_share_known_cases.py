@@ -38,6 +38,7 @@ def task_calculate_and_plot_share_known_cases(depends_on, produces):
     df_new = pd.read_csv(depends_on["new"])
     new_share_known = _calculate_share_known_cases(df_new)["2020-12-25":]
     share_known = pd.concat([old_share_known, new_share_known])
+    share_known.index = share_known.index.normalize()
     assert not share_known.index.duplicated().any()
     dates = share_known.index
     expected_dates = pd.date_range(dates.min(), dates.max())
