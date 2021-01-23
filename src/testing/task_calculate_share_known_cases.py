@@ -39,6 +39,13 @@ def task_calculate_and_plot_share_known_cases(depends_on, produces):
     new_share_known = _calculate_share_known_cases(df_new)["2020-12-25":]
     share_known = pd.concat([old_share_known, new_share_known])
     assert not share_known.index.duplicated().any()
+    dates = share_known.index
+    expected_dates = pd.date_range(dates.min(), dates.max())
+    missing_dates = [str(x.date()) for x in expected_dates if x not in dates]
+    assert (
+        len(missing_dates) == 0
+    ), f"There are missing dates in the share_known: {missing_dates}"
+
     share_known.to_pickle(produces["share_known_cases"])
 
     fig, ax = _plot_time_series(share_known, title="Share of Known Cases")
