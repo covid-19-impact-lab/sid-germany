@@ -4,7 +4,9 @@ import seaborn as sns
 from matplotlib.dates import DateFormatter
 from sid.colors import get_colors
 
+from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
+from src.config import BLD
 
 
 plt.rcParams.update(
@@ -45,7 +47,7 @@ def weekly_incidences_from_results(results, outcome):
     return weekly_incidences
 
 
-def plot_incidences(incidences, n_single_runs, title):
+def plot_incidences(incidences, n_single_runs, title, rki=False):
     """Plot incidences.
 
     Args:
@@ -55,6 +57,7 @@ def plot_incidences(incidences, n_single_runs, title):
         n_single_runs (int): number of individual runs to
             visualize to show statistical uncertainty.
         title (str): plot title.
+        rki (bool): Whether to plot the rki data.
 
     Returns:
         fig, ax
@@ -93,6 +96,33 @@ def plot_incidences(incidences, n_single_runs, title):
                 linewidth=0.5,
                 alpha=0.2,
             )
+    if rki is not False:
+        rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
+        rki_dates = rki_data.index.get_level_values("date")
+        keep_dates = sorted(x for x in rki_dates if x in dates)
+        cropped_rki = rki_data.loc[keep_dates]
+        national_data = cropped_rki.groupby("date").sum()
+        if rki == "new_known_case":
+            rki_col = "newly_infected"
+            label = "RKI Fallzahlen"
+        elif rki == "newly_infected":
+            rki_col = "upscaled_newly_infected"
+            label = "DunkelzifferRadar Schätzung der tatsächlichen Inzidenz"
+        else:
+            raise ValueError(f"No matching RKI variable found to {rki}")
+
+        weekly_smoothed = (
+            smoothed_outcome_per_hundred_thousand_rki(
+                df=national_data,
+                outcome=rki_col,
+                take_logs=False,
+                window=7,
+            )
+            * 7
+        )
+        sns.lineplot(
+            x=weekly_smoothed.index, y=weekly_smoothed, ax=ax, color="k", label=label
+        )
 
     ax.set_ylabel("")
     ax.set_xlabel("Datum")

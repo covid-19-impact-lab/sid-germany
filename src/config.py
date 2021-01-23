@@ -1,7 +1,7 @@
 import warnings
 from pathlib import Path
 
-FAST_FLAG = True
+FAST_FLAG = False
 
 try:
     import pyarrow  # noqa: F401
