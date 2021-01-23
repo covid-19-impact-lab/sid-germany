@@ -5,7 +5,7 @@ from src.config import FAST_FLAG
 
 def build_base_prognosis_parametrization():
     n_seeds = 1 if FAST_FLAG else 15
-    other_scenarios = [0.5] if FAST_FLAG else [0.3, 0.4, 0.5, 0.6]
+    other_scenarios = [0.5] if FAST_FLAG else [0.3, 0.45, 0.6]
     nested_parametrization = {}
     for other_multiplier in other_scenarios:
         nested_parametrization[other_multiplier] = []

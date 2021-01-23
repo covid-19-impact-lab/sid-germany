@@ -79,7 +79,7 @@ def plot_incidences(incidences, n_single_runs, title):
             y=df.mean(axis=1),
             ax=ax,
             color=color,
-            label=name_to_label[name],
+            label=name_to_label[name] if name in name_to_label else name,
             linewidth=2.5,
             alpha=0.8,
         )
