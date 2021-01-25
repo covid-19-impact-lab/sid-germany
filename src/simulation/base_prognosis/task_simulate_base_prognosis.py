@@ -12,7 +12,7 @@ from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
-from src.policies.combine_policies_over_periods import get_jan_and_feb_2021_policies
+from src.policies.combine_policies_over_periods import get_jan_to_april_2021_policies
 from src.simulation.base_prognosis.base_prognosis_specification import (
     build_base_prognosis_parametrization,
 )
@@ -62,8 +62,11 @@ def task_run_base_prognoses(depends_on, other_multiplier, seed, produces):
     contact_models = get_all_contact_models(
         christmas_mode=None, n_extra_contacts_before_christmas=None
     )
-    policies = get_jan_and_feb_2021_policies(
-        contact_models=contact_models, other_multiplier=other_multiplier
+    policies = get_jan_to_april_2021_policies(
+        contact_models=contact_models,
+        other_multiplier=other_multiplier,
+        start_date=START_DATE,
+        end_date=END_DATE,
     )
     simulate = get_simulate_func(
         params=params,

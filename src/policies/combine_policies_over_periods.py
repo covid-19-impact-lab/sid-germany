@@ -1,8 +1,19 @@
+import pandas as pd
+
 from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.policy_tools import combine_dictionaries
 
 
-def get_jan_and_feb_2021_policies(contact_models, other_multiplier=0.5):
+def get_jan_to_april_2021_policies(
+    contact_models, start_date, end_date, other_multiplier
+):
+    assert pd.Timestamp(start_date) >= pd.Timestamp(
+        "2020-12-27"
+    ), "start date must lie after Dec, 26th"
+    assert pd.Timestamp(end_date) <= pd.Timestamp(
+        "2021-03-31"
+    ), "end date must lie after before, April, 1st"
+
     "Get policies for January and February 2021."
     to_combine = [
         get_soft_lockdown(
@@ -50,8 +61,34 @@ def get_jan_and_feb_2021_policies(contact_models, other_multiplier=0.5):
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-02-15",
-                "end_date": "2021-03-01",
+                "end_date": "2021-02-28",
                 "prefix": "2nd_feb_half",
+            },
+            multipliers={
+                "educ": 0.6,  # old school multiplier
+                "work": 0.95 * 0.55,
+                "other": other_multiplier,
+            },
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-03-01",
+                "end_date": "2021-03-15",
+                "prefix": "1st_half_march",
+            },
+            multipliers={
+                "educ": 0.6,  # old school multiplier
+                "work": 0.95 * 0.55,
+                "other": other_multiplier,
+            },
+        ),
+        get_soft_lockdown(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-03-16",
+                "end_date": "2021-03-31",
+                "prefix": "2nd_half_march",
             },
             multipliers={
                 "educ": 0.6,  # old school multiplier
