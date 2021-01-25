@@ -30,7 +30,7 @@ dependencies:
   - scipy
   - seaborn
   - snakeviz
-  - xlrd
+  - xlrd<=1.2.0
   - virtualenv=20.0.33
 
   - sphinx
