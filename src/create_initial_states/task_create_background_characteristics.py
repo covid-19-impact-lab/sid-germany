@@ -131,6 +131,8 @@ def _prepare_microcensus(mc):
     mc = mc.rename(columns=rename_dict)
     mc = mc[rename_dict.values()]
     mc["private_hh"] = mc["hh_form"] == "bevölkerung in privathaushalten"
+    # restrict to private households for the moment
+    mc = mc[mc["private_hh"]]
     mc["gender"] = (
         mc["gender"]
         .replace({"männlich": "male", "weiblich": "female"})
@@ -149,7 +151,7 @@ def _prepare_microcensus(mc):
 
     mc["hh_id"] = mc.apply(_create_mc_hh_id, axis=1)
     mc["hh_id"] = pd.factorize(mc["hh_id"])[0]
-    assert len(mc["hh_id"].unique()) == 11_494, "Wrong number of households."
+    assert len(mc["hh_id"].unique()) == 11_461, "Wrong number of households."
 
     keep_cols = [
         "private_hh",
