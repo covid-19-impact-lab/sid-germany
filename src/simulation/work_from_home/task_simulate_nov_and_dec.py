@@ -9,11 +9,11 @@ Summary of data on work from home:
 work_multiplier = (1 - stay_home_share * 1.5) * 0.95
 
 => wfh_share    stay_home_share     work_multiplier
-   15/13%         (+3%) 18/16%        0.76, 0.73
-   16/14          (+3%) 19/17%        0.715, 0.745
-   25%            (+3%) 28%           0.58
-   35%            (+3%) 38%           0.43
-   55%            (+3%) 58%           0.13
+   15/13%         (+3%) 18/16%        0.82, 0.84
+   16/14          (+3%) 19/17%        0.81, 0.83
+   25%            (+3%) 28%           0.72
+   35%            (+3%) 38%           0.62
+   55%            (+3%) 58%           0.52
 
 """
 import pandas as pd
@@ -40,11 +40,11 @@ WFH_SCENARIO_NAMES = [
     "full_potential",
 ]
 WFH_WORK_MULTIPLIERS = [
-    (0.73, 0.76),
-    (0.715, 0.745),  # 1 pct more
-    (0.58, 0.58),  # 1st lockdown weak
-    (0.43, 0.43),  # 1st lockdown strict
-    (0.13, 0.13),  # full potential
+    (0.82, 0.84),
+    (0.81, 0.83),  # 1 pct more
+    (0.72, 0.72),  # 1st lockdown weak
+    (0.62, 0.62),  # 1st lockdown strict
+    (0.52, 0.52),  # full potential
 ]
 for name, work_multipliers in zip(WFH_SCENARIO_NAMES, WFH_WORK_MULTIPLIERS):
     for seed in WFH_SEEDS:
@@ -112,9 +112,17 @@ def task_simulate_work_from_home_scenario(depends_on, work_multipliers, seed, pr
 
 def _get_work_from_home_policies(contact_models, work_multipliers):
     """Get estimation policies from November to December 15th."""
-    pre_fall_vacation_multipliers = {"educ": 0.8, "work": 0.775, "other": 0.75}
-    fall_vacation_multipliers = {"educ": 0.8, "work": 0.63, "other": 1.0}
-    post_fall_vacation_multipliers = {"educ": 0.8, "work": 0.775, "other": 0.65}
+    pre_fall_vacation_multipliers = {
+        "educ": 0.8,
+        "work": 0.33 + 0.66 * 0.775,
+        "other": 0.75,
+    }
+    fall_vacation_multipliers = {"educ": 0.8, "work": 0.33 + 0.66 * 0.63, "other": 1.0}
+    post_fall_vacation_multipliers = {
+        "educ": 0.8,
+        "work": 0.33 + 0.66 * 0.775,
+        "other": 0.65,
+    }
     lockdown_light_multipliers = {
         "educ": 0.6,
         "work": work_multipliers[0] * 0.95,

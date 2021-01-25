@@ -1,10 +1,10 @@
 """Simulate different work from home scenarios into the future.
 
-=> wfh_share    stay_home_share     work_multiplier
-   15%            (+5%) 20%             0.70
-   25%            (+5%) 30%             0.55
-   35%            (+5%) 40%             0.40
-   55%            (+5%) 60%             0.10
+=> wfh_share    stay_home_share
+   15%            (+5%) 20%      November level
+   25%            (+5%) 30%      Lower bound spring lockdown
+   35%            (+5%) 40%      Upper bound spring lockodwn
+   55%            (+5%) 60%      Theoretical potential
 
 
 
@@ -31,10 +31,10 @@ FUTURE_WFH_SCENARIO_NAMES = [
 ]
 
 WORK_MULTIPLIERS = [
+    0.80,
     0.70,
-    0.55,
+    0.60,
     0.40,
-    0.10,
 ]
 
 

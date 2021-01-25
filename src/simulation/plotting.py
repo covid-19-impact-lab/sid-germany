@@ -131,6 +131,7 @@ def plot_incidences(incidences, n_single_runs, title, rki=False):
     fig.autofmt_xdate()
     ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
     ax.grid(axis="y")
+    ax.grid(axis="x")
     ax.set_title(title)
     ax.legend(loc="upper center", bbox_to_anchor=(-0.0, -0.5, 1, 0.2), ncol=2)
     fig.tight_layout()

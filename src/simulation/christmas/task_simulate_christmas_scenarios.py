@@ -140,11 +140,11 @@ def get_december_to_feb_policies(
 
     """
     if scenario == "optimistic":
-        hard_lockdown_work_multiplier = 0.3
+        hard_lockdown_work_multiplier = 0.33 + 0.66 * 0.3
         vacation_other_multiplier = 0.4
         hard_lockdown_other_multiplier = 0.3
     elif scenario == "pessimistic":
-        hard_lockdown_work_multiplier = 0.4
+        hard_lockdown_work_multiplier = 0.33 + 0.66 * 0.4
         vacation_other_multiplier = 0.7
         hard_lockdown_other_multiplier = 0.4
     else:
@@ -159,7 +159,7 @@ def get_december_to_feb_policies(
                 "end_date": "2020-12-15",
                 "prefix": "lockdown_light",
             },
-            multipliers={"educ": 0.7, "work": 0.45, "other": 0.5},
+            multipliers={"educ": 0.7, "work": 0.33 + 0.66 * 0.45, "other": 0.5},
         ),
         # Until start of christmas vacation
         fpb.get_soft_lockdown(
@@ -185,7 +185,7 @@ def get_december_to_feb_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.15,
+                "work": 0.33 + 0.66 * 0.15,
                 "other": hard_lockdown_other_multiplier,
             },
         ),
@@ -209,7 +209,7 @@ def get_december_to_feb_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.15,
+                "work": 0.33 + 0.66 * 0.15,
                 "other": vacation_other_multiplier,
             },
         ),

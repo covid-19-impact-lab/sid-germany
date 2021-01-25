@@ -3,20 +3,22 @@ from src.policies.policy_tools import combine_dictionaries
 
 
 def get_future_policies(
-    contact_models, work_multiplier, other_multiplier, schools_open
+    contact_models, share_of_commuting_workers, other_multiplier, schools_open
 ):
     """Get future policy scenario.
 
     Args:
         contact_models (dict)
-        work_multiplier (float): work multiplier used starting January 12th
-        other_multiplier (float): other multiplier used starting January 12th
+        share_of_commuting_workers (float): share of workers continuing to have
+            work contacts starting January 24th.
+        other_multiplier (float): other multiplier used starting January 12th.
         schools_open (bool)
 
     Returns:
         policies (dict):
 
     """
+    hygiene_multiplier = 0.95  # compared to October
     to_combine = [
         get_soft_lockdown(
             contact_models=contact_models,
@@ -28,7 +30,7 @@ def get_future_policies(
             multipliers={
                 "educ": 0.0,
                 # google mobility data says work mobility -40%
-                "work": 0.95 * 0.4,
+                "work": hygiene_multiplier * (0.33 + 0.66 * 0.4),
                 "other": other_multiplier,
             },
         ),
@@ -46,7 +48,7 @@ def get_future_policies(
             multipliers={
                 "educ": 0.0,
                 # google mobility data from autumn vacation.
-                "work": 0.95 * 0.55,
+                "work": hygiene_multiplier * (0.33 + 0.66 * 0.55),
                 "other": other_multiplier,
             },
         ),
@@ -59,7 +61,8 @@ def get_future_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.95 * min(0.55, work_multiplier),
+                "work": hygiene_multiplier
+                * min(0.33 + 0.66 * 0.55, share_of_commuting_workers),
                 "other": other_multiplier,
             },
         ),
@@ -75,7 +78,7 @@ def get_future_policies(
                 },
                 multipliers={
                     "educ": 0.6,
-                    "work": 0.95 * work_multiplier,
+                    "work": hygiene_multiplier * share_of_commuting_workers,
                     "other": other_multiplier,
                 },
             ),
@@ -91,7 +94,8 @@ def get_future_policies(
                 },
                 multipliers={
                     "educ": 0.0,
-                    "work": 0.95 * min(0.55, work_multiplier),
+                    "work": hygiene_multiplier
+                    * min(0.33 + 0.66 * 0.55, share_of_commuting_workers),
                     "other": other_multiplier,
                 },
             ),

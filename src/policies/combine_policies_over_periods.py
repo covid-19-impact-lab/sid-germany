@@ -5,8 +5,12 @@ from src.policies.policy_tools import combine_dictionaries
 
 
 def get_jan_to_april_2021_policies(
-    contact_models, start_date, end_date, other_multiplier
+    contact_models,
+    start_date,
+    end_date,
+    other_multiplier,
 ):
+    "Get policies for January and February 2021."
     assert pd.Timestamp(start_date) >= pd.Timestamp(
         "2020-12-27"
     ), "start date must lie after Dec, 26th"
@@ -14,7 +18,9 @@ def get_jan_to_april_2021_policies(
         "2021-03-31"
     ), "end date must lie after before, April, 1st"
 
-    "Get policies for January and February 2021."
+    # 0.7 ~ mid of spring lockdown share_working estimate
+    work_multiplier = 0.95 * (0.33 + 0.66 * 0.62)
+
     to_combine = [
         get_soft_lockdown(
             contact_models=contact_models,
@@ -25,7 +31,8 @@ def get_jan_to_april_2021_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.15,
+                # not in line with google mobility data!
+                "work": 0.33 + 0.66 * 0.15,
                 "other": other_multiplier,
             },
         ),
@@ -39,7 +46,7 @@ def get_jan_to_april_2021_policies(
             multipliers={
                 "educ": 0.0,
                 # google mobility data says work mobility -40%
-                "work": 0.95 * 0.4,
+                "work": 0.95 * (0.33 + 0.66 * 0.4),
                 "other": other_multiplier,
             },
         ),
@@ -52,8 +59,7 @@ def get_jan_to_april_2021_policies(
             },
             multipliers={
                 "educ": 0.0,
-                # google mobility data from autumn vacation.
-                "work": 0.95 * 0.55,
+                "work": work_multiplier,
                 "other": other_multiplier,
             },
         ),
@@ -66,7 +72,7 @@ def get_jan_to_april_2021_policies(
             },
             multipliers={
                 "educ": 0.6,  # old school multiplier
-                "work": 0.95 * 0.55,
+                "work": work_multiplier,
                 "other": other_multiplier,
             },
         ),
@@ -79,7 +85,7 @@ def get_jan_to_april_2021_policies(
             },
             multipliers={
                 "educ": 0.6,  # old school multiplier
-                "work": 0.95 * 0.55,
+                "work": work_multiplier,
                 "other": other_multiplier,
             },
         ),
@@ -92,7 +98,7 @@ def get_jan_to_april_2021_policies(
             },
             multipliers={
                 "educ": 0.6,  # old school multiplier
-                "work": 0.95 * 0.55,
+                "work": work_multiplier,
                 "other": other_multiplier,
             },
         ),
@@ -102,18 +108,34 @@ def get_jan_to_april_2021_policies(
 
 def get_october_to_christmas_policies(contact_models):
     """Policies from October 1st 2020 until Christmas 2020. """
-    pre_fall_vacation_multipliers = {"educ": 0.8, "work": 0.775, "other": 0.75}
-    fall_vacation_multipliers = {"educ": 0.8, "work": 0.63, "other": 1.0}
-    post_fall_vacation_multipliers = {"educ": 0.8, "work": 0.775, "other": 0.65}
-    lockdown_light_multipliers = {"educ": 0.6, "work": 0.73 * 0.95, "other": 0.45}
+    pre_fall_vacation_multipliers = {
+        "educ": 0.8,
+        "work": (0.33 + 0.66 * 0.775),
+        "other": 0.75,
+    }
+    fall_vacation_multipliers = {
+        "educ": 0.8,
+        "work": (0.33 + 0.66 * 0.63),
+        "other": 1.0,
+    }
+    post_fall_vacation_multipliers = {
+        "educ": 0.8,
+        "work": (0.33 + 0.66 * 0.775),
+        "other": 0.65,
+    }
+    lockdown_light_multipliers = {
+        "educ": 0.6,
+        "work": (0.33 + 0.66 * 0.73) * 0.95,
+        "other": 0.45,
+    }
     lockdown_light_multipliers_with_fatigue = {
         "educ": 0.6,
-        "work": 0.76 * 0.95,
+        "work": (0.33 + 0.66 * 0.76) * 0.95,
         "other": 0.55,
     }
     week_before_christmas_multipliers = {
         "educ": 0.0,
-        "work": 0.76 * 0.95,
+        "work": (0.33 + 0.66 * 0.76) * 0.95,
         "other": 0.55,
     }
     to_combine = [
@@ -182,7 +204,8 @@ def get_october_to_christmas_policies(contact_models):
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.15,
+                # from google mobility data
+                "work": 0.5,
                 "other": 0.35,
             },
         ),
