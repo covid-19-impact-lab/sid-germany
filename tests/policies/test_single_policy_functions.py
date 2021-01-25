@@ -33,7 +33,6 @@ def fake_states():
     )
     states["educ_worker"] = [False] * 8 + [True] * 2
     states["age"] = np.arange(10)
-    states["systemically_relevant"] = [True, False] * 5
     return states
 
 
@@ -134,8 +133,9 @@ def test_a_b_school_system_above_age_5(fake_states):
 
 def test_shut_down_work_model(fake_states):
     contacts = pd.Series([0] * 5 + [1] * 5)
+    fake_states["work_contact_priority"] = [0.2] * 3 + [0.8] * 5 + [0.2] * 2
     calculated = shut_down_work_model(fake_states, contacts, 123)
-    expected = pd.Series([0] * 6 + [1, 0, 1, 0])
+    expected = pd.Series([0] * 5 + [1, 1, 1, 0, 0])
     assert_series_equal(calculated, expected)
 
 
@@ -150,7 +150,7 @@ def test_reduce_work_model(fake_states):
         seed=123,
         multiplier=0.5,
     )
-    expected = pd.Series([1, 1, 0, 1, 1, 0, 1, 0, 1, 0], index=fake_states.index)
+    expected = pd.Series([1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index)
     assert_series_equal(calculated, expected)
 
 
@@ -189,7 +189,7 @@ def test_reopen_work_model(fake_states):
 
     calculated = reopen_work_model(
         states=fake_states,
-        contacts=pd.Series([1] * 10),
+        contacts=pd.Series([0] + [1] * 9),
         seed=1234,
         start_multiplier=0.5,
         end_multiplier=1,
@@ -197,7 +197,7 @@ def test_reopen_work_model(fake_states):
         end_date="2020-03-25",
     )
 
-    expected = pd.Series([1] * 7 + [0, 1, 0])
+    expected = pd.Series([0] + [1] * 6 + [0] * 3)
     assert_series_equal(calculated, expected)
 
 
