@@ -36,6 +36,9 @@ sns.set_palette(get_colors("categorical", 12))
         "by_state": BLD / "policies" / "work_mobility_reduction_by_state.png",
         "de": BLD / "policies" / "work_mobility_reduction_aggregated.png",
         "de_weekdays": BLD / "policies" / "work_mobility_reduction_only_weekdays.png",
+        "de_weekdays_since_dec": BLD
+        / "policies"
+        / "work_mobility_reduction_only_weekdays_since_dec.png",
         "decomposition_table": BLD / "policies" / "decomposition_table.csv",
         "work_days": BLD / "policies" / "google_workday_data.csv",
     }
@@ -47,15 +50,26 @@ def task_decompose_work_multiplier(depends_on, produces):
     fig.savefig(produces["by_state"], dpi=200, transparent=False, facecolor="w")
 
     de_df = df[df["sub_region_1"].isnull()].copy()  # only whole of Germany
-    de_df["workplaces_smoothed"] = de_df["workplaces"].rolling(window=7).mean()
+    de_df["share_working"] = 1 + (de_df["workplaces"] / 100)
     assert not de_df["date"].duplicated().any()
-    fig, ax = _plot_time_series(de_df, y="workplaces", x="date")
+    fig, ax = _plot_time_series(de_df, title="Share Going to Work")
     fig.savefig(produces["de"], dpi=200, transparent=False, facecolor="w")
 
     work_days = de_df[~de_df["date"].dt.day_name().isin(["Saturday", "Sunday"])]
     work_days.to_csv(produces["work_days"])
-    fig, ax = _plot_time_series(work_days)
+    fig, ax = _plot_time_series(work_days, title="Share Going to Work (Workdays Only)")
     fig.savefig(produces["de_weekdays"], dpi=200, transparent=False, facecolor="w")
+
+    fig, ax = _plot_time_series(
+        work_days[work_days["date"] > "2020-11-30"],
+        title="Share Working (Workdays Only)",
+    )
+    ax.axvline(pd.Timestamp("2020-12-27"))
+    ax.axvline(pd.Timestamp("2021-01-04"))
+    ax.axvline(pd.Timestamp("2021-01-12"))
+    fig.savefig(
+        produces["de_weekdays_since_dec"], dpi=200, transparent=False, facecolor="w"
+    )
 
     contact_models = get_all_contact_models(None, None)
     policies = get_october_to_christmas_policies(contact_models=contact_models)
@@ -124,10 +138,12 @@ def decompose_work_multiplier(work_multiplier, start_date, end_date, google_data
         relevant workers that go to work and have (full risk) work contacts.
         Who goes to work is independent of how many work contacts someone has.
 
-        => the work_multiplier can be interpreted as the share of (full risk)
-           contacts that take place among the non-systemically relevant workers.
-
-        => share_risk_contacts_still_happening = 0.33 + 0.66 * work_multiplier
+        => the work_multiplier is approximately the share of (full risk)
+           contacts that take place among workers. Only approximately because
+           the work multiplier selects individuals who stop / continue to go
+           to work where they have "full risk" contacts. If the hygiene multiplier
+           is close to 1 the difference between the extensive and intensive margin
+           should be negligible.
 
         Another way to look at it is:
 
@@ -136,10 +152,9 @@ def decompose_work_multiplier(work_multiplier, start_date, end_date, google_data
 
         Combining the two ways of writing this, we get:
 
-        0.33 + 0.66 * work_multiplier = participation_multiplier * hygiene_multiplier
+        work_multiplier = participation_multiplier * hygiene_multiplier
 
-        <=>  hygiene_multiplier = (0.33 + 0.66 * work_multiplier) /
-                                   participation_multiplier
+        <=>  hygiene_multiplier = work_multiplier / participation_multiplier
 
         the participation_multiplier can be proxied by the reduction in workplace
         mobility in the google mobility data from the respective time period.
@@ -159,7 +174,7 @@ def decompose_work_multiplier(work_multiplier, start_date, end_date, google_data
     data = google_data.loc[start_date:end_date]
     mobility_increase_to_baseline = data["workplaces"].mean() / 100
     participation_multiplier = 1 + mobility_increase_to_baseline
-    hygiene_multiplier = (0.33 + 0.66 * work_multiplier) / participation_multiplier
+    hygiene_multiplier = work_multiplier / participation_multiplier
     return participation_multiplier, hygiene_multiplier
 
 
@@ -169,20 +184,33 @@ def _visualize_reductions_by_state(df):
         df["sub_region_1"].isin(states)
         & ~df["date"].dt.day_name().isin(["Saturday", "Sunday"])
     ]
-    fig, ax = _plot_time_series(data=subset, hue="sub_region_1")
+    fig, ax = _plot_time_series(data=subset, y="workplaces", hue="sub_region_1")
     title = "Reduction in Workplace Mobility Acc. to Google Mobility Data by State"
     ax.set_title(title)
     return fig, ax
 
 
-def _plot_time_series(data, y="workplaces", x="date", hue=None, fig=None, ax=None):
+def _plot_time_series(
+    data,
+    y="share_working",
+    x="date",
+    title="",
+    hue=None,
+    fig=None,
+    ax=None,
+):
+    data = data.copy()
     if ax is None:
-        fig, ax = plt.subplots(figsize=(10, 3))
+        fig, ax = plt.subplots(figsize=(15, 5))
+
     sns.lineplot(data=data, y=y, x=x, hue=hue, ax=ax)
-    ax.axhline(0, color="k", linewidth=1)
-    date_form = DateFormatter("%m/%Y")
+    date_form = (
+        DateFormatter("%d/%m/%Y") if len(data) < 100 else DateFormatter("%d/%m/%Y")
+    )
     ax.xaxis.set_major_formatter(date_form)
     fig.autofmt_xdate()
     loc = AutoDateLocator(minticks=5, maxticks=12)
     ax.xaxis.set_major_locator(loc)
+    ax.grid(axis="y")
+    ax.set_title(title)
     return fig, ax
