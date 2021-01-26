@@ -1,4 +1,5 @@
 import dask.dataframe as dd
+import pandas as pd
 import pytask
 
 from src.config import BLD
@@ -23,8 +24,12 @@ for outcome, title in [
     ("new_known_case", "Beobachtete Inzidenz"),
     ("newly_infected", "Tatsächliche Inzidenz"),
 ]:
-    out_path = BLD / "simulations" / "baseline_prognosis" / f"{outcome}.png"
-    spec = (outcome, title, out_path)
+    produces = {"fig": BLD / "simulations" / "baseline_prognosis" / f"{outcome}.png"}
+    if outcome == "new_known_case":
+        produces["data"] = (
+            BLD / "simulations" / "baseline_prognosis" / "scenario_means.csv"
+        )
+    spec = (outcome, title, produces)
     PLOT_PARAMETRIZATION.append(spec)
 
 
@@ -44,6 +49,14 @@ def task_plot_baseline_prognosis(depends_on, outcome, title, produces):
         time_series_df = weekly_incidences_from_results(simulation_runs, outcome)
         incidences[multiplier] = time_series_df
 
+    if "data" in produces.keys():
+        to_concat = [
+            pd.Series(df.mean(axis=1), name=multiplier)
+            for multiplier, df in incidences.items()
+        ]
+        means = pd.concat(to_concat, axis=1)
+        means.to_csv(produces["data"])
+
     fig, ax = plot_incidences(incidences, 15, title, rki=outcome)
 
-    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
