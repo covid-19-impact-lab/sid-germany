@@ -18,7 +18,7 @@ def get_future_policies(
         policies (dict):
 
     """
-    hygiene_multiplier = 0.95  # compared to October
+    hygiene_multiplier = 0.966667  # compared to October
     to_combine = [
         get_soft_lockdown(
             contact_models=contact_models,

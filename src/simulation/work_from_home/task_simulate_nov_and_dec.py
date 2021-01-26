@@ -6,7 +6,6 @@ Summary of data on work from home:
     3. approx. 55% of workers could work from home.
 
 +3% of individuals who can't work because of restaurant closures etc.:
-work_multiplier = (1 - stay_home_share * 1.5) * 0.95
 
 => wfh_share    stay_home_share     work_multiplier
    15/13%         (+3%) 18/16%        0.82, 0.84
@@ -123,14 +122,15 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
         "work": 0.33 + 0.66 * 0.775,
         "other": 0.65,
     }
+    hygiene_multiplier = 0.966667  # compared to October
     lockdown_light_multipliers = {
         "educ": 0.6,
-        "work": work_multipliers[0] * 0.95,
+        "work": work_multipliers[0] * hygiene_multiplier,
         "other": 0.45,
     }
     lockdown_light_multipliers_with_fatigue = {
         "educ": 0.6,
-        "work": work_multipliers[1] * 0.95,
+        "work": work_multipliers[1] * hygiene_multiplier,
         "other": 0.55,
     }
     to_combine = [
