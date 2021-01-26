@@ -13,13 +13,12 @@ def get_jan_to_april_2021_policies(
     "Get policies for January and February 2021."
     assert pd.Timestamp(start_date) >= pd.Timestamp(
         "2020-12-27"
-    ), "start date must lie after Dec, 26th"
+    ), "start date must lie after Dec, 26th."
     assert pd.Timestamp(end_date) <= pd.Timestamp(
         "2021-03-31"
-    ), "end date must lie after before, April, 1st"
+    ), "end date must lie after before April, 1st."
 
-    # 0.7 ~ mid of spring lockdown share_working estimate
-    work_multiplier = 0.95 * (0.33 + 0.66 * 0.62)
+    work_multiplier = 0.95 * (0.33 + 0.66 * 0.55)
 
     to_combine = [
         get_soft_lockdown(
