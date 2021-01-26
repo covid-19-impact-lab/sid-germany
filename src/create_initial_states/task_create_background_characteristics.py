@@ -110,7 +110,7 @@ def _build_initial_states(
     )
 
     df.index.name = "index"
-    df = df.drop(columns=["index", "work_type"])
+    df = _only_keep_relevant_columns(df)
     df = df.sample(frac=1).reset_index(drop=True)
     return df
 
@@ -238,3 +238,62 @@ def _create_occupation(df):
     to_fill_nans = to_fill_nans.fillna("stays home")
     occupation = occupation.fillna(to_fill_nans).astype("category")
     return occupation
+
+
+def _only_keep_relevant_columns(df):
+    keep = [
+        "age",  # used by `implement_a_b_school_system_above_age`
+        "age_group",  # assort_by variable
+        "age_group_rki",  # for plotting and comparison
+        "county",  # assort_by variable
+        "educ_worker",  # used by `implement_a_b_school_system_above_age`
+        "hh_id",  # not really used anywhere but I would still keep it.
+        "occupation",
+        "private_hh",  # will become relevant if we include nursery homes
+        "state",  # needed for school vacations
+        "work_contact_priority",
+        "work_saturday",
+        "work_sunday",
+        # contact group ids:
+        "hh_model_group_id",
+        "nursery_group_id_0",
+        "other_daily_group_id",
+        "other_weekly_group_id_0",
+        "other_weekly_group_id_1",
+        "other_weekly_group_id_2",
+        "other_weekly_group_id_3",
+        "preschool_group_id_0",
+        "school_group_a",
+        "school_group_id_0",
+        "school_group_id_1",
+        "school_group_id_2",
+        "work_daily_group_id",
+        "work_weekly_group_id_0",
+        "work_weekly_group_id_1",
+        "work_weekly_group_id_10",
+        "work_weekly_group_id_11",
+        "work_weekly_group_id_12",
+        "work_weekly_group_id_13",
+        "work_weekly_group_id_2",
+        "work_weekly_group_id_3",
+        "work_weekly_group_id_4",
+        "work_weekly_group_id_5",
+        "work_weekly_group_id_6",
+        "work_weekly_group_id_7",
+        "work_weekly_group_id_8",
+        "work_weekly_group_id_9",
+    ]
+
+    to_drop = [
+        # I would create them not save them until we need them again.
+        "christmas_group_id_0",
+        "christmas_group_id_1",
+        "christmas_group_id_2",
+        "gender",
+        "index",
+        "stays_home_when_schools_close",  # not used at the moment
+        "work_type",
+    ]
+
+    assert set(keep + to_drop) == set(df.columns)
+    return df[keep]
