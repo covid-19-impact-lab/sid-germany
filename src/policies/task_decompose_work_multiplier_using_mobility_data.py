@@ -26,7 +26,7 @@ sns.set_palette(get_colors("categorical", 12))
 
 @pytask.mark.depends_on(
     {
-        "data": SRC / "original_data" / "google_mobility_2021-01-14_DE.csv",
+        "data": SRC / "original_data" / "google_mobility_2021-01-21_DE.csv",
         "policy_py": SRC / "policies" / "combine_policies_over_periods.py",
         "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     }
