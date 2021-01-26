@@ -30,12 +30,7 @@ FUTURE_WFH_SCENARIO_NAMES = [
     "full_potential",
 ]
 
-WORK_MULTIPLIERS = [
-    0.80,
-    0.70,
-    0.60,
-    0.40,
-]
+WORK_MULTIPLIERS = [0.80, 0.70, 0.60, 0.40]
 
 
 OTHER_MULTIPLIERS = [0.5] * len(WORK_MULTIPLIERS)
