@@ -314,10 +314,10 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
     day = date.day_name()
     contacts = pd.Series(0, index=states.index)
 
-    if on_weekends is False and (day in ["Saturday", "Sunday"]):
+    if not on_weekends and day in ["Saturday", "Sunday"]:
         pass
     else:
-        if isinstance(on_weekends, str) and (day in ["Saturday", "Sunday"]):
+        if isinstance(on_weekends, str) and day in ["Saturday", "Sunday"]:
             participating_today = states[f"{on_weekends}_{day.lower()}"]
             is_participating = states.eval(query) & participating_today
         else:

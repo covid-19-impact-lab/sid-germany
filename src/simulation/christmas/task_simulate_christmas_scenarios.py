@@ -102,7 +102,6 @@ def task_simulation_christmas_scenarios(
         initial_conditions=initial_conditions,
         share_known_cases=share_known_cases,
         path=path,
-        events=None,
         seed=384,
         saved_columns={
             "time": ["date"],

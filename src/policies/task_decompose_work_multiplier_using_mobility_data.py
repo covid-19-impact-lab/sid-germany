@@ -111,7 +111,7 @@ def _build_decomposition_table(policies, google_data):
                         "hygiene_multiplier": hygiene_multiplier,
                     }
                 )
-                df.loc[(tuple(name.split("_work_"))), :] = row
+                df.loc[tuple(name.split("_work_"))] = row
     return df
 
 

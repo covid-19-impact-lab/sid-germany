@@ -185,7 +185,7 @@ def test_go_to_weekly_meeting_right_day(a_thursday, no_reduction_params):
 
 
 def test_go_to_daily_work_meeting_weekend(states, no_reduction_params):
-    a_saturday = states[states["date"] == pd.Timestamp("2020-04-04 00:00:00")]
+    a_saturday = states[states["date"] == pd.Timestamp("2020-04-04")]
     a_saturday["work_saturday"] = [True, True] + [False] * (len(a_saturday) - 2)
     a_saturday["work_daily_group_id"] = 333
     res = go_to_daily_work_meeting(a_saturday, no_reduction_params, 555)
@@ -289,7 +289,7 @@ def test_non_recurrent_work_contacts_no_random_no_sick(
 def test_non_recurrent_work_contacts_no_random_no_sick_sat(
     states, params_with_positive
 ):
-    a_saturday = states[states["date"] == pd.Timestamp("2020-04-04 00:00:00")]
+    a_saturday = states[states["date"] == pd.Timestamp("2020-04-04")]
     a_saturday["symptomatic"] = False
     a_saturday["participates_saturday"] = [True, True, True] + [False] * (
         len(a_saturday) - 3
