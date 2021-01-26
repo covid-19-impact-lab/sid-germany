@@ -41,10 +41,11 @@ def task_check_initial_states(depends_on):
     _check_educ_group_ids(df)
     _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
     _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
-    for i in range(3):
-        col = f"christmas_group_id_{i}"
-        _check_christmas_groups(df, col)
-    assert (df["christmas_group_id_0"] != df["christmas_group_id_1"]).any()
+    if "christmas_group_id_0" in df.columns:
+        for i in range(3):
+            col = f"christmas_group_id_{i}"
+            _check_christmas_groups(df, col)
+        assert (df["christmas_group_id_0"] != df["christmas_group_id_1"]).any()
     not_categorical_group_ids = [
         col for col in df if "group_id" in col and not is_categorical_dtype(df[col])
     ]
@@ -56,26 +57,11 @@ def task_check_initial_states(depends_on):
 def _check_background_characteristics(df):
     """Check that the background characteristics come out right."""
     df = df.copy(deep=True)
-    df["female"] = df["gender"] == "female"
-    df["male"] = df["gender"] == "male"
 
     assert df["hh_id"].value_counts().max() <= 42
     assert df["age"].between(0, 110).all()
     assert (40 <= df["age"].median()) & (48 >= df["age"].median())
     assert df["state"].nunique() == 16
-
-    assert df["gender"].value_counts(normalize=True).between(0.48, 0.52).all()
-    young_gender_shares = df.query("age < 18")["gender"].value_counts(normalize=True)
-    assert young_gender_shares.between(0.48, 0.52).all()
-    old_women_share = (df.query("70 < age < 80")["gender"] == "female").mean()
-    assert old_women_share > 0.53
-    old_women_share = (df.query("age > 80")["gender"] == "female").mean()
-    assert old_women_share > 0.62
-    assert (df.query("occupation == 'working'")["gender"] == "female").mean() < 0.5
-    # given couple formation men and women appear in much more than half of households
-    assert df.groupby("hh_id")["female"].any().mean() > 0.75
-    assert df.groupby("hh_id")["male"].any().mean() > 0.75
-
     _check_occupation_column(df)
 
 
