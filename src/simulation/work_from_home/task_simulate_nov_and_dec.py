@@ -7,12 +7,14 @@ Summary of data on work from home:
 
 +3% of individuals who can't work because of restaurant closures etc.:
 
-=> wfh_share    stay_home_share     work_multiplier
+=> wfh_share    stay_home_share       participation_multiplier
    15/13%         (+3%) 18/16%        0.82, 0.84
    16/14          (+3%) 19/17%        0.81, 0.83
    25%            (+3%) 28%           0.72
    35%            (+3%) 38%           0.62
    55%            (+3%) 58%           0.52
+
+Note: the hygiene multiplier is added as part of _get_work_from_home_policies.
 
 """
 import pandas as pd
@@ -122,7 +124,7 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
         "work": 0.33 + 0.66 * 0.775,
         "other": 0.65,
     }
-    hygiene_multiplier = 0.966667  # compared to October
+    hygiene_multiplier = 0.966667  # compared to October, adjusted for essential workers
     lockdown_light_multipliers = {
         "educ": 0.6,
         "work": work_multipliers[0] * hygiene_multiplier,

@@ -235,7 +235,7 @@ def test_go_to_daily_work_meeting_weekday_with_reduction(
 
 
 def test_non_recurrent_work_contacts_weekend(states, params):
-    a_saturday = states[states["date"] == pd.Timestamp("2020-04-04 00:00:00")]
+    a_saturday = states[states["date"] == pd.Timestamp("2020-04-04")]
     res = calculate_non_recurrent_contacts_from_empirical_distribution(
         states=a_saturday,
         params=params.loc["work_non_recurrent"],

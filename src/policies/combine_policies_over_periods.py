@@ -18,8 +18,8 @@ def get_jan_to_april_2021_policies(
         "2021-03-31"
     ), "end date must lie after before April, 1st."
 
-    hygiene_multiplier = 0.966667  # compared to October
-    work_multiplier = hygiene_multiplier * (0.33 + 0.66 * 0.55)
+    hygiene_multiplier = 0.95  # compared to October
+    work_multiplier = 0.33 + 0.66 * 0.55 * hygiene_multiplier
 
     to_combine = [
         get_soft_lockdown(
@@ -45,8 +45,8 @@ def get_jan_to_april_2021_policies(
             },
             multipliers={
                 "educ": 0.0,
-                # google mobility data says work mobility -40%
-                "work": hygiene_multiplier * (0.33 + 0.66 * 0.4),
+                # google mobility data says work mobility -40% !!!
+                "work": 0.33 + 0.66 * 0.4 * hygiene_multiplier,
                 "other": other_multiplier,
             },
         ),
@@ -108,35 +108,35 @@ def get_jan_to_april_2021_policies(
 
 def get_october_to_christmas_policies(contact_models):
     """Policies from October 1st 2020 until Christmas 2020. """
-    hygiene_multiplier = 0.966667  # compared to October
+    hygiene_multiplier = 0.95  # compared to October
     pre_fall_vacation_multipliers = {
         "educ": 0.8,
-        "work": (0.33 + 0.66 * 0.775),
+        "work": 0.33 + 0.66 * 0.775,
         "other": 0.75,
     }
     fall_vacation_multipliers = {
         "educ": 0.8,
-        "work": (0.33 + 0.66 * 0.63),
+        "work": 0.33 + 0.66 * 0.63,
         "other": 1.0,
     }
     post_fall_vacation_multipliers = {
         "educ": 0.8,
-        "work": (0.33 + 0.66 * 0.775),
+        "work": 0.33 + 0.66 * 0.775,
         "other": 0.65,
     }
     lockdown_light_multipliers = {
         "educ": 0.6,
-        "work": (0.33 + 0.66 * 0.73) * hygiene_multiplier,
+        "work": 0.33 + 0.66 * 0.73 * hygiene_multiplier,
         "other": 0.45,
     }
     lockdown_light_multipliers_with_fatigue = {
         "educ": 0.6,
-        "work": (0.33 + 0.66 * 0.76) * hygiene_multiplier,
+        "work": 0.33 + 0.66 * 0.76 * hygiene_multiplier,
         "other": 0.55,
     }
     week_before_christmas_multipliers = {
         "educ": 0.0,
-        "work": (0.33 + 0.66 * 0.76) * hygiene_multiplier,
+        "work": 0.33 + 0.66 * 0.76 * hygiene_multiplier,
         "other": 0.55,
     }
     to_combine = [
