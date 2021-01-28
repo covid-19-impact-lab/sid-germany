@@ -17,7 +17,6 @@ from src.policies.single_policy_functions import reopen_educ_model_germany
 from src.policies.single_policy_functions import reopen_other_model
 from src.policies.single_policy_functions import reopen_work_model
 from src.policies.single_policy_functions import shut_down_model
-from src.policies.single_policy_functions import shut_down_work_model
 
 
 @pytest.fixture
@@ -128,14 +127,6 @@ def test_a_b_school_system_above_age_5(fake_states):
         age_cutoff=5,
     )
     expected = pd.Series([1] * 6 + [0] + [1] * 3)
-    assert_series_equal(calculated, expected)
-
-
-def test_shut_down_work_model(fake_states):
-    contacts = pd.Series([0] * 5 + [1] * 5)
-    fake_states["work_contact_priority"] = [0.2] * 3 + [0.8] * 5 + [0.2] * 2
-    calculated = shut_down_work_model(fake_states, contacts, 123)
-    expected = pd.Series([0] * 5 + [1, 1, 1, 0, 0])
     assert_series_equal(calculated, expected)
 
 

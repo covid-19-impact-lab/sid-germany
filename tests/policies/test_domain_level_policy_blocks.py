@@ -14,7 +14,6 @@ from src.policies.domain_level_policy_blocks import reopen_other_models
 from src.policies.domain_level_policy_blocks import reopen_work_models
 from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.domain_level_policy_blocks import shut_down_other_models
-from src.policies.domain_level_policy_blocks import shut_down_work_models
 from src.policies.single_policy_functions import implement_a_b_school_system_above_age
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
@@ -22,7 +21,6 @@ from src.policies.single_policy_functions import reopen_educ_model_germany
 from src.policies.single_policy_functions import reopen_other_model
 from src.policies.single_policy_functions import reopen_work_model
 from src.policies.single_policy_functions import shut_down_model
-from src.policies.single_policy_functions import shut_down_work_model
 
 
 def compare_policy_dicts(d1, d2):
@@ -54,32 +52,6 @@ def contact_models():
         "other1": {"model": fake_func, "is_recurrent": False},
     }
     return contact_models
-
-
-def test_shut_down_work_models(contact_models):
-    res = shut_down_work_models(
-        contact_models,
-        {
-            "start_date": "2020-10-01",
-            "end_date": "2020-10-31",
-            "prefix": "test_shut_down",
-        },
-    )
-    expected = {
-        "test_shut_down_work1": {
-            "affected_contact_model": "work1",
-            "start": "2020-10-01",
-            "end": "2020-10-31",
-            "policy": shut_down_work_model,
-        },
-        "test_shut_down_work2": {
-            "affected_contact_model": "work2",
-            "start": "2020-10-01",
-            "end": "2020-10-31",
-            "policy": shut_down_work_model,
-        },
-    }
-    compare_policy_dicts(res, expected)
 
 
 def test_shut_down_educ_models(contact_models):

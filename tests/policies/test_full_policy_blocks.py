@@ -1,9 +1,6 @@
 import pytest
 
 from src.policies.full_policy_blocks import get_german_reopening_phase
-from src.policies.full_policy_blocks import get_hard_lockdown
-from src.policies.full_policy_blocks import get_hard_lockdown_with_ab_schooling
-from src.policies.full_policy_blocks import get_only_educ_closed
 from src.policies.full_policy_blocks import get_soft_lockdown
 from src.policies.full_policy_blocks import get_soft_lockdown_with_ab_schooling
 
@@ -51,16 +48,6 @@ def expected_keys():
     return keys
 
 
-def test_get_only_educ_closed_runs(contact_models, block_info):
-    res = get_only_educ_closed(contact_models, block_info)
-    assert res.keys() == {"prefix_educ_school", "prefix_educ_preschool"}
-
-
-def test_get_hard_lockdown_runs(contact_models, block_info, expected_keys):
-    res = get_hard_lockdown(contact_models, block_info, 0.5)
-    assert res.keys() == expected_keys
-
-
 def test_get_german_reopening_phase_runs(
     contact_models, block_info, start_and_end_multipliers, expected_keys
 ):
@@ -79,15 +66,6 @@ def test_get_soft_lockdown_with_ab_schooling(
     contact_models, block_info, multipliers, expected_keys
 ):
     res = get_soft_lockdown_with_ab_schooling(
-        contact_models, block_info, multipliers, 12
-    )
-    assert res.keys() == expected_keys
-
-
-def test_get_hard_lockdown_with_ab_schooling(
-    contact_models, block_info, multipliers, expected_keys
-):
-    res = get_hard_lockdown_with_ab_schooling(
         contact_models, block_info, multipliers, 12
     )
     assert res.keys() == expected_keys
