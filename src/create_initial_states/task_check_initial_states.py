@@ -99,7 +99,7 @@ def _check_work_contact_priority(df):
     not_working = "occupation in ['stays home', 'retired', 'school']"
     assert (df.query(not_working)["work_contact_priority"] == -1).all()
     workers_priority = df.query("occupation == 'working'")["work_contact_priority"]
-    assert workers_priority.between(-0.01, 1.01).all()
+    assert workers_priority.between(0.0, 1.0).all()
     assert workers_priority.std() > 0.2
     assert (workers_priority.mean() < 0.52) & (workers_priority.mean() > 0.48)
 
