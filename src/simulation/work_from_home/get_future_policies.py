@@ -18,7 +18,7 @@ def get_future_policies(
         policies (dict):
 
     """
-    hygiene_multiplier = 0.95  # compared to October
+    hygiene_multiplier = 0.966667  # compared to October
     to_combine = [
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -30,7 +30,7 @@ def get_future_policies(
             multipliers={
                 "educ": 0.0,
                 # google mobility data says work mobility -40%
-                "work": 0.33 + 0.66 * 0.4 * hygiene_multiplier,
+                "work": 0.594 * hygiene_multiplier,
                 "other": other_multiplier,
             },
         ),
@@ -48,7 +48,7 @@ def get_future_policies(
             multipliers={
                 "educ": 0.0,
                 # google mobility data from autumn vacation.
-                "work": 0.33 + 0.66 * 0.55 * hygiene_multiplier,
+                "work": 0.693 * hygiene_multiplier,
                 "other": other_multiplier,
             },
         ),
@@ -61,9 +61,7 @@ def get_future_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": min(
-                    0.33 + 0.66 * 0.55 * hygiene_multiplier, share_of_commuting_workers
-                ),
+                "work": min(0.693 * hygiene_multiplier, share_of_commuting_workers),
                 "other": other_multiplier,
             },
         ),
@@ -96,7 +94,7 @@ def get_future_policies(
                 multipliers={
                     "educ": 0.0,
                     "work": min(
-                        0.33 + 0.66 * 0.55 * hygiene_multiplier,
+                        0.693 * hygiene_multiplier,
                         share_of_commuting_workers,
                     ),
                     "other": other_multiplier,

@@ -115,13 +115,13 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
     """Get estimation policies from November to December 15th."""
     pre_fall_vacation_multipliers = {
         "educ": 0.8,
-        "work": 0.33 + 0.66 * 0.775,
+        "work": 0.8415,
         "other": 0.75,
     }
-    fall_vacation_multipliers = {"educ": 0.8, "work": 0.33 + 0.66 * 0.63, "other": 1.0}
+    fall_vacation_multipliers = {"educ": 0.8, "work": 0.7458, "other": 1.0}
     post_fall_vacation_multipliers = {
         "educ": 0.8,
-        "work": 0.33 + 0.66 * 0.775,
+        "work": 0.8415,
         "other": 0.65,
     }
     hygiene_multiplier = 0.966667  # compared to October, adjusted for essential workers
