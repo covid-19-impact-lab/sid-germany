@@ -137,12 +137,16 @@ def implement_a_b_school_system_above_age(
 ):  # noqa: U100
     """Classes are split in two for children above age cutoff.
 
+    Note:
+        - Children below the age cutoff go to school normally.
+        - Children above the age cutoff rotate weekly.
+        - Educators always attend.
+
     Args:
         age_cutoff (float): Minimum age to which the policy applies. Set to 0 to
             implement the policy for all.
 
     """
-    assert set(states["school_group_a"].unique()) == {0, 1}
     date = get_date(states)
     attending_half = contacts.where(
         (states["age"] < age_cutoff)
@@ -151,11 +155,6 @@ def implement_a_b_school_system_above_age(
         0,
     )
     return attending_half
-
-
-def shut_down_work_model(states, contacts, seed):
-    # the share of essential workers is about a third of individuals
-    return reduce_work_model(states, contacts, seed, 0.33)
 
 
 def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
@@ -226,7 +225,7 @@ def reopen_other_model(
     in Germany (End of April 2020 to beginning of October 2020).
 
     Args:
-        start_multiplier (float): Activity at start.
+        start_multiplier (float): Activity level at start.
         end_multiplier (float): Activity level at end.
         start_date (str or pandas.Timestamp): Date at which the interpolation phase
             starts.
@@ -284,9 +283,10 @@ def _interpolate_activity_level(
     return activity
 
 
-def reduce_contacts_through_private_contact_tracing(
+def reduce_contacts_through_private_christmas_contact_tracing(
     contacts, states, seed, multiplier, group_ids, is_recurrent, path
 ):
+    """Implement post Christmas celebrations contact tracing."""
     today = get_date(states)
     days_since_christmas = (today - pd.Timestamp("2020-12-26")).days
     test_condition = f"-{days_since_christmas} <= cd_received_test_result_true <= 0"

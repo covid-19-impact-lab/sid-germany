@@ -146,6 +146,9 @@ def _check_educ_group_ids(df):
     _check_educ_group_sizes(df)
     _check_educ_group_assortativeness(df)
 
+    assert set(df["school_group_a"].unique()) == {0, 1}
+    assert 0.49 < df["school_group_a"].mean() < 0.51
+
 
 def _check_educators(df):
     educators = df[df["occupation"].str.endswith("_teacher")]

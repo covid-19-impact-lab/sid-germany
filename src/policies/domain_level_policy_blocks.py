@@ -24,27 +24,14 @@ from src.policies.single_policy_functions import reopen_educ_model_germany
 from src.policies.single_policy_functions import reopen_other_model
 from src.policies.single_policy_functions import reopen_work_model
 from src.policies.single_policy_functions import shut_down_model
-from src.policies.single_policy_functions import shut_down_work_model
 
 # ======================================================================================
 # work policies
 # ======================================================================================
 
 
-def shut_down_work_models(contact_models, block_info):
-    """Reduce all work contacts of non-essential workers."""
-    policies = {}
-
-    work_models = _get_work_models(contact_models)
-    for mod in work_models:
-        policy = _get_base_policy(mod, block_info)
-        policy["policy"] = shut_down_work_model
-        policies[f"{block_info['prefix']}_{mod}"] = policy
-    return policies
-
-
 def reduce_work_models(contact_models, block_info, multiplier):
-    """Reduce contacts of non essential workers with multiplier."""
+    """Reduce contacts of workers by a multiplier."""
     policies = {}
     work_models = _get_work_models(contact_models)
     for mod in work_models:
@@ -55,7 +42,7 @@ def reduce_work_models(contact_models, block_info, multiplier):
 
 
 def reopen_work_models(contact_models, block_info, start_multiplier, end_multiplier):
-    """Reduce contacts of non-essential workers with gradually changing multiplier."""
+    """Reduce contacts of workers with a gradually changing multiplier."""
     policies = {}
     work_models = _get_work_models(contact_models)
     for mod in work_models:
