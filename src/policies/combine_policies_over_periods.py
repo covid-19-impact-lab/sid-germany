@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.policies.full_policy_blocks import get_soft_lockdown
+from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 
 
@@ -22,7 +22,7 @@ def get_jan_to_april_2021_policies(
     work_multiplier = 0.33 + 0.66 * 0.55 * hygiene_multiplier
 
     to_combine = [
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-27",
@@ -36,7 +36,7 @@ def get_jan_to_april_2021_policies(
                 "other": other_multiplier,
             },
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-01-04",
@@ -50,7 +50,7 @@ def get_jan_to_april_2021_policies(
                 "other": other_multiplier,
             },
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-01-12",
@@ -63,7 +63,7 @@ def get_jan_to_april_2021_policies(
                 "other": other_multiplier,
             },
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-02-15",
@@ -76,7 +76,7 @@ def get_jan_to_april_2021_policies(
                 "other": other_multiplier,
             },
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-03-01",
@@ -89,7 +89,7 @@ def get_jan_to_april_2021_policies(
                 "other": other_multiplier,
             },
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-03-16",
@@ -140,7 +140,7 @@ def get_october_to_christmas_policies(contact_models):
         "other": 0.55,
     }
     to_combine = [
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-10-01",
@@ -149,7 +149,7 @@ def get_october_to_christmas_policies(contact_models):
             },
             multipliers=pre_fall_vacation_multipliers,
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-10-10",
@@ -158,7 +158,7 @@ def get_october_to_christmas_policies(contact_models):
             },
             multipliers=fall_vacation_multipliers,
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-10-24",
@@ -167,7 +167,7 @@ def get_october_to_christmas_policies(contact_models):
             },
             multipliers=post_fall_vacation_multipliers,
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-11-02",
@@ -176,7 +176,7 @@ def get_october_to_christmas_policies(contact_models):
             },
             multipliers=lockdown_light_multipliers,
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-11-23",
@@ -186,7 +186,7 @@ def get_october_to_christmas_policies(contact_models):
             multipliers=lockdown_light_multipliers_with_fatigue,
         ),
         # Until start of christmas vacation
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-16",
@@ -196,7 +196,7 @@ def get_october_to_christmas_policies(contact_models):
             multipliers=week_before_christmas_multipliers,
         ),
         # Until Christmas
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-21",

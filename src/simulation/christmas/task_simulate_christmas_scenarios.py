@@ -151,7 +151,7 @@ def get_december_to_feb_policies(
 
     to_combine = [
         # 1st December Half
-        fpb.get_soft_lockdown(
+        fpb.get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-01",
@@ -161,7 +161,7 @@ def get_december_to_feb_policies(
             multipliers={"educ": 0.7, "work": 0.33 + 0.66 * 0.45, "other": 0.5},
         ),
         # Until start of christmas vacation
-        fpb.get_soft_lockdown(
+        fpb.get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-16",
@@ -175,7 +175,7 @@ def get_december_to_feb_policies(
             },
         ),
         # until christmas
-        fpb.get_soft_lockdown(
+        fpb.get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-21",
@@ -199,7 +199,7 @@ def get_december_to_feb_policies(
             other_contacts_multiplier=0.2,
         ),
         # Christmas Until End of Hard Lockdown
-        fpb.get_soft_lockdown(
+        fpb.get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-27",
@@ -212,7 +212,7 @@ def get_december_to_feb_policies(
                 "other": vacation_other_multiplier,
             },
         ),
-        fpb.get_soft_lockdown(
+        fpb.get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-01-04",

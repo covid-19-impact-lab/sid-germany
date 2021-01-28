@@ -27,7 +27,7 @@ from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
-from src.policies.full_policy_blocks import get_soft_lockdown
+from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 
 WFH_SEEDS = [1_000_000 * i for i in range(24)]
@@ -136,7 +136,7 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
         "other": 0.55,
     }
     to_combine = [
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-10-01",
@@ -145,7 +145,7 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
             },
             multipliers=pre_fall_vacation_multipliers,
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-10-10",
@@ -154,7 +154,7 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
             },
             multipliers=fall_vacation_multipliers,
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-10-24",
@@ -163,7 +163,7 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
             },
             multipliers=post_fall_vacation_multipliers,
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-11-02",
@@ -172,7 +172,7 @@ def _get_work_from_home_policies(contact_models, work_multipliers):
             },
             multipliers=lockdown_light_multipliers,
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-11-23",

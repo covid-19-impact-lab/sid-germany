@@ -29,6 +29,8 @@ from src.policies.domain_level_policy_blocks import reduce_work_models
 from src.policies.domain_level_policy_blocks import reopen_educ_models
 from src.policies.domain_level_policy_blocks import reopen_other_models
 from src.policies.domain_level_policy_blocks import reopen_work_models
+from src.policies.domain_level_policy_blocks import shut_down_educ_models
+from src.policies.domain_level_policy_blocks import shut_down_other_models
 from src.policies.policy_tools import combine_dictionaries
 
 
@@ -89,19 +91,32 @@ def get_german_reopening_phase(
     return policies
 
 
-def get_soft_lockdown(contact_models, block_info, multipliers):
+def get_lockdown_with_multipliers(contact_models, block_info, multipliers):
     """Reduce all contact models except for households by multipliers."""
-    to_combine = [
-        reduce_educ_models(contact_models, block_info, multipliers["educ"]),
-        reduce_work_models(contact_models, block_info, multipliers["work"]),
-        reduce_other_models(contact_models, block_info, multipliers["other"]),
-    ]
+    if multipliers["educ"] == 0.0:
+        educ_policies = shut_down_educ_models(contact_models, block_info)
+    elif multipliers["educ"] < 1.0:
+        educ_policies = reduce_educ_models(
+            contact_models, block_info, multipliers["educ"]
+        )
+    else:
+        educ_policies = {}
 
+    work_policies = reduce_work_models(contact_models, block_info, multipliers["work"])
+    if multipliers["other"] == 0.0:
+        other_policies = shut_down_other_models(contact_models, block_info)
+    elif multipliers["other"] < 1.0:
+        other_policies = reduce_other_models(
+            contact_models, block_info, multipliers["other"]
+        )
+    else:
+        other_policies = {}
+    to_combine = [educ_policies, work_policies, other_policies]
     policies = combine_dictionaries(to_combine)
     return policies
 
 
-def get_soft_lockdown_with_ab_schooling(
+def get_lockdown_with_multipliers_with_ab_schooling(
     contact_models, block_info, multipliers, age_cutoff
 ):
 

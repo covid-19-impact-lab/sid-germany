@@ -1,4 +1,4 @@
-from src.policies.full_policy_blocks import get_soft_lockdown
+from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 
 
@@ -20,7 +20,7 @@ def get_future_policies(
     """
     hygiene_multiplier = 0.95  # compared to October
     to_combine = [
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-01-04",
@@ -38,7 +38,7 @@ def get_future_policies(
         # BW: https://tinyurl.com/y2clplul
         # BY: https://tinyurl.com/y49q2uys
         # NRW: https://tinyurl.com/y4rlx37z
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-01-12",
@@ -52,7 +52,7 @@ def get_future_policies(
                 "other": other_multiplier,
             },
         ),
-        get_soft_lockdown(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-01-24",
@@ -70,7 +70,7 @@ def get_future_policies(
     ]
     if schools_open:
         to_combine.append(
-            get_soft_lockdown(
+            get_lockdown_with_multipliers(
                 contact_models=contact_models,
                 block_info={
                     "start_date": "2021-02-01",
@@ -86,7 +86,7 @@ def get_future_policies(
         )
     else:
         to_combine.append(
-            get_soft_lockdown(
+            get_lockdown_with_multipliers(
                 contact_models=contact_models,
                 block_info={
                     "start_date": "2021-02-01",

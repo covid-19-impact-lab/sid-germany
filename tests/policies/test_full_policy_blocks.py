@@ -1,8 +1,10 @@
 import pytest
 
 from src.policies.full_policy_blocks import get_german_reopening_phase
-from src.policies.full_policy_blocks import get_soft_lockdown
-from src.policies.full_policy_blocks import get_soft_lockdown_with_ab_schooling
+from src.policies.full_policy_blocks import get_lockdown_with_multipliers
+from src.policies.full_policy_blocks import (
+    get_lockdown_with_multipliers_with_ab_schooling,
+)
 
 
 def fake_func():
@@ -57,15 +59,17 @@ def test_get_german_reopening_phase_runs(
     assert res.keys() == expected_keys
 
 
-def test_get_soft_lockdown_runs(contact_models, block_info, multipliers, expected_keys):
-    res = get_soft_lockdown(contact_models, block_info, multipliers)
+def test_get_lockdown_with_multipliers_runs(
+    contact_models, block_info, multipliers, expected_keys
+):
+    res = get_lockdown_with_multipliers(contact_models, block_info, multipliers)
     assert res.keys() == expected_keys
 
 
-def test_get_soft_lockdown_with_ab_schooling(
+def test_get_lockdown_with_multipliers_with_ab_schooling(
     contact_models, block_info, multipliers, expected_keys
 ):
-    res = get_soft_lockdown_with_ab_schooling(
+    res = get_lockdown_with_multipliers_with_ab_schooling(
         contact_models, block_info, multipliers, 12
     )
     assert res.keys() == expected_keys
