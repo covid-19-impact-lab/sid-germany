@@ -29,41 +29,7 @@ from src.policies.domain_level_policy_blocks import reduce_work_models
 from src.policies.domain_level_policy_blocks import reopen_educ_models
 from src.policies.domain_level_policy_blocks import reopen_other_models
 from src.policies.domain_level_policy_blocks import reopen_work_models
-from src.policies.domain_level_policy_blocks import shut_down_educ_models
-from src.policies.domain_level_policy_blocks import shut_down_work_models
 from src.policies.policy_tools import combine_dictionaries
-
-
-def get_only_educ_closed(contact_models, block_info):
-    """Reduce all models that have "educ" in their name to 0"""
-    policies = shut_down_educ_models(contact_models, block_info)
-    return policies
-
-
-def get_hard_lockdown(contact_models, block_info, other_contacts_multiplier):
-    """Implement a hard lockdown.
-
-    - All educational facilities are closed
-    - Only essential workers are allowed to work
-    - All other contacts are reduced with a multiplier.
-
-    The same effect could be achieved by calling get_soft_lockdown with zero
-    multipliers for work and educ models, but get_hard_lockdown is more efficient
-    in that case.
-
-    Args:
-        other_contacts_multiplier (float): Multiplier for non-work and non-education
-            contacts.
-
-    """
-    to_combine = [
-        shut_down_educ_models(contact_models, block_info),
-        shut_down_work_models(contact_models, block_info),
-        reduce_other_models(contact_models, block_info, other_contacts_multiplier),
-    ]
-
-    policies = combine_dictionaries(to_combine)
-    return policies
 
 
 def get_german_reopening_phase(
@@ -147,29 +113,6 @@ def get_soft_lockdown_with_ab_schooling(
             multiplier=multipliers["educ"],
         ),
         reduce_work_models(contact_models, block_info, multipliers["work"]),
-        reduce_other_models(contact_models, block_info, multipliers["other"]),
-    ]
-
-    policies = combine_dictionaries(to_combine)
-    return policies
-
-
-def get_hard_lockdown_with_ab_schooling(
-    contact_models,
-    block_info,
-    multipliers,
-    age_cutoff,
-):
-    """Implement a hard lockdown but with a-b scholing instead of closed schools."""
-
-    to_combine = [
-        implement_ab_schooling_with_reduced_other_educ_models(
-            contact_models=contact_models,
-            block_info=block_info,
-            multiplier=multipliers["educ"],
-            age_cutoff=age_cutoff,
-        ),
-        shut_down_work_models(contact_models, block_info),
         reduce_other_models(contact_models, block_info, multipliers["other"]),
     ]
 
