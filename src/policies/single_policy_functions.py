@@ -120,10 +120,15 @@ def reduce_recurrent_model(states, contacts, seed, multiplier):
     This function returns a Series of 0s and 1s.
 
     Args:
-        multiplier (float): Must be smaller or equal to one.
+        multiplier (float or pd.Series): Must be smaller or equal to one. If a
+            Series is supplied the index must be dates.
 
     """
     np.random.seed(seed)
+    if isinstance(multiplier, pd.Series):
+        date = get_date(states)
+        multiplier = multiplier[date]
+
     contacts = contacts.to_numpy()
     resampled_contacts = np.random.choice(
         [1, 0], size=len(states), p=[multiplier, 1 - multiplier]
@@ -161,15 +166,18 @@ def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
     """Reduce contacts for the working population.
 
     Args:
-        multiplier (float): share of workers that have work contacts.
+        multiplier (float, pandas.Series): share of workers that have work
+            contacts. If it's a Series, the index must be dates.
 
     """
-    assert 0 <= multiplier <= 1
+    if isinstance(multiplier, pd.Series):
+        date = get_date(states)
+        multiplier = multiplier[date]
+
+    assert 0 <= multiplier <= 1, f"Work multiplier not in [0, 1] on {get_date(states)}"
     threshold = 1 - multiplier
-    reduced_contacts = contacts.where(
-        (states["work_contact_priority"] > threshold),
-        0,
-    )
+    above_threshold = states["work_contact_priority"] > threshold
+    reduced_contacts = contacts.where(above_threshold, 0)
     return reduced_contacts
 
 
@@ -182,8 +190,7 @@ def reopen_work_model(
     in Germany (End of April 2020 to beginning of October 2020).
 
     Work contacts require special treatment because workers are differ persistently in
-    their "work_contact_priority", i.e. some workers are essential, others are not,
-    with a continuum in between.
+    their "work_contact_priority".
 
     Args:
         start_multiplier (float): Activity at start.

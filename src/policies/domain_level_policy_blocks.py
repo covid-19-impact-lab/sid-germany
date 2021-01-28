@@ -31,7 +31,13 @@ from src.policies.single_policy_functions import shut_down_model
 
 
 def reduce_work_models(contact_models, block_info, multiplier):
-    """Reduce contacts of workers by a multiplier."""
+    """Reduce contacts of workers by a multiplier.
+
+    Args:
+        multiplier (float or pd.Series): Must be smaller or equal to one. If a
+            Series is supplied the index must be dates.
+
+    """
     policies = {}
     work_models = _get_work_models(contact_models)
     for mod in work_models:

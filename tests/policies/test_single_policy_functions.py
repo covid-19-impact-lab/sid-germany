@@ -145,6 +145,21 @@ def test_reduce_work_model(fake_states):
     assert_series_equal(calculated, expected)
 
 
+def test_reduce_work_model_multiplier_series(fake_states):
+    fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
+    contacts = pd.Series(1, index=fake_states.index)
+    contacts[2] = 0
+
+    calculated = reduce_work_model(
+        states=fake_states,
+        contacts=contacts,
+        seed=123,
+        multiplier=pd.Series([0.5], index=[pd.Timestamp("2020-04-23")]),
+    )
+    expected = pd.Series([1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index)
+    assert_series_equal(calculated, expected)
+
+
 def test_interpolate_activity_level():
     calculated = _interpolate_activity_level(
         date="2020-03-20",
