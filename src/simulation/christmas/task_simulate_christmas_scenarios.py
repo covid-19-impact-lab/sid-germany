@@ -14,7 +14,7 @@ from src.create_initial_states.create_initial_conditions import (
 from src.policies.domain_level_policy_blocks import _get_base_policy
 from src.policies.policy_tools import combine_dictionaries
 from src.policies.single_policy_functions import (
-    reduce_contacts_through_private_contact_tracing,
+    reduce_contacts_through_private_christmas_contact_tracing,
 )
 from src.simulation.christmas.spec_christmas_scenarios import (
     create_christmas_parametrization,
@@ -261,7 +261,7 @@ def _get_christmas_contact_tracing_policies(
     for mod in models_with_post_christmas_isolation:
         policy = _get_base_policy(mod, block_info)
         policy["policy"] = partial(
-            reduce_contacts_through_private_contact_tracing,
+            reduce_contacts_through_private_christmas_contact_tracing,
             multiplier=multiplier,
             group_ids=christmas_id_groups,
             is_recurrent=contact_models[mod]["is_recurrent"],
