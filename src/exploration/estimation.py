@@ -20,9 +20,7 @@ from src.create_initial_states.create_initial_conditions import (  # noqa
 )
 from src.manfred.minimize_manfred_estimagic import minimize_manfred_estimagic
 from src.manfred.shared import hash_array
-from src.policies.full_policy_blocks import get_german_reopening_phase
-from src.policies.full_policy_blocks import get_soft_lockdown
-from src.policies.policy_tools import combine_dictionaries
+from src.policies.combine_policies_over_periods import get_october_to_christmas_policies
 
 
 def _get_free_params(params, constraints):
@@ -49,52 +47,6 @@ initial_conditions = create_initial_conditions(
 contact_models = get_all_contact_models()
 
 
-def get_estimation_policies(contact_models):
-    reopening_end_multipliers = {"educ": 0.8, "work": 0.6, "other": 0.7}
-    to_combine = [
-        get_german_reopening_phase(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2020-04-23",
-                "end_date": "2020-09-30",
-                "prefix": "reopening",
-            },
-            start_multipliers={"educ": 0.5, "work": 0.2, "other": 0.3},
-            end_multipliers=reopening_end_multipliers,
-            educ_switching_date="2020-08-01",
-        ),
-        get_soft_lockdown(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2020-10-01",
-                "end_date": "2020-10-20",
-                "prefix": "after_reopening",
-            },
-            multipliers=reopening_end_multipliers,
-        ),
-        get_soft_lockdown(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2020-10-21",
-                "end_date": "2020-11-01",
-                "prefix": "anticipate_lockdown_light",
-            },
-            multipliers={"educ": 0.8, "work": 0.6, "other": 0.55},
-        ),
-        get_soft_lockdown(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2020-11-02",
-                "end_date": "2020-12-20",
-                "prefix": "lockdown_light",
-            },
-            multipliers={"educ": 0.7, "work": 0.5, "other": 0.45},
-        ),
-    ]
-
-    return combine_dictionaries(to_combine)
-
-
 def parallelizable_msm_func(
     params, initial_states, initial_conditions, prefix, share_known_cases
 ):
@@ -104,7 +56,7 @@ def parallelizable_msm_func(
 
     contact_models = get_all_contact_models()
 
-    estimation_policies = get_estimation_policies(contact_models)
+    estimation_policies = get_october_to_christmas_policies(contact_models)
 
     simulate = get_simulate_func(
         params=params,

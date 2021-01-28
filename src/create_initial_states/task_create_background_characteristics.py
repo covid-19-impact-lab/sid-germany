@@ -110,7 +110,7 @@ def _build_initial_states(
     )
 
     df.index.name = "index"
-    df = df.drop(columns=["index", "work_type"])
+    df = _only_keep_relevant_columns(df)
     df = df.sample(frac=1).reset_index(drop=True)
     return df
 
@@ -125,10 +125,14 @@ def _prepare_microcensus(mc):
         "ef31": "hh_form",
         "ef44": "age",
         "ef46": "gender",
+        "ef149": "frequency_work_saturday",
+        "ef150": "frequency_work_sunday",
     }
     mc = mc.rename(columns=rename_dict)
     mc = mc[rename_dict.values()]
     mc["private_hh"] = mc["hh_form"] == "bevölkerung in privathaushalten"
+    # restrict to private households for the moment
+    mc = mc[mc["private_hh"]]
     mc["gender"] = (
         mc["gender"]
         .replace({"männlich": "male", "weiblich": "female"})
@@ -139,10 +143,28 @@ def _prepare_microcensus(mc):
     mc["age_group"] = create_age_groups(mc["age"])
     mc["age_group_rki"] = create_age_groups_rki(mc)
 
+    # 53% no, 21% every now and then, 17% regularly, 9% all the time
+    work_answers = ["ja, ständig", "ja, regelmäßig"]
+    mc["work_saturday"] = mc["frequency_work_saturday"].isin(work_answers)
+    # 72% no, 14% every now and then, 10% regularly, 3% all the time
+    mc["work_sunday"] = mc["frequency_work_sunday"].isin(work_answers)
+
     mc["hh_id"] = mc.apply(_create_mc_hh_id, axis=1)
     mc["hh_id"] = pd.factorize(mc["hh_id"])[0]
-    assert len(mc["hh_id"].unique()) == 11_494, "Wrong number of households."
-    mc = mc.drop(columns=["district_id", "east_west", "hh_form", "hh_nr_in_district"])
+    assert len(mc["hh_id"].unique()) == 11_461, "Wrong number of households."
+
+    keep_cols = [
+        "private_hh",
+        "gender",
+        "age",
+        "age_group",
+        "age_group_rki",
+        "work_type",
+        "work_saturday",
+        "work_sunday",
+        "hh_id",
+    ]
+    mc = mc[keep_cols]
     return mc
 
 
@@ -216,3 +238,62 @@ def _create_occupation(df):
     to_fill_nans = to_fill_nans.fillna("stays home")
     occupation = occupation.fillna(to_fill_nans).astype("category")
     return occupation
+
+
+def _only_keep_relevant_columns(df):
+    keep = [
+        "age",  # used by `implement_a_b_school_system_above_age`
+        "age_group",  # assort_by variable
+        "age_group_rki",  # for plotting and comparison
+        "county",  # assort_by variable
+        "educ_worker",  # used by `implement_a_b_school_system_above_age`
+        "hh_id",  # not really used anywhere but I would still keep it.
+        "occupation",
+        "private_hh",  # will become relevant if we include nursery homes
+        "state",  # needed for school vacations
+        "work_contact_priority",
+        "work_saturday",
+        "work_sunday",
+        # contact group ids:
+        "hh_model_group_id",
+        "nursery_group_id_0",
+        "other_daily_group_id",
+        "other_weekly_group_id_0",
+        "other_weekly_group_id_1",
+        "other_weekly_group_id_2",
+        "other_weekly_group_id_3",
+        "preschool_group_id_0",
+        "school_group_a",
+        "school_group_id_0",
+        "school_group_id_1",
+        "school_group_id_2",
+        "work_daily_group_id",
+        "work_weekly_group_id_0",
+        "work_weekly_group_id_1",
+        "work_weekly_group_id_10",
+        "work_weekly_group_id_11",
+        "work_weekly_group_id_12",
+        "work_weekly_group_id_13",
+        "work_weekly_group_id_2",
+        "work_weekly_group_id_3",
+        "work_weekly_group_id_4",
+        "work_weekly_group_id_5",
+        "work_weekly_group_id_6",
+        "work_weekly_group_id_7",
+        "work_weekly_group_id_8",
+        "work_weekly_group_id_9",
+    ]
+
+    to_drop = [
+        # I would create them not save them until we need them again.
+        "christmas_group_id_0",
+        "christmas_group_id_1",
+        "christmas_group_id_2",
+        "gender",
+        "index",
+        "stays_home_when_schools_close",  # not used at the moment
+        "work_type",
+    ]
+
+    assert set(keep + to_drop) == set(df.columns)
+    return df[keep]

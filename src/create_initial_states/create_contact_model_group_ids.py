@@ -63,14 +63,53 @@ def add_contact_model_group_ids(
                 - updated occupation column
                 - educ_worker
                 - school_group_a
-                - systemically_relevant
                 - work_contact_priority
                 - christmas_group_{0, 1, 2}
+                - stays_home_when_schools_close
 
     """
     seed = itertools.count(seed)
     df = df.copy(deep=True)
 
+    df = _add_educ_group_ids(df, seed)
+
+    df["work_contact_priority"] = _draw_work_contact_priority(
+        df["occupation"], next(seed)
+    )
+    df = _add_work_group_ids(df, work_daily_dist, work_weekly_dist, seed)
+
+    df = _add_other_group_ids(df, other_daily_dist, other_weekly_dist, seed)
+
+    hh_sizes = df.groupby("hh_id")["one"].transform("size")
+    df["hh_model_group_id"] = (
+        df["hh_id"].astype(int).where(hh_sizes > 1, -1).astype("category")
+    )
+
+    for i in range(3):
+        df[f"christmas_group_id_{i}"] = _sample_household_groups(
+            df, seed=next(seed), assort_by="state", same_group_probability=0.5, n_hhs=3
+        )
+
+    educ_group_cols = [
+        "school_group_id_0",
+        "school_group_id_1",
+        "school_group_id_2",
+        "preschool_group_id_0",
+        "nursery_group_id_0",
+    ]
+    df[educ_group_cols] = df[educ_group_cols].astype("category")
+
+    # the stays_home_when_schools_close variable is not used yet.
+    df[
+        "stays_home_when_schools_close"
+    ] = _identify_adult_staying_home_when_schools_close(df)
+
+    df = df.drop(columns=["pos_in_group", "one", "group_size"])
+    return df
+
+
+def _add_educ_group_ids(df, seed):
+    df = df.copy(deep=True)
     school_class_ids, updated_occupation = make_educ_group_columns(
         states=df,
         query="occupation == 'school'",
@@ -124,128 +163,10 @@ def add_contact_model_group_ids(
     df = df.merge(nursery_class_ids, left_index=True, right_index=True, validate="1:1")
     df["occupation"] = updated_occupation
     df["educ_worker"] = df["occupation"].str.endswith("_teacher")
-
-    df["systemically_relevant"] = _draw_systemically_relevant(
-        df["occupation"], seed=next(seed)
-    )
-    df["work_contact_priority"] = _draw_work_contact_priority(
-        df["occupation"], df["systemically_relevant"], next(seed)
-    )
-
-    work_daily_group_sizes = work_daily_dist.copy(deep=True)
-    work_daily_group_sizes.index += 1
-    df["work_daily_group_id"] = create_groups_from_dist(
-        initial_states=df,
-        group_distribution=work_daily_group_sizes,
-        query="occupation == 'working'",
-        assort_bys=["county"],
-        seed=next(seed),
-    )
-
-    other_daily_group_sizes = other_daily_dist.copy(deep=True)
-    other_daily_group_sizes.index += 1
-    df["other_daily_group_id"] = create_groups_from_dist(
-        initial_states=df,
-        group_distribution=other_daily_group_sizes,
-        query=None,
-        assort_bys=["county", "age_group"],
-        seed=next(seed),
-    )
-
-    weekly_work_ids = add_weekly_ids(
-        states=df,
-        weekly_dist=work_weekly_dist,
-        query="occupation =='working'",
-        seed=9958,
-        col_prefix="work_weekly_group_id",
-        county_assortativeness=0.8,
-    )
-
-    df = df.merge(
-        right=weekly_work_ids,
-        left_index=True,
-        right_index=True,
-        validate="1:1",
-    )
-
-    weekly_other_ids = add_weekly_ids(
-        states=df,
-        weekly_dist=other_weekly_dist,
-        seed=4748,
-        query=None,
-        col_prefix="other_weekly_group_id",
-        county_assortativeness=0.8,
-    )
-
-    df = df.merge(
-        right=weekly_other_ids,
-        left_index=True,
-        right_index=True,
-        validate="1:1",
-    )
-
-    cols_with_non_parquet_compatible_categories = (
-        ["work_daily_group_id", "other_daily_group_id"]
-        + weekly_work_ids.columns.tolist()
-        + weekly_other_ids.columns.tolist()
-    )
-    for col in cols_with_non_parquet_compatible_categories:
-        simplified = pd.Series(pd.factorize(df[col])[0], index=df.index)
-        # -1 has a special meaning so it needs to remain
-        df[col] = simplified.where(df[col] != -1, -1)
-        df[col] = df[col].astype("category")
-
-    hh_sizes = df.groupby("hh_id")["one"].transform("size")
-    df["hh_model_group_id"] = (
-        df["hh_id"].astype(int).where(hh_sizes > 1, -1).astype("category")
-    )
-
-    for i in range(3):
-        df[f"christmas_group_id_{i}"] = _sample_household_groups(
-            df, seed=next(seed), assort_by="state", same_group_probability=0.5, n_hhs=3
-        )
-
-    educ_group_cols = [
-        "school_group_id_0",
-        "school_group_id_1",
-        "school_group_id_2",
-        "preschool_group_id_0",
-        "nursery_group_id_0",
-    ]
-    df[educ_group_cols] = df[educ_group_cols].astype("category")
-    df = df.drop(columns=["pos_in_group", "one", "group_size"])
     return df
 
 
-def _draw_systemically_relevant(occupation, seed):
-    """Assign each worker whether (s)he is systemically relevant.
-
-    According to the German government around 1 in 3 German workers work
-    in systemically relevant jobs. Teachers of any age group are classified as
-    systemically relevant.
-
-    source: https://dip21.bundestag.de/dip21/btd/19/218/1921889.pdf
-
-    """
-    np.random.seed(seed)
-
-    is_teacher = occupation.str.endswith("_teacher")
-    share_teachers = is_teacher.mean()
-    corrected_probs = [0.33 - share_teachers, 0.67 + share_teachers]
-    values = np.random.choice(
-        a=[True, False],
-        size=len(occupation),
-        p=corrected_probs,
-    )
-    systemically_relevant = pd.Series(
-        values, index=occupation.index, name="systemically_relevant"
-    )
-    systemically_relevant = systemically_relevant.where(occupation == "working", False)
-    systemically_relevant = systemically_relevant.where(~is_teacher, True)
-    return systemically_relevant
-
-
-def _draw_work_contact_priority(occupation, systemically_relevant, seed):
+def _draw_work_contact_priority(occupation, seed):
     np.random.seed(seed)
 
     is_worker = occupation == "working"
@@ -254,7 +175,6 @@ def _draw_work_contact_priority(occupation, systemically_relevant, seed):
         values, index=occupation.index, name="work_contact_priority"
     )
     work_contact_priority = work_contact_priority.where(is_worker, other=-1)
-    work_contact_priority = work_contact_priority.where(~systemically_relevant, 2)
     return work_contact_priority
 
 
@@ -351,3 +271,99 @@ def _sample_household_groups(df, seed, assort_by, same_group_probability=None, n
     id_col = id_col.astype("category")
 
     return id_col
+
+
+def _add_work_group_ids(df, work_daily_dist, work_weekly_dist, seed):
+    df = df.copy(deep=True)
+
+    work_daily_group_sizes = work_daily_dist.copy(deep=True)
+    work_daily_group_sizes.index += 1
+    df["work_daily_group_id"] = create_groups_from_dist(
+        initial_states=df,
+        group_distribution=work_daily_group_sizes,
+        query="occupation == 'working'",
+        assort_bys=["county"],
+        seed=next(seed),
+    )
+
+    weekly_work_ids = add_weekly_ids(
+        states=df,
+        weekly_dist=work_weekly_dist,
+        query="occupation =='working'",
+        seed=9958,
+        col_prefix="work_weekly_group_id",
+        county_assortativeness=0.8,
+    )
+
+    df = df.merge(
+        right=weekly_work_ids,
+        left_index=True,
+        right_index=True,
+        validate="1:1",
+    )
+
+    cols_with_non_parquet_compatible_categories = [
+        "work_daily_group_id"
+    ] + weekly_work_ids.columns.tolist()
+    for col in cols_with_non_parquet_compatible_categories:
+        simplified = pd.Series(pd.factorize(df[col])[0], index=df.index)
+        # -1 has a special meaning so it needs to remain
+        df[col] = simplified.where(df[col] != -1, -1)
+        df[col] = df[col].astype("category")
+
+    return df
+
+
+def _add_other_group_ids(df, other_daily_dist, other_weekly_dist, seed):
+    other_daily_group_sizes = other_daily_dist.copy(deep=True)
+    other_daily_group_sizes.index += 1
+    df["other_daily_group_id"] = create_groups_from_dist(
+        initial_states=df,
+        group_distribution=other_daily_group_sizes,
+        query=None,
+        assort_bys=["county", "age_group"],
+        seed=next(seed),
+    )
+
+    weekly_other_ids = add_weekly_ids(
+        states=df,
+        weekly_dist=other_weekly_dist,
+        seed=4748,
+        query=None,
+        col_prefix="other_weekly_group_id",
+        county_assortativeness=0.8,
+    )
+
+    df = df.merge(
+        right=weekly_other_ids,
+        left_index=True,
+        right_index=True,
+        validate="1:1",
+    )
+
+    cols_with_non_parquet_compatible_categories = [
+        "other_daily_group_id"
+    ] + weekly_other_ids.columns.tolist()
+    for col in cols_with_non_parquet_compatible_categories:
+        simplified = pd.Series(pd.factorize(df[col])[0], index=df.index)
+        # -1 has a special meaning so it needs to remain
+        df[col] = simplified.where(df[col] != -1, -1)
+        df[col] = df[col].astype("category")
+    return df
+
+
+def _identify_adult_staying_home_when_schools_close(df):
+    df = df.copy(deep=True)
+
+    df["is_under_14"] = df["age"] < 14
+    hh_has_young_child = df.groupby("hh_id")["is_under_14"].transform("any")
+
+    not_working = df["occupation"].isin(["retired", "stays_home"])
+    df["non_working_adult"] = not_working & (df["age"] > 18)
+    has_non_working_adult = df.groupby("hh_id")["non_working_adult"].transform("any")
+
+    oldest_adult_in_hh = df["age"] == df.groupby("hh_id")["age"].transform("max")
+    oldest_in_hh_with_kids = oldest_adult_in_hh & hh_has_young_child
+    stays_home_when_schools_close = oldest_in_hh_with_kids & ~has_non_working_adult
+
+    return stays_home_when_schools_close

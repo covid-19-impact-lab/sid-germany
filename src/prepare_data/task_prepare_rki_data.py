@@ -108,6 +108,13 @@ def task_prepare_rki_data(depends_on, produces):
     cropped = cropped.drop(columns=["date", "undetected_multiplier"])
 
     assert cropped.notnull().all().all()
+    dates = cropped.index.get_level_values("date").unique()
+    expected_dates = pd.date_range(dates.min(), dates.max())
+    missing_dates = [str(x.date()) for x in expected_dates if x not in dates]
+    assert (
+        len(missing_dates) == 0
+    ), f"There are missing dates in the RKI data: {missing_dates}"
+
     cropped.to_pickle(produces["data"])
 
     reported_per_day = cropped["newly_infected"].groupby("date").sum()

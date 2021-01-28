@@ -152,11 +152,8 @@ def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
     return attends_meeting
 
 
-def go_to_work(states, params, seed):
+def go_to_daily_work_meeting(states, params, seed):
     """Return which people go to work.
-
-    Adults go to work if they are workers, it is a weekday, and they do not show any
-    symptoms.
 
     Args:
         states (pandas.DataFrame): sid states DataFrame
@@ -171,12 +168,13 @@ def go_to_work(states, params, seed):
     """
     date = get_date(states)
     day = date.day_name()
+
+    attends_work = states.eval(
+        "(occupation == 'working') & (work_daily_group_id != -1)"
+    ).astype(int)
     if day in ["Saturday", "Sunday"]:
-        attends_work = pd.Series(data=0, index=states.index)
+        attends_work = attends_work & states[f"work_{day.lower()}"]
     else:
-        attends_work = states.eval(
-            "(occupation == 'working') & (work_daily_group_id != -1)"
-        ).astype(int)
         for params_entry, condition in [
             ("symptomatic_multiplier", "symptomatic"),
             ("positive_test_multiplier", IS_POSITIVE_CASE),
@@ -300,7 +298,10 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
         params (pandas.DataFrame): DataFrame with two index levels,
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
-        on_weekends (bool): whether to meet on weekends or not.
+        on_weekends (bool or str): whether to meet on weekends or not. If it's a string
+            it's interpreted as the prefix of columns identifying who participates
+            in this contact model on weekends. Then, columns of the form
+            "{on_weekends}_saturday" and "{on_weekends}_sunday" must be in states.
         query (str): query string to identify the subset of individuals to which this
             contact model applies.
 
@@ -310,16 +311,20 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
 
     """
     date = get_date(states)
+    day = date.day_name()
     contacts = pd.Series(0, index=states.index)
 
-    if not on_weekends and (date.day_name() in ["Saturday", "Sunday"]):
+    if not on_weekends and day in ["Saturday", "Sunday"]:
         pass
-
     else:
-        if query is not None:
-            is_participating = states.eval(query)
+        if isinstance(on_weekends, str) and day in ["Saturday", "Sunday"]:
+            participating_today = states[f"{on_weekends}_{day.lower()}"]
+            is_participating = states.eval(query) & participating_today
         else:
-            is_participating = pd.Series(True, index=states.index)
+            if query is not None:
+                is_participating = states.eval(query)
+            else:
+                is_participating = pd.Series(True, index=states.index)
 
         distribution = params.query("~subcategory.str.contains('multiplier')")["value"]
         contacts[is_participating] = _draw_nr_of_contacts(

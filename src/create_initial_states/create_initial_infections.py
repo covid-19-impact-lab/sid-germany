@@ -51,7 +51,9 @@ def create_initial_infections(
     assert correct_index_levels, f"Your data must have {index_cols} as index levels."
 
     dates = empirical_data.index.get_level_values("date").unique()
-    assert set(pd.date_range(start, end)).issubset(dates)
+    expected_dates = pd.date_range(start, end)
+    missing_dates = [str(x.date()) for x in expected_dates if x.date() not in dates]
+    assert len(missing_dates) == 0, f"The following dates are missing: {missing_dates}"
 
     empirical_data = empirical_data.loc[pd.Timestamp(start) : pd.Timestamp(end)]  # noqa
 

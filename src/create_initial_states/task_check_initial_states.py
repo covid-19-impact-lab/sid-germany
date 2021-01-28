@@ -37,15 +37,15 @@ def task_check_initial_states(depends_on):
     other_daily_dist = pd.read_pickle(depends_on["other_daily_dist"])
     other_weekly_dist = pd.read_pickle(depends_on["other_weekly_dist"])
 
-    _check_systemically_relevant(df)
     _check_work_contact_priority(df)
     _check_educ_group_ids(df)
     _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
     _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
-    for i in range(3):
-        col = f"christmas_group_id_{i}"
-        _check_christmas_groups(df, col)
-    assert (df["christmas_group_id_0"] != df["christmas_group_id_1"]).any()
+    if "christmas_group_id_0" in df.columns:
+        for i in range(3):
+            col = f"christmas_group_id_{i}"
+            _check_christmas_groups(df, col)
+        assert (df["christmas_group_id_0"] != df["christmas_group_id_1"]).any()
     not_categorical_group_ids = [
         col for col in df if "group_id" in col and not is_categorical_dtype(df[col])
     ]
@@ -57,26 +57,11 @@ def task_check_initial_states(depends_on):
 def _check_background_characteristics(df):
     """Check that the background characteristics come out right."""
     df = df.copy(deep=True)
-    df["female"] = df["gender"] == "female"
-    df["male"] = df["gender"] == "male"
 
     assert df["hh_id"].value_counts().max() <= 42
     assert df["age"].between(0, 110).all()
     assert (40 <= df["age"].median()) & (48 >= df["age"].median())
     assert df["state"].nunique() == 16
-
-    assert df["gender"].value_counts(normalize=True).between(0.48, 0.52).all()
-    young_gender_shares = df.query("age < 18")["gender"].value_counts(normalize=True)
-    assert young_gender_shares.between(0.48, 0.52).all()
-    old_women_share = (df.query("70 < age < 80")["gender"] == "female").mean()
-    assert old_women_share > 0.53
-    old_women_share = (df.query("age > 80")["gender"] == "female").mean()
-    assert old_women_share > 0.62
-    assert (df.query("occupation == 'working'")["gender"] == "female").mean() < 0.5
-    # given couple formation men and women appear in much more than half of households
-    assert df.groupby("hh_id")["female"].any().mean() > 0.75
-    assert df.groupby("hh_id")["male"].any().mean() > 0.75
-
     _check_occupation_column(df)
 
 
@@ -110,34 +95,13 @@ def _check_occupation_column(df):
     assert 0.9 < (df[df["age"] > 70]["occupation"] == "retired").mean()
 
 
-def _check_systemically_relevant(df):
-    shares = df.groupby("occupation")["systemically_relevant"].mean()
-    assert shares["retired"] == 0.0, "retired systemically relevant."
-    assert shares["school"] == 0.0, "children systemically relevant."
-    teach_occs = ["school_teacher", "preschool_teacher", "nursery_teacher"]
-    assert (shares[teach_occs] == 1.0).all(), "not all teachers systemically relevant."
-    assert shares["stays home"] == 0.0, "stays home systemically relevant."
-    assert (0.31 < shares["working"]) and (
-        shares["working"] < 0.35
-    ), "not a third of workers systemically_relevant"
-
-    not_working = "occupation in ['stays home', 'retired', 'school']"
-    assert not df.query(not_working)["systemically_relevant"].any()
-    workers = df.query("occupation == 'working'")
-    assert workers["systemically_relevant"].mean() > 0.27
-    assert workers["systemically_relevant"].mean() < 0.35
-
-
 def _check_work_contact_priority(df):
     not_working = "occupation in ['stays home', 'retired', 'school']"
     assert (df.query(not_working)["work_contact_priority"] == -1).all()
-    assert (df.query("systemically_relevant")["work_contact_priority"] == 2).all()
-    non_essential_prios = df.query("occupation == 'working' & ~ systemically_relevant")[
-        "work_contact_priority"
-    ]
-    assert non_essential_prios.between(-0.01, 1.01).all()
-    assert non_essential_prios.std() > 0.2
-    assert (non_essential_prios.mean() < 0.52) & (non_essential_prios.mean() > 0.48)
+    workers_priority = df.query("occupation == 'working'")["work_contact_priority"]
+    assert workers_priority.between(0.0, 1.0).all()
+    assert workers_priority.std() > 0.2
+    assert (workers_priority.mean() < 0.52) & (workers_priority.mean() > 0.48)
 
 
 def _check_educ_group_ids(df):
@@ -301,7 +265,4 @@ def _check_christmas_groups(df, col):
     groups_per_hh = df.groupby("hh_id")[col].nunique()
     assert (groups_per_hh == 1).all(), "Every hh must have one christmas group."
     hh_per_group = df.groupby(col)["hh_id"].nunique()
-    assert hh_per_group[-1] == 0
-    assert (
-        hh_per_group.drop(-1) == 3
-    ).mean() > 0.9999, "Too many groups don't have 3 households."
+    assert (hh_per_group == 3).all(), "Not all groups have 3 households."

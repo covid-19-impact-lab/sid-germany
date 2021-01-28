@@ -14,6 +14,22 @@ CARTESIAN_PRODUCT = list(
 )
 
 
+def create_christmas_parametrization():
+    """Create the parametrization for the simulation of the Christmas scenarios.
+
+    Returns:
+        out (list): List of specification tuples. Each tuple is composed of:
+            (scenario, christmas_mode, contact_tracing_multiplier, path, produces).
+            path is the directory where sid saves all results.
+            produces is the path to the last states.
+
+    """
+    paths = [create_output_path_for_simulation(*args) for args in CARTESIAN_PRODUCT]
+    produces = [create_path_to_last_states(*args) for args in CARTESIAN_PRODUCT]
+
+    return zip(*zip(*CARTESIAN_PRODUCT), paths, produces)
+
+
 def create_output_path_for_simulation(
     scenario, christmas_mode, contact_tracing_multiplier
 ):
@@ -23,7 +39,7 @@ def create_output_path_for_simulation(
         else f"w_ct_{str(contact_tracing_multiplier).replace('.', '_')}"
     )
     path = (
-        BLD / "simulation" / f"simulation_christmas_mode_{christmas_mode}_"
+        BLD / "simulations" / "christmas" / f"{christmas_mode}_mode"
         f"{ctm_str}_{scenario}"
     )
 

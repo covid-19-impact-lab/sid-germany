@@ -1,7 +1,7 @@
 import warnings
 from pathlib import Path
 
-import pandas as pd
+FAST_FLAG = True
 
 try:
     import pyarrow  # noqa: F401
@@ -19,13 +19,6 @@ else:
 SRC = Path(__file__).parent
 BLD = SRC.parent / "bld"
 
-RKI_DATA_RANGE = pd.date_range("2020-03-01", "2020-10-31")
-
-RELATIVE_POPULATION_PARAMETER = 1 / 100_000
-
 POPULATION_GERMANY = 83_000_000
-
-ONE_DAY = pd.Timedelta(days=1)
-
 
 N_HOUSEHOLDS = 750_000

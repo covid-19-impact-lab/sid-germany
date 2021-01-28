@@ -153,24 +153,22 @@ def implement_a_b_school_system_above_age(
     return attending_half
 
 
-def shut_down_work_model(states, contacts, seed):  # noqa: U100
-    return contacts.where(states["systemically_relevant"], 0)
+def shut_down_work_model(states, contacts, seed):
+    # the share of essential workers is about a third of individuals
+    return reduce_work_model(states, contacts, seed, 0.33)
 
 
 def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
-    """Reduce contacts for the non systemically relevant working population.
-
-    Contacts of systemically relevant workers are never reduced.
+    """Reduce contacts for the working population.
 
     Args:
-        multiplier (float): share of non-systemically relevant workers
-            that have work contacts.
+        multiplier (float): share of workers that have work contacts.
 
     """
     assert 0 <= multiplier <= 1
     threshold = 1 - multiplier
     reduced_contacts = contacts.where(
-        states["systemically_relevant"] | (states["work_contact_priority"] > threshold),
+        (states["work_contact_priority"] > threshold),
         0,
     )
     return reduced_contacts
