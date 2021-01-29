@@ -92,8 +92,8 @@ def get_jan_to_april_2021_policies(
 def get_october_to_christmas_policies(contact_models):
     """Policies from October 1st 2020 until Christmas 2020. """
     work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
-    work_multiplier = pd.read_csv(work_multiplier_path, parse_dates="date")
-    work_multiplier = work_multiplier.set_index("date")
+    work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
+    work_multiplier = work_multiplier.set_index("date")["share_working"]
 
     pre_fall_vacation_multipliers = {
         "educ": 0.8,
@@ -202,7 +202,8 @@ def get_october_to_christmas_policies(contact_models):
 def _process_work_multiplier(work_multiplier, start_date, end_date):
     dates = pd.date_range(start_date, end_date)
     default_path = BLD / "policies" / "work_multiplier.csv"
-    default = pd.read_csv(default_path, parse_dates="date").set_index("date")
+    default = pd.read_csv(default_path, parse_dates=["date"])
+    default = default.set_index("date")["share_working"]
     if isinstance(work_multiplier, pd.Series):
         expanded = pd.Series(work_multiplier, index=dates)
         expanded.fillna(default)
@@ -213,6 +214,5 @@ def _process_work_multiplier(work_multiplier, start_date, end_date):
         assert expanded.notnull().all(), msg
     elif isinstance(work_multiplier, float):
         expanded = pd.Series(default, index=dates)
-        expanded[default.index.max() :] = work_multiplier  # noqa: E203
-        assert expanded.notnull().all()
+        expanded = expanded.fillna(work_multiplier)
     return expanded

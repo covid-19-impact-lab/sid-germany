@@ -81,6 +81,10 @@ def _calculate_work_multiplier(df):
     weekends = work_multiplier.index.day_name().isin(["Saturday", "Sunday"])
     work_multiplier[weekends] = np.nan
     work_multiplier = work_multiplier.interpolate(method="nearest")
+    work_multiplier = work_multiplier.fillna(method="ffill").fillna(method="bfill")
+    start, end = work_multiplier.index.min(), work_multiplier.index.max()
+    assert (work_multiplier.index == pd.date_range(start, end)).all()
+    assert work_multiplier.notnull().all()
     return work_multiplier
 
 
