@@ -17,16 +17,11 @@ from src.simulation.base_prognosis.base_prognosis_specification import (
     build_base_prognosis_parametrization,
 )
 
-
-START_DATE = (pd.Timestamp(datetime.today()) - pd.Timedelta(days=14)).normalize()
-END_DATE = START_DATE + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
 NESTED_PARAMETRIZATION = build_base_prognosis_parametrization()
-SIMULATION_PARAMETRIZATION = [
-    (other_multiplier, seed, produces)
-    for other_multiplier, val in NESTED_PARAMETRIZATION.items()
-    for seed, produces in val
+PARAMETRIZATION = [
+    spec for seed_list in NESTED_PARAMETRIZATION.values() for spec in seed_list
 ]
-
+"""Each specification consists of a produces path, the scenario dictioary and a seed"""
 
 DEPENDENCIES = {
     "initial_states": BLD / "data" / "initial_states.parquet",
@@ -43,10 +38,13 @@ if FAST_FLAG:
 
 
 @pytask.mark.depends_on(DEPENDENCIES)
-@pytask.mark.parametrize("other_multiplier, seed, produces", SIMULATION_PARAMETRIZATION)
-def task_run_base_prognoses(depends_on, other_multiplier, seed, produces):
-    init_start = START_DATE - pd.Timedelta(31, unit="D")
-    init_end = START_DATE - pd.Timedelta(1, unit="D")
+@pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
+def task_run_base_prognoses(depends_on, produces, scenario, seed):
+    start_date = (pd.Timestamp(datetime.today()) - pd.Timedelta(days=14)).normalize()
+    end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
+
+    init_start = start_date - pd.Timedelta(31, unit="D")
+    init_end = start_date - pd.Timedelta(1, unit="D")
 
     initial_states = pd.read_parquet(depends_on["initial_states"])
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
@@ -62,17 +60,16 @@ def task_run_base_prognoses(depends_on, other_multiplier, seed, produces):
     contact_models = get_all_contact_models()
     policies = get_jan_to_april_2021_policies(
         contact_models=contact_models,
-        other_multiplier=other_multiplier,
-        start_date=START_DATE,
-        end_date=END_DATE,
-        work_fill_value=0.7,
+        start_date=start_date,
+        end_date=end_date,
+        **scenario
     )
     simulate = get_simulate_func(
         params=params,
         initial_states=initial_states,
         contact_models=contact_models,
         contact_policies=policies,
-        duration={"start": START_DATE, "end": END_DATE},
+        duration={"start": start_date, "end": end_date},
         initial_conditions=initial_conditions,
         share_known_cases=share_known_cases,
         path=produces.parent,
