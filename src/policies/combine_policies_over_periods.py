@@ -98,42 +98,31 @@ def get_jan_to_april_2021_policies(
     return combine_dictionaries(to_combine)
 
 
-def get_october_to_christmas_policies(contact_models, educ_multiplier=0.8):
-    """Policies from October 1st 2020 until Christmas 2020. """
-    work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
-    work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
-    work_multiplier = work_multiplier.set_index("date")["share_working"]
+def get_october_to_christmas_policies(
+    contact_models, work_multiplier=None, educ_multiplier=0.8
+):
+    """Policies from October 1st 2020 until Christmas 2020.
 
-    pre_fall_vacation_multipliers = {
-        "educ": educ_multiplier,
-        "work": work_multiplier,
-        "other": 0.75,
-    }
-    fall_vacation_multipliers = {
-        "educ": educ_multiplier,
-        "work": work_multiplier,
-        "other": 1.0,
-    }
-    post_fall_vacation_multipliers = {
-        "educ": educ_multiplier,
-        "work": work_multiplier,
-        "other": 0.65,
-    }
-    lockdown_light_multipliers = {
-        "educ": educ_multiplier,
-        "work": work_multiplier,
-        "other": 0.45,
-    }
-    lockdown_light_multipliers_with_fatigue = {
-        "educ": educ_multiplier,
-        "work": work_multiplier,
-        "other": 0.55,
-    }
-    week_before_christmas_multipliers = {
-        "educ": 0.0,
-        "work": work_multiplier,
-        "other": 0.55,
-    }
+    Args:
+        contact_models (dict)
+        work_multiplier (pandas.Series, optional): Series from Oct 1st to Dec 23rd.
+            values are between 0 and 1. If not given, the work_multipliers
+            implied by the google mobility reports are used.
+        educ_multiplier (float, optional)
+
+    """
+    dates = pd.date_range("2020-10-01", "2020-12-23")
+    if work_multiplier is None:
+        work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
+        work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
+        work_multiplier = work_multiplier.set_index("date")["share_working"]
+        work_multiplier = work_multiplier[dates]
+    else:
+        assert work_multiplier.between(
+            0, 1
+        ).all(), "Work multipliers must lie in [0, 1]."
+        assert (work_multiplier.index == dates).all(), ""
+
     to_combine = [
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -142,7 +131,11 @@ def get_october_to_christmas_policies(contact_models, educ_multiplier=0.8):
                 "end_date": "2020-10-09",
                 "prefix": "pre_fall_vacation",
             },
-            multipliers=pre_fall_vacation_multipliers,
+            multipliers={
+                "educ": educ_multiplier,
+                "work": work_multiplier,
+                "other": 0.75,
+            },
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -151,7 +144,11 @@ def get_october_to_christmas_policies(contact_models, educ_multiplier=0.8):
                 "end_date": "2020-10-23",
                 "prefix": "fall_vacation",
             },
-            multipliers=fall_vacation_multipliers,
+            multipliers={
+                "educ": educ_multiplier,
+                "work": work_multiplier,
+                "other": 1.0,
+            },
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -160,7 +157,11 @@ def get_october_to_christmas_policies(contact_models, educ_multiplier=0.8):
                 "end_date": "2020-11-01",
                 "prefix": "post_fall_vacation",
             },
-            multipliers=post_fall_vacation_multipliers,
+            multipliers={
+                "educ": educ_multiplier,
+                "work": work_multiplier,
+                "other": 0.65,
+            },
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -169,7 +170,11 @@ def get_october_to_christmas_policies(contact_models, educ_multiplier=0.8):
                 "end_date": "2020-11-22",
                 "prefix": "lockdown_light",
             },
-            multipliers=lockdown_light_multipliers,
+            multipliers={
+                "educ": educ_multiplier,
+                "work": work_multiplier,
+                "other": 0.45,
+            },
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -178,7 +183,11 @@ def get_october_to_christmas_policies(contact_models, educ_multiplier=0.8):
                 "end_date": "2020-12-15",
                 "prefix": "lockdown_light_with_fatigue",
             },
-            multipliers=lockdown_light_multipliers_with_fatigue,
+            multipliers={
+                "educ": educ_multiplier,
+                "work": work_multiplier,
+                "other": 0.55,
+            },
         ),
         # Until start of Christmas vacation
         get_lockdown_with_multipliers(
@@ -188,7 +197,10 @@ def get_october_to_christmas_policies(contact_models, educ_multiplier=0.8):
                 "end_date": "2020-12-20",
                 "prefix": "pre-christmas-lockdown-first-half",
             },
-            multipliers=week_before_christmas_multipliers,
+            multipliers={
+                "educ": educ_multiplier,
+                "work": work_multiplier,
+            },
         ),
         # Until Christmas
         get_lockdown_with_multipliers(
@@ -201,7 +213,7 @@ def get_october_to_christmas_policies(contact_models, educ_multiplier=0.8):
             multipliers={
                 "educ": 0.0,
                 "work": work_multiplier,
-                "other": 0.35,
+                "other": 0.55,
             },
         ),
     ]
