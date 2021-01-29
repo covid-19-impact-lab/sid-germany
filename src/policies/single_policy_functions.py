@@ -290,29 +290,6 @@ def _interpolate_activity_level(
     return activity
 
 
-def reduce_contacts_through_private_christmas_contact_tracing(
-    contacts, states, seed, multiplier, group_ids, is_recurrent, path
-):
-    """Implement post Christmas celebrations contact tracing."""
-    today = get_date(states)
-    days_since_christmas = (today - pd.Timestamp("2020-12-26")).days
-    test_condition = f"-{days_since_christmas} <= cd_received_test_result_true <= 0"
-    symptom_condition = f"-{days_since_christmas} <= cd_symptoms_true <= 0"
-    risk_condition = f"({symptom_condition}) | ({test_condition})"
-
-    reduced = reduce_contacts_when_condition_among_recurrent_contacts(
-        contacts=contacts,
-        states=states,
-        seed=seed,
-        multiplier=multiplier,
-        group_ids=group_ids,
-        condition=risk_condition,
-        is_recurrent=is_recurrent,
-        path=path,
-    )
-    return reduced
-
-
 def reduce_contacts_when_condition_among_recurrent_contacts(
     contacts, states, seed, multiplier, group_ids, condition, is_recurrent, path=None
 ):

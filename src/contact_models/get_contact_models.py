@@ -1,28 +1,11 @@
 from functools import partial
 
-import pandas as pd
-
 from src.contact_models import contact_model_functions as cm_funcs
 from src.policies.policy_tools import combine_dictionaries
 
 
-def get_all_contact_models(christmas_mode, n_extra_contacts_before_christmas):
+def get_all_contact_models():
     """Create the full set of contact models.
-
-    Args:
-        christmas_mode (str): one of "full", "same_group", "meet_twice".
-            - If "full", every household meets with a different set of
-              two other households on every of the three holidays.
-            - If "same_group", every household meets the same two other
-              households on every of the three holidays.
-            - If "meet_twice", every household meets the same two other
-              households but only once on the 24th and 25th of December.
-            - If None, no Christmas models are included.
-        n_extra_contacts_before_christmas (float, pandas.Series):
-            Number of additional contacts before Christmas to cover
-            things like holiday shopping and travel. If it is a Series
-            the index are the number of contacts and the values their
-            probabilities.
 
     Returns:
         contact_models (dict): sid contact model dictionary.
@@ -44,12 +27,6 @@ def get_all_contact_models(christmas_mode, n_extra_contacts_before_christmas):
         get_other_daily_contact_model(),
         get_other_weekly_contact_models(),
     ]
-    if christmas_mode is not None:
-        to_combine.append(
-            get_christmas_contact_models(
-                christmas_mode, n_extra_contacts_before_christmas
-            )
-        )
     contact_models = combine_dictionaries(to_combine)
     return contact_models
 
@@ -234,89 +211,3 @@ def get_other_weekly_contact_models():
         }
         other_weekly_contact_models[model_name] = model
     return other_weekly_contact_models
-
-
-def get_christmas_contact_models(mode, n_contacts_before):
-    """Create the Christmas contact models.
-
-    Args:
-        mode (str): one of "full", "same_group", "meet_twice".
-            - If "full", every household meets with a different set of
-              two other households on every of the three holidays.
-            - If "same_group", every household meets the same two other
-              households on every of the three holidays.
-            - If "meet_twice", every household meets the same
-              two other households but only once on the 24th and 25th
-              of December.
-        n_contacts_before (int, float or pandas.Series):
-            number of contacts people meet before Christmas. If it is a
-            Series the index are the number of contacts and
-            the values their probabilities.
-
-    Returns:
-        christmas_contact_models (dict)
-
-    """
-    assert isinstance(
-        n_contacts_before, (float, int, pd.Series)
-    ), "n_contacts_before must be an int, float or pandas.Series."
-    dates = pd.date_range("2020-12-24", "2020-12-26")
-
-    christmas_contact_models = {
-        "holiday_preparation": {
-            "is_recurrent": False,
-            "loc": "holiday_preparation",
-            "assort_by": ["age_group", "county"],
-            "model": partial(
-                cm_funcs.holiday_preparation_contacts,
-                n_contacts=n_contacts_before,
-            ),
-        }
-    }
-
-    if mode == "full":
-        for i, date in enumerate(dates):
-            model_name = f"christmas_{mode}_{i}"
-            col_name = f"christmas_group_id_{i}"
-            contact_model = {
-                "is_recurrent": True,
-                "loc": model_name,
-                "assort_by": [col_name],
-                "model": partial(
-                    cm_funcs.meet_on_holidays, group_col=col_name, dates=[date]
-                ),
-            }
-            christmas_contact_models[model_name] = contact_model
-
-    elif mode == "same_group":
-        for i, date in enumerate(dates):
-            model_name = f"christmas_same_group_{i}"
-            col_name = "christmas_group_id_0"
-            contact_model = {
-                "is_recurrent": True,
-                "loc": model_name,
-                "assort_by": [col_name],
-                "model": partial(
-                    cm_funcs.meet_on_holidays, group_col=col_name, dates=[date]
-                ),
-            }
-            christmas_contact_models[model_name] = contact_model
-
-    elif mode == "meet_twice":
-        model_name = "christmas_meet_twice"
-        col_name = "christmas_group_id_0"
-        contact_model = {
-            "is_recurrent": True,
-            "loc": model_name,
-            "assort_by": [col_name],
-            "model": partial(
-                cm_funcs.meet_on_holidays, group_col=col_name, dates=dates[:2]
-            ),
-        }
-        christmas_contact_models[model_name] = contact_model
-    else:
-        raise NotImplementedError(
-            "Your mode is not one of 'full', 'same_group', 'meet_twice'"
-        )
-
-    return christmas_contact_models

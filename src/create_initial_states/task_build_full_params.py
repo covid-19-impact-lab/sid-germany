@@ -77,7 +77,7 @@ def task_create_full_params(depends_on, produces):
 
 
 def _get_contact_models_for_params():
-    non_christmas_contact_models = get_all_contact_models(None, None)
+    non_christmas_contact_models = get_all_contact_models()
     full_christmas = get_christmas_contact_models("full", 2)
     same_group_christmas = get_christmas_contact_models("same_group", 2)
     del same_group_christmas["holiday_preparation"]
