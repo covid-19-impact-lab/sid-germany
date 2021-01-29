@@ -1,61 +1,57 @@
 import pandas as pd
 
+from src.config import BLD
 from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 
 
 def get_jan_to_april_2021_policies(
-    contact_models,
-    start_date,
-    end_date,
-    other_multiplier,
+    contact_models, start_date, end_date, other_multiplier, work_multiplier
 ):
-    "Get policies for January and February 2021."
+    """Get policies for January to April 2021.
+
+    Args:
+        contat_models (dict)
+        start_date: convertible to pandas.Timestamp
+        end_date: convertible to pandas.Timestamp
+        other_multiplier (float): leisure multiplier to be used for the entire
+            time period.
+        work_multiplier (float or pandas.Series): if it is a float this is the
+            value used from the point onward where no estimate is available
+            from the google data. If a pandas.Series, missing values of the time
+            frame are filled up with google mobility data.
+
+
+    """
     assert pd.Timestamp(start_date) >= pd.Timestamp(
         "2020-12-27"
     ), "start date must lie after Dec, 26th."
     assert pd.Timestamp(end_date) <= pd.Timestamp(
         "2021-03-31"
-    ), "end date must lie after before April, 1st."
+    ), "end date must lie before April, 1st."
 
-    hygiene_multiplier = 0.966667  # compared to October
-    work_multiplier = 0.693 * hygiene_multiplier
+    work_multiplier = _process_work_multiplier(work_multiplier, start_date, end_date)
 
     to_combine = [
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-12-27",
-                "end_date": "2021-01-03",
-                "prefix": "post-christmas-lockdown",
+                "end_date": "2021-01-31",
+                "prefix": "christmas_to_february",
             },
             multipliers={
                 "educ": 0.0,
-                # not in line with google mobility data!
-                "work": 0.429,
+                "work": work_multiplier,
                 "other": other_multiplier,
             },
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
-                "start_date": "2021-01-04",
-                "end_date": "2021-01-11",
-                "prefix": "after-christmas-vacation",
-            },
-            multipliers={
-                "educ": 0.0,
-                # google mobility data says work mobility -40% !!!
-                "work": 0.594 * hygiene_multiplier,
-                "other": other_multiplier,
-            },
-        ),
-        get_lockdown_with_multipliers(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2021-01-12",
+                "start_date": "2021-02-01",
                 "end_date": "2021-02-14",
-                "prefix": "mid_jan_to_mid_feb",
+                "prefix": "first_half_february",
             },
             multipliers={
                 "educ": 0.0,
@@ -95,35 +91,38 @@ def get_jan_to_april_2021_policies(
 
 def get_october_to_christmas_policies(contact_models):
     """Policies from October 1st 2020 until Christmas 2020. """
-    hygiene_multiplier = 0.966667  # compared to October
+    work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
+    work_multiplier = pd.read_csv(work_multiplier_path, parse_dates="date")
+    work_multiplier = work_multiplier.set_index("date")
+
     pre_fall_vacation_multipliers = {
         "educ": 0.8,
-        "work": 0.8415,
+        "work": work_multiplier,
         "other": 0.75,
     }
     fall_vacation_multipliers = {
         "educ": 0.8,
-        "work": 0.7458,
+        "work": work_multiplier,
         "other": 1.0,
     }
     post_fall_vacation_multipliers = {
         "educ": 0.8,
-        "work": 0.8415,
+        "work": work_multiplier,
         "other": 0.65,
     }
     lockdown_light_multipliers = {
         "educ": 0.6,
-        "work": 0.8118 * hygiene_multiplier,
+        "work": work_multiplier,
         "other": 0.45,
     }
     lockdown_light_multipliers_with_fatigue = {
         "educ": 0.6,
-        "work": 0.8316 * hygiene_multiplier,
+        "work": work_multiplier,
         "other": 0.55,
     }
     week_before_christmas_multipliers = {
         "educ": 0.0,
-        "work": 0.8316 * hygiene_multiplier,
+        "work": work_multiplier,
         "other": 0.55,
     }
     to_combine = [
@@ -172,7 +171,7 @@ def get_october_to_christmas_policies(contact_models):
             },
             multipliers=lockdown_light_multipliers_with_fatigue,
         ),
-        # Until start of christmas vacation
+        # Until start of Christmas vacation
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
@@ -192,10 +191,28 @@ def get_october_to_christmas_policies(contact_models):
             },
             multipliers={
                 "educ": 0.0,
-                # from google mobility data
-                "work": 0.5,
+                "work": work_multiplier,
                 "other": 0.35,
             },
         ),
     ]
     return combine_dictionaries(to_combine)
+
+
+def _process_work_multiplier(work_multiplier, start_date, end_date):
+    dates = pd.date_range(start_date, end_date)
+    default_path = BLD / "policies" / "work_multiplier.csv"
+    default = pd.read_csv(default_path, parse_dates="date").set_index("date")
+    if isinstance(work_multiplier, pd.Series):
+        expanded = pd.Series(work_multiplier, index=dates)
+        expanded.fillna(default)
+        msg = (
+            "NaN remain in your work multipliers after filling them with "
+            + "the default work multipliers."
+        )
+        assert expanded.notnull().all(), msg
+    elif isinstance(work_multiplier, float):
+        expanded = pd.Series(default, index=dates)
+        expanded[default.index.max() :] = work_multiplier  # noqa: E203
+        assert expanded.notnull().all()
+    return expanded
