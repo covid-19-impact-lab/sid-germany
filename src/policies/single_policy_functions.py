@@ -120,10 +120,15 @@ def reduce_recurrent_model(states, contacts, seed, multiplier):
     This function returns a Series of 0s and 1s.
 
     Args:
-        multiplier (float): Must be smaller or equal to one.
+        multiplier (float or pd.Series): Must be smaller or equal to one. If a
+            Series is supplied the index must be dates.
 
     """
     np.random.seed(seed)
+    if isinstance(multiplier, pd.Series):
+        date = get_date(states)
+        multiplier = multiplier[date]
+
     contacts = contacts.to_numpy()
     resampled_contacts = np.random.choice(
         [1, 0], size=len(states), p=[multiplier, 1 - multiplier]
@@ -137,12 +142,16 @@ def implement_a_b_school_system_above_age(
 ):  # noqa: U100
     """Classes are split in two for children above age cutoff.
 
+    Note:
+        - Children below the age cutoff go to school normally.
+        - Children above the age cutoff rotate weekly.
+        - Educators always attend.
+
     Args:
         age_cutoff (float): Minimum age to which the policy applies. Set to 0 to
             implement the policy for all.
 
     """
-    assert set(states["school_group_a"].unique()) == {0, 1}
     date = get_date(states)
     attending_half = contacts.where(
         (states["age"] < age_cutoff)
@@ -153,24 +162,22 @@ def implement_a_b_school_system_above_age(
     return attending_half
 
 
-def shut_down_work_model(states, contacts, seed):
-    # the share of essential workers is about a third of individuals
-    return reduce_work_model(states, contacts, seed, 0.33)
-
-
 def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
     """Reduce contacts for the working population.
 
     Args:
-        multiplier (float): share of workers that have work contacts.
+        multiplier (float, pandas.Series): share of workers that have work
+            contacts. If it's a Series, the index must be dates.
 
     """
-    assert 0 <= multiplier <= 1
+    if isinstance(multiplier, pd.Series):
+        date = get_date(states)
+        multiplier = multiplier[date]
+
+    assert 0 <= multiplier <= 1, f"Work multiplier not in [0, 1] on {get_date(states)}"
     threshold = 1 - multiplier
-    reduced_contacts = contacts.where(
-        (states["work_contact_priority"] > threshold),
-        0,
-    )
+    above_threshold = states["work_contact_priority"] > threshold
+    reduced_contacts = contacts.where(above_threshold, 0)
     return reduced_contacts
 
 
@@ -183,8 +190,7 @@ def reopen_work_model(
     in Germany (End of April 2020 to beginning of October 2020).
 
     Work contacts require special treatment because workers are differ persistently in
-    their "work_contact_priority", i.e. some workers are essential, others are not,
-    with a continuum in between.
+    their "work_contact_priority".
 
     Args:
         start_multiplier (float): Activity at start.
@@ -226,7 +232,7 @@ def reopen_other_model(
     in Germany (End of April 2020 to beginning of October 2020).
 
     Args:
-        start_multiplier (float): Activity at start.
+        start_multiplier (float): Activity level at start.
         end_multiplier (float): Activity level at end.
         start_date (str or pandas.Timestamp): Date at which the interpolation phase
             starts.
@@ -282,28 +288,6 @@ def _interpolate_activity_level(
     )
     activity = interpolator(date.dayofyear)
     return activity
-
-
-def reduce_contacts_through_private_contact_tracing(
-    contacts, states, seed, multiplier, group_ids, is_recurrent, path
-):
-    today = get_date(states)
-    days_since_christmas = (today - pd.Timestamp("2020-12-26")).days
-    test_condition = f"-{days_since_christmas} <= cd_received_test_result_true <= 0"
-    symptom_condition = f"-{days_since_christmas} <= cd_symptoms_true <= 0"
-    risk_condition = f"({symptom_condition}) | ({test_condition})"
-
-    reduced = reduce_contacts_when_condition_among_recurrent_contacts(
-        contacts=contacts,
-        states=states,
-        seed=seed,
-        multiplier=multiplier,
-        group_ids=group_ids,
-        condition=risk_condition,
-        is_recurrent=is_recurrent,
-        path=path,
-    )
-    return reduced
 
 
 def reduce_contacts_when_condition_among_recurrent_contacts(

@@ -59,14 +59,13 @@ def task_run_base_prognoses(depends_on, other_multiplier, seed, produces):
         reporting_delay=5,
     )
 
-    contact_models = get_all_contact_models(
-        christmas_mode=None, n_extra_contacts_before_christmas=None
-    )
+    contact_models = get_all_contact_models()
     policies = get_jan_to_april_2021_policies(
         contact_models=contact_models,
         other_multiplier=other_multiplier,
         start_date=START_DATE,
         end_date=END_DATE,
+        work_fill_value=0.7,
     )
     simulate = get_simulate_func(
         params=params,

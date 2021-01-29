@@ -285,10 +285,6 @@ def _only_keep_relevant_columns(df):
     ]
 
     to_drop = [
-        # I would create them not save them until we need them again.
-        "christmas_group_id_0",
-        "christmas_group_id_1",
-        "christmas_group_id_2",
         "gender",
         "index",
         "stays_home_when_schools_close",  # not used at the moment

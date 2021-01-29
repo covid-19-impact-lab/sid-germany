@@ -4,8 +4,6 @@ from sid import load_epidemiological_parameters
 
 from src.config import BLD
 from src.contact_models.get_contact_models import get_all_contact_models
-from src.contact_models.get_contact_models import get_christmas_contact_models
-from src.policies.policy_tools import combine_dictionaries
 
 
 @pytask.mark.depends_on(
@@ -50,21 +48,11 @@ def task_create_full_params(depends_on, produces):
         if name.startswith("assort")
     }
 
-    non_christmas_contact_models, all_contact_models = _get_contact_models_for_params()
+    contact_models = get_all_contact_models()
 
-    assort_params = _build_assort_params(
-        non_christmas_contact_models, age_assort_params
-    )
-    # assortative matching of the holiday preparation by county and age_group
-    # This is supposed to cover holiday shopping and traveling.
-    assort_params.loc[
-        ("assortative_matching", "holiday_preparation", "county"), "value"
-    ] = 0.3
-    assort_params.loc[
-        ("assortative_matching", "holiday_preparation", "age_group"), "value"
-    ] = 0.3
+    assort_params = _build_assort_params(contact_models, age_assort_params)
 
-    reaction_params = _build_reaction_params(all_contact_models)
+    reaction_params = _build_reaction_params(contact_models)
     param_slices = [
         reaction_params,
         dist_params,
@@ -74,22 +62,6 @@ def task_create_full_params(depends_on, produces):
     ]
     params = pd.concat(param_slices, axis=0)
     params.to_pickle(produces)
-
-
-def _get_contact_models_for_params():
-    non_christmas_contact_models = get_all_contact_models(None, None)
-    full_christmas = get_christmas_contact_models("full", 2)
-    same_group_christmas = get_christmas_contact_models("same_group", 2)
-    del same_group_christmas["holiday_preparation"]
-    meet_twice_christmas = get_christmas_contact_models("meet_twice", 2)
-    del meet_twice_christmas["holiday_preparation"]
-    christmas_contact_models = combine_dictionaries(
-        [full_christmas, same_group_christmas, meet_twice_christmas]
-    )
-    all_contact_models = combine_dictionaries(
-        [non_christmas_contact_models, christmas_contact_models]
-    )
-    return non_christmas_contact_models, all_contact_models
 
 
 def _make_mergable_with_params(dist, category):
@@ -141,6 +113,5 @@ def _build_reaction_params(contact_models):
             if "household" in cm:
                 df.loc[(cm, name, name)] = hh_multiplier
             else:
-                # this includes the holiday preparation and christmas models
                 df.loc[(cm, name, name)] = multiplier
     return df

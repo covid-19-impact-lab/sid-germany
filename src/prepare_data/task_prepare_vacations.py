@@ -23,9 +23,9 @@ def _prepare_vacations(path):
     assert (vacations["start"] <= vacations["end"]).all(), "End date before start date."
     vacations["length"] = vacations["end"] - vacations["start"]
     long_vacations = vacations[vacations["length"] > pd.Timedelta(days=20)]
-    assert (long_vacations["vacation"] == "Sommerferien").all()
+    assert (long_vacations["vacation"].isin(["Sommerferien", "Sommerferien2021"])).all()
     assert (
-        vacations["length"] < pd.Timedelta(days=45)
+        vacations["length"] < pd.Timedelta(days=46)
     ).all(), "No vacation longer than 45 days allowed."
     vacations = vacations.drop(columns=["length"])
     return vacations

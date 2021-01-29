@@ -64,7 +64,6 @@ def add_contact_model_group_ids(
                 - educ_worker
                 - school_group_a
                 - work_contact_priority
-                - christmas_group_{0, 1, 2}
                 - stays_home_when_schools_close
 
     """
@@ -84,11 +83,6 @@ def add_contact_model_group_ids(
     df["hh_model_group_id"] = (
         df["hh_id"].astype(int).where(hh_sizes > 1, -1).astype("category")
     )
-
-    for i in range(3):
-        df[f"christmas_group_id_{i}"] = _sample_household_groups(
-            df, seed=next(seed), assort_by="state", same_group_probability=0.5, n_hhs=3
-        )
 
     educ_group_cols = [
         "school_group_id_0",
@@ -267,7 +261,7 @@ def _sample_household_groups(df, seed, assort_by, same_group_probability=None, n
         id_col = expanded["new_group_id"]
 
     id_col = id_col.where(df["private_hh"], -1)
-    assert id_col.notnull().all(), "NaN remain in the Christmas group id column."
+    assert id_col.notnull().all(), "NaN remain in the group id column."
     id_col = id_col.astype("category")
 
     return id_col

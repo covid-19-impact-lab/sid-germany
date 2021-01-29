@@ -17,7 +17,6 @@ from src.policies.single_policy_functions import reopen_educ_model_germany
 from src.policies.single_policy_functions import reopen_other_model
 from src.policies.single_policy_functions import reopen_work_model
 from src.policies.single_policy_functions import shut_down_model
-from src.policies.single_policy_functions import shut_down_work_model
 
 
 @pytest.fixture
@@ -131,14 +130,6 @@ def test_a_b_school_system_above_age_5(fake_states):
     assert_series_equal(calculated, expected)
 
 
-def test_shut_down_work_model(fake_states):
-    contacts = pd.Series([0] * 5 + [1] * 5)
-    fake_states["work_contact_priority"] = [0.2] * 3 + [0.8] * 5 + [0.2] * 2
-    calculated = shut_down_work_model(fake_states, contacts, 123)
-    expected = pd.Series([0] * 5 + [1, 1, 1, 0, 0])
-    assert_series_equal(calculated, expected)
-
-
 def test_reduce_work_model(fake_states):
     fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
     contacts = pd.Series(1, index=fake_states.index)
@@ -149,6 +140,21 @@ def test_reduce_work_model(fake_states):
         contacts=contacts,
         seed=123,
         multiplier=0.5,
+    )
+    expected = pd.Series([1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index)
+    assert_series_equal(calculated, expected)
+
+
+def test_reduce_work_model_multiplier_series(fake_states):
+    fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
+    contacts = pd.Series(1, index=fake_states.index)
+    contacts[2] = 0
+
+    calculated = reduce_work_model(
+        states=fake_states,
+        contacts=contacts,
+        seed=123,
+        multiplier=pd.Series([0.5], index=[pd.Timestamp("2020-04-23")]),
     )
     expected = pd.Series([1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index)
     assert_series_equal(calculated, expected)
