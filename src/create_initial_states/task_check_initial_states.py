@@ -41,11 +41,6 @@ def task_check_initial_states(depends_on):
     _check_educ_group_ids(df)
     _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
     _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
-    if "christmas_group_id_0" in df.columns:
-        for i in range(3):
-            col = f"christmas_group_id_{i}"
-            _check_christmas_groups(df, col)
-        assert (df["christmas_group_id_0"] != df["christmas_group_id_1"]).any()
     not_categorical_group_ids = [
         col for col in df if "group_id" in col and not is_categorical_dtype(df[col])
     ]
@@ -256,16 +251,3 @@ def _check_other_group_ids(df, daily_dist, weekly_dist):
     goal_o_daily_group_size_shares.index += 1
     diff_btw_o_shares = o_daily_group_size_shares - goal_o_daily_group_size_shares
     assert np.abs(diff_btw_o_shares).max() < 0.1
-
-
-def _check_christmas_groups(df, col):
-    assert df[col].notnull().all(), f"No NaNs allowed in {col}."
-    community_groups = df.query("~private_hh")[col]
-    assert (community_groups == -1).all(), "Only private hhs should be matched"
-
-    df = df.query("private_hh").copy(deep=True)
-    df["hh_id"] = df["hh_id"].astype(float)
-    groups_per_hh = df.groupby("hh_id")[col].nunique()
-    assert (groups_per_hh == 1).all(), "Every hh must have one christmas group."
-    hh_per_group = df.groupby(col)["hh_id"].nunique()
-    assert (hh_per_group == 3).all(), "Not all groups have 3 households."
