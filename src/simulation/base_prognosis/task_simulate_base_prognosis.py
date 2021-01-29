@@ -67,7 +67,7 @@ def task_run_base_prognoses(depends_on, other_multiplier, seed, produces):
         other_multiplier=other_multiplier,
         start_date=START_DATE,
         end_date=END_DATE,
-        work_multiplier=0.7,
+        work_fill_value=0.7,
     )
     simulate = get_simulate_func(
         params=params,

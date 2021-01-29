@@ -29,7 +29,7 @@ from src.config import SRC
         "work_multiplier": BLD / "policies" / "work_multiplier.csv",
     }
 )
-def task_create_work_multiplier_series(depends_on, produces):
+def task_process_mobility_and_hygiene_data(depends_on, produces):
     mobility_data = pd.read_csv(depends_on["mobility_data"])
     hygiene_data = pd.read_csv(depends_on["hygiene_data"])
 
@@ -85,16 +85,5 @@ def _calculate_work_multiplier(df):
     start, end = work_multiplier.index.min(), work_multiplier.index.max()
     assert (work_multiplier.index == pd.date_range(start, end)).all()
     assert work_multiplier.notnull().all()
+    assert (work_multiplier <= 1).all(), "Work multiplier is somewhere outside [0, 1]."
     return work_multiplier
-
-
-def _make_hygiene_score_match_our_hygiene_multiplier(hygiene_score):
-    """Make hygiene score reflect our multiplier.
-
-    We change scale to have 1 as October value and higher values mean
-    riskier behavior. Note that the score can never be interpreted quantitatively.
-
-    """
-    hygiene_multiplier = hygiene_score / hygiene_score["2020-10-13"]
-    hygiene_multiplier = 2 - hygiene_multiplier
-    return hygiene_multiplier

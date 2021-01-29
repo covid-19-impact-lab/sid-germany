@@ -99,8 +99,10 @@ def get_lockdown_with_multipliers(contact_models, block_info, multipliers):
         educ_policies = reduce_educ_models(
             contact_models, block_info, multipliers["educ"]
         )
-    else:
+    elif multipliers["educ"] == 1:
         educ_policies = {}
+    else:
+        raise ValueError("Only education multipliers <= 1 allowed.")
 
     work_policies = reduce_work_models(contact_models, block_info, multipliers["work"])
     if multipliers["other"] == 0.0:
@@ -109,8 +111,11 @@ def get_lockdown_with_multipliers(contact_models, block_info, multipliers):
         other_policies = reduce_other_models(
             contact_models, block_info, multipliers["other"]
         )
-    else:
+    elif multipliers["other"] == 1:
         other_policies = {}
+    else:
+        raise ValueError("Only education multipliers <= 1 allowed.")
+
     to_combine = [educ_policies, work_policies, other_policies]
     policies = combine_dictionaries(to_combine)
     return policies
