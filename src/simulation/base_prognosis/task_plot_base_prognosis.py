@@ -72,5 +72,19 @@ def task_plot_base_prognosis(depends_on, outcome, title, produces):
     incidences = pd.read_pickle(depends_on["all"])
     to_plot = {key[0]: df for key, df in incidences.items() if key[1] == outcome}
 
-    fig, ax = plot_incidences(to_plot, 15, title, rki=outcome)
+    name_to_label = {
+        "base_scenario": "Aktuelle Verordnungslage",
+        "nov_home_office": "Home-Office-Quote wie im November",
+        "spring_home_office": "Home-Office-Quote wie im 1. Lockdown",
+        "keep_schools_closed": "Schulen auch nach dem 15.2. geschlossen",
+    }
+
+    fig, ax = plot_incidences(
+        incidences=to_plot,
+        n_single_runs=15,
+        title=title,
+        name_to_label=name_to_label,
+        rki=outcome,
+    )
+    ax.axvline("2021-02-15", label="15. Februar")
     fig.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")

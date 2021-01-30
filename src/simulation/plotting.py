@@ -47,25 +47,7 @@ def weekly_incidences_from_results(results, outcome):
     return weekly_incidences
 
 
-NAME_TO_LABEL = {
-    "baseline": "Tatsächliche Home Office-Quote (14%)",
-    "1_pct_more": "1 Prozent Mehr Home Office",
-    "1st_lockdown_weak": "Home Office wie im Frühjahrslockdown, untere Grenze (25%)",  # noqa: E501
-    "1st_lockdown_strict": "Home Office wie im Frühjahrslockdown, obere Grenze (35%)",  # noqa: E501
-    "full_potential": "Volles Ausreizen des Home Office Potenzials (55%)",
-    "november_baseline": "Home Office auf dem Niveau von November (15%)",
-    "mobility_data_baseline": "Home Office auf dem Niveau von Anfang Januar (25%)",
-    #
-    "base_scenario": "Aktuelle Verordnungslage",
-    "nov_home_office": "Home Office Quote wie im November",
-    "spring_home_office": "Home Office Quote wie im 1. Lockdown",
-    "keep_schools_closed": "Schulen auch nach dem 15.2. zu",
-}
-
-
-def plot_incidences(
-    incidences, n_single_runs, title, name_to_label=NAME_TO_LABEL, rki=False
-):
+def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
     """Plot incidences.
 
     Args:
