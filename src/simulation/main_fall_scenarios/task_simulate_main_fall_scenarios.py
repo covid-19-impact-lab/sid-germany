@@ -1,6 +1,4 @@
-"""Basic prognosis 6 weeks into the future."""
-from datetime import datetime
-
+"""Basic scenarios for the October to Christmas period."""
 import pandas as pd
 import pytask
 from sid import get_simulate_func
@@ -12,12 +10,11 @@ from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
-from src.policies.combine_policies_over_periods import get_jan_to_april_2021_policies
-from src.simulation.base_prognosis_specification import (
-    build_base_prognosis_parametrization,
-)
+from src.policies.combine_policies_over_periods import get_october_to_christmas_policies
+from src.simulation.main_specification import build_main_scenarios
+from src.simulation.main_specification import FALL_PATH
 
-NESTED_PARAMETRIZATION = build_base_prognosis_parametrization()
+NESTED_PARAMETRIZATION = build_main_scenarios(FALL_PATH)
 PARAMETRIZATION = [
     spec for seed_list in NESTED_PARAMETRIZATION.values() for spec in seed_list
 ]
@@ -32,7 +29,7 @@ DEPENDENCIES = {
     "params": SRC / "simulation" / "estimated_params.pkl",
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     "policies_py": SRC / "policies" / "combine_policies_over_periods.py",
-    "specs": SRC / "simulation" / "base_prognosis_specification.py",
+    "specs": SRC / "simulation" / "main_specification.py",
 }
 if FAST_FLAG:
     DEPENDENCIES["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
@@ -40,9 +37,9 @@ if FAST_FLAG:
 
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
-def task_run_base_prognoses(depends_on, produces, scenario, seed):
-    start_date = (pd.Timestamp(datetime.today()) - pd.Timedelta(days=14)).normalize()
-    end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
+def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
+    start_date = pd.Timestamp("2020-10-15")
+    end_date = pd.Timestamp("2020-11-15") if FAST_FLAG else pd.Timestamp("2020-12-23")
 
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
@@ -54,16 +51,12 @@ def task_run_base_prognoses(depends_on, produces, scenario, seed):
     initial_conditions = create_initial_conditions(
         start=init_start,
         end=init_end,
-        seed=3930,
+        seed=344490,
         reporting_delay=5,
     )
-
     contact_models = get_all_contact_models()
-    policies = get_jan_to_april_2021_policies(
-        contact_models=contact_models,
-        start_date=start_date,
-        end_date=end_date,
-        **scenario
+    policies = get_october_to_christmas_policies(
+        contact_models=contact_models, **scenario
     )
     simulate = get_simulate_func(
         params=params,

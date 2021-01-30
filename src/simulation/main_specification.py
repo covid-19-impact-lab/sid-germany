@@ -2,9 +2,16 @@
 from src.config import BLD
 from src.config import FAST_FLAG
 
+FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
+PREDICT_PATH = BLD / "simulations" / "main_predictions"
 
-def build_base_prognosis_parametrization():
-    """Build the nested parametrization.
+
+def build_main_scenarios(base_path):
+    """Build the nested scenario specifications.
+
+    Args:
+        base_path (pathlib.Path): Path where each simulation run will get
+            a separate folder.
 
     Returns:
         nested_parametrization (dict): Keys are the names of the scenarios.
@@ -39,10 +46,8 @@ def build_base_prognosis_parametrization():
     for name, scenario in scenarios.items():
         nested_parametrization[name] = []
         for i in range(n_seeds):
-            seed = 300_000 + 700_000 * i
-            produces = (
-                BLD / "simulations" / "base_prognosis" / f"{name}_{i}" / "time_series"
-            )
+            seed = 300_000 + 700_001 * i
+            produces = base_path / f"{name}_{seed}" / "time_series"
             nested_parametrization[name].append((produces, scenario, seed))
 
     return nested_parametrization

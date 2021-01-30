@@ -4,24 +4,23 @@ import pytask
 
 from src.config import BLD
 from src.config import SRC
-from src.simulation.base_prognosis_specification import (
-    build_base_prognosis_parametrization,
-)
+from src.simulation.main_specification import build_main_scenarios
+from src.simulation.main_specification import PREDICT_PATH
 from src.simulation.plotting import plot_incidences
 from src.simulation.plotting import weekly_incidences_from_results
 
-NESTED_PARAMETRIZATION = build_base_prognosis_parametrization()
+NESTED_PARAMETRIZATION = build_main_scenarios(PREDICT_PATH)
 
 DEPENDENCIES = {
-    "specs": SRC / "simulation" / "base_prognosis_specification.py",
+    "specs": SRC / "simulation" / "main_specification.py",
 }
 for name, seed_list in NESTED_PARAMETRIZATION.items():
     for path, _, seed in seed_list:
         DEPENDENCIES[(name, seed)] = path
 
 INCIDENCE_PATHS = {
-    "all": BLD / "simulations" / "base_prognosis" / "all_incidences.pkl",
-    "means": BLD / "simulations" / "base_prognosis" / "mean_incidences.csv",
+    "all": PREDICT_PATH / "all_incidences.pkl",
+    "means": PREDICT_PATH / "mean_incidences.csv",
 }
 
 
@@ -61,14 +60,14 @@ for outcome, title in [
     ("new_known_case", "Beobachtete Inzidenz"),
     ("newly_infected", "Tatsächliche Inzidenz"),
 ]:
-    produces = {"fig": BLD / "simulations" / "base_prognosis" / f"{outcome}.png"}
+    produces = {"fig": PREDICT_PATH / f"{outcome}.png"}
     spec = (outcome, title, produces)
     PLOT_PARAMETRIZATION.append(spec)
 
 
 @pytask.mark.depends_on(PLOT_DEPENDENCIES)
 @pytask.mark.parametrize("outcome, title, produces", PLOT_PARAMETRIZATION)
-def task_plot_base_prognosis(depends_on, outcome, title, produces):
+def task_plot_main_predictions(depends_on, outcome, title, produces):
     incidences = pd.read_pickle(depends_on["all"])
     to_plot = {key[0]: df for key, df in incidences.items() if key[1] == outcome}
 
@@ -86,5 +85,5 @@ def task_plot_base_prognosis(depends_on, outcome, title, produces):
         name_to_label=name_to_label,
         rki=outcome,
     )
-    ax.axvline("2021-02-15", label="15. Februar")
+    ax.axvline(pd.Timestamp("2021-02-15"), label="15. Februar")
     fig.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
