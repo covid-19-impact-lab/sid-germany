@@ -166,16 +166,31 @@ def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
     """Reduce contacts for the working population.
 
     Args:
-        multiplier (float, pandas.Series): share of workers that have work
-            contacts. If it's a Series, the index must be dates.
+        multiplier (float, pandas.Series, pandas.DataFrame):
+            share of workers that have work contacts.
+            If it is a Series or DataFrame, the index must be dates.
+            If it is a DataFrame the columns must be the values of
+            the "state" column in the states.
 
     """
-    if isinstance(multiplier, pd.Series):
+    if isinstance(multiplier, (pd.Series, pd.DataFrame)):
         date = get_date(states)
-        multiplier = multiplier[date]
+        multiplier = multiplier.loc[date]
 
-    assert 0 <= multiplier <= 1, f"Work multiplier not in [0, 1] on {get_date(states)}"
+    msg = f"Work multiplier not in [0, 1] on {get_date(states)}"
+    if isinstance(multiplier, (float, int)):
+        assert 0 <= multiplier <= 1, msg
+    else:
+        assert (multiplier >= 0).all(), msg
+        assert (multiplier <= 1).all(), msg
+
     threshold = 1 - multiplier
+    if isinstance(threshold, pd.Series):
+        assert set(states["state"].unique()).issubset(
+            threshold.index
+        ), "work multipliers not supplied for all states."
+        threshold = states["state"].replace(threshold)
+
     above_threshold = states["work_contact_priority"] > threshold
     reduced_contacts = contacts.where(above_threshold, 0)
     return reduced_contacts
