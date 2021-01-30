@@ -44,7 +44,9 @@ def build_base_prognosis_parametrization():
         nested_parametrization[name] = []
         for i in range(n_seeds):
             seed = 300_000 + 700_000 * i
-            produces = BLD / "simulations" / f"{name}_{i}" / "time_series"
+            produces = (
+                BLD / "simulations" / "base_prognosis" / f"{name}_{i}" / "time_series"
+            )
             nested_parametrization[name].append((produces, scenario, seed))
 
     return nested_parametrization

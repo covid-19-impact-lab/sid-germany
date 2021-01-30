@@ -13,7 +13,7 @@ from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
 from src.policies.combine_policies_over_periods import get_jan_to_april_2021_policies
-from src.simulation.base_prognosis.base_prognosis_specification import (
+from src.simulation.base_prognosis_specification import (
     build_base_prognosis_parametrization,
 )
 
@@ -32,6 +32,7 @@ DEPENDENCIES = {
     "params": SRC / "simulation" / "estimated_params.pkl",
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     "policies_py": SRC / "policies" / "combine_policies_over_periods.py",
+    "specs": SRC / "simulation" / "base_prognosis_specification.py",
 }
 if FAST_FLAG:
     DEPENDENCIES["initial_states"] = BLD / "data" / "debug_initial_states.parquet"

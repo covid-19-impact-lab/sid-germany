@@ -47,7 +47,24 @@ def weekly_incidences_from_results(results, outcome):
     return weekly_incidences
 
 
-def plot_incidences(incidences, n_single_runs, title, rki=False):
+NAME_TO_LABEL = {
+    "baseline": "Tatsächliche Home Office-Quote (14%)",
+    "1_pct_more": "1 Prozent Mehr Home Office",
+    "1st_lockdown_weak": "Home Office wie im Frühjahrslockdown, untere Grenze (25%)",  # noqa: E501
+    "1st_lockdown_strict": "Home Office wie im Frühjahrslockdown, obere Grenze (35%)",  # noqa: E501
+    "full_potential": "Volles Ausreizen des Home Office Potenzials (55%)",
+    "november_baseline": "Home Office auf dem Niveau von November (15%)",
+    "mobility_data_baseline": "Home Office auf dem Niveau von Anfang Januar (25%)",
+    "base_scenario": "Aktuelle Verordnungslage",
+    "nov_home_office": "Änderung der Home Office Quote auf das Niveau von November",
+    "spring_home_office": "Home Office Quote wie im ersten Lockdown",
+    "keep_schools_closed": "Keine Öffnung der Schulen am 15. Februar",
+}
+
+
+def plot_incidences(
+    incidences, n_single_runs, title, name_to_label=NAME_TO_LABEL, rki=False
+):
     """Plot incidences.
 
     Args:
@@ -65,15 +82,6 @@ def plot_incidences(incidences, n_single_runs, title, rki=False):
     """
     colors = get_colors("ordered", len(incidences))
     fig, ax = plt.subplots(figsize=(6, 4))
-    name_to_label = {
-        "baseline": "Tatsächliche Home Office-Quote (14%)",
-        "1_pct_more": "1 Prozent Mehr Home Office",
-        "1st_lockdown_weak": "Home Office wie im Frühjahrslockdown, untere Grenze (25%)",  # noqa: E501
-        "1st_lockdown_strict": "Home Office wie im Frühjahrslockdown, obere Grenze (35%)",  # noqa: E501
-        "full_potential": "Volles Ausreizen des Home Office Potenzials (55%)",
-        "november_baseline": "Home Office auf dem Niveau von November (15%)",
-        "mobility_data_baseline": "Home Office auf dem Niveau von Anfang Januar (25%)",
-    }
     for name, color in zip(incidences, colors):
         df = incidences[name]
         dates = df.index
@@ -107,7 +115,7 @@ def plot_incidences(incidences, n_single_runs, title, rki=False):
             label = "RKI Fallzahlen"
         elif rki == "newly_infected":
             rki_col = "upscaled_newly_infected"
-            label = "DunkelzifferRadar Schätzung der tatsächlichen Inzidenz"
+            label = "DunkelzifferRadar Schätzung der \ntatsächlichen Inzidenz"
         else:
             raise ValueError(f"No matching RKI variable found to {rki}")
 
@@ -131,7 +139,6 @@ def plot_incidences(incidences, n_single_runs, title, rki=False):
     fig.autofmt_xdate()
     ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
     ax.grid(axis="y")
-    ax.grid(axis="x")
     ax.set_title(title)
     ax.legend(loc="upper center", bbox_to_anchor=(-0.0, -0.5, 1, 0.2), ncol=2)
     fig.tight_layout()
