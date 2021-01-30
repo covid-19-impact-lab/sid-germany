@@ -99,7 +99,11 @@ def get_jan_to_april_2021_policies(
 
 
 def get_october_to_christmas_policies(
-    contact_models, work_multiplier=None, educ_multiplier=0.8
+    contact_models,
+    other_multiplier=None,
+    work_multiplier=None,
+    work_fill_value=None,
+    educ_multiplier=0.8,
 ):
     """Policies from October 1st 2020 until Christmas 2020.
 
@@ -108,7 +112,11 @@ def get_october_to_christmas_policies(
         work_multiplier (pandas.Series, optional): Series from Oct 1st to Dec 23rd.
             values are between 0 and 1. If not given, the work_multipliers
             implied by the google mobility reports are used.
-        educ_multiplier (float, optional)
+        educ_multiplier (float, optional): This is the education multiplier used
+            starting 2nd of November. Default is 0.8, i.e. schools were normally
+            open until December, 16th.
+        work_fill_value (float, optional): If given, the work_multiplier Series will
+            be set to this value after November, 1st.
 
     """
     dates = pd.date_range("2020-10-01", "2020-12-23")
@@ -122,6 +130,9 @@ def get_october_to_christmas_policies(
             0, 1
         ).all(), "Work multipliers must lie in [0, 1]."
         assert (work_multiplier.index == dates).all(), ""
+    if work_fill_value is not None:
+        assert 0 <= work_fill_value <= 1, "work fill value must lie in [0, 1]."
+        work_multiplier["2020-11-02":] = work_fill_value
 
     to_combine = [
         get_lockdown_with_multipliers(
@@ -132,7 +143,7 @@ def get_october_to_christmas_policies(
                 "prefix": "pre_fall_vacation",
             },
             multipliers={
-                "educ": educ_multiplier,
+                "educ": 0.8,
                 "work": work_multiplier,
                 "other": 0.75,
             },
@@ -145,7 +156,7 @@ def get_october_to_christmas_policies(
                 "prefix": "fall_vacation",
             },
             multipliers={
-                "educ": educ_multiplier,
+                "educ": 0.8,
                 "work": work_multiplier,
                 "other": 1.0,
             },
@@ -158,7 +169,7 @@ def get_october_to_christmas_policies(
                 "prefix": "post_fall_vacation",
             },
             multipliers={
-                "educ": educ_multiplier,
+                "educ": 0.8,
                 "work": work_multiplier,
                 "other": 0.65,
             },
@@ -173,7 +184,7 @@ def get_october_to_christmas_policies(
             multipliers={
                 "educ": educ_multiplier,
                 "work": work_multiplier,
-                "other": 0.45,
+                "other": 0.45 if other_multiplier is None else other_multiplier,
             },
         ),
         get_lockdown_with_multipliers(
@@ -186,7 +197,7 @@ def get_october_to_christmas_policies(
             multipliers={
                 "educ": educ_multiplier,
                 "work": work_multiplier,
-                "other": 0.55,
+                "other": 0.55 if other_multiplier is None else other_multiplier,
             },
         ),
         # Until start of Christmas vacation
@@ -198,8 +209,9 @@ def get_october_to_christmas_policies(
                 "prefix": "pre-christmas-lockdown-first-half",
             },
             multipliers={
-                "educ": educ_multiplier,
+                "educ": 0.0,
                 "work": work_multiplier,
+                "other": 0.55 if other_multiplier is None else other_multiplier,
             },
         ),
         # Until Christmas
@@ -213,7 +225,7 @@ def get_october_to_christmas_policies(
             multipliers={
                 "educ": 0.0,
                 "work": work_multiplier,
-                "other": 0.55,
+                "other": 0.55 if other_multiplier is None else other_multiplier,
             },
         ),
     ]
