@@ -18,14 +18,10 @@ def build_base_prognosis_parametrization():
     """
     n_seeds = 1 if FAST_FLAG else 15
 
-    base_scenario = {
-        "educ_multiplier": 0.8,  # schools open Feb 15th
-        "work_fill_value": 0.7,  # level of 1st half of January
-        "other_multiplier": 0.45,  # arbitrary
-    }
-    nov_home_office = {**base_scenario, "work_fill_value": 0.8}
-    spring_home_office = {**base_scenario, "work_fill_value": 0.6}
-    schools_stay_closed = {**base_scenario, "educ_multiplier": 0.0}
+    base_scenario = {}  # use default values
+    nov_home_office = {"work_fill_value": 0.8}
+    spring_home_office = {"work_fill_value": 0.6}
+    schools_stay_closed = {"educ_multiplier": 0.0}
 
     if FAST_FLAG:
         scenarios = {

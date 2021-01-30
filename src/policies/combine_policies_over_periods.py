@@ -9,10 +9,10 @@ def get_jan_to_april_2021_policies(
     contact_models,
     start_date,
     end_date,
-    other_multiplier,
+    other_multiplier=0.45,
     work_multiplier=None,
-    work_fill_value=None,
-    educ_multiplier=0.8,
+    work_fill_value=0.7,  # level of 1st half of January
+    educ_multiplier=0.8,  # ~ schools open Feb 15th
 ):
     """Get policies for January to April 2021.
 
