@@ -32,10 +32,8 @@ def task_save_results(depends_on, produces):
     results = {}
     scenario_names = NESTED_PARAMETRIZATION.keys()
     for name in scenario_names:
-        result_paths = [
-            path for (it_name, _), path in depends_on.items() if name in it_name
-        ]
-        results[name] = [dd.read_parquet(path) for path in result_paths]
+        paths = [path for (scenario, _), path in depends_on.items() if name in scenario]
+        results[name] = [dd.read_parquet(p) for p in paths]
 
     incidences = {}
     for outcome in ["new_known_case", "newly_infected"]:

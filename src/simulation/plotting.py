@@ -55,10 +55,11 @@ NAME_TO_LABEL = {
     "full_potential": "Volles Ausreizen des Home Office Potenzials (55%)",
     "november_baseline": "Home Office auf dem Niveau von November (15%)",
     "mobility_data_baseline": "Home Office auf dem Niveau von Anfang Januar (25%)",
+    #
     "base_scenario": "Aktuelle Verordnungslage",
-    "nov_home_office": "Änderung der Home Office Quote auf das Niveau von November",
-    "spring_home_office": "Home Office Quote wie im ersten Lockdown",
-    "keep_schools_closed": "Keine Öffnung der Schulen am 15. Februar",
+    "nov_home_office": "Home Office Quote wie im November",
+    "spring_home_office": "Home Office Quote wie im 1. Lockdown",
+    "keep_schools_closed": "Schulen auch nach dem 15.2. zu",
 }
 
 
