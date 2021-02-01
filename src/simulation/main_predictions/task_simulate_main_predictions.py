@@ -1,6 +1,4 @@
 """Basic prognosis 6 weeks into the future."""
-from datetime import datetime
-
 import pandas as pd
 import pytask
 from sid import get_simulate_func
@@ -40,7 +38,7 @@ if FAST_FLAG:
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
-    start_date = (pd.Timestamp(datetime.today()) - pd.Timedelta(days=14)).normalize()
+    start_date = (pd.Timestamp.today() - pd.Timedelta(days=15)).normalize()
     end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
 
     init_start = start_date - pd.Timedelta(31, unit="D")

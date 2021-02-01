@@ -160,6 +160,40 @@ def test_reduce_work_model_multiplier_series(fake_states):
     assert_series_equal(calculated, expected)
 
 
+def test_reduce_work_model_multiplier_frame_missing_state(fake_states):
+    fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
+    fake_states["state"] = ["A", "B"] * 5
+    contacts = pd.Series(6, index=fake_states.index)
+    contacts[2] = 0
+    multiplier = pd.DataFrame(data={"A": [0.5]}, index=[pd.Timestamp("2020-04-23")])
+
+    with pytest.raises(AssertionError):
+        reduce_work_model(
+            states=fake_states,
+            contacts=contacts,
+            seed=123,
+            multiplier=multiplier,
+        )
+
+
+def test_reduce_work_model_multiplier_frame(fake_states):
+    fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
+    fake_states["state"] = ["A", "B"] * 5
+    contacts = pd.Series(1, index=fake_states.index)
+    contacts[2] = 0
+    multiplier = pd.DataFrame(
+        data={"A": [0.55], "B": [0.85]}, index=[pd.Timestamp("2020-04-23")]
+    )
+    calculated = reduce_work_model(
+        states=fake_states,
+        contacts=contacts,
+        seed=123,
+        multiplier=multiplier,
+    )
+    expected = pd.Series([1, 1, 0, 1, 1, 1, 0, 1, 0, 0], index=fake_states.index)
+    assert_series_equal(calculated, expected)
+
+
 def test_interpolate_activity_level():
     calculated = _interpolate_activity_level(
         date="2020-03-20",

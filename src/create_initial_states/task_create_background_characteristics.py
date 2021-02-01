@@ -216,6 +216,17 @@ def _draw_counties(hh_ids, county_probabilities, seed):
         county_probabilities[["id", "state"]], left_on="county", right_on="id"
     )
     df = df.drop(columns="id")
+
+    translate_state_names = {
+        "Bayern": "Bavaria",
+        "Niedersachsen": "Lower Saxony",
+        "Nordrhein-Westfalen": "North Rhine-Westphalia",
+        "Rheinland-Pfalz": "Rhineland-Palatinate",
+        "Sachsen": "Saxony",
+        "Sachsen-Anhalt": "Saxony-Anhalt",
+        "Thüringen": "Thuringia",
+    }
+    df["state"] = df["state"].replace(translate_state_names)
     df = df.astype({"state": "category", "county": "category"})
     return df
 

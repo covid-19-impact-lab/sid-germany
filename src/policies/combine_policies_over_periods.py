@@ -22,12 +22,13 @@ def get_jan_to_april_2021_policies(
         end_date: convertible to pandas.Timestamp
         other_multiplier (float): leisure multiplier to be used for the entire
             time period.
-        work_multiplier (float or pandas.Series):
+        work_multiplier (float or pandas.Series or pandas.DataFrame):
             If None, the google mobility data are used and the user must supply
             a `work_fill_value`.
             If the work_multiplier is a float it's constant for the entire
-            time period. If a Series is supplied that Series is used and must
-            have as index pandas.date_range(start_date, end_date)
+            time period. If a Series or DataFrame is supplied the index must be
+            pandas.date_range(start_date, end_date) and possible columns are
+            the German federal states.
 
     """
     assert pd.Timestamp(start_date) >= pd.Timestamp(
@@ -123,8 +124,8 @@ def get_october_to_christmas_policies(
     if work_multiplier is None:
         work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
         work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
-        work_multiplier = work_multiplier.set_index("date")["share_working"]
-        work_multiplier = work_multiplier[dates]
+        work_multiplier = work_multiplier.set_index("date")
+        work_multiplier = work_multiplier.loc[dates]
     else:
         assert work_multiplier.between(
             0, 1
@@ -246,8 +247,7 @@ def _process_work_multiplier(work_multiplier, fill_value, start_date, end_date):
         ).all(), f"Index is not consecutive from {start_date} to {end_date}"
     elif work_multiplier is None:
         default_path = BLD / "policies" / "work_multiplier.csv"
-        default = pd.read_csv(default_path, parse_dates=["date"])
-        default = default.set_index("date")["share_working"]
-        expanded = pd.Series(default, index=dates)
+        default = pd.read_csv(default_path, parse_dates=["date"], index_col="date")
+        expanded = default.reindex(index=dates)
         expanded = expanded.fillna(fill_value)
     return expanded

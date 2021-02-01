@@ -24,7 +24,6 @@ from src.config import SRC
 )
 @pytask.mark.produces(
     {
-        "cleaned_mobility": BLD / "policies" / "cleaned_mobility.csv",
         "hygiene_score": BLD / "policies" / "hygiene_score.csv",
         "work_multiplier": BLD / "policies" / "work_multiplier.csv",
     }
@@ -33,14 +32,11 @@ def task_process_mobility_and_hygiene_data(depends_on, produces):
     mobility_data = pd.read_csv(depends_on["mobility_data"])
     hygiene_data = pd.read_csv(depends_on["hygiene_data"])
 
-    mobility_data = _prepare_mobility_data(df=mobility_data)
-    mobility_data.to_csv(produces["cleaned_mobility"])
-
     hygiene_score = _calculate_hygiene_score_from_data(df=hygiene_data)
     hygiene_score.to_csv(produces["hygiene_score"])
 
-    work_multiplier = _calculate_work_multiplier(df=mobility_data)
-    work_multiplier.to_csv(produces["work_multiplier"])
+    mobility_data = _prepare_mobility_data(df=mobility_data)
+    mobility_data.to_csv(produces["work_multiplier"])
 
 
 def _prepare_mobility_data(df):
@@ -55,7 +51,20 @@ def _prepare_mobility_data(df):
     ]
     df = df.drop(columns=to_drop)
     df.columns = [x.replace("_percent_change_from_baseline", "") for x in df.columns]
-    return df
+    df["sub_region_1"] = df["sub_region_1"].fillna("Germany")
+    pivoted = pd.pivot(data=df, index="date", columns="sub_region_1")
+    work_multiplier = 1 + (pivoted["workplaces"] / 100)
+    assert not work_multiplier.index.duplicated().any()
+    # set weekends to NaN and interpolate because we already handle weekends
+    # in the contact models.
+    weekends = work_multiplier.index.day_name().isin(["Saturday", "Sunday"])
+    work_multiplier[weekends] = np.nan
+    work_multiplier = work_multiplier.interpolate(method="nearest")
+    work_multiplier = work_multiplier.fillna(method="ffill").fillna(method="bfill")
+    start, end = work_multiplier.index.min(), work_multiplier.index.max()
+    assert (work_multiplier.index == pd.date_range(start, end)).all()
+    assert work_multiplier.notnull().all().all()
+    return work_multiplier
 
 
 def _calculate_hygiene_score_from_data(df):
@@ -69,21 +78,3 @@ def _calculate_hygiene_score_from_data(df):
     expanded = pd.Series(hygiene_score, index=dates, name="hygiene_score")
     expanded = expanded.interpolate(method="nearest")
     return expanded
-
-
-def _calculate_work_multiplier(df):
-    de_df = df[df["sub_region_1"].isnull()].copy()  # only whole of Germany
-    de_df["share_working"] = 1 + (de_df["workplaces"] / 100)
-    assert not de_df["date"].duplicated().any()
-    work_multiplier = de_df.set_index("date")["share_working"]
-    # set weekends to NaN and interpolate because we already handle weekends
-    # in the contact models.
-    weekends = work_multiplier.index.day_name().isin(["Saturday", "Sunday"])
-    work_multiplier[weekends] = np.nan
-    work_multiplier = work_multiplier.interpolate(method="nearest")
-    work_multiplier = work_multiplier.fillna(method="ffill").fillna(method="bfill")
-    start, end = work_multiplier.index.min(), work_multiplier.index.max()
-    assert (work_multiplier.index == pd.date_range(start, end)).all()
-    assert work_multiplier.notnull().all()
-    assert (work_multiplier <= 1).all(), "Work multiplier is somewhere outside [0, 1]."
-    return work_multiplier

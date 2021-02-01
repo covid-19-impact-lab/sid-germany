@@ -21,7 +21,6 @@ sns.set_palette(get_colors("categorical", 12))
 
 @pytask.mark.depends_on(
     {
-        "cleaned_mobility": BLD / "policies" / "cleaned_mobility.csv",
         "hygiene": BLD / "policies" / "hygiene_score.csv",
         "work": BLD / "policies" / "work_multiplier.csv",
     }
@@ -35,7 +34,6 @@ sns.set_palette(get_colors("categorical", 12))
     }
 )
 def task_visualize_work_multipliers(depends_on, produces):
-    cleaned_mobility = pd.read_csv(depends_on["cleaned_mobility"], parse_dates=["date"])
     hygiene_score = pd.read_csv(depends_on["hygiene"], parse_dates=["date"])
     work_multiplier = pd.read_csv(depends_on["work"], parse_dates=["date"])
 
@@ -47,7 +45,7 @@ def task_visualize_work_multipliers(depends_on, produces):
     )
     fig.savefig(produces["hygiene"], dpi=200, transparent=False, facecolor="w")
 
-    fig, ax = _visualize_reductions_by_state(df=cleaned_mobility.reset_index())
+    fig, ax = _visualize_reductions_by_state(df=work_multiplier)
     fig.savefig(produces["by_state"], dpi=200, transparent=False, facecolor="w")
 
     fig, ax = _plot_time_series(work_multiplier, title="Work Multiplier")
@@ -67,30 +65,27 @@ def task_visualize_work_multipliers(depends_on, produces):
 
 def _visualize_reductions_by_state(df):
     states = ["Bavaria", "North Rhine-Westphalia", "Saxony", "Mecklenburg-Vorpommern"]
-    subset = df[
-        df["sub_region_1"].isin(states)
-        & ~df["date"].dt.day_name().isin(["Saturday", "Sunday"])
-    ]
-    fig, ax = _plot_time_series(data=subset, y="workplaces", hue="sub_region_1")
-    title = "Reduction in Workplace Mobility Acc. to Google Mobility Data by State"
+    fig, ax = _plot_time_series(data=df, y=states)
+    title = "Work Multiplier Acc. to Google Mobility Data by State"
     ax.set_title(title)
     return fig, ax
 
 
 def _plot_time_series(
     data,
-    y="share_working",
+    y="Germany",
     x="date",
     title="",
-    hue=None,
     fig=None,
     ax=None,
 ):
-    data = data.copy()
+    y = [y] if isinstance(y, str) else y
     if ax is None:
         fig, ax = plt.subplots(figsize=(15, 5))
 
-    sns.lineplot(data=data, y=y, x=x, hue=hue, ax=ax)
+    for var in y:
+        sns.lineplot(data=data, y=var, x=x, ax=ax, label=var)
+
     date_form = (
         DateFormatter("%d/%m/%Y") if len(data) < 100 else DateFormatter("%d/%m/%Y")
     )

@@ -26,7 +26,7 @@ INCIDENCE_PATHS = {
 
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.produces(INCIDENCE_PATHS)
-def task_save_results(depends_on, produces):
+def task_save_statistics_for_main_scenario(depends_on, produces):
     depends_on.pop("specs")
     results = {}
     scenario_names = NESTED_PARAMETRIZATION.keys()
@@ -73,9 +73,9 @@ def task_plot_main_predictions(depends_on, outcome, title, produces):
 
     name_to_label = {
         "base_scenario": "Aktuelle Verordnungslage",
-        "nov_home_office": "Home-Office-Quote wie im November",
-        "spring_home_office": "Home-Office-Quote wie im 1. Lockdown",
-        "keep_schools_closed": "Schulen auch nach dem 15.2. geschlossen",
+        "nov_home_office_level": "Home-Office-Quote wie im November",
+        "spring_home_office_level": "Home-Office-Quote wie im 1. Lockdown",
+        "keep_schools_closed": "Schulen bleiben nach dem 15.2. geschlossen",
     }
 
     fig, ax = plot_incidences(
