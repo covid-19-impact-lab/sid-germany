@@ -247,8 +247,7 @@ def _process_work_multiplier(work_multiplier, fill_value, start_date, end_date):
         ).all(), f"Index is not consecutive from {start_date} to {end_date}"
     elif work_multiplier is None:
         default_path = BLD / "policies" / "work_multiplier.csv"
-        default = pd.read_csv(default_path, parse_dates=["date"])
-        default = default.set_index("date")
-        expanded = pd.DataFrame(default, index=dates)
+        default = pd.read_csv(default_path, parse_dates=["date"], index_col="date")
+        expanded = default.reindex(index=dates)
         expanded = expanded.fillna(fill_value)
     return expanded
