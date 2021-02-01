@@ -1,5 +1,4 @@
 """Basic prognosis 6 weeks into the future."""
-from datetime import datetime
 
 import pandas as pd
 import pytask
