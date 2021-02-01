@@ -73,8 +73,8 @@ def task_plot_predictions_for_main_fall_scenarios(depends_on, outcome, title, pr
 
     name_to_label = {
         "base_scenario": "Tatsächliche Verordnungslage",
-        "spring_home_office": "Home-Office-Quote wie im 1. Lockdown",
-        "keep_schools_closed": "Schulen ab 1. November geschlossen",
+        "spring_home_office_level": "Home-Office-Quote wie im 1. Lockdown",
+        "keep_schools_closed": "Schulen ab 1.11. geschlossen",
     }
 
     fig, ax = plot_incidences(

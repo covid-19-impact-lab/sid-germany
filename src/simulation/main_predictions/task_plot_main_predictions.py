@@ -73,9 +73,9 @@ def task_plot_main_predictions(depends_on, outcome, title, produces):
 
     name_to_label = {
         "base_scenario": "Aktuelle Verordnungslage",
-        "nov_home_office": "Home-Office-Quote wie im November",
-        "spring_home_office": "Home-Office-Quote wie im 1. Lockdown",
-        "keep_schools_closed": "Schulen auch nach dem 15.2. geschlossen",
+        "nov_home_office_level": "Home-Office-Quote wie im November",
+        "spring_home_office_level": "Home-Office-Quote wie im 1. Lockdown",
+        "keep_schools_closed": "Schulen bleiben nach dem 15.2. geschlossen",
     }
 
     fig, ax = plot_incidences(
