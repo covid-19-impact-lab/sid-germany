@@ -2,11 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 import seaborn as sns
-from matplotlib.dates import AutoDateLocator
-from matplotlib.dates import DateFormatter
 from sid.colors import get_colors
 
 from src.config import BLD
+from src.simulation.plotting import style_plot
 
 plt.rcParams.update(
     {
@@ -86,14 +85,7 @@ def _plot_time_series(
     for var in y:
         sns.lineplot(data=data, y=var, x=x, ax=ax, label=var)
 
-    date_form = (
-        DateFormatter("%d/%m/%Y") if len(data) < 100 else DateFormatter("%d/%m/%Y")
-    )
-    ax.xaxis.set_major_formatter(date_form)
-    fig.autofmt_xdate()
-    loc = AutoDateLocator(minticks=5, maxticks=12)
-    ax.xaxis.set_major_locator(loc)
-    ax.grid(axis="y")
+    fig, ax = style_plot(fig, ax)
     ax.set_title(title)
     return fig, ax
 

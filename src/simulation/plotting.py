@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from matplotlib.dates import AutoDateLocator
 from matplotlib.dates import DateFormatter
 from sid.colors import get_colors
 
@@ -115,15 +116,23 @@ def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
             x=weekly_smoothed.index, y=weekly_smoothed, ax=ax, color="k", label=label
         )
 
-    ax.set_ylabel("")
-    ax.set_xlabel("Datum")
-    date_form = DateFormatter("%d.%m")
-    ax.xaxis.set_major_formatter(date_form)
-    fig.autofmt_xdate()
+    fig, ax = style_plot(fig, ax)
     ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
-    ax.grid(axis="y")
     ax.set_title(title)
     ax.legend(loc="upper center", bbox_to_anchor=(-0.0, -0.5, 1, 0.2), ncol=2)
     fig.tight_layout()
 
+    return fig, ax
+
+
+def style_plot(fig, ax):
+    ax.set_ylabel("")
+    ax.set_xlabel("Datum")
+    n_days = ax.get_xlim()[1] - ax.get_xlim()[0]
+    date_form = DateFormatter("%d.%m") if n_days < 100 else DateFormatter("%m/%Y")
+    ax.xaxis.set_major_formatter(date_form)
+    loc = AutoDateLocator(minticks=5, maxticks=12)
+    ax.xaxis.set_major_locator(loc)
+    ax.grid(axis="y")
+    sns.despine()
     return fig, ax
