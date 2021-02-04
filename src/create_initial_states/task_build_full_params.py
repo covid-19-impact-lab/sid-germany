@@ -61,6 +61,10 @@ def task_create_full_params(depends_on, produces):
         vacations,
     ]
     params = pd.concat(param_slices, axis=0)
+    # number of available tests is implemented in the test demand model.
+    # therefore, we set the "sid" limit, which is time invariant to one test
+    # per individual
+    params.loc[("testing", "allocation", "rel_available_tests"), "value"] = 100_000
     params.to_pickle(produces)
 
 
