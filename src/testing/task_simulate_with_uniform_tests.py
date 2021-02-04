@@ -29,9 +29,9 @@ PARAMETRIZATION = [
 
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("multiplier, produces", PARAMETRIZATION)
-def task_simulate_with_raining_tests(depends_on, multiplier, produces):
+def task_simulate_with_uniform_tests(depends_on, multiplier, produces):
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
-    initial_states = pd.read_pickle(depends_on["initial_states"])
+    initial_states = pd.read_parquet(depends_on["initial_states"])
     params = pd.read_pickle(depends_on["params"])
     if multiplier is not None:
         subcategories = params.index.get_level_values("subcategory")
