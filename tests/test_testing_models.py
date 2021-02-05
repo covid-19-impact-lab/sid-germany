@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -26,6 +27,7 @@ def states():
 
 def test_up_or_downscale_demand(states):
     states["demanded"] = [True, True] + [False, True] * 4
+    states["newly_infected"] = True
     remaining = pd.Series([-2, 0, 2], index=["0-4", "5-14", "15-34"])
     expected_vals = [False, False] + [False, True] * 2 + [True] * 4
     expected = pd.Series(data=expected_vals, index=states.index)
@@ -73,4 +75,32 @@ def test_demand_test_zero_remainder(states):
         positivity_rate_by_age_group=positivity_rate_by_age_group,
     )
     expected = states["symptomatic"].copy(deep=True)
+    pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+def test_demand_test_non_zero_remainder(states):
+    params = None
+    states["newly_infected"] = True
+    # tests to distribute: 2 per individual.
+    # 0-4 get one extra. 5-14 are even. 15-34 have two tests removed.
+    states["symptomatic"] = [True, False] + [True, True, False, False] + [True] * 4
+
+    share_known_cases = 1
+    positivity_rate_overall = 1 / 3
+    test_shares_by_age_group = pd.Series([1 / 3] * 3, index=["0-4", "5-14", "15-34"])
+    positivity_rate_by_age_group = pd.Series([0.2] * 3, index=["0-4", "5-14", "15-34"])
+    np.random.seed(333)
+    res = demand_test(
+        states=states,
+        params=params,
+        share_known_cases=share_known_cases,
+        positivity_rate_overall=positivity_rate_overall,
+        test_shares_by_age_group=test_shares_by_age_group,
+        positivity_rate_by_age_group=positivity_rate_by_age_group,
+    )
+    # the order of the last four is random and will change if the seed is changed!
+    expected = pd.Series(
+        [True, True] + [True, True, False, False] + [True, False, False, True],
+        index=states.index,
+    )
     pd.testing.assert_series_equal(res, expected, check_names=False)

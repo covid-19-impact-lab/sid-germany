@@ -1,4 +1,6 @@
 """Testing models, adjusted from Tobi's sid tutorial."""
+import warnings
+
 import numpy as np
 import pandas as pd
 from sid.time import get_date
@@ -107,11 +109,19 @@ def _up_or_downscale_demand(states, remaining):
     for group, remainder in remaining.items():
         n_to_draw = int(abs(remainder))
         selection_string = (
-            f"age_group_rki == '{group}' & ~pending_test "
+            f"age_group_rki == '{group}' & newly_infected & ~pending_test "
             + f"& ~knows_immune & demanded == {remainder < 0}"
         )
         pool = states.query(selection_string).index
-        drawn = np.random.choice(pool, n_to_draw, replace=False)
+        if len(pool) >= n_to_draw:
+            drawn = np.random.choice(pool, n_to_draw, replace=False)
+        else:
+            warnings.warn(
+                "There were more tests to be allocated / removed. "
+                f"The remainder was {remainder} in group {group} on "
+                f"{get_date(states).date()}."
+            )
+            drawn = pool
         demanded.loc[drawn] = True if remainder > 0 else False
     return demanded
 
