@@ -6,7 +6,9 @@ from src.testing.testing_models import (
     _calculate_positive_tests_to_distribute_per_age_group,
 )
 from src.testing.testing_models import _up_or_downscale_demand
+from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
+from src.testing.testing_models import process_tests
 
 DATE = pd.Timestamp("2020-10-10")
 
@@ -103,4 +105,21 @@ def test_demand_test_non_zero_remainder(states):
         [True, True] + [True, True, False, False] + [True, False, False, True],
         index=states.index,
     )
+    pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+def test_allocate_tests(states):
+    demands_test = pd.Series(True, index=states.index)
+    res = allocate_tests(
+        n_allocated_tests=None, demands_test=demands_test, states=None, params=None
+    )
+    demands_test[:5] = False
+    assert res.all()
+
+
+def test_process_tests(states):
+    expected = pd.Series([True] * 5 + [False] * 5, index=states.index)
+    states["pending_test"] = expected.copy(deep=True)
+    res = process_tests(n_to_be_processed_tests=None, states=states, params=None)
+    states.loc[:3, "pending_test"] = False
     pd.testing.assert_series_equal(res, expected, check_names=False)
