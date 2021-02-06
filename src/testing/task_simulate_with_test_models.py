@@ -54,7 +54,9 @@ def task_simulate_with_test_models(depends_on, multiplier, produces):
 
     # These must be filled in once we have the data from the ARS!
     groups = initial_states["age_group_rki"].unique()
-    test_shares_by_age_group = pd.Series(data=1 / 6, index=groups)
+    population_proportions = initial_states["age_group_rki"].value_counts(
+        normalize=True
+    )
     positivity_rate_by_age_group = pd.DataFrame(index=positivity_rate_overall.index)
     for g in groups:
         positivity_rate_by_age_group[g] = positivity_rate_overall
@@ -83,7 +85,7 @@ def task_simulate_with_test_models(depends_on, multiplier, produces):
                 demand_test,
                 share_known_cases=share_known_cases,
                 positivity_rate_overall=positivity_rate_overall,
-                test_shares_by_age_group=test_shares_by_age_group,
+                test_shares_by_age_group=population_proportions,
                 positivity_rate_by_age_group=positivity_rate_by_age_group,
             ),
         }
@@ -106,10 +108,21 @@ def task_simulate_with_test_models(depends_on, multiplier, produces):
         path=produces.parent,
         seed=898,
         saved_columns={
-            "initial_states": ["age_group_rki"],
-            "disease_states": ["newly_infected"],
+            "initial_states": ["age_group_rki", "cd_received_test_result_true_draws"],
+            "disease_states": ["newly_infected", "symptomatic"],
             "time": ["date"],
-            "other": ["new_known_case"],
+            "other": [
+                "allocated_test",
+                "cd_received_test_result_true",
+                "cd_infectious_true",
+                "demands_test",
+                "knows_immune",
+                "new_known_case",
+                "pending_test",
+                "pending_test_date",
+                "received_test_result",
+                "to_be_processed_test",
+            ],
         },
     )
     sim_func(params)
