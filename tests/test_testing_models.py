@@ -28,12 +28,12 @@ def states():
 
 
 def test_up_or_downscale_demand(states):
-    states["demanded"] = [True, True] + [False, True] * 4
+    demanded = pd.Series([True, True] + [False, True] * 4, index=states.index)
     states["newly_infected"] = True
     remaining = pd.Series([-2, 0, 2], index=["0-4", "5-14", "15-34"])
     expected_vals = [False, False] + [False, True] * 2 + [True] * 4
     expected = pd.Series(data=expected_vals, index=states.index)
-    res = _up_or_downscale_demand(states=states, remaining=remaining)
+    res = _up_or_downscale_demand(demanded=demanded, states=states, remaining=remaining)
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 

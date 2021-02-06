@@ -60,13 +60,10 @@ def demand_test(
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
     )
-    states = states.copy()
-    states["demanded"] = (
-        states["symptomatic"] & ~states["pending_test"] & ~states["knows_immune"]
-    )
-    demands_by_age_group = states.groupby("age_group_rki")["demanded"].sum()
+    demanded = states["symptomatic"] & ~states["pending_test"] & ~states["knows_immune"]
+    demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
-    demanded = _up_or_downscale_demand(states, remaining)
+    demanded = _up_or_downscale_demand(demanded, states, remaining)
     return demanded
 
 
@@ -103,16 +100,19 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     return n_pos_tests_for_each_group
 
 
-def _up_or_downscale_demand(states, remaining):
-    demanded = states["demanded"].copy(deep=True)
-
+def _up_or_downscale_demand(demanded, states, remaining):
+    demanded = demanded.copy(deep=True)
     for group, remainder in remaining.items():
         n_to_draw = int(abs(remainder))
-        selection_string = (
-            f"age_group_rki == '{group}' & newly_infected & ~pending_test "
-            + f"& ~knows_immune & demanded == {remainder < 0}"
-        )
-        pool = states.query(selection_string).index
+        selection_string = f"age_group_rki == '{group}' & ~pending_test & ~knows_immune"
+        if remainder > 0:
+            # this is the case where we have additional tests to distribute
+            selection_string += " & newly_infected"
+            pool = states[~demanded].query(selection_string).index
+        else:
+            # this is the case where symptomatics already exceed the available
+            # positive tests.
+            pool = states[demanded].query(selection_string).index
         if len(pool) >= n_to_draw:
             drawn = np.random.choice(pool, n_to_draw, replace=False)
         else:
@@ -145,7 +145,8 @@ def allocate_tests(n_allocated_tests, demands_test, states, params):  # noqa: U1
             series which indicates which individuals received a test.
 
     """
-    return demands_test.copy(deep=True)
+    allocated_tests = demands_test.copy(deep=True)
+    return allocated_tests
 
 
 def process_tests(n_to_be_processed_tests, states, params):  # noqa: U100
