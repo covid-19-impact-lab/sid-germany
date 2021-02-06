@@ -8,12 +8,8 @@ from src.simulation.plotting import weekly_incidences_from_results
 
 
 def plot_known_vs_total_cases(res, title):
-    new_known_case = weekly_incidences_from_results(
-        [res["time_series"]], "new_known_case"
-    )
-    newly_infected = weekly_incidences_from_results(
-        [res["time_series"]], "newly_infected"
-    )
+    new_known_case = weekly_incidences_from_results([res], "new_known_case")
+    newly_infected = weekly_incidences_from_results([res], "newly_infected")
 
     to_plot = {"newly_infected": newly_infected, "new_known_cases": new_known_case}
     name_to_label = {
@@ -28,12 +24,8 @@ def plot_known_vs_total_cases(res, title):
 
 
 def plot_share_known_cases(res, title):
-    new_known_case = weekly_incidences_from_results(
-        [res["time_series"]], "new_known_case"
-    )
-    newly_infected = weekly_incidences_from_results(
-        [res["time_series"]], "newly_infected"
-    )
+    new_known_case = weekly_incidences_from_results([res], "new_known_case")
+    newly_infected = weekly_incidences_from_results([res], "newly_infected")
     share_known_case = new_known_case / newly_infected
 
     colors = get_colors("ordered", 4)
