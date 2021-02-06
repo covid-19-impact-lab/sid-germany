@@ -79,20 +79,15 @@ def task_simulate_with_test_models(depends_on, multiplier, produces):
     contact_models = get_all_contact_models()
     policies = get_october_to_christmas_policies(contact_models=contact_models)
 
-    testing_demand_models = {
-        "symptoms": {
-            "model": partial(
-                demand_test,
-                share_known_cases=share_known_cases,
-                positivity_rate_overall=positivity_rate_overall,
-                test_shares_by_age_group=population_proportions,
-                positivity_rate_by_age_group=positivity_rate_by_age_group,
-            ),
-        }
-    }
-
+    demand_test_func = partial(
+        demand_test,
+        share_known_cases=share_known_cases,
+        positivity_rate_overall=positivity_rate_overall,
+        test_shares_by_age_group=population_proportions,
+        positivity_rate_by_age_group=positivity_rate_by_age_group,
+    )
+    testing_demand_models = {"symptoms": {"model": demand_test_func}}
     testing_allocation_models = {"direct_allocation": {"model": allocate_tests}}
-
     testing_processing_models = {"direct_processing": {"model": process_tests}}
 
     sim_func = get_simulate_func(
