@@ -25,6 +25,7 @@ from src.config import SRC
 @pytask.mark.produces(
     {
         "hygiene_score": BLD / "policies" / "hygiene_score.csv",
+        "mobility_data": BLD / "policies" / "mobility_data.pkl",
         "work_multiplier": BLD / "policies" / "work_multiplier.csv",
     }
 )
@@ -36,7 +37,10 @@ def task_process_mobility_and_hygiene_data(depends_on, produces):
     hygiene_score.to_csv(produces["hygiene_score"])
 
     mobility_data = _prepare_mobility_data(df=mobility_data)
-    mobility_data.to_csv(produces["work_multiplier"])
+    mobility_data.to_pickle(produces["mobility_data"])
+
+    work_multiplier = _create_work_multiplier(mobility_data)
+    work_multiplier.to_csv(produces["work_multiplier"])
 
 
 def _prepare_mobility_data(df):
@@ -53,7 +57,11 @@ def _prepare_mobility_data(df):
     df.columns = [x.replace("_percent_change_from_baseline", "") for x in df.columns]
     df["sub_region_1"] = df["sub_region_1"].fillna("Germany")
     pivoted = pd.pivot(data=df, index="date", columns="sub_region_1")
-    work_multiplier = 1 + (pivoted["workplaces"] / 100)
+    return pivoted
+
+
+def _create_work_multiplier(df):
+    work_multiplier = 1 + (df["workplaces"] / 100)
     assert not work_multiplier.index.duplicated().any()
     # set weekends to NaN and interpolate because we already handle weekends
     # in the contact models.
