@@ -26,7 +26,7 @@ for col in OUT_COLS:
 @pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "test_statistics.xlsx")
 @pytask.mark.produces(PRODUCTS)
 def task_create_test_statistics(depends_on, produces):
-    df = pd.read_excel(depends_on, sheet_name="Testzahlen", header=2)
+    df = pd.read_excel(depends_on, sheet_name="1_Testzahlerfassung")
     df = _prepare_data(df)
     for col in OUT_COLS:
         df.set_index("date")[col].to_csv(produces[col])
@@ -39,12 +39,14 @@ def _prepare_data(df):
         "Kalenderwoche": "week_and_year",
         "Anzahl Testungen": "n_tests",
         "Positiv getestet": "n_positive_tests",
-        "Positiven-quote (%)": "share_tests_positive",
-        "Anzahl übermittelnde Labore": "n_laboratories",
+        "Positivenquote (%)": "share_tests_positive",
+        "Anzahl übermittelnder Labore": "n_laboratories",
     }
     df = df.rename(columns=translations)
     df = df[translations.values()]
-    df = df.loc[1:47]
+    # drop lines that contain comments or sums:
+    df = df[df["share_tests_positive"].notnull()]
+
     df["share_tests_positive"] = df["share_tests_positive"] / 100
     df["n_tests_per_100_000"] = 100_000 * df["n_tests"] / POPULATION_GERMANY
     df["n_positive_tests_per_100_000"] = (

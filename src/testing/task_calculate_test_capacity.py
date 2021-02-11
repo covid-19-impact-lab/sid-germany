@@ -1,7 +1,6 @@
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import pytask
 import seaborn as sns
@@ -24,7 +23,7 @@ PRODUCTS = {
 @pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "test_statistics.xlsx")
 @pytask.mark.produces(PRODUCTS)
 def task_calculate_test_capacity(depends_on, produces):
-    df = pd.read_excel(depends_on, sheet_name="Testkapazitäten", header=1)
+    df = pd.read_excel(depends_on, sheet_name="2_Testkapazitäten")
     df = _process_test_statistics(df)
 
     fig, ax = plot_time_series(
@@ -55,7 +54,6 @@ def task_calculate_test_capacity(depends_on, produces):
 
 
 def _process_test_statistics(df):
-    df = df.replace("-", np.nan)
     df["date"] = _create_date(df)
     df = expand_to_every_day(df)
     df = df.rename(
@@ -69,7 +67,7 @@ def _process_test_statistics(df):
     df["test_capacity_per_100_000"] = 100_000 * df["tests_per_inhabitant"]
 
     to_drop = [
-        "KW, für die die Angabe prognostisch erfolgt ist:",
+        "KW, für die die Angabe prognostisch erfolgt ist",
         "Testkapazität pro Tag",
         "Theoretische wöchentliche Kapazität anhand von Wochenarbeitstagen",
     ]
@@ -78,7 +76,7 @@ def _process_test_statistics(df):
 
 
 def _create_date(df):
-    time_col = "KW, für die die Angabe prognostisch erfolgt ist:"
+    time_col = "KW, für die die Angabe prognostisch erfolgt ist"
     year_and_week = df[time_col].str.split(", KW", 1, expand=True)
     year_and_week = year_and_week.astype(int)
     year_and_week.columns = ["year", "week"]
