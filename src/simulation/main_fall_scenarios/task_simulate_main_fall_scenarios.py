@@ -35,6 +35,7 @@ if FAST_FLAG:
     DEPENDENCIES["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):

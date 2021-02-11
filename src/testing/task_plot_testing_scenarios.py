@@ -11,8 +11,6 @@ OUT_PATH = BLD / "simulations" / "develop_testing_model"
 SCENARIOS = [
     "with_models_stay_home",
     "with_models_meet_when_positive",
-    "without_models_stay_home",
-    "without_models_meet_when_positive",
 ]
 
 DEPENDENCIES = {scenario: OUT_PATH / scenario / "time_series" for scenario in SCENARIOS}

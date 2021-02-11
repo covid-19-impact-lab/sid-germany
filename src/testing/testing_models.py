@@ -9,6 +9,7 @@ from sid.time import get_date
 def demand_test(
     states,
     params,  # noqa: U100
+    seed,  # noqa: U100
     share_known_cases,
     positivity_rate_overall,
     test_shares_by_age_group,
@@ -126,7 +127,7 @@ def _up_or_downscale_demand(demanded, states, remaining):
     return demanded
 
 
-def allocate_tests(n_allocated_tests, demands_test, states, params):  # noqa: U100
+def allocate_tests(n_allocated_tests, demands_test, states, params, seed):  # noqa: U100
     """Allocate tests to individuals who demand a test.
 
     Excess and insufficient demand are handled in the demand function,
@@ -149,7 +150,7 @@ def allocate_tests(n_allocated_tests, demands_test, states, params):  # noqa: U1
     return allocated_tests
 
 
-def process_tests(n_to_be_processed_tests, states, params):  # noqa: U100
+def process_tests(n_to_be_processed_tests, states, params, seed):  # noqa: U100
     """Process tests.
 
     For simplicity, we assume that all tests are processed immediately, without
