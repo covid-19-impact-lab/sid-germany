@@ -30,6 +30,8 @@ sns.set_palette(get_colors("categorical", 12))
         "by_state": BLD / "policies" / "work_mobility_reduction_by_state.png",
         "de": BLD / "policies" / "work_multiplier.png",
         "since_oct": BLD / "policies" / "work_multiplier_since_oct.png",
+        "old_vs_new": BLD / "policies" / "old_vs_new_work_multipliers_since_oct.png",
+        "2021": BLD / "policies" / "work_mobility_2021.png",
     }
 )
 def task_visualize_work_multipliers(depends_on, produces):
@@ -55,11 +57,28 @@ def task_visualize_work_multipliers(depends_on, produces):
 
     since_oct = work_multiplier[work_multiplier["date"] > "2020-10-01"]
     fig, ax = _plot_time_series(since_oct, title="Work Multiplier Since October")
+    fig.savefig(produces["since_oct"], dpi=200, transparent=False, facecolor="w")
+
     old_multipliers = _get_old_work_multipliers()
     sns.lineplot(
         x=old_multipliers.index, y=old_multipliers, ax=ax, label="old multipliers"
     )
-    fig.savefig(produces["since_oct"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["old_vs_new"], dpi=200, transparent=False, facecolor="w")
+
+    this_year = work_multiplier[work_multiplier["date"] > "2021-01-03"]
+    fig, ax = _plot_time_series(this_year, title="Reduction of Work Mobility in 2021")
+    plt.axvline(
+        x=pd.Timestamp("2021-01-27"),
+        label="Corona-Arbeitsschutzverordnung",
+        color="firebrick",
+    )
+    plt.legend()
+    fig.savefig(
+        produces["2021"],
+        dpi=200,
+        transparent=False,
+        facecolor="w",
+    )
 
 
 def _visualize_reductions_by_state(df):
@@ -87,6 +106,8 @@ def _plot_time_series(
 
     fig, ax = style_plot(fig, ax)
     ax.set_title(title)
+    ax.set_ylabel("")
+    ax.set_xlabel("")
     return fig, ax
 
 
