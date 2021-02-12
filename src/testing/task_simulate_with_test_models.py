@@ -24,11 +24,10 @@ DEPENDENCIES = {
     / "share_known_cases.pkl",
     "initial_states": BLD / "data" / "debug_initial_states.parquet",
     "params": SRC / "simulation" / "estimated_params.pkl",
-    "positivity_rate_overall": BLD
-    / "data"
-    / "processed_time_series"
-    / "share_tests_positive.csv",
+    "positivity_rate_overall": BLD / "data" / "testing" / "share_tests_positive.csv",
     "testing_models": SRC / "testing" / "testing_models.py",
+    "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
+    "synthetic_data_path": BLD / "data" / "initial_states.parquet",
 }
 
 OUT_PATH = BLD / "simulations" / "develop_testing_model"

@@ -8,7 +8,7 @@ from src.testing.task_calculate_test_capacity import get_date_from_year_and_week
 from src.testing.task_calculate_test_capacity import plot_time_series
 
 
-OUT_PATH = BLD / "data" / "processed_time_series"
+OUT_PATH = BLD / "data" / "testing"
 PRODUCTS = {}
 OUT_COLS = [
     "n_tests",
@@ -30,7 +30,7 @@ def task_create_test_statistics(depends_on, produces):
     df = _prepare_data(df)
     for col in OUT_COLS:
         df.set_index("date")[col].to_csv(produces[col])
-        fig, ax = plot_time_series(df=df, y="share_tests_positive")
+        fig, ax = plot_time_series(df=df, y=col)
         fig.savefig(produces[f"{col}_png"])
 
 

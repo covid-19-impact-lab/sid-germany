@@ -53,6 +53,7 @@ def task_save_statistics_for_main_fall_scenarios(depends_on, produces):
 PLOT_DEPENDENCIES = {
     "plotting_py": SRC / "simulation" / "plotting.py",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
+    "synthetic_data_path": BLD / "data" / "initial_states.parquet",
     **INCIDENCE_PATHS,
 }
 

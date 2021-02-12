@@ -30,6 +30,8 @@ DEPENDENCIES = {
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     "policies_py": SRC / "policies" / "combine_policies_over_periods.py",
     "specs": SRC / "simulation" / "main_specification.py",
+    "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
+    "synthetic_data_path": BLD / "data" / "initial_states.parquet",
 }
 if FAST_FLAG:
     DEPENDENCIES["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
