@@ -7,9 +7,9 @@ from src.simulation.plotting import style_plot
 from src.simulation.plotting import weekly_incidences_from_results
 
 
-def plot_known_vs_total_cases(res, title):
-    new_known_case = weekly_incidences_from_results([res], "new_known_case")
-    newly_infected = weekly_incidences_from_results([res], "newly_infected")
+def plot_known_vs_total_cases(dfs, title):
+    new_known_case = weekly_incidences_from_results(dfs, "new_known_case")
+    newly_infected = weekly_incidences_from_results(dfs, "newly_infected")
 
     to_plot = {"newly_infected": newly_infected, "new_known_cases": new_known_case}
     name_to_label = {
@@ -18,15 +18,15 @@ def plot_known_vs_total_cases(res, title):
     }
 
     fig, ax = plot_incidences(
-        to_plot, title=title, n_single_runs=0, name_to_label=name_to_label
+        to_plot, title=title, n_single_runs=5, name_to_label=name_to_label
     )
     return fig, ax
 
 
-def plot_share_known_cases(res, title):
-    new_known_case = weekly_incidences_from_results([res], "new_known_case")
-    newly_infected = weekly_incidences_from_results([res], "newly_infected")
-    share_known_case = new_known_case / newly_infected
+def plot_share_known_cases(dfs, title):
+    new_known_case = weekly_incidences_from_results(dfs, "new_known_case")
+    newly_infected = weekly_incidences_from_results(dfs, "newly_infected")
+    share_known_case = (new_known_case / newly_infected).mean(axis=1)
 
     colors = get_colors("ordered", 4)
     fig, ax = plt.subplots(figsize=(6, 4))

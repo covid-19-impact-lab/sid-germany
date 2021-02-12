@@ -23,7 +23,8 @@ def weekly_incidences_from_results(results, outcome):
     """Create the weekly incidences from a list of simulation runs.
 
     Args:
-        results (list): list of DataFrames with the
+        results (list): list of DataFrames with the time series data from sid
+            simulations.
 
     Returns:
         weekly_incidences (pandas.DataFrame): every column is the

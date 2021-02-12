@@ -22,7 +22,7 @@ DEPENDENCIES = {
     / "data"
     / "processed_time_series"
     / "share_known_cases.pkl",
-    "initial_states": BLD / "data" / "debug_initial_states.parquet",
+    "initial_states": BLD / "data" / "initial_states.parquet",
     "params": SRC / "simulation" / "estimated_params.pkl",
     "positivity_rate_overall": BLD / "data" / "testing" / "share_tests_positive.csv",
     "testing_models": SRC / "testing" / "testing_models.py",
@@ -32,15 +32,18 @@ DEPENDENCIES = {
 
 OUT_PATH = BLD / "simulations" / "develop_testing_model"
 
-PARAMETRIZATION = [
-    (None, OUT_PATH / "with_models_stay_home" / "time_series"),
-    (1.0, OUT_PATH / "with_models_meet_when_positive" / "time_series"),
-]
+PARAMETRIZATION = []
+SEEDS = [200_500, 400_500, 600_500, 800_500, 1_000_500, 1_200_500][:1]
+for i, seed in enumerate(SEEDS):
+    PARAMETRIZATION += [
+        (None, seed, OUT_PATH / f"with_models_stay_home_{i}" / "time_series"),
+        (1.0, seed, OUT_PATH / f"with_models_meet_when_positive_{i}" / "time_series"),
+    ]
 
 
 @pytask.mark.depends_on(DEPENDENCIES)
-@pytask.mark.parametrize("multiplier, produces", PARAMETRIZATION)
-def task_simulate_with_test_models(depends_on, multiplier, produces):
+@pytask.mark.parametrize("multiplier, seed, produces", PARAMETRIZATION)
+def task_simulate_with_test_models(depends_on, multiplier, seed, produces):
     initial_states = pd.read_parquet(depends_on["initial_states"])
 
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
@@ -100,7 +103,7 @@ def task_simulate_with_test_models(depends_on, multiplier, produces):
         testing_allocation_models=testing_allocation_models,
         testing_processing_models=testing_processing_models,
         path=produces.parent,
-        seed=898,
+        seed=seed,
         saved_columns={
             "initial_states": ["age_group_rki", "cd_received_test_result_true_draws"],
             "disease_states": ["newly_infected", "symptomatic"],
