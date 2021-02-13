@@ -55,23 +55,15 @@ def task_calculate_test_capacity(depends_on, produces):
 
 def _process_test_statistics(df):
     df["date"] = _create_date(df)
-    df = expand_to_every_day(df)
-    df = df.rename(
-        columns={
-            "Anzahl übermittelnde Labore": "n_laboratories",
-            "Reale Testkapazität zum Zeitpunkt der Abfrage": "weekly_test_capacity",
-        }
-    )
-    df["test_capacity"] = df["weekly_test_capacity"] / 7
+    rename_dict = {
+        "Anzahl übermittelnde Labore": "n_laboratories",
+        "Reale Testkapazität zum Zeitpunkt der Abfrage": "test_capacity",
+    }
+    df = df.rename(columns=rename_dict)
+    df = df[["date", "n_laboratories", "test_capacity"]]
+    df = convert_weekly_to_daily(df, divide_by_7_cols=["test_capacity"])
     df["tests_per_inhabitant"] = df["test_capacity"] / POPULATION_GERMANY
     df["test_capacity_per_100_000"] = 100_000 * df["tests_per_inhabitant"]
-
-    to_drop = [
-        "KW, für die die Angabe prognostisch erfolgt ist",
-        "Testkapazität pro Tag",
-        "Theoretische wöchentliche Kapazität anhand von Wochenarbeitstagen",
-    ]
-    df = df.drop(columns=to_drop)
     return df
 
 
@@ -80,23 +72,24 @@ def _create_date(df):
     year_and_week = df[time_col].str.split(", KW", 1, expand=True)
     year_and_week = year_and_week.astype(int)
     year_and_week.columns = ["year", "week"]
-    return year_and_week.apply(get_date_from_year_and_week_to_date, axis=1)
+    return year_and_week.apply(get_date_from_year_and_week, axis=1)
 
 
-def get_date_from_year_and_week_to_date(row):
+def get_date_from_year_and_week(row):
     date = datetime.date.fromisocalendar(
         year=int(row["year"]), week=int(row["week"]), day=3
     )
     return pd.Timestamp(date)
 
 
-def expand_to_every_day(df):
+def convert_weekly_to_daily(df, divide_by_7_cols):
     dates = pd.date_range(df["date"].min(), df["date"].max())
     df = df.set_index("date")
     df = df.reindex(dates)
     df = df.interpolate("nearest")
     df = df.reset_index()
     df = df.rename(columns={"index": "date"})
+    df[divide_by_7_cols] = df[divide_by_7_cols] / 7
     return df
 
 

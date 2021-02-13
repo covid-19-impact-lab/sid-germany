@@ -3,8 +3,8 @@ import pytask
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
-from src.testing.task_calculate_test_capacity import expand_to_every_day
-from src.testing.task_calculate_test_capacity import get_date_from_year_and_week_to_date
+from src.testing.task_calculate_test_capacity import convert_weekly_to_daily
+from src.testing.task_calculate_test_capacity import get_date_from_year_and_week
 from src.testing.task_calculate_test_capacity import plot_time_series
 
 
@@ -47,15 +47,15 @@ def _prepare_data(df):
     # drop lines that contain comments or sums:
     df = df[df["share_tests_positive"].notnull()]
 
+    df["date"] = _create_date(df)
     df["share_tests_positive"] = df["share_tests_positive"] / 100
+    df = df.drop(columns=["week_and_year"])
+    df = convert_weekly_to_daily(df, divide_by_7_cols=["n_tests", "n_positive_tests"])
+
     df["n_tests_per_100_000"] = 100_000 * df["n_tests"] / POPULATION_GERMANY
     df["n_positive_tests_per_100_000"] = (
         100_000 * df["n_positive_tests"] / POPULATION_GERMANY
     )
-
-    df["date"] = _create_date(df)
-    df = df.drop(columns=["week_and_year"])
-    df = expand_to_every_day(df)
     df = df[df["date"] > "2020-08-15"]
     return df
 
@@ -65,4 +65,4 @@ def _create_date(df):
     week_and_year[1] = week_and_year[1].str.replace("*", "")
     week_and_year = week_and_year.astype(int)
     week_and_year.columns = ["week", "year"]
-    return week_and_year.apply(get_date_from_year_and_week_to_date, axis=1)
+    return week_and_year.apply(get_date_from_year_and_week, axis=1)
