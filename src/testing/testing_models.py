@@ -1,4 +1,32 @@
-"""Testing models, adjusted from Tobi's sid tutorial."""
+"""Testing models, adjusted from Tobi's sid tutorial.
+
+We only model positive tests and assume there are no false positives or false negatives.
+Note this assumes that individuals' behavior is unaffected by a negative test result.
+
+This is very advantageous because only PCR tests are reported and antigen tests are not.
+Thus, since positive antigen tests are followed up with a PCR test, positive antigen
+tests show up in the test statistics and negative tests don't. So the positive tests
+reflect the true positive tests but the negative tests don't.
+
+Who gets a test as follows is completely determined in the demand_test function:
+
+Firstly, we calculate from the number of infected people in the simulation and the
+share_known_cases from the DunkelzifferRadar project how many positive tests are to
+be distributed in the whole population. From this, using the overall positivity rate
+of tests we get to the full budget of tests to be distributed across the population.
+Using the ARS data, we get the share of tests (positive and negative) going to each
+age group. Using the age specific positivity rate - also reported in the ARS data -
+then gets us the number of positive tests to distribute in each age group.
+Using the RKI and ARS data therefore allows us to reflect the German testing strategy
+over age groups, e.g .preferential testing of older individuals.
+
+We assume that symptomatic individuals preferentially demand and receive tests.
+The remaining tests are distributed uniformly among the infectious in each age group.
+We plan to further enhance the testing demand model by further variables such as contact
+tracing.
+
+
+"""
 import warnings
 
 import numpy as np
@@ -22,7 +50,10 @@ def demand_test(
     a test before which is still pending and have not received a positive
     test result with a probability of 1.
 
-    We then add tests among the remaining currently infectious. ###
+    We then add tests among the remaining currently infectious such that we
+    match the share of positive tests implied by the share_known_cases, the
+    positivity_rate_overall, the test_shares_by_age_group and the
+    positvity_rate_by_age_group.
 
     Args:
         states (pandas.DataFrame): The states of the individuals.
@@ -106,20 +137,32 @@ def _up_or_downscale_demand(demanded, states, remaining):
     for group, remainder in remaining.items():
         n_to_draw = int(abs(remainder))
         selection_string = f"age_group_rki == '{group}' & ~pending_test & ~knows_immune"
-        if remainder > 0:
+        if remainder == 0:
+            continue
+        elif remainder > 0:
             # this is the case where we have additional tests to distribute
-            selection_string += " & newly_infected"
+            selection_string += " & infectious"
             pool = states[~demanded].query(selection_string).index
-        else:
+        else:  # remainder < 0
             # this is the case where symptomatics already exceed the available
             # positive tests.
             pool = states[demanded].query(selection_string).index
+            warnings.warn(
+                f"The demand for tests by symptomatic individuals in age group {group} "
+                f"exceeded the number of available tests on {get_date(states).date()}. "
+                "Conisder changing the model parameters such that you generalte less "
+                f"infected individuals. There were {demanded.sum()} tests demanded "
+                f"which was {-remainder} above the number of available tests."
+            )
         if len(pool) >= n_to_draw:
             drawn = np.random.choice(pool, n_to_draw, replace=False)
         else:
+            type_of_operation = "allocated" if remainder > 0 else "removed"
             warnings.warn(
-                "There were more tests to be allocated / removed. "
-                f"The remainder was {remainder} in group {group} on "
+                f"There were more tests to be {type_of_operation}. This indicates that "
+                "your model parameters (either the infection probabilities, "
+                "the infection probabilities or the test demand parameters are not "
+                f"well chosen. The remainder was {remainder} in group {group} on "
                 f"{get_date(states).date()}."
             )
             drawn = pool
