@@ -126,6 +126,7 @@ def task_simulate_with_test_models(depends_on, multiplier, seed, produces):
 
 
 def _adjust_params_to_testing_and_scenario(params, multiplier):
+    params = params.copy(deep=True)
     params.loc[("testing", "allocation", "rel_available_tests"), "value"] = 100_000
     params.loc[("testing", "processing", "rel_available_capacity"), "value"] = 100_000
     if multiplier is not None:

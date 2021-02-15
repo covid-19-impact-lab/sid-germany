@@ -45,15 +45,23 @@ def demand_test(
 ):
     """Test demand function.
 
-    This demand model assumes that individuals request a test for a
-    Covid-19 infection if they experience symptoms, have not requested
-    a test before which is still pending and have not received a positive
-    test result with a probability of 1.
+    This demand model already includes allocation and processing.
 
-    We then add tests among the remaining currently infectious such that we
-    match the share of positive tests implied by the share_known_cases, the
-    positivity_rate_overall, the test_shares_by_age_group and the
-    positvity_rate_by_age_group.
+    We calculate the tests available in each age group as follows:
+    Firstly, we calculate from the number of infected people in the simulation and the
+    share_known_cases from the DunkelzifferRadar project how many positive tests are to
+    be distributed in the whole population. From this, using the overall positivity rate
+    of tests we get to the full budget of tests to be distributed across the population.
+    Using the ARS data, we get the share of tests (positive and negative) going to each
+    age group. Using the age specific positivity rate - also reported in the ARS data -
+    then gets us the number of positive tests to distribute in each age group.
+    Using the RKI and ARS data therefore allows us to reflect the German testing
+    strategy over age groups, e.g .preferential testing of older individuals.
+
+    In each age group we first distribute tests among those that are symptomatic but
+    have no pending test and do not know their infection state yet. We then distribute
+    the remaining tests tests among the remaining currently infectious such that we
+    use up the full test budget in each group.
 
     Args:
         states (pandas.DataFrame): The states of the individuals.
