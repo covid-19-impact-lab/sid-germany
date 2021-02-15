@@ -24,14 +24,14 @@ PRODUCTS = {
 @pytask.mark.produces(PRODUCTS)
 def task_calculate_test_capacity(depends_on, produces):
     df = pd.read_excel(depends_on, sheet_name="2_Testkapazitäten")
-    df = _process_test_statistics(df)
+    df = _prepare_test_capacity_data(df)
 
     fig, ax = plot_time_series(
         df, y="n_laboratories", title="Number of Laboratories Reporting"
     )
     fig.savefig(produces["n_laboratories_overall"])
 
-    # make sure enough laboratories are participating
+    # restrict to time frame where enough laboratories are participating
     df = df[df["date"] > pd.Timestamp("2020-08-15")]
     df.to_csv(produces["data"])
 
@@ -53,7 +53,7 @@ def task_calculate_test_capacity(depends_on, produces):
     fig.savefig(produces["n_test_capacity_per_100_000"])
 
 
-def _process_test_statistics(df):
+def _prepare_test_capacity_data(df):
     df["date"] = _create_date(df)
     rename_dict = {
         "Anzahl übermittelnde Labore": "n_laboratories",
@@ -68,6 +68,7 @@ def _process_test_statistics(df):
 
 
 def _create_date(df):
+    """Create year and week from string column and convert to true date."""
     time_col = "KW, für die die Angabe prognostisch erfolgt ist"
     year_and_week = df[time_col].str.split(", KW", 1, expand=True)
     year_and_week = year_and_week.astype(int)
@@ -76,17 +77,38 @@ def _create_date(df):
 
 
 def get_date_from_year_and_week(row):
+    """Create date from year and week.
+
+    We take the Sunday of each week.
+
+    """
     date = datetime.date.fromisocalendar(
-        year=int(row["year"]), week=int(row["week"]), day=3
+        year=int(row["year"]), week=int(row["week"]), day=7
     )
     return pd.Timestamp(date)
 
 
 def convert_weekly_to_daily(df, divide_by_7_cols):
+    """Convert from a weekly to a daily index.
+
+    Each week is filled with the observation of the end of the week.
+    Together with `get_date_from_year_and_week` taking the Sunday of
+    each week, the week's values for Mon through Sun of each week.
+
+    Args:
+        df (pandas.DataFrame): DataFrame with
+        divide_by_7_cols (list): list of columns that have to be
+            divided by 7. So for example the number of participating
+            laboratories does not change from a weekly to daily
+            representation of the data but the available number of
+            tests on each day is (ignoring weekends) a seventh of the
+            weekly capacity.
+
+    """
     dates = pd.date_range(df["date"].min(), df["date"].max())
     df = df.set_index("date")
     df = df.reindex(dates)
-    df = df.interpolate("nearest")
+    df = df.fillna(method="backfill")
     df = df.reset_index()
     df = df.rename(columns={"index": "date"})
     df[divide_by_7_cols] = df[divide_by_7_cols] / 7

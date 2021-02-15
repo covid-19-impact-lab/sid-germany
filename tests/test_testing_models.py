@@ -75,6 +75,7 @@ def test_demand_test_zero_remainder(states):
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
+        seed=394,
     )
     expected = states["symptomatic"].copy(deep=True)
     pd.testing.assert_series_equal(res, expected, check_names=False)
@@ -99,6 +100,7 @@ def test_demand_test_non_zero_remainder(states):
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
+        seed=58,
     )
     # the order of the last four is random and will change if the seed is changed!
     expected = pd.Series(
@@ -111,7 +113,11 @@ def test_demand_test_non_zero_remainder(states):
 def test_allocate_tests(states):
     demands_test = pd.Series(True, index=states.index)
     res = allocate_tests(
-        n_allocated_tests=None, demands_test=demands_test, states=None, params=None
+        n_allocated_tests=None,
+        demands_test=demands_test,
+        states=None,
+        params=None,
+        seed=332,
     )
     demands_test[:5] = False
     assert res.all()
@@ -120,6 +126,8 @@ def test_allocate_tests(states):
 def test_process_tests(states):
     expected = pd.Series([True] * 5 + [False] * 5, index=states.index)
     states["pending_test"] = expected.copy(deep=True)
-    res = process_tests(n_to_be_processed_tests=None, states=states, params=None)
+    res = process_tests(
+        n_to_be_processed_tests=None, states=states, params=None, seed=13222
+    )
     states.loc[:3, "pending_test"] = False
     pd.testing.assert_series_equal(res, expected, check_names=False)

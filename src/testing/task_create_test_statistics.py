@@ -29,26 +29,37 @@ def task_create_test_statistics(depends_on, produces):
     df = pd.read_excel(depends_on, sheet_name="1_Testzahlerfassung")
     df = _prepare_data(df)
     for col in OUT_COLS:
+        title = col.replace("_", " ").replace("n ", "Number of")
         df.set_index("date")[col].to_csv(produces[col])
-        fig, ax = plot_time_series(df=df, y=col)
+        fig, ax = plot_time_series(df=df, y=col, title=title)
         fig.savefig(produces[f"{col}_png"])
 
 
 def _prepare_data(df):
+    """Prepare the test statistics data.
+
+    In particular:
+        - rename columns
+        - drop comment and summary rows
+        - create a date from the entered calendar week and year
+        - Extend the data to have an observation for each day
+        - create number of tests and positive tests per 100_000
+
+    """
     translations = {
         "Kalenderwoche": "week_and_year",
         "Anzahl Testungen": "n_tests",
         "Positiv getestet": "n_positive_tests",
-        "Positivenquote (%)": "share_tests_positive",
+        "Positivenquote (%)": "pct_tests_positive",
         "Anzahl übermittelnder Labore": "n_laboratories",
     }
     df = df.rename(columns=translations)
     df = df[translations.values()]
-    # drop lines that contain comments or sums:
-    df = df[df["share_tests_positive"].notnull()]
+    # drop rows that contain comments or sums:
+    df = df[df["pct_tests_positive"].notnull()]
 
     df["date"] = _create_date(df)
-    df["share_tests_positive"] = df["share_tests_positive"] / 100
+    df["share_tests_positive"] = df["pct_tests_positive"] / 100
     df = df.drop(columns=["week_and_year"])
     df = convert_weekly_to_daily(df, divide_by_7_cols=["n_tests", "n_positive_tests"])
 
@@ -56,11 +67,13 @@ def _prepare_data(df):
     df["n_positive_tests_per_100_000"] = (
         100_000 * df["n_positive_tests"] / POPULATION_GERMANY
     )
-    df = df[df["date"] > "2020-08-15"]
+    # restrict to time frame where enough laboratories are participating
+    df = df[df["date"] > pd.Timestamp("2020-08-15")]
     return df
 
 
 def _create_date(df):
+    """Get week and year from "week_and_year" column and calculate date from it."""
     week_and_year = df["week_and_year"].str.split("/", 1, expand=True)
     week_and_year[1] = week_and_year[1].str.replace("*", "")
     week_and_year = week_and_year.astype(int)
