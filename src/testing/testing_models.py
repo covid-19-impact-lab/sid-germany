@@ -103,7 +103,7 @@ def demand_test(
     demanded = states["symptomatic"] & ~states["pending_test"] & ~states["knows_immune"]
     demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
-    demanded = _up_or_downscale_demand(demanded, states, remaining)
+    demanded = _scale_demand_up_or_down(demanded, states, remaining)
     return demanded
 
 
@@ -140,7 +140,30 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     return n_pos_tests_for_each_group
 
 
-def _up_or_downscale_demand(demanded, states, remaining):
+def _scale_demand_up_or_down(demanded, states, remaining):
+    """Adjust the demand for tests to match the available tests in each age group.
+
+    After symptomatic individuals have preferentially received tests the budget for
+    tests in each age group may not be used up yet or exceeded. Here we remove the
+    excess tests in the age groups where they exceed the budget. In groups were not
+    all tests are used for symptomatic individuals we distribute the tests among the
+    remaining infectious individuals that have no pending test and do not know their
+    infection state yet.
+
+    Args:
+        demanded (pandas.Series): index is the same as that of states. It's boolean
+            indicating whether the individual demands a test this period.
+        states (pandas.DataFrame): sid states DataFrame
+        remaining (pandas.Series): index are the RKI age groups, values are the
+            number of remaining tests (can be negative) in each age group.
+
+    Returns:
+        demanded (pandas.Series): index is the same as that of states. It's boolean
+            indicating whether the individual demands a test this period. The
+            number of tests in each age group have been adjusted to match the number
+            of available tests in that age group.
+
+    """
     demanded = demanded.copy(deep=True)
     for group, remainder in remaining.items():
         n_to_draw = int(abs(remainder))
@@ -148,18 +171,19 @@ def _up_or_downscale_demand(demanded, states, remaining):
         if remainder == 0:
             continue
         elif remainder > 0:
-            # this is the case where we have additional tests to distribute
+            # this is the case where we have additional positive tests to distribute.
             selection_string += " & infectious"
             pool = states[~demanded].query(selection_string).index
         else:  # remainder < 0
             # this is the case where symptomatics already exceed the available
-            # positive tests.
+            # number of positive tests.
             pool = states[demanded].query(selection_string).index
             warnings.warn(
                 f"The demand for tests by symptomatic individuals in age group {group} "
                 f"exceeded the number of available tests on {get_date(states).date()}. "
                 "Conisder changing the model parameters such that you generalte less "
-                f"infected individuals. There were {demanded.sum()} tests demanded "
+                "infected individuals or less infected individuals become symptomatic."
+                f"There were {demanded.sum()} tests demanded "
                 f"which was {-remainder} above the number of available tests."
             )
         if len(pool) >= n_to_draw:
@@ -167,10 +191,11 @@ def _up_or_downscale_demand(demanded, states, remaining):
         else:
             type_of_operation = "allocated" if remainder > 0 else "removed"
             warnings.warn(
-                f"There were more tests to be {type_of_operation}. This indicates that "
-                "your model parameters (either the infection probabilities, "
-                "the infection probabilities or the test demand parameters are not "
-                f"well chosen. The remainder was {remainder} in group {group} on "
+                f"There were more tests to be {type_of_operation} than individuals "
+                "available for this. This indicates that your model parameters "
+                "(either the infection probabilities, the probability to become "
+                "symptomatic or the test demand parameters are not well chosen. "
+                f"The remainder was {remainder} in group {group} on "
                 f"{get_date(states).date()}."
             )
             drawn = pool

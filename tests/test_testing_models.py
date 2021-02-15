@@ -4,7 +4,7 @@ import pytest
 from src.testing.testing_models import (
     _calculate_positive_tests_to_distribute_per_age_group,
 )
-from src.testing.testing_models import _up_or_downscale_demand
+from src.testing.testing_models import _scale_demand_up_or_down
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -26,13 +26,15 @@ def states():
     return states
 
 
-def test_up_or_downscale_demand(states):
+def test_scale_demand_up_or_down(states):
     demanded = pd.Series([True, True] + [False, True] * 4, index=states.index)
     states["infectious"] = True
     remaining = pd.Series([-2, 0, 2], index=["0-4", "5-14", "15-34"])
     expected_vals = [False, False] + [False, True] * 2 + [True] * 4
     expected = pd.Series(data=expected_vals, index=states.index)
-    res = _up_or_downscale_demand(demanded=demanded, states=states, remaining=remaining)
+    res = _scale_demand_up_or_down(
+        demanded=demanded, states=states, remaining=remaining
+    )
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
