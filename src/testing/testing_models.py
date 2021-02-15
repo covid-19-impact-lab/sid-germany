@@ -232,6 +232,13 @@ def process_tests(n_to_be_processed_tests, states, params, seed):  # noqa: U100
     For simplicity, we assume that all tests are processed immediately, without
     further delay and without a capacity constraint.
 
+    When tests are processed, sid starts the test countdowns which we take from
+    the RKI data (see https://tinyurl.com/2urakgwa for details) which reports
+    the data from taking the test sample to notifying the subject of his/her
+    result. This aligns well with our test demand function assigning test demand
+    to symptomatic individuals and currently infectious individuals (starting
+    with sid commit d9185a8).
+
     Args:
         n_to_be_processed_tests (int): Number of individuals whose test is
             already set to be processed.
