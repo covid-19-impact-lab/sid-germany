@@ -14,6 +14,12 @@ PARAMETRIZED_DOWNLOADS = [
         "f10774f1c63e40168479a1feb6c7ca74/data",
         BLD / "data" / "raw_time_series" / "rki.csv",
     ),
+    (
+        "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/"
+        "Daten/Testzahlen-gesamt.xlsx;jsessionid="
+        "3E410CDC013276FC28AD711373F5D82A.internet072?__blob=publicationFile",
+        BLD / "data" / "raw_time_series" / "test_statistics.xlsx",
+    ),
 ]
 
 

@@ -2,11 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 import seaborn as sns
-from matplotlib.dates import AutoDateLocator
-from matplotlib.dates import DateFormatter
 from sid.colors import get_colors
 
 from src.config import BLD
+from src.simulation.plotting import style_plot
 
 plt.rcParams.update(
     {
@@ -31,6 +30,8 @@ sns.set_palette(get_colors("categorical", 12))
         "by_state": BLD / "policies" / "work_mobility_reduction_by_state.png",
         "de": BLD / "policies" / "work_multiplier.png",
         "since_oct": BLD / "policies" / "work_multiplier_since_oct.png",
+        "old_vs_new": BLD / "policies" / "old_vs_new_work_multipliers_since_oct.png",
+        "2021": BLD / "policies" / "work_mobility_2021.png",
     }
 )
 def task_visualize_work_multipliers(depends_on, produces):
@@ -56,11 +57,28 @@ def task_visualize_work_multipliers(depends_on, produces):
 
     since_oct = work_multiplier[work_multiplier["date"] > "2020-10-01"]
     fig, ax = _plot_time_series(since_oct, title="Work Multiplier Since October")
+    fig.savefig(produces["since_oct"], dpi=200, transparent=False, facecolor="w")
+
     old_multipliers = _get_old_work_multipliers()
     sns.lineplot(
         x=old_multipliers.index, y=old_multipliers, ax=ax, label="old multipliers"
     )
-    fig.savefig(produces["since_oct"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["old_vs_new"], dpi=200, transparent=False, facecolor="w")
+
+    this_year = work_multiplier[work_multiplier["date"] > "2021-01-03"]
+    fig, ax = _plot_time_series(this_year, title="Reduction of Work Mobility in 2021")
+    plt.axvline(
+        x=pd.Timestamp("2021-01-27"),
+        label="Corona-Arbeitsschutzverordnung",
+        color="firebrick",
+    )
+    plt.legend()
+    fig.savefig(
+        produces["2021"],
+        dpi=200,
+        transparent=False,
+        facecolor="w",
+    )
 
 
 def _visualize_reductions_by_state(df):
@@ -86,15 +104,10 @@ def _plot_time_series(
     for var in y:
         sns.lineplot(data=data, y=var, x=x, ax=ax, label=var)
 
-    date_form = (
-        DateFormatter("%d/%m/%Y") if len(data) < 100 else DateFormatter("%d/%m/%Y")
-    )
-    ax.xaxis.set_major_formatter(date_form)
-    fig.autofmt_xdate()
-    loc = AutoDateLocator(minticks=5, maxticks=12)
-    ax.xaxis.set_major_locator(loc)
-    ax.grid(axis="y")
+    fig, ax = style_plot(fig, ax)
     ax.set_title(title)
+    ax.set_ylabel("")
+    ax.set_xlabel("")
     return fig, ax
 
 
