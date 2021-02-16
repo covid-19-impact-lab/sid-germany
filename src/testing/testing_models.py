@@ -42,12 +42,14 @@ def demand_test(
     positivity_rate_overall,
     test_shares_by_age_group,
     positivity_rate_by_age_group,
+    share_symptomatic_requesting_test,
 ):
     """Test demand function.
 
-    This demand model already includes allocation and processing.
+    Test demand is calculated in such a way that the demand fits to the empirical
+    distribution of positive tests in the empirical data.
 
-    We calculate the tests available in each age group as follows:
+    We calculate the tests designated in each age group as follows:
     Firstly, we calculate from the number of infected people in the simulation and the
     share_known_cases from the DunkelzifferRadar project how many positive tests are to
     be distributed in the whole population. From this, using the overall positivity rate
@@ -76,6 +78,8 @@ def demand_test(
             share of tests that was positive in each age group. If a Series the
             index are the age groups. If a DataFrame, the index are the dates and
             the columns are the age groups.
+        share_symptomatic_requesting_test (float): Share of symptomatic indiviudals
+            requesting a test.
 
     Returns:
         demand_probability (numpy.ndarray, pandas.Series): An array or a series
@@ -92,6 +96,11 @@ def demand_test(
         positivity_rate_overall = positivity_rate_overall.loc[date]
     if isinstance(share_known_cases, pd.Series):
         share_known_cases = share_known_cases.loc[date]
+    if share_symptomatic_requesting_test > 1.0 or share_symptomatic_requesting_test < 0:
+        raise ValueError(
+            "The share of symptomatic individuals requesting a test must lie in the "
+            f"[0, 1] interval, you specified {share_symptomatic_requesting_test}"
+        )
 
     n_pos_tests_for_each_group = _calculate_positive_tests_to_distribute_per_age_group(
         n_newly_infected=n_newly_infected,
@@ -100,7 +109,23 @@ def demand_test(
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
     )
-    demanded = states["symptomatic"] & ~states["pending_test"] & ~states["knows_immune"]
+    symptomatic_without_test = (
+        states["symptomatic"] & ~states["pending_test"] & ~states["knows_immune"]
+    )
+    if share_symptomatic_requesting_test == 1.0:
+        demanded = symptomatic_without_test
+    else:
+        # this ignores the designated number of tests per age group.
+        # Adjusting the number of tests to the designated number is done in
+        # `_scale_demand_up_or_down` below.
+        n_to_demand = int(
+            share_symptomatic_requesting_test * symptomatic_without_test.sum()
+        )
+        pool = states[symptomatic_without_test].index
+        drawn = np.random.choice(size=n_to_demand, a=pool, replace=False)
+        demanded = pd.Series(False, index=states.index)
+        demanded[drawn] = True
+
     demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
     demanded = _scale_demand_up_or_down(demanded, states, remaining)
@@ -141,7 +166,7 @@ def _calculate_positive_tests_to_distribute_per_age_group(
 
 
 def _scale_demand_up_or_down(demanded, states, remaining):
-    """Adjust the demand for tests to match the available tests in each age group.
+    """Adjust the demand for tests to match the designated tests in each age group.
 
     After symptomatic individuals have preferentially received tests the budget for
     tests in each age group may not be used up yet or exceeded. Here we remove the
@@ -151,17 +176,17 @@ def _scale_demand_up_or_down(demanded, states, remaining):
     infection state yet.
 
     Args:
-        demanded (pandas.Series): index is the same as that of states. It's boolean
-            indicating whether the individual demands a test this period.
+        demanded (pandas.Series): Boolean Series with same index as states. It is
+            True for people who demanded a test.
         states (pandas.DataFrame): sid states DataFrame
         remaining (pandas.Series): index are the RKI age groups, values are the
             number of remaining tests (can be negative) in each age group.
 
     Returns:
-        demanded (pandas.Series): index is the same as that of states. It's boolean
-            indicating whether the individual demands a test this period. The
-            number of tests in each age group have been adjusted to match the number
-            of available tests in that age group.
+        demanded (pandas.Series): Boolean Series with same index as states. It is
+            True for people who demanded a test. The number of tests in each age
+            group have been adjusted to match the number of designated tests in
+            that age group.
 
     """
     demanded = demanded.copy(deep=True)
@@ -175,14 +200,15 @@ def _scale_demand_up_or_down(demanded, states, remaining):
             selection_string += " & infectious"
             pool = states[~demanded].query(selection_string).index
         else:  # remainder < 0
-            # this is the case where symptomatics already exceed the available
+            # this is the case where symptomatics already exceed the designated
             # number of positive tests.
             pool = states[demanded].query(selection_string).index
             warnings.warn(
                 f"The demand for tests by symptomatic individuals in age group {group} "
-                f"exceeded the number of available tests on {get_date(states).date()}. "
-                "Conisder changing the model parameters such that you generalte less "
-                "infected individuals or less infected individuals become symptomatic."
+                "exceeds the number of positive tests calculated by the share known "
+                "cases. This is an indication that one or both of the following model "
+                "parameters are incorrect: 1. The share of infected people who become "
+                "symptomatic. 2. The share of sympomatic people who demand a test."
                 f"There were {demanded.sum()} tests demanded "
                 f"which was {-remainder} above the number of available tests."
             )
@@ -191,11 +217,12 @@ def _scale_demand_up_or_down(demanded, states, remaining):
         else:
             type_of_operation = "allocated" if remainder > 0 else "removed"
             warnings.warn(
-                f"There were more tests to be {type_of_operation} than individuals "
-                "available for this. This indicates that your model parameters "
-                "(either the infection probabilities, the probability to become "
-                "symptomatic or the test demand parameters are not well chosen. "
-                f"The remainder was {remainder} in group {group} on "
+                f"The number of tests to be {type_of_operation} exceeds the number of "
+                f"candidate individuals. As a result only {len(pool)} rather than "
+                f"{n_to_draw} tests were {type_of_operation}. This indicates that your "
+                "model parameters (either the infection probabilities, the probability "
+                "to become symptomatic or the test demand parameters) are incompatible."
+                f" The remainder was {remainder} in group {group} on "
                 f"{get_date(states).date()}."
             )
             drawn = pool

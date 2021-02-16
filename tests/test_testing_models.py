@@ -76,9 +76,38 @@ def test_demand_test_zero_remainder(states):
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
-        seed=394,
+        seed=5999,
+        share_symptomatic_requesting_test=1.0,
     )
     expected = states["symptomatic"].copy(deep=True)
+    pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states):
+    params = None
+    share_known_cases = 1
+    positivity_rate_overall = 0.25
+    test_shares_by_age_group = pd.Series(
+        [0.5, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
+    )
+    positivity_rate_by_age_group = pd.Series(
+        [0.125, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
+    )
+    states["infectious"] = states.index.isin([1, 4, 7])
+
+    expected = pd.Series(False, index=states.index)
+    expected.loc[0, 4, 7] = True
+
+    res = demand_test(
+        states=states,
+        params=params,
+        share_known_cases=share_known_cases,
+        positivity_rate_overall=positivity_rate_overall,
+        test_shares_by_age_group=test_shares_by_age_group,
+        positivity_rate_by_age_group=positivity_rate_by_age_group,
+        seed=394,
+        share_symptomatic_requesting_test=0.5,
+    )
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
@@ -104,6 +133,7 @@ def test_demand_test_non_zero_remainder(states):
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
         seed=333,
+        share_symptomatic_requesting_test=1.0,
     )
     # the order of the last four is random and will change if the seed is changed!
     expected = pd.Series(
