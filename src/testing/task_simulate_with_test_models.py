@@ -77,8 +77,9 @@ def task_simulate_with_test_models(depends_on, multiplier, seed, produces):
     start_date = pd.Timestamp("2020-10-15")
     end_date = pd.Timestamp("2020-11-15")
 
+    one_day = pd.Timedelta(1, unit="D")
     init_start = start_date - pd.Timedelta(31, unit="D")
-    init_end = start_date - pd.Timedelta(1, unit="D")
+    init_end = start_date - one_day
 
     initial_conditions = create_initial_conditions(
         start=init_start,
@@ -97,9 +98,27 @@ def task_simulate_with_test_models(depends_on, multiplier, seed, produces):
         positivity_rate_by_age_group=positivity_rate_by_age_group,
         share_symptomatic_requesting_test=0.0,  # to have uniform testing
     )
-    testing_demand_models = {"symptoms": {"model": demand_test_func}}
-    testing_allocation_models = {"direct_allocation": {"model": allocate_tests}}
-    testing_processing_models = {"direct_processing": {"model": process_tests}}
+    testing_demand_models = {
+        "symptoms": {
+            "model": demand_test_func,
+            "start": init_start - one_day,
+            "end": end_date + one_day,
+        }
+    }
+    testing_allocation_models = {
+        "direct_allocation": {
+            "model": allocate_tests,
+            "start": init_start - one_day,
+            "end": end_date + one_day,
+        }
+    }
+    testing_processing_models = {
+        "direct_processing": {
+            "model": process_tests,
+            "start": init_start - one_day,
+            "end": end_date + one_day,
+        }
+    }
 
     sim_func = get_simulate_func(
         params=params,
