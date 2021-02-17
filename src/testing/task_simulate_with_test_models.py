@@ -4,6 +4,7 @@ from functools import partial
 import pandas as pd
 import pytask
 from sid import get_simulate_func
+from sid import load_epidemiological_parameters
 
 from src.config import BLD
 from src.config import SRC
@@ -65,6 +66,13 @@ def task_simulate_with_test_models(depends_on, multiplier, seed, produces):
 
     params = pd.read_pickle(depends_on["params"])
     params = _adjust_params_to_testing_and_scenario(params, multiplier)
+    # update params to use the new epi params
+    current_epi_params = load_epidemiological_parameters()
+    epi_param_names = current_epi_params.index.get_level_values("category")
+    # drop old epi params
+    params = params[~params.index.get_level_values("category").isin(epi_param_names)]
+    # add new epi params
+    params = pd.concat([params, current_epi_params])
 
     start_date = pd.Timestamp("2020-10-15")
     end_date = pd.Timestamp("2020-11-15")
