@@ -87,6 +87,7 @@ def task_simulate_with_test_models(depends_on, multiplier, seed, produces):
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=population_proportions,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
+        share_symptomatic_requesting_test=0.0,  # to have uniform testing
     )
     testing_demand_models = {"symptoms": {"model": demand_test_func}}
     testing_allocation_models = {"direct_allocation": {"model": allocate_tests}}
