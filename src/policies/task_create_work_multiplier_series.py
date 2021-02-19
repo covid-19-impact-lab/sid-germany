@@ -18,7 +18,7 @@ from src.config import SRC
 
 @pytask.mark.depends_on(
     {
-        "mobility_data": SRC / "original_data" / "google_mobility_2021-02-10_DE.csv",
+        "mobility_data": SRC / "original_data" / "google_mobility_2021-02-15_DE.csv",
         "hygiene_data": SRC / "original_data" / "cosmo_hygiene_2021-01-28.csv",
     }
 )
