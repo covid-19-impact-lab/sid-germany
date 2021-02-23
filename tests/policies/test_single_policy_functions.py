@@ -8,6 +8,7 @@ from src.policies.single_policy_functions import (
 )
 from src.policies.single_policy_functions import _interpolate_activity_level
 from src.policies.single_policy_functions import implement_a_b_school_system_above_age
+from src.policies.single_policy_functions import implement_a_b_school_system_below_age
 from src.policies.single_policy_functions import (
     reduce_contacts_when_condition_among_recurrent_contacts,
 )
@@ -127,6 +128,18 @@ def test_a_b_school_system_above_age_5(fake_states):
         age_cutoff=5,
     )
     expected = pd.Series([1] * 6 + [0] + [1] * 3)
+    assert_series_equal(calculated, expected)
+
+
+def test_a_b_school_system_below_age_5(fake_states):
+    contacts = pd.Series(1, index=fake_states.index)
+    calculated = implement_a_b_school_system_below_age(
+        states=fake_states,
+        contacts=contacts,
+        seed=123,
+        age_cutoff=5,
+    )
+    expected = pd.Series([0, 1, 0, 1, 0, 0, 0, 0, 1, 1])
     assert_series_equal(calculated, expected)
 
 

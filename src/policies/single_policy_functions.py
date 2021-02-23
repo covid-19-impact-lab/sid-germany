@@ -162,6 +162,32 @@ def implement_a_b_school_system_above_age(
     return attending_half
 
 
+def implement_a_b_school_system_below_age(
+    states, contacts, seed, age_cutoff
+):  # noqa: U100
+    """Only children below age cutoff attend in splits.
+
+    Note:
+        - Children below the age cutoff go to school rotating weekly.
+        - Children above the age cutoff do not go to school.
+        - Educators always attend (if their classes are above the age cutoff
+          they only meet the other educators.)
+
+    Args:
+        age_cutoff (float): Minimum age to which the policy applies. Set to 0 to
+            implement the policy for all.
+
+    """
+    date = get_date(states)
+
+    attending_half = contacts.where(
+        ((states["age"] < age_cutoff) & (states["school_group_a"] == date.week % 2))
+        | states["educ_worker"],
+        0,
+    )
+    return attending_half
+
+
 def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
     """Reduce contacts for the working population.
 
