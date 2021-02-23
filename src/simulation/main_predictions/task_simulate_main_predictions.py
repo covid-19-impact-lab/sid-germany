@@ -61,6 +61,7 @@ if FAST_FLAG:
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
+    # load dependencies
     initial_states = pd.read_parquet(depends_on["initial_states"])
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
 
@@ -71,7 +72,7 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
     positivity_rate_overall = pd.read_pickle(depends_on["positivity_rate_overall"])
 
     params = pd.read_pickle(depends_on["params"])
-    params = _update_params_to_new_epi_params(params)
+    params = update_params_to_new_epi_params(params)
 
     # determine dates
     start_date = (pd.Timestamp.today() - pd.Timedelta(days=15)).normalize()
@@ -156,7 +157,7 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
     simulate(params)
 
 
-def _update_params_to_new_epi_params(params):
+def update_params_to_new_epi_params(params):
     """Update params to use the new epidemiological parameters.
 
     This function is only temporary and will be removed once the parameters

@@ -79,6 +79,12 @@ def get_jan_to_april_2021_policies(
                 "prefix": "february2_educ_starts_to_open",
             },
             multipliers={
+                # most common: primary schools and graduating
+                # classes are open
+                # -> (4 + 2) / 12 ~ 0.5
+                # sources:
+                # - https://taz.de/Schulen-in-Coronazeiten/!5753515/
+                # - https://tinyurl.com/2jfm4tp8
                 "educ": 0.5,
                 "work": work_multiplier,
                 "other": other_multiplier,
@@ -92,9 +98,6 @@ def get_jan_to_april_2021_policies(
                 "prefix": "march",
             },
             multipliers={
-                # most common: primary schools and graduating
-                # classes are open
-                # -> (4 + 2) / 12 ~ 0.5
                 "educ": 0.5,
                 "work": work_multiplier,
                 "other": other_multiplier,
