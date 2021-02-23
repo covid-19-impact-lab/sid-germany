@@ -42,8 +42,9 @@ def task_prepare_ars_data(depends_on, produces):
 
     We do not export the ARS data at the moment because:
     1. it is weekly and not daily frequency data (not relevant for shares and rates)
-    2. it would be necessary to upscale the number of tests to account for
-       the fact that only a fraction of laboratories report ARS data.
+    2. it would be necessary to upscale the number of tests to account for the fact
+       that only a fraction of laboratories report ARS data. The coverage between
+       groups and over time is rather volatile.
 
     """
     ars = pd.read_excel(depends_on)
