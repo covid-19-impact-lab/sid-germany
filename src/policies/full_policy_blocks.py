@@ -21,7 +21,10 @@ Thus we do not use anything but multipliers here!
 
 """
 from src.policies.domain_level_policy_blocks import (
-    implement_ab_schooling_with_reduced_other_educ_models,
+    implement_a_b_schooling_above_age_with_reduced_other_educ_models,
+)
+from src.policies.domain_level_policy_blocks import (
+    implement_a_b_schooling_below_age_with_reduced_other_educ_models,
 )
 from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_other_models
@@ -121,12 +124,31 @@ def get_lockdown_with_multipliers(contact_models, block_info, multipliers):
     return policies
 
 
-def get_lockdown_with_multipliers_with_ab_schooling(
+def get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff(
     contact_models, block_info, multipliers, age_cutoff
 ):
 
     to_combine = [
-        implement_ab_schooling_with_reduced_other_educ_models(
+        implement_a_b_schooling_above_age_with_reduced_other_educ_models(
+            contact_models=contact_models,
+            block_info=block_info,
+            age_cutoff=age_cutoff,
+            multiplier=multipliers["educ"],
+        ),
+        reduce_work_models(contact_models, block_info, multipliers["work"]),
+        reduce_other_models(contact_models, block_info, multipliers["other"]),
+    ]
+
+    policies = combine_dictionaries(to_combine)
+    return policies
+
+
+def get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff(
+    contact_models, block_info, multipliers, age_cutoff
+):
+
+    to_combine = [
+        implement_a_b_schooling_below_age_with_reduced_other_educ_models(
             contact_models=contact_models,
             block_info=block_info,
             age_cutoff=age_cutoff,

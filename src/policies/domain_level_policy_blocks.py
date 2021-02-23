@@ -18,6 +18,7 @@ The functions here expect that the domain names are part of contact model names.
 from functools import partial
 
 from src.policies.single_policy_functions import implement_a_b_school_system_above_age
+from src.policies.single_policy_functions import implement_a_b_school_system_below_age
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany
@@ -127,7 +128,7 @@ def reopen_educ_models(
     return policies
 
 
-def implement_ab_schooling_with_reduced_other_educ_models(
+def implement_a_b_schooling_above_age_with_reduced_other_educ_models(
     contact_models,
     block_info,
     age_cutoff,
@@ -148,6 +149,34 @@ def implement_ab_schooling_with_reduced_other_educ_models(
         new_policy = _get_base_policy(mod, block_info)
         new_policy["policy"] = partial(
             implement_a_b_school_system_above_age,
+            age_cutoff=age_cutoff,
+        )
+        policies[pol_name] = new_policy
+
+    return policies
+
+
+def implement_a_b_schooling_below_age_with_reduced_other_educ_models(
+    contact_models,
+    block_info,
+    age_cutoff,
+    multiplier,
+):
+    """Split classes on a weekly basis for schools; keep other educ models open."""
+    policies = reduce_educ_models(contact_models, block_info, multiplier)
+
+    educ_models = _get_educ_models(contact_models)
+    school_models = [
+        cm for cm in educ_models if "school" in cm and "preschool" not in cm
+    ]
+
+    for mod in school_models:
+        pol_name = f"{block_info['prefix']}_{mod}"
+        assert pol_name in policies
+
+        new_policy = _get_base_policy(mod, block_info)
+        new_policy["policy"] = partial(
+            implement_a_b_school_system_below_age,
             age_cutoff=age_cutoff,
         )
         policies[pol_name] = new_policy

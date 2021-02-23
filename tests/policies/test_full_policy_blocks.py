@@ -3,7 +3,7 @@ import pytest
 from src.policies.full_policy_blocks import get_german_reopening_phase
 from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.full_policy_blocks import (
-    get_lockdown_with_multipliers_with_ab_schooling,
+    get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff,
 )
 
 
@@ -66,10 +66,10 @@ def test_get_lockdown_with_multipliers_runs(
     assert res.keys() == expected_keys
 
 
-def test_get_lockdown_with_multipliers_with_ab_schooling(
+def test_get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff(
     contact_models, block_info, multipliers, expected_keys
 ):
-    res = get_lockdown_with_multipliers_with_ab_schooling(
+    res = get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff(
         contact_models, block_info, multipliers, 12
     )
     assert res.keys() == expected_keys

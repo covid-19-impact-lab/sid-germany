@@ -4,7 +4,7 @@ import pytest
 
 from src.policies.domain_level_policy_blocks import _get_base_policy
 from src.policies.domain_level_policy_blocks import (
-    implement_ab_schooling_with_reduced_other_educ_models,
+    implement_a_b_schooling_above_age_with_reduced_other_educ_models,
 )
 from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_other_models
@@ -271,7 +271,7 @@ def test_reopen_other_models(contact_models):
     compare_policy_dicts(res, expected)
 
 
-def test_implement_ab_schooling_with_reduced_other_educ_models():
+def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
     block_info = {
         "start_date": "2020-10-10",
         "end_date": "2020-10-20",
@@ -301,7 +301,7 @@ def test_implement_ab_schooling_with_reduced_other_educ_models():
         },
         "other": {},
     }
-    res = implement_ab_schooling_with_reduced_other_educ_models(
+    res = implement_a_b_schooling_above_age_with_reduced_other_educ_models(
         contact_models, block_info, age_cutoff=10, multiplier=0.5
     )
     expected = {
