@@ -26,9 +26,9 @@ sns.set_palette(get_colors("categorical", 12))
 OUT_PATH = BLD / "data" / "testing"
 
 PRODUCTS = {
-    "test_shares_by_age_group": OUT_PATH / "test_shares_by_age_group.csv",
-    "positivity_rate_by_age_group": OUT_PATH / "positivity_rate_by_age_group.csv",
-    "positivity_rate_overall": OUT_PATH / "positivity_rate_overall.csv",
+    "test_shares_by_age_group": OUT_PATH / "test_shares_by_age_group.pkl",
+    "positivity_rate_by_age_group": OUT_PATH / "positivity_rate_by_age_group.pkl",
+    "positivity_rate_overall": OUT_PATH / "positivity_rate_overall.pkl",
     "test_shares_by_age_group_png": OUT_PATH / "test_shares_by_age_group.png",
     "positivity_rate_by_age_group_png": OUT_PATH / "positivity_rate_by_age_group.png",
     "positivity_rate_overall_png": OUT_PATH / "positivity_rate_overall.png",
@@ -50,14 +50,15 @@ def task_prepare_ars_data(depends_on, produces):
     ars = _clean_ars_data(ars)
 
     test_shares_by_age_group = _calculate_test_shares_by_age_group(ars)
-    test_shares_by_age_group.to_csv(produces["test_shares_by_age_group"])
+    test_shares_by_age_group.to_pickle(produces["test_shares_by_age_group"])
 
     fig, ax = _plot_frame(test_shares_by_age_group)
     fig.savefig(produces["test_shares_by_age_group_png"])
 
     positivity_rates = ars["positivity_rate"].unstack()
     positivity_rates = _convert_from_weekly_to_daily(positivity_rates)
-    positivity_rates.to_csv(produces["positivity_rate_by_age_group"])
+    positivity_rates.index.name = "date"
+    positivity_rates.to_pickle(produces["positivity_rate_by_age_group"])
 
     fig, ax = _plot_frame(positivity_rates)
     fig.savefig(produces["positivity_rate_by_age_group_png"])
@@ -66,7 +67,9 @@ def task_prepare_ars_data(depends_on, produces):
         ars.groupby("date")["n_positive_tests"].sum()
         / ars.groupby("date")["n_tests"].sum()
     )
-    positivity_rate_overall.to_csv(produces["positivity_rate_overall"])
+    positivity_rate_overall = _convert_from_weekly_to_daily(positivity_rate_overall)
+    positivity_rate_overall.name = "positivity_rate_overall"
+    positivity_rate_overall.to_pickle(produces["positivity_rate_overall"])
 
     fig, ax = _plot_frame(positivity_rate_overall.to_frame())
     fig.savefig(produces["positivity_rate_overall_png"])
@@ -118,6 +121,7 @@ def _calculate_test_shares_by_age_group(ars):
     age_group_shares = tests_by_age_group.div(total_tests, axis=0)
     assert (age_group_shares.sum(axis=1).between(0.9999, 1.0001)).all()
     age_group_shares = _convert_from_weekly_to_daily(age_group_shares)
+    age_group_shares.index.name = "date"
     return age_group_shares
 
 
