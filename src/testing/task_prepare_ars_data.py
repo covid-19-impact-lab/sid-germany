@@ -32,10 +32,16 @@ PRODUCTS = {
     "test_shares_by_age_group_png": OUT_PATH / "test_shares_by_age_group.png",
     "positivity_rate_by_age_group_png": OUT_PATH / "positivity_rate_by_age_group.png",
     "positivity_rate_overall_png": OUT_PATH / "positivity_rate_overall.png",
+    "ars_coverage": OUT_PATH / "ars_coverage.png",
 }
 
 
-@pytask.mark.depends_on(SRC / "original_data" / "testing" / "ars_data_raw.xlsx")
+@pytask.mark.depends_on(
+    {
+        "ars": SRC / "original_data" / "testing" / "ars_data_raw.xlsx",
+        "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
+    }
+)
 @pytask.mark.produces(PRODUCTS)
 def task_prepare_ars_data(depends_on, produces):
     """Calculate and save quantaties of interest of the ARS data.
@@ -47,13 +53,17 @@ def task_prepare_ars_data(depends_on, produces):
        groups and over time is rather volatile.
 
     """
-    ars = pd.read_excel(depends_on)
+    rki = pd.read_pickle(depends_on["rki"])
+    rki_weekly_cases = _calculate_rki_weekly_cases(rki)
+
+    ars = pd.read_excel(depends_on["ars"])
     ars = _clean_ars_data(ars)
 
     test_shares_by_age_group = _calculate_test_shares_by_age_group(ars)
     test_shares_by_age_group.to_pickle(produces["test_shares_by_age_group"])
 
     fig, ax = _plot_frame(test_shares_by_age_group)
+    ax.set_title("Anteil der Tests, die auf die einzelnen Altersgruppen entfallen")
     fig.savefig(produces["test_shares_by_age_group_png"])
 
     positivity_rates = ars["positivity_rate"].unstack()
@@ -62,6 +72,7 @@ def task_prepare_ars_data(depends_on, produces):
     positivity_rates.to_pickle(produces["positivity_rate_by_age_group"])
 
     fig, ax = _plot_frame(positivity_rates)
+    ax.set_title("Anteil der Tests in jeder Altersgruppe, die positiv sind")
     fig.savefig(produces["positivity_rate_by_age_group_png"])
 
     positivity_rate_overall = (
@@ -73,7 +84,14 @@ def task_prepare_ars_data(depends_on, produces):
     positivity_rate_overall.to_pickle(produces["positivity_rate_overall"])
 
     fig, ax = _plot_frame(positivity_rate_overall.to_frame())
+    ax.set_title("Anteil der Tests in den ARS Daten, die positiv ausfallen")
     fig.savefig(produces["positivity_rate_overall_png"])
+
+    ars_weekly_cases = ars["n_positive_tests"].unstack()
+    ars_coverage = ars_weekly_cases / rki_weekly_cases
+    fig, ax = _plot_frame(ars_coverage)
+    ax.set_title("Anteil der positiven Tests des RKI, die in den ARS Daten sind")
+    fig.savefig(produces["ars_coverage"])
 
 
 def _clean_ars_data(ars):
@@ -158,3 +176,28 @@ def _plot_frame(df):
         sns.lineplot(ax=ax, x=df.index, y=df[col], label=col)
     fig, ax = style_plot(fig, ax)
     return fig, ax
+
+
+def _calculate_rki_weekly_cases(rki):
+    rki_pos_tests = rki.groupby(["date", "age_group_rki"])["newly_infected"].sum()
+    rki_pos_tests = rki_pos_tests.unstack()
+    rki_pos_tests.columns = rki_pos_tests.columns.categories
+    # to avoid duplication of weeks
+    rki_pos_tests = rki_pos_tests.loc["2020-04-01":]
+    rki_pos_tests["date"] = rki_pos_tests.index.get_level_values("date")
+    rki_pos_tests["week"] = rki_pos_tests["date"].dt.week
+    rki_pos_tests["year"] = rki_pos_tests["date"].dt.year
+    weekly_rki_pos_tests = rki_pos_tests.groupby("week").sum()
+    week_to_year = rki_pos_tests[["week", "year"]].drop_duplicates()
+    # drop 1st of January because it would mess up the week to year mapping
+    week_to_year = week_to_year.drop(pd.Timestamp("2021-01-01"))
+    week_to_year = week_to_year.set_index("week")["year"]
+    weekly_rki_pos_tests["year"] = week_to_year
+    weekly_rki_pos_tests = weekly_rki_pos_tests.reset_index()
+    weekly_rki_pos_tests["date"] = weekly_rki_pos_tests.apply(
+        get_date_from_year_and_week, axis=1
+    )
+    weekly_rki_pos_tests = weekly_rki_pos_tests.set_index("date")
+    weekly_rki_pos_tests = weekly_rki_pos_tests.drop(columns=["week", "year"])
+    weekly_rki_pos_tests = weekly_rki_pos_tests.sort_index()
+    return weekly_rki_pos_tests
