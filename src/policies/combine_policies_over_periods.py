@@ -12,7 +12,7 @@ def get_jan_to_april_2021_policies(
     other_multiplier=0.45,
     work_multiplier=None,
     work_fill_value=0.7,  # level of 1st half of January
-    educ_multiplier=0.8,  # ~ schools open Feb 15th
+    educ_multiplier=0.8,
 ):
     """Get policies for January to April 2021.
 
@@ -29,14 +29,16 @@ def get_jan_to_april_2021_policies(
             time period. If a Series or DataFrame is supplied the index must be
             pandas.date_range(start_date, end_date) and possible columns are
             the German federal states.
+        educ_multiplier (float, optional): This is the education multiplier used
+            starting March 1st. Default is 0.8.
 
     """
     assert pd.Timestamp(start_date) >= pd.Timestamp(
         "2020-12-27"
     ), "start date must lie after Dec, 26th."
     assert pd.Timestamp(end_date) <= pd.Timestamp(
-        "2021-03-31"
-    ), "end date must lie before April, 1st."
+        "2021-04-30"
+    ), "end date must lie before May, 1st."
 
     work_multiplier = _process_work_multiplier(
         work_multiplier, work_fill_value, start_date, end_date
@@ -60,8 +62,8 @@ def get_jan_to_april_2021_policies(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-02-01",
-                "end_date": "2021-02-14",
-                "prefix": "first_half_february",
+                "end_date": "2021-02-21",
+                "prefix": "february1",
             },
             multipliers={
                 "educ": 0.0,
@@ -72,12 +74,12 @@ def get_jan_to_april_2021_policies(
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
-                "start_date": "2021-02-15",
+                "start_date": "2021-02-22",
                 "end_date": "2021-02-28",
-                "prefix": "2nd_feb_half",
+                "prefix": "february2_educ_starts_to_open",
             },
             multipliers={
-                "educ": educ_multiplier,
+                "educ": 0.5,
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
@@ -88,6 +90,22 @@ def get_jan_to_april_2021_policies(
                 "start_date": "2021-03-01",
                 "end_date": "2021-03-31",
                 "prefix": "march",
+            },
+            multipliers={
+                # most common: primary schools and graduating
+                # classes are open
+                # -> (4 + 2) / 12 ~ 0.5
+                "educ": 0.5,
+                "work": work_multiplier,
+                "other": other_multiplier,
+            },
+        ),
+        get_lockdown_with_multipliers(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-04-01",
+                "end_date": "2021-04-30",
+                "prefix": "april",
             },
             multipliers={
                 "educ": educ_multiplier,
