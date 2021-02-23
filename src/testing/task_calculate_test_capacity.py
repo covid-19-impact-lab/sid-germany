@@ -93,7 +93,8 @@ def convert_weekly_to_daily(df, divide_by_7_cols):
 
     Each week is filled with the observation of the end of the week.
     Together with `get_date_from_year_and_week` taking the Sunday of
-    each week, the week's values for Mon through Sun of each week.
+    each week, this yields the week's values for Mon through Sun to be
+    the values of reported for that week.
 
     Args:
         df (pandas.DataFrame): DataFrame with
@@ -105,7 +106,7 @@ def convert_weekly_to_daily(df, divide_by_7_cols):
             weekly capacity.
 
     """
-    dates = pd.date_range(df["date"].min(), df["date"].max())
+    dates = pd.date_range(df["date"].min() - pd.Timedelta(days=6), df["date"].max())
     df = df.set_index("date")
     df = df.reindex(dates)
     df = df.fillna(method="backfill")
