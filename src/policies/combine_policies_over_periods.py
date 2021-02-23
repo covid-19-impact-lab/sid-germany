@@ -2,6 +2,9 @@ import pandas as pd
 
 from src.config import BLD
 from src.policies.full_policy_blocks import get_lockdown_with_multipliers
+from src.policies.full_policy_blocks import (
+    get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff,
+)
 from src.policies.policy_tools import combine_dictionaries
 
 
@@ -71,24 +74,28 @@ def get_jan_to_april_2021_policies(
                 "other": other_multiplier,
             },
         ),
-        get_lockdown_with_multipliers(
+        # very varied schooling across German states
+        # very often A / B schooling, only primaries (1-4)
+        # and graduating classes are open
+        # we simplify to have up to grade 5 open everywhere
+        # in A / B schooling and older youths stay home.
+        # We ignore Notbetreuung like this.
+        # sources:
+        # - https://taz.de/Schulen-in-Coronazeiten/!5753515/
+        # - https://tinyurl.com/2jfm4tp8
+        get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-02-22",
-                "end_date": "2021-02-28",
-                "prefix": "february2_educ_starts_to_open",
+                "end_date": "2021-03-13",
+                "prefix": "educ_reopen_spring_2021",
             },
             multipliers={
-                # most common: primary schools and graduating
-                # classes are open
-                # -> (4 + 2) / 12 ~ 0.5
-                # sources:
-                # - https://taz.de/Schulen-in-Coronazeiten/!5753515/
-                # - https://tinyurl.com/2jfm4tp8
                 "educ": 0.5,
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
+            age_cutoff=12,
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
