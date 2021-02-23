@@ -22,7 +22,7 @@ from src.testing.testing_models import process_tests
 
 # ----------------------------------------------------------------------------
 # At the moment we assume uniform testing!
-SHARE_SYMPTOMATIC_REQUESTING_TEST = 0.0
+SHARE_SYMPTOMATIC_REQUESTING_TEST = 0.8
 # ----------------------------------------------------------------------------
 
 

@@ -210,7 +210,7 @@ def _scale_demand_up_or_down(demanded, states, remaining):
                 "parameters are incorrect: 1. The share of infected people who become "
                 "symptomatic. 2. The share of sympomatic people who demand a test."
                 f"There were {demanded.sum()} tests demanded "
-                f"which was {-remainder} above the number of available tests."
+                f"which was {-remainder} above the number of available tests.\n\n\n"
             )
         if len(pool) >= n_to_draw:
             drawn = np.random.choice(pool, n_to_draw, replace=False)
@@ -223,7 +223,7 @@ def _scale_demand_up_or_down(demanded, states, remaining):
                 "model parameters (either the infection probabilities, the probability "
                 "to become symptomatic or the test demand parameters) are incompatible."
                 f" The remainder was {remainder} in group {group} on "
-                f"{get_date(states).date()}."
+                f"{get_date(states).date()}.\n\n\n"
             )
             drawn = pool
         demanded.loc[drawn] = True if remainder > 0 else False
