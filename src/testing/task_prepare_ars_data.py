@@ -28,8 +28,10 @@ OUT_PATH = BLD / "data" / "testing"
 PRODUCTS = {
     "test_shares_by_age_group": OUT_PATH / "test_shares_by_age_group.csv",
     "positivity_rate_by_age_group": OUT_PATH / "positivity_rate_by_age_group.csv",
+    "positivity_rate_overall": OUT_PATH / "positivity_rate_overall.csv",
     "test_shares_by_age_group_png": OUT_PATH / "test_shares_by_age_group.png",
     "positivity_rate_by_age_group_png": OUT_PATH / "positivity_rate_by_age_group.png",
+    "positivity_rate_overall_png": OUT_PATH / "positivity_rate_overall.png",
 }
 
 
@@ -53,12 +55,21 @@ def task_prepare_ars_data(depends_on, produces):
     fig, ax = _plot_frame(test_shares_by_age_group)
     fig.savefig(produces["test_shares_by_age_group_png"])
 
-    positivity_rates = ars["positivity_rate_by_age_group"].unstack()
+    positivity_rates = ars["positivity_rate"].unstack()
     positivity_rates = _convert_from_weekly_to_daily(positivity_rates)
     positivity_rates.to_csv(produces["positivity_rate_by_age_group"])
 
     fig, ax = _plot_frame(positivity_rates)
     fig.savefig(produces["positivity_rate_by_age_group_png"])
+
+    positivity_rate_overall = (
+        ars.groupby("date")["n_positive_tests"].sum()
+        / ars.groupby("date")["n_tests"].sum()
+    )
+    positivity_rate_overall.to_csv(produces["positivity_rate_overall"])
+
+    fig, ax = _plot_frame(positivity_rate_overall.to_frame())
+    fig.savefig(produces["positivity_rate_overall_png"])
 
 
 def _clean_ars_data(ars):
@@ -76,10 +87,8 @@ def _clean_ars_data(ars):
     assert cleaned.notnull().all().all()
 
     cleaned["date"] = cleaned.apply(get_date_from_year_and_week, axis=1)
-    cleaned["positivity_rate_by_age_group"] = cleaned["pct_of_tests_positive"] / 100
-    cleaned["n_positive_tests"] = (
-        cleaned["n_tests"] * cleaned["positivity_rate_by_age_group"]
-    )
+    cleaned["positivity_rate"] = cleaned["pct_of_tests_positive"] / 100
+    cleaned["n_positive_tests"] = cleaned["n_tests"] * cleaned["positivity_rate"]
     cleaned["age_group"] = cleaned["age_group"].replace({">=80": "80-100"})
     cleaned["age_group_rki"] = pd.Categorical(
         cleaned["age_group"],
