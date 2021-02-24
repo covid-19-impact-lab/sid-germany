@@ -87,4 +87,6 @@ def task_plot_main_predictions(depends_on, outcome, title, produces):
         name_to_label=name_to_label,
         rki=outcome,
     )
-    fig.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(
+        produces["fig"], dpi=200, transparent=False, facecolor="w", bbox_inches="tight"
+    )
