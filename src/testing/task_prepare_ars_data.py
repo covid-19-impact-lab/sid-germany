@@ -178,41 +178,23 @@ def _plot_frame(df):
     return fig, ax
 
 
-def _calculate_rki_weekly_cases(rki):
-    """Convert the RKI positive case reports to a weekly level."""
-    # Aggregate over the county level
-    rki_pos_tests = rki.groupby(["date", "age_group_rki"])["newly_infected"].sum()
-    rki_pos_tests = rki_pos_tests.unstack()
-    rki_pos_tests.columns = rki_pos_tests.columns.categories
-    # to avoid duplication of weeks
-    rki_pos_tests = rki_pos_tests.loc["2020-04-01":]
-    rki_pos_tests["date"] = rki_pos_tests.index.get_level_values("date")
-    rki_pos_tests["week"] = rki_pos_tests["date"].dt.week
-    rki_pos_tests["year"] = rki_pos_tests["date"].dt.year
-    weekly_rki_pos_tests = rki_pos_tests.groupby("week").sum()
+def _calculate_rki_weekly_cases(df):
+    """Convert the RKI positive case reports to a weekly level.
 
-    week_to_year = _create_week_to_year(rki_pos_tests)
-    weekly_rki_pos_tests["year"] = week_to_year
-    weekly_rki_pos_tests = weekly_rki_pos_tests.reset_index()
-    weekly_rki_pos_tests["date"] = weekly_rki_pos_tests.apply(
-        get_date_from_year_and_week, axis=1
-    )
-    weekly_rki_pos_tests = weekly_rki_pos_tests.set_index("date")
-    weekly_rki_pos_tests = weekly_rki_pos_tests.drop(columns=["week", "year"])
-    weekly_rki_pos_tests = weekly_rki_pos_tests.sort_index()
-    return weekly_rki_pos_tests
+    Args:
+        df (pandas.DataFrame): rki DataFrame with date, county and age_group_rki
+            as index levels and "newly_infected" as one column.
 
-
-def _create_week_to_year(rki_pos_tests):
-    """Create a Series with week numbers as index and the year as value.
-
-    The weekly_rki_pos_tests have weeks as index. To calculate the correct date
-    from the week we need the year additionally. This function creates a Series
-    that contains the year for each week that can be merged to weekly_rki_pos_tests.
+    Returns:
+        weekly (pandas.DataFrame): index are weekly dates. The columns are the age
+            groups. Values are the number of positive test results reported by
+            the RKI in that week in that age group.
 
     """
-    week_to_year = rki_pos_tests[["week", "year"]].drop_duplicates()
-    # drop 1st of January because it would mess up the week to year mapping
-    week_to_year = week_to_year.drop(pd.Timestamp("2021-01-01"))
-    week_to_year = week_to_year.set_index("week")["year"]
-    return week_to_year
+    summed_over_counties = df.groupby(["date", "age_group_rki"])["newly_infected"].sum()
+    pos_tests = summed_over_counties.unstack()
+    pos_tests.columns = pos_tests.columns.categories
+    weekly_pos_tests = pos_tests.groupby(pd.Grouper(level="date", freq="W")).sum()
+    # drop last week because it is likely incomplete
+    weekly_pos_tests = weekly_pos_tests[:-1]
+    return weekly_pos_tests
