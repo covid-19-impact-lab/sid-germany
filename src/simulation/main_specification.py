@@ -26,8 +26,11 @@ def build_main_scenarios(base_path):
     n_seeds = 1 if FAST_FLAG else 15
 
     base_scenario = {}  # use default values
-    nov_home_office = {"work_fill_value": 0.8}
-    spring_home_office = {"work_fill_value": 0.6}
+
+    # November average work multiplier: 0.83
+    # 1st lockdown (24.3.-08.04.) average work multiplier: 0.56
+    nov_home_office = {"work_fill_value": 0.83}
+    spring_home_office = {"work_fill_value": 0.56}
     schools_stay_closed = {"educ_multiplier": 0.0}
 
     if FAST_FLAG:
