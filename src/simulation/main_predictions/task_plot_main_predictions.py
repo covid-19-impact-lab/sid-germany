@@ -75,7 +75,7 @@ def task_plot_main_predictions(depends_on, outcome, title, produces):
 
     name_to_label = {
         "base_scenario": "Status Quo beibehalten",
-        "nov_home_office_level": "Home-Office-Quote wie im November",
+        "november_home_office_level": "Home-Office-Quote wie im November",
         "spring_home_office_level": "Home-Office-Quote wie im 1. Lockdown",
         "keep_schools_closed": "Bildungseinrichtungen werden zum 1.3. geschlossen",
     }
