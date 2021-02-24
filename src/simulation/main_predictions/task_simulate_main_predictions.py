@@ -22,7 +22,7 @@ from src.testing.testing_models import process_tests
 
 # ----------------------------------------------------------------------------
 # At the moment we assume uniform testing!
-SHARE_SYMPTOMATIC_REQUESTING_TEST = 0.8
+SHARE_SYMPTOMATIC_REQUESTING_TEST = 0.0
 # ----------------------------------------------------------------------------
 
 
@@ -179,6 +179,19 @@ def update_params_to_new_epi_params(params):
 
 
 def _extend_df_into_future(short, end_date):
+    """Take the last values of a DataFrame and propagate it into the future.
+
+    Args:
+        short (pandas.DataFrame): the index must be a DatetimeIndex.
+        end_date (pandas.Timestamp): date until which the short DataFrame is
+            to be extended.
+
+    Returns:
+        extended (pandas.DataFrame): the index runs from the start date of
+            short to end_date. If there were NaN in short these were filled
+            with the next available non NaN value.
+
+    """
     future_dates = pd.date_range(short.index.max(), end_date, closed="right")
     extended_index = short.index.append(future_dates)
     extended = short.reindex(extended_index).fillna(method="ffill")

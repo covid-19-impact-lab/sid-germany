@@ -134,7 +134,7 @@ def implement_a_b_schooling_above_age_with_reduced_other_educ_models(
     age_cutoff,
     multiplier,
 ):
-    """Split classes on a weekly basis for schools; keep other educ models open."""
+    """Split classes for students above age_cutoff; keep other educ models open."""
     policies = reduce_educ_models(contact_models, block_info, multiplier)
 
     educ_models = _get_educ_models(contact_models)
@@ -162,7 +162,7 @@ def implement_a_b_schooling_below_age_with_reduced_other_educ_models(
     age_cutoff,
     multiplier,
 ):
-    """Split classes on a weekly basis for schools; keep other educ models open."""
+    """Schools only have split classes below age_cutoff; keep other educ models open."""
     policies = reduce_educ_models(contact_models, block_info, multiplier)
 
     educ_models = _get_educ_models(contact_models)
