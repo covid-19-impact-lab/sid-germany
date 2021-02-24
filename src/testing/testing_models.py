@@ -42,7 +42,6 @@ def demand_test(
     positivity_rate_overall,
     test_shares_by_age_group,
     positivity_rate_by_age_group,
-    share_symptomatic_requesting_test,
 ):
     """Test demand function.
 
@@ -67,7 +66,8 @@ def demand_test(
 
     Args:
         states (pandas.DataFrame): The states of the individuals.
-        params (pandas.DataFrame): A DataFrame with parameters.
+        params (pandas.DataFrame): A DataFrame with parameters. It should contain the
+            entry ("test_demand", "symptoms", "share_symptomatic_requesting_test").
         share_known_cases (pandas.Series): share of infections that is detected.
         positivity_rate_overall (pandas.Series): share of total tests that was positive.
         test_shares_by_age_group (pandas.Series or pandas.DataFrame):
@@ -78,8 +78,6 @@ def demand_test(
             share of tests that was positive in each age group. If a Series the
             index are the age groups. If a DataFrame, the index are the dates and
             the columns are the age groups.
-        share_symptomatic_requesting_test (float): Share of symptomatic indiviudals
-            requesting a test.
 
     Returns:
         demand_probability (numpy.ndarray, pandas.Series): An array or a series
@@ -87,6 +85,8 @@ def demand_test(
 
     """
     n_newly_infected = states["newly_infected"].sum()
+    symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
+    share_symptomatic_requesting_test = params.loc[symptom_tuple, "value"]
     date = get_date(states)
     if isinstance(test_shares_by_age_group, pd.DataFrame):
         test_shares_by_age_group = test_shares_by_age_group.loc[date]

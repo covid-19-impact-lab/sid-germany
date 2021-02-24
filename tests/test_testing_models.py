@@ -26,6 +26,17 @@ def states():
     return states
 
 
+@pytest.fixture(scope="function")
+def params():
+    share_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
+    params = pd.DataFrame(
+        1.0,
+        columns=["value"],
+        index=pd.MultiIndex.from_tuples([share_tuple]),
+    )
+    return params
+
+
 def test_scale_demand_up_or_down(states):
     demanded = pd.Series([True, True] + [False, True] * 4, index=states.index)
     states["infectious"] = True
@@ -59,8 +70,7 @@ def test_calculate_positive_tests_to_distribute_per_age_group():
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
-def test_demand_test_zero_remainder(states):
-    params = None
+def test_demand_test_zero_remainder(states, params):
     share_known_cases = 1
     positivity_rate_overall = 0.25
     test_shares_by_age_group = pd.Series(
@@ -77,14 +87,13 @@ def test_demand_test_zero_remainder(states):
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
         seed=5999,
-        share_symptomatic_requesting_test=1.0,
     )
     expected = states["symptomatic"].copy(deep=True)
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
-def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states):
-    params = None
+def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states, params):
+    params.loc[("test_demand", "symptoms", "share_symptomatic_requesting_test")] = 0.5
     share_known_cases = 1
     positivity_rate_overall = 0.25
     test_shares_by_age_group = pd.Series(
@@ -106,13 +115,11 @@ def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states):
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
         seed=394,
-        share_symptomatic_requesting_test=0.5,
     )
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
-def test_demand_test_non_zero_remainder(states):
-    params = None
+def test_demand_test_non_zero_remainder(states, params):
     states["newly_infected"] = True
     states["infectious"] = (
         [True, True] + [True, True, False, False] + [True, False, True, True]
@@ -133,7 +140,6 @@ def test_demand_test_non_zero_remainder(states):
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
         seed=333,
-        share_symptomatic_requesting_test=1.0,
     )
     # the order of the last four is random and will change if the seed is changed!
     expected = pd.Series(

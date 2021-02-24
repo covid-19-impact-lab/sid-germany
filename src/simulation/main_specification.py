@@ -122,7 +122,6 @@ def _get_testing_models(
     positivity_rate_overall,
     test_shares_by_age_group,
     positivity_rate_by_age_group,
-    share_symptomatic_requesting_test=0.8,
 ):
     demand_test_func = partial(
         demand_test,
@@ -130,7 +129,6 @@ def _get_testing_models(
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
-        share_symptomatic_requesting_test=share_symptomatic_requesting_test,
     )
     one_day = pd.Timedelta(1, unit="D")
     testing_models = {
