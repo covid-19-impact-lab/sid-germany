@@ -36,6 +36,7 @@ def build_main_scenarios(base_path):
     if FAST_FLAG:
         scenarios = {
             "base_scenario": base_scenario,
+            "keep_schools_closed": schools_stay_closed,
         }
     if not FAST_FLAG:
         scenarios = {
