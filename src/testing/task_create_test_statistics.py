@@ -3,9 +3,9 @@ import pytask
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
-from src.testing.task_calculate_test_capacity import convert_weekly_to_daily
-from src.testing.task_calculate_test_capacity import get_date_from_year_and_week
-from src.testing.task_calculate_test_capacity import plot_time_series
+from src.testing.shared import convert_weekly_to_daily
+from src.testing.shared import get_date_from_year_and_week
+from src.testing.shared import plot_time_series
 
 
 OUT_PATH = BLD / "data" / "testing"

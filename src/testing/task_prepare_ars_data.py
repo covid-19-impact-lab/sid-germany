@@ -8,7 +8,7 @@ from sid.colors import get_colors
 from src.config import BLD
 from src.config import SRC
 from src.simulation.plotting import style_plot
-from src.testing.task_calculate_test_capacity import (
+from src.testing.shared import (
     get_date_from_year_and_week,
 )
 
