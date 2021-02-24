@@ -1,6 +1,15 @@
 """Build the specifiation for the base prognosis."""
+from functools import partial
+
+import pandas as pd
+
 from src.config import BLD
 from src.config import FAST_FLAG
+from src.contact_models.get_contact_models import get_all_contact_models
+from src.testing.testing_models import allocate_tests
+from src.testing.testing_models import demand_test
+from src.testing.testing_models import process_tests
+
 
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
@@ -36,7 +45,6 @@ def build_main_scenarios(base_path):
     if FAST_FLAG:
         scenarios = {
             "base_scenario": base_scenario,
-            "keep_schools_closed": schools_stay_closed,
         }
     if not FAST_FLAG:
         scenarios = {
@@ -55,3 +63,97 @@ def build_main_scenarios(base_path):
             nested_parametrization[name].append((produces, scenario, seed))
 
     return nested_parametrization
+
+
+def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False):
+    test_kwargs = {
+        "test_shares_by_age_group": pd.read_pickle(
+            depends_on["test_shares_by_age_group"]
+        ),
+        "positivity_rate_by_age_group": pd.read_pickle(
+            depends_on["positivity_rate_by_age_group"]
+        ),
+        "positivity_rate_overall": pd.read_pickle(
+            depends_on["positivity_rate_overall"]
+        ),
+        "share_known_cases": pd.read_pickle(depends_on["share_known_cases"]),
+    }
+
+    if extend_ars_dfs:
+        for name, df in test_kwargs.items():
+            test_kwargs[name] = _extend_df_into_future(df, end_date=end_date)
+
+    kwargs = _get_testing_models(
+        init_start=init_start,
+        end_date=end_date,
+        **test_kwargs,
+    )
+    kwargs["initial_states"] = pd.read_parquet(depends_on["initial_states"])
+    kwargs["params"] = pd.read_pickle(depends_on["params"])
+    kwargs["contact_models"] = get_all_contact_models()
+
+    return kwargs
+
+
+def _extend_df_into_future(df, end_date):
+    """Take the last values of a DataFrame and propagate it into the future.
+
+    Args:
+        df (pandas.DataFrame): the index must be a DatetimeIndex.
+        end_date (pandas.Timestamp): date until which the short DataFrame is
+            to be extended.
+
+    Returns:
+        extended (pandas.DataFrame): the index runs from the start date of
+            short to end_date. If there were NaN in short these were filled
+            with the next available non NaN value.
+
+    """
+    future_dates = pd.date_range(df.index.max(), end_date, closed="right")
+    extended_index = df.index.append(future_dates)
+    extended = df.reindex(extended_index).fillna(method="ffill")
+    return extended
+
+
+def _get_testing_models(
+    init_start,
+    end_date,
+    share_known_cases,
+    positivity_rate_overall,
+    test_shares_by_age_group,
+    positivity_rate_by_age_group,
+    share_symptomatic_requesting_test=0.8,
+):
+    demand_test_func = partial(
+        demand_test,
+        share_known_cases=share_known_cases,
+        positivity_rate_overall=positivity_rate_overall,
+        test_shares_by_age_group=test_shares_by_age_group,
+        positivity_rate_by_age_group=positivity_rate_by_age_group,
+        share_symptomatic_requesting_test=share_symptomatic_requesting_test,
+    )
+    one_day = pd.Timedelta(1, unit="D")
+    testing_models = {
+        "testing_demand_models": {
+            "symptoms": {
+                "model": demand_test_func,
+                "start": init_start - one_day,
+                "end": end_date + one_day,
+            },
+        },
+        "testing_allocation_models": {
+            "direct_allocation": {
+                "model": allocate_tests,
+                "start": init_start - one_day,
+                "end": end_date + one_day,
+            },
+        },
+        "testing_processing_models": {
+            "direct_processing": {
+                "model": process_tests,
+                "start": init_start - one_day,
+                "end": end_date + one_day,
+            },
+        },
+    }
+    return testing_models
