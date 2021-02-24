@@ -40,7 +40,9 @@ def build_main_scenarios(base_path):
     # 1st lockdown (24.3.-08.04.) average work multiplier: 0.56
     nov_home_office = {"work_fill_value": 0.83}
     spring_home_office = {"work_fill_value": 0.56}
-    schools_stay_closed = {"educ_multiplier": 0.0}
+    # would also work without changing the school mode but this way less
+    # policies are created
+    schools_stay_closed = {"school_mode": "open", "educ_multiplier": 0.0}
 
     if FAST_FLAG:
         scenarios = {

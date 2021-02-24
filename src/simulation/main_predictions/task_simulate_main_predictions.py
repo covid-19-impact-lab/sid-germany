@@ -9,10 +9,13 @@ from src.config import SRC
 from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
-from src.policies.combine_policies_over_periods import get_jan_to_april_2021_policies
+from src.policies.combine_policies_over_periods import create_scenario_policies
+from src.policies.combine_policies_over_periods import get_enacted_policies_of_2021
+from src.policies.policy_tools import combine_dictionaries
 from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import get_simulation_kwargs
 from src.simulation.main_specification import PREDICT_PATH
+
 
 NESTED_PARAMETRIZATION = build_main_scenarios(PREDICT_PATH)
 PARAMETRIZATION = [
@@ -49,9 +52,10 @@ if FAST_FLAG:
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
-    # determine dates
-    start_date = (pd.Timestamp.today() - pd.Timedelta(days=15)).normalize()
-    end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
+    # start date = (pd.Timestamp.today() - pd.Timedelta(days=15)).normalize()
+    # end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
+    start_date = pd.Timestamp("2021-01-05")
+    end_date = pd.Timestamp.today().normalize() + pd.Timedelta(days=15)
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 
@@ -66,12 +70,20 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
         depends_on, init_start, end_date, extend_ars_dfs=True
     )
 
-    policies = get_jan_to_april_2021_policies(
+    scenario_name = produces.parent.name
+    today = str(pd.Timestamp.today().date())
+    enacted_policies = get_enacted_policies_of_2021(
         contact_models=kwargs["contact_models"],
-        start_date=start_date,
+        scenario_start=today,
+    )
+    scenario_policies = create_scenario_policies(
+        contact_models=kwargs["contact_models"],
+        prefix=scenario_name,
+        start_date=today,
         end_date=end_date,
         **scenario,
     )
+    policies = combine_dictionaries([enacted_policies, scenario_policies])
 
     simulate = get_simulate_func(
         **kwargs,
