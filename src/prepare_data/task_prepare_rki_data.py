@@ -95,7 +95,8 @@ def task_prepare_rki_data(depends_on, produces):
     summed = summed.fillna(0)
     today = datetime.now().date()
     one_week_ago = today - timedelta(weeks=1)
-    cropped = summed.loc[:one_week_ago]
+    # 2020-02-08 started missing on 2021-02-24.
+    cropped = summed.loc[pd.Timestamp("2020-02-09") : one_week_ago]  # noqa: E203
     cropped = cropped.sort_index()
 
     share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
