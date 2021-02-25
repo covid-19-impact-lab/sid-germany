@@ -59,15 +59,15 @@ def demand_test(
     Using the RKI and ARS data therefore allows us to reflect the German testing
     strategy over age groups, e.g .preferential testing of older individuals.
 
-    In each age group we first distribute tests among those that are symptomatic but
-    have no pending test and do not know their infection state yet. We then distribute
-    the remaining tests tests among the remaining currently infectious such that we
-    use up the full test budget in each group.
+    In each age group we first distribute tests among those that recently developed
+    symptoms but have no pending test and do not know their infection state yet.
+    We then distribute the remaining tests tests among the remaining currently
+    infectious such that we use up the full test budget in each age group.
 
     Args:
         states (pandas.DataFrame): The states of the individuals.
-        params (pandas.DataFrame): A DataFrame with parameters. It should contain the
-            entry ("test_demand", "symptoms", "share_symptomatic_requesting_test").
+        params (pandas.DataFrame): A DataFrame with parameters. It needs to contain
+            the entry ("test_demand", "symptoms", "share_symptomatic_requesting_test").
         share_known_cases (pandas.Series): share of infections that is detected.
         positivity_rate_overall (pandas.Series): share of total tests that was positive.
         test_shares_by_age_group (pandas.Series or pandas.DataFrame):
@@ -109,8 +109,9 @@ def demand_test(
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
     )
+    developed_symptoms_yesterday = states["cd_symptoms_true"] == -1
     symptomatic_without_test = (
-        states["symptomatic"] & ~states["pending_test"] & ~states["knows_immune"]
+        developed_symptoms_yesterday & ~states["pending_test"] & ~states["knows_immune"]
     )
     if share_symptomatic_requesting_test == 1.0:
         demanded = symptomatic_without_test

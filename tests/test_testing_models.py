@@ -22,7 +22,7 @@ def states():
     states["date"] = DATE
     # 1, 1, 2 infections => 4 newly_infected
     states["newly_infected"] = [True, False, True] + [False] * 5 + [True, True]
-    states["symptomatic"] = [True, False, True] + [False] * 6 + [True]
+    states["cd_symptoms_true"] = [-1, 2, -1] + [-5] * 6 + [-1]
     return states
 
 
@@ -88,7 +88,7 @@ def test_demand_test_zero_remainder(states, params):
         positivity_rate_by_age_group=positivity_rate_by_age_group,
         seed=5999,
     )
-    expected = states["symptomatic"].copy(deep=True)
+    expected = states["cd_symptoms_true"] == -1
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
@@ -126,7 +126,7 @@ def test_demand_test_non_zero_remainder(states, params):
     )
     # tests to distribute: 2 per individual.
     # 0-4 get one extra. 5-14 are even. 15-34 have two tests removed.
-    states["symptomatic"] = [True, False] + [True, True, False, False] + [True] * 4
+    states["cd_symptomatic_true"] = [-1, 2] + [-1, -1, -10, 30] + [-1] * 4
 
     share_known_cases = 1
     positivity_rate_overall = 1 / 3
