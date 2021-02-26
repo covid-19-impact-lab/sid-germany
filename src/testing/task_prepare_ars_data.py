@@ -106,7 +106,8 @@ def _clean_ars_data(ars):
         "year",
     ]
     cleaned = cleaned[keep_cols]
-    assert cleaned.notnull().all().all()
+    not_null_cols = ["age_group", "n_tests", "pct_of_tests_positive", "week", "year"]
+    assert cleaned[not_null_cols].notnull().all().all()
 
     cleaned["date"] = cleaned.apply(get_date_from_year_and_week, axis=1)
     cleaned["positivity_rate"] = cleaned["pct_of_tests_positive"] / 100
