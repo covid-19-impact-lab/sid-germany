@@ -42,7 +42,11 @@ def task_check_initial_states(depends_on):
     _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
     _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
     not_categorical_group_ids = [
-        col for col in df if "group_id" in col and not is_categorical_dtype(df[col])
+        col
+        for col in df
+        if "group_id" in col
+        and not col.endswith("_a_b")
+        and not is_categorical_dtype(df[col])
     ]
     assert (
         len(not_categorical_group_ids) == 0
@@ -126,7 +130,7 @@ def _check_educ_group_ids(df):
             check_names=False,
         )
 
-    assert set(df["school_group_a"].unique()) == {1, 0}
+    assert set(df["school_group_id_0_a_b"].unique()) == {1, 0}
     assert df.query("age < 3")["occupation"].isin(["nursery", "stays home"]).all()
     assert (df.query("3 <= age <= 14")["nursery_group_id_0"] == -1).all()
     preschool_kid_groups = df.query("3 <= age < 6")["preschool_group_id_0"]
@@ -141,8 +145,8 @@ def _check_educ_group_ids(df):
     _check_educ_group_sizes(df)
     _check_educ_group_assortativeness(df)
 
-    assert set(df["school_group_a"].unique()) == {0, 1}
-    assert 0.49 < df["school_group_a"].mean() < 0.51
+    assert set(df["school_group_id_0_a_b"].unique()) == {0, 1}
+    assert 0.49 < df["school_group_id_0_a_b"].mean() < 0.51
 
 
 def _check_educators(df):

@@ -60,9 +60,13 @@ def add_contact_model_group_ids(
                 - school_group_id_2
                 - preschool_group_id_0
                 - nursery_group_id_0
+                - school_group_id_0_a_b
+                - school_group_id_1_a_b
+                - school_group_id_2_a_b
+                - preschool_group_id_0_a_b
+                - nursery_group_id_0_a_b
                 - updated occupation column
                 - educ_worker
-                - school_group_a
                 - work_contact_priority
                 - stays_home_when_schools_close
 
@@ -123,7 +127,7 @@ def _add_educ_group_ids(df, seed):
     gb = df.groupby("school_group_id_0")
     df["pos_in_group"] = gb["one"].cumsum() - 1
     df["group_size"] = gb["one"].transform("size")
-    df["school_group_a"] = df.eval("pos_in_group < group_size / 2").astype(np.uint8)
+    a_b_series = df.eval("pos_in_group < group_size / 2").astype(np.uint8)
 
     preschool_class_ids, updated_occupation = make_educ_group_columns(
         states=df,
@@ -155,6 +159,8 @@ def _add_educ_group_ids(df, seed):
         seed=next(seed),
     )
     df = df.merge(nursery_class_ids, left_index=True, right_index=True, validate="1:1")
+    for col in school_class_ids + preschool_class_ids + nursery_class_ids:
+        df[col + "_a_b"] = a_b_series
     df["occupation"] = updated_occupation
     df["educ_worker"] = df["occupation"].str.endswith("_teacher")
     return df
