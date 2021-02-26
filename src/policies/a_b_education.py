@@ -60,19 +60,20 @@ def a_b_education(
 
     # since our educ models are all recurrent and educ_workers must always attend
     # we only apply the hygiene multiplier to the students
-    not_educ_worker = states.eval("~educ_worker")
-    contacts[not_educ_worker] = reduce_recurrent_model(
-        states[not_educ_worker], contacts[not_educ_worker], seed, hygiene_multiplier
+    contacts[~states["educ_worker"]] = reduce_recurrent_model(
+        states[~states["educ_worker"]],
+        contacts[~states["educ_worker"]],
+        seed,
+        hygiene_multiplier,
     )
 
     # educ_workers of classes with 0 participants don't go to school
-    educ_workers = states.eval("educ_worker")
     educ_group_id_cols = _identify_educ_group_id_cols(states.columns)
 
     for col in educ_group_id_cols:
         size_0_classes = _find_size_zero_classes(contacts, states, col)
-        has_no_students = states[educ_workers][col].isin(size_0_classes)
-        teachers_with_0_students = states[educ_workers][has_no_students].index
+        has_no_students = states.query("educ_worker")[col].isin(size_0_classes)
+        teachers_with_0_students = states.query("educ_worker")[has_no_students].index
         contacts[teachers_with_0_students] = 0
 
     return contacts
@@ -86,9 +87,8 @@ def _get_a_b_children_staying_home(states, subgroup_query, group_column, date):
 
 
 def _find_size_zero_classes(contacts, states, col):
-    not_educ_worker = states.eval("~ educ_worker")
-    students_group_ids = states[not_educ_worker][col]
-    students_contacts = contacts[not_educ_worker]
+    students_group_ids = states[~states["educ_worker"]][col]
+    students_contacts = contacts[~states["educ_worker"]]
     class_sizes = students_contacts.groupby(students_group_ids).sum().drop(-1)
     size_zero_classes = class_sizes[class_sizes == 0].index
     return size_zero_classes
