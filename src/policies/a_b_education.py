@@ -34,7 +34,8 @@ def a_b_education(
         others_attend (bool): if True, children not selected by the subgroup
             query attend school normally. If False, children not selected by
             the subgroup query stay home.
-        hygiene_multiplier (float):
+        hygiene_multiplier (float): Applied to all children that still attend
+            educational facilities.
 
     """
     np.random.seed(seed)

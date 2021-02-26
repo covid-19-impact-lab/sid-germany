@@ -2,6 +2,7 @@ from functools import partial
 
 import pytest
 
+from src.policies.a_b_education import a_b_education
 from src.policies.domain_level_policy_blocks import _get_base_policy
 from src.policies.domain_level_policy_blocks import (
     implement_a_b_schooling_above_age_with_reduced_other_educ_models,
@@ -14,7 +15,6 @@ from src.policies.domain_level_policy_blocks import reopen_other_models
 from src.policies.domain_level_policy_blocks import reopen_work_models
 from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.domain_level_policy_blocks import shut_down_other_models
-from src.policies.single_policy_functions import implement_a_b_school_system_above_age
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany
@@ -310,8 +310,11 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                implement_a_b_school_system_above_age,
-                age_cutoff=10,
+                a_b_education,
+                group_column="school_group_a",
+                subgroup_query="occupation == 'school' & age > 10",
+                others_attend=True,
+                hygiene_multiplier=0.5,
             ),
         },
         "test_educ_school_2": {
@@ -319,21 +322,36 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                implement_a_b_school_system_above_age,
-                age_cutoff=10,
+                a_b_education,
+                group_column="school_group_a",
+                subgroup_query="occupation == 'school' & age > 10",
+                others_attend=True,
+                hygiene_multiplier=0.5,
             ),
         },
         "test_educ_preschool": {
             "affected_contact_model": "educ_preschool",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": partial(reduce_recurrent_model, multiplier=0.5),
+            "policy": partial(
+                a_b_education,
+                group_column="school_group_a",
+                subgroup_query="occupation == 'school' & age > 10",
+                others_attend=True,
+                hygiene_multiplier=0.5,
+            ),
         },
         "test_educ_nursery": {
             "affected_contact_model": "educ_nursery",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": partial(reduce_recurrent_model, multiplier=0.5),
+            "policy": partial(
+                a_b_education,
+                group_column="school_group_a",
+                subgroup_query="occupation == 'school' & age > 10",
+                others_attend=True,
+                hygiene_multiplier=0.5,
+            ),
         },
     }
     compare_policy_dicts(res, expected)

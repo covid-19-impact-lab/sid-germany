@@ -17,8 +17,7 @@ The functions here expect that the domain names are part of contact model names.
 """
 from functools import partial
 
-from src.policies.single_policy_functions import implement_a_b_school_system_above_age
-from src.policies.single_policy_functions import implement_a_b_school_system_below_age
+from src.policies.a_b_education import a_b_education
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany
@@ -128,6 +127,45 @@ def reopen_educ_models(
     return policies
 
 
+def implement_a_b_education(
+    contact_models,
+    block_info,
+    group_column,
+    subgroup_query,
+    others_attend,
+    hygiene_multiplier,
+):
+    """Split education groups for some children and apply a hygiene multiplier.
+
+    Args:
+        group_column (str): column in states that takes the values 0 and 1.
+            Depending on whether the current week is even or odd either the
+            children with 0 or the children that have 1s go to school.
+        subgroup_query (str, optional): string identifying the children that
+            are taught in split classes. If None, all children in all education
+            facilities attend in split classes.
+        others_attend (bool): if True, children not selected by the subgroup
+            query attend school normally. If False, children not selected by
+            the subgroup query stay home.
+        hygiene_multiplier (float): Applied to all children that still attend
+            educational facilities.
+
+    """
+    policies = {}
+    educ_models = _get_educ_models(contact_models)
+    for mod in educ_models:
+        policy = _get_base_policy(mod, block_info)
+        policy["policy"] = partial(
+            a_b_education,
+            group_column=group_column,
+            subgroup_query=subgroup_query,
+            others_attend=others_attend,
+            hygiene_multiplier=hygiene_multiplier,
+        )
+        policies[f"{block_info['prefix']}_{mod}"] = policy
+    return policies
+
+
 def implement_a_b_schooling_above_age_with_reduced_other_educ_models(
     contact_models,
     block_info,
@@ -135,24 +173,15 @@ def implement_a_b_schooling_above_age_with_reduced_other_educ_models(
     multiplier,
 ):
     """Split classes for students above age_cutoff; keep other educ models open."""
-    policies = reduce_educ_models(contact_models, block_info, multiplier)
-
-    educ_models = _get_educ_models(contact_models)
-    school_models = [
-        cm for cm in educ_models if "school" in cm and "preschool" not in cm
-    ]
-
-    for mod in school_models:
-        pol_name = f"{block_info['prefix']}_{mod}"
-        assert pol_name in policies
-
-        new_policy = _get_base_policy(mod, block_info)
-        new_policy["policy"] = partial(
-            implement_a_b_school_system_above_age,
-            age_cutoff=age_cutoff,
-        )
-        policies[pol_name] = new_policy
-
+    subgroup_query = f"occupation == 'school' & age > {age_cutoff}"
+    policies = implement_a_b_education(
+        contact_models=contact_models,
+        block_info=block_info,
+        group_column="school_group_a",
+        subgroup_query=subgroup_query,
+        others_attend=True,
+        hygiene_multiplier=multiplier,
+    )
     return policies
 
 
@@ -163,24 +192,15 @@ def implement_a_b_schooling_below_age_with_reduced_other_educ_models(
     multiplier,
 ):
     """Schools only have split classes below age_cutoff; keep other educ models open."""
-    policies = reduce_educ_models(contact_models, block_info, multiplier)
-
-    educ_models = _get_educ_models(contact_models)
-    school_models = [
-        cm for cm in educ_models if "school" in cm and "preschool" not in cm
-    ]
-
-    for mod in school_models:
-        pol_name = f"{block_info['prefix']}_{mod}"
-        assert pol_name in policies
-
-        new_policy = _get_base_policy(mod, block_info)
-        new_policy["policy"] = partial(
-            implement_a_b_school_system_below_age,
-            age_cutoff=age_cutoff,
-        )
-        policies[pol_name] = new_policy
-
+    subgroup_query = f"occupation == 'school' & age <= {age_cutoff}"
+    policies = implement_a_b_education(
+        contact_models=contact_models,
+        block_info=block_info,
+        group_column="school_group_a",
+        subgroup_query=subgroup_query,
+        others_attend=False,
+        hygiene_multiplier=multiplier,
+    )
     return policies
 
 
