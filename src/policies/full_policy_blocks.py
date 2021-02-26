@@ -20,6 +20,7 @@ this is defined as (1 - multiplier) or (1 / multiplier) which makes them error p
 Thus we do not use anything but multipliers here!
 
 """
+from src.policies.domain_level_policy_blocks import implement_a_b_education
 from src.policies.domain_level_policy_blocks import (
     implement_a_b_schooling_above_age_with_reduced_other_educ_models,
 )
@@ -120,6 +121,31 @@ def get_lockdown_with_multipliers(contact_models, block_info, multipliers):
         raise ValueError("Only education multipliers <= 1 allowed.")
 
     to_combine = [educ_policies, work_policies, other_policies]
+    policies = combine_dictionaries(to_combine)
+    return policies
+
+
+def get_lockdown_with_multipliers_with_general_a_b_schooling(
+    contact_models,
+    block_info,
+    multipliers,
+    group_column,
+    subgroup_query,
+    others_attend,
+):
+    to_combine = [
+        reduce_work_models(contact_models, block_info, multipliers["work"]),
+        reduce_other_models(contact_models, block_info, multipliers["other"]),
+        implement_a_b_education(
+            contact_models=contact_models,
+            block_info=block_info,
+            group_column=group_column,
+            subgroup_query=subgroup_query,
+            others_attend=others_attend,
+            hygiene_multiplier=multipliers["educ"],
+        ),
+    ]
+
     policies = combine_dictionaries(to_combine)
     return policies
 
