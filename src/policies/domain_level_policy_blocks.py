@@ -130,7 +130,6 @@ def reopen_educ_models(
 def implement_a_b_education(
     contact_models,
     block_info,
-    group_column,
     subgroup_query,
     others_attend,
     hygiene_multiplier,
@@ -138,9 +137,6 @@ def implement_a_b_education(
     """Split education groups for some children and apply a hygiene multiplier.
 
     Args:
-        group_column (str): column in states that takes the values 0 and 1.
-            Depending on whether the current week is even or odd either the
-            children with 0 or the children that have 1s go to school.
         subgroup_query (str, optional): string identifying the children that
             are taught in split classes. If None, all children in all education
             facilities attend in split classes.
@@ -157,10 +153,10 @@ def implement_a_b_education(
         policy = _get_base_policy(mod, block_info)
         policy["policy"] = partial(
             a_b_education,
-            group_column=group_column,
             subgroup_query=subgroup_query,
             others_attend=others_attend,
             hygiene_multiplier=hygiene_multiplier,
+            group_id_column=contact_models[mod]["assort_by"][0],
         )
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies

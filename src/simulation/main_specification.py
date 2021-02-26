@@ -17,7 +17,6 @@ PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-03-01")
 
 PRIMARY_AND_GRADUATION_CLASSES = {
-    "group_column": "school_group_a",
     "subgroup_query": "occupation == 'school' & (age < 12 | age in [16, 17, 18])",
     "others_attend": False,
     "multiplier": 0.5,

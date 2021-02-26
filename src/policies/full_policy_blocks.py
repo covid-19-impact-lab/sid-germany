@@ -123,7 +123,6 @@ def get_lockdown_with_multipliers_with_general_a_b_schooling(
     contact_models,
     block_info,
     multipliers,
-    group_column,
     subgroup_query,
     others_attend,
 ):
@@ -133,7 +132,6 @@ def get_lockdown_with_multipliers_with_general_a_b_schooling(
         implement_a_b_education(
             contact_models=contact_models,
             block_info=block_info,
-            group_column=group_column,
             subgroup_query=subgroup_query,
             others_attend=others_attend,
             hygiene_multiplier=multipliers["educ"],

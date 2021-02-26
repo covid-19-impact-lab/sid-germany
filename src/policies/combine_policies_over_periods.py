@@ -29,7 +29,7 @@ def create_scenario_policies(
         educ_mode (str): one of "open", "a_b_general".
         educ_kwargs (dict): dictionary of the specification for the education policy.
             If "open": a dictionary with a key "multiplier".
-            If "a_b_general": keys must be 'group_column', 'subgroup_query',
+            If "a_b_general": keys must be 'subgroup_query',
                 'others_attend' and 'hygiene_multiplier'.
         work_multiplier (float, pandas.Series or None):
             If None use the google mobility based work multiplier.
@@ -156,7 +156,6 @@ def get_enacted_policies_of_2021(
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            group_column="school_group_a",
             subgroup_query="occupation == 'school' & age <= 12",
             others_attend=False,
         ),
@@ -184,7 +183,7 @@ def get_october_to_christmas_policies(
         educ_mode (str): one of "open", "a_b_general".
         educ_kwargs (dict): dictionary of the specification for the education policy.
             If "open": a dictionary with a key "multiplier".
-            If "a_b_general": keys must be 'group_column', 'subgroup_query',
+            If "a_b_general": keys must be 'subgroup_query',
                 'others_attend' and 'hygiene_multiplier'.
 
     """
