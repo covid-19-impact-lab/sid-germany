@@ -4,9 +4,7 @@ import pytest
 
 from src.policies.a_b_education import a_b_education
 from src.policies.domain_level_policy_blocks import _get_base_policy
-from src.policies.domain_level_policy_blocks import (
-    implement_a_b_schooling_above_age_with_reduced_other_educ_models,
-)
+from src.policies.domain_level_policy_blocks import implement_a_b_education
 from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_other_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
@@ -301,8 +299,13 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
         },
         "other": {},
     }
-    res = implement_a_b_schooling_above_age_with_reduced_other_educ_models(
-        contact_models, block_info, age_cutoff=10, multiplier=0.5
+    res = implement_a_b_education(
+        contact_models,
+        block_info,
+        group_column="school_group_a",
+        subgroup_query="occupation == 'school' & age > 10",
+        others_attend=True,
+        hygiene_multiplier=0.5,
     )
     expected = {
         "test_educ_school_1": {

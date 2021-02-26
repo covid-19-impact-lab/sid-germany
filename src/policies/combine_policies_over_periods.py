@@ -3,12 +3,6 @@ import pandas as pd
 from src.config import BLD
 from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.full_policy_blocks import (
-    get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff,
-)
-from src.policies.full_policy_blocks import (
-    get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff,
-)
-from src.policies.full_policy_blocks import (
     get_lockdown_with_multipliers_with_general_a_b_schooling,
 )
 from src.policies.policy_tools import combine_dictionaries
@@ -32,10 +26,9 @@ def create_scenario_policies(
         prefix (str): Name of the policy.
         start_date (str)
         end_date (str)
-        educ_mode (str): one of "open", a_b_below", "a_b_above" or "a_b_general".
+        educ_mode (str): one of "open", "a_b_general".
         educ_kwargs (dict): dictionary of the specification for the education policy.
             If "open": a dictionary with a key "multiplier".
-            If "a_b_below" or "a_b_above": keys must be "multiplier" and "age_cutoff"
             If "a_b_general": keys must be 'group_column', 'subgroup_query',
                 'others_attend' and 'hygiene_multiplier'.
         work_multiplier (float, pandas.Series or None):
@@ -67,36 +60,6 @@ def create_scenario_policies(
                 "educ": educ_kwargs["multiplier"],
             },
         )
-    elif educ_mode == "a_b_below":
-        policies = get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff(
-            contact_models=contact_models,
-            block_info={
-                "start_date": start_date,
-                "end_date": end_date,
-                "prefix": prefix,
-            },
-            multipliers={
-                "educ": educ_kwargs["multiplier"],
-                "work": work_multiplier,
-                "other": other_multiplier,
-            },
-            age_cutoff=educ_kwargs["age_cutoff"],
-        )
-    elif educ_mode == "a_b_above":
-        policies = get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff(
-            contact_models=contact_models,
-            block_info={
-                "start_date": start_date,
-                "end_date": end_date,
-                "prefix": prefix,
-            },
-            multipliers={
-                "educ": educ_kwargs["multiplier"],
-                "work": work_multiplier,
-                "other": other_multiplier,
-            },
-            age_cutoff=educ_kwargs["age_cutoff"],
-        )
     elif educ_mode == "a_b_general":
         a_b_kwargs = {k: v for k, v in educ_kwargs.items() if k != "multiplier"}
         policies = get_lockdown_with_multipliers_with_general_a_b_schooling(
@@ -115,10 +78,7 @@ def create_scenario_policies(
         )
 
     else:
-        raise ValueError(
-            f"Unsupported educ_mode: {educ_mode}. Supported are 'open', "
-            "'a_b_below', 'a_b_above' and 'a_b_general'."
-        )
+        raise ValueError(f"Unsupported educ_mode: {educ_mode}.")
     return policies
 
 
@@ -182,7 +142,7 @@ def get_enacted_policies_of_2021(
         # sources:
         # - https://taz.de/Schulen-in-Coronazeiten/!5753515/
         # - https://tinyurl.com/2jfm4tp8
-        get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff(
+        get_lockdown_with_multipliers_with_general_a_b_schooling(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-02-22",
@@ -196,7 +156,9 @@ def get_enacted_policies_of_2021(
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            age_cutoff=12,
+            group_column="school_group_a",
+            subgroup_query="occupation == 'school' & age <= 12",
+            others_attend=False,
         ),
     ]
     return combine_dictionaries(to_combine)
@@ -219,10 +181,9 @@ def get_october_to_christmas_policies(
             implied by the google mobility reports are used.
         work_fill_value (float, optional): If given, the work_multiplier Series will
             be set to this value after November, 1st.
-        educ_mode (str): one of "open", a_b_below", "a_b_above" or "a_b_general".
+        educ_mode (str): one of "open", "a_b_general".
         educ_kwargs (dict): dictionary of the specification for the education policy.
             If "open": a dictionary with a key "multiplier".
-            If "a_b_below" or "a_b_above": keys must be "multiplier" and "age_cutoff"
             If "a_b_general": keys must be 'group_column', 'subgroup_query',
                 'others_attend' and 'hygiene_multiplier'.
 
@@ -285,7 +246,6 @@ def get_october_to_christmas_policies(
             },
         ),
     ]
-
     if educ_mode == "open":
         to_combine += [
             get_lockdown_with_multipliers(
@@ -313,69 +273,6 @@ def get_october_to_christmas_policies(
                     "work": work_multiplier,
                     "other": 0.55 if other_multiplier is None else other_multiplier,
                 },
-            ),
-        ]
-    elif educ_mode == "a_b_above":
-        to_combine += [
-            get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff(
-                contact_models=contact_models,
-                block_info={
-                    "start_date": "2020-11-02",
-                    "end_date": "2020-11-22",
-                    "prefix": "lockdown_light",
-                },
-                multipliers={
-                    "educ": educ_kwargs["multiplier"],
-                    "work": work_multiplier,
-                    "other": 0.45 if other_multiplier is None else other_multiplier,
-                },
-                age_cutoff=educ_kwargs["age_cutoff"],
-            ),
-            get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff(
-                contact_models=contact_models,
-                block_info={
-                    "start_date": "2020-11-23",
-                    "end_date": "2020-12-15",
-                    "prefix": "lockdown_light_with_fatigue",
-                },
-                multipliers={
-                    "educ": educ_kwargs["multiplier"],
-                    "work": work_multiplier,
-                    "other": 0.55 if other_multiplier is None else other_multiplier,
-                },
-                age_cutoff=educ_kwargs["age_cutoff"],
-            ),
-        ]
-
-    elif educ_mode == "a_b_below":
-        to_combine += [
-            get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff(
-                contact_models=contact_models,
-                block_info={
-                    "start_date": "2020-11-02",
-                    "end_date": "2020-11-22",
-                    "prefix": "lockdown_light",
-                },
-                multipliers={
-                    "educ": educ_kwargs["multiplier"],
-                    "work": work_multiplier,
-                    "other": 0.45 if other_multiplier is None else other_multiplier,
-                },
-                age_cutoff=educ_kwargs["age_cutoff"],
-            ),
-            get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff(
-                contact_models=contact_models,
-                block_info={
-                    "start_date": "2020-11-23",
-                    "end_date": "2020-12-15",
-                    "prefix": "lockdown_light_with_fatigue",
-                },
-                multipliers={
-                    "educ": educ_kwargs["multiplier"],
-                    "work": work_multiplier,
-                    "other": 0.55 if other_multiplier is None else other_multiplier,
-                },
-                age_cutoff=educ_kwargs["age_cutoff"],
             ),
         ]
     elif educ_mode == "a_b_general":
@@ -412,10 +309,7 @@ def get_october_to_christmas_policies(
         ]
 
     else:
-        raise ValueError(
-            f"Unsupported educ_mode: {educ_mode}. Supported are 'open', "
-            "'a_b_below', 'a_b_above' and 'a_b_general'."
-        )
+        raise ValueError(f"Unsupported educ_mode: {educ_mode}.")
 
     to_combine += [
         # Until start of Christmas vacation

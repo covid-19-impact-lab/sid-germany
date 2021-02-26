@@ -166,44 +166,6 @@ def implement_a_b_education(
     return policies
 
 
-def implement_a_b_schooling_above_age_with_reduced_other_educ_models(
-    contact_models,
-    block_info,
-    age_cutoff,
-    multiplier,
-):
-    """Split classes for students above age_cutoff; keep other educ models open."""
-    subgroup_query = f"occupation == 'school' & age > {age_cutoff}"
-    policies = implement_a_b_education(
-        contact_models=contact_models,
-        block_info=block_info,
-        group_column="school_group_a",
-        subgroup_query=subgroup_query,
-        others_attend=True,
-        hygiene_multiplier=multiplier,
-    )
-    return policies
-
-
-def implement_a_b_schooling_below_age_with_reduced_other_educ_models(
-    contact_models,
-    block_info,
-    age_cutoff,
-    multiplier,
-):
-    """Schools only have split classes below age_cutoff; keep other educ models open."""
-    subgroup_query = f"occupation == 'school' & age <= {age_cutoff}"
-    policies = implement_a_b_education(
-        contact_models=contact_models,
-        block_info=block_info,
-        group_column="school_group_a",
-        subgroup_query=subgroup_query,
-        others_attend=False,
-        hygiene_multiplier=multiplier,
-    )
-    return policies
-
-
 # ======================================================================================
 # other policies
 # ======================================================================================
