@@ -8,6 +8,9 @@ from src.policies.full_policy_blocks import (
 from src.policies.full_policy_blocks import (
     get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff,
 )
+from src.policies.full_policy_blocks import (
+    get_lockdown_with_multipliers_with_general_a_b_schooling,
+)
 from src.policies.policy_tools import combine_dictionaries
 
 
@@ -16,12 +19,11 @@ def create_scenario_policies(
     prefix,
     start_date,
     end_date,
-    school_mode="a_b_below",
-    educ_multiplier=0.5,
-    age_cutoff=None,
-    other_multiplier=0.45,
+    educ_mode,
+    educ_kwargs,
     work_multiplier=None,
     work_fill_value=0.68,  # level between 10th of Jan and carnival
+    other_multiplier=0.45,
 ):
     """Create hypothetical policies.
 
@@ -30,10 +32,12 @@ def create_scenario_policies(
         prefix (str): Name of the policy.
         start_date (str)
         end_date (str)
-        school_mode (str): one of "open", "a_b_below" and "a_b_above".
-        educ_multiplier (float): Function of this depends on the
-            school_mode.
-        age_cutoff (float, optional): Only
+        educ_mode (str): one of "open", a_b_below", "a_b_above" or "a_b_general".
+        educ_kwargs (dict): dictionary of the specification for the education policy.
+            If "open": a dictionary with a key "multiplier".
+            If "a_b_below" or "a_b_above": keys must be "multiplier" and "age_cutoff"
+            If "a_b_general": keys must be 'group_column', 'subgroup_query',
+                'others_attend' and 'hygiene_multiplier'.
         work_multiplier (float, pandas.Series or None):
             If None use the google mobility based work multiplier.
         work_fill_value (float or None):
@@ -44,14 +48,12 @@ def create_scenario_policies(
         policies (dict)
 
     """
-    if school_mode == "open" and age_cutoff is not None:
-        raise ValueError("age cutoff must be None if schools are open.")
 
     work_multiplier = _process_work_multiplier(
         work_multiplier, work_fill_value, start_date, end_date
     )
 
-    if school_mode == "open":
+    if educ_mode == "open":
         policies = get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
@@ -60,12 +62,12 @@ def create_scenario_policies(
                 "prefix": prefix,
             },
             multipliers={
-                "educ": educ_multiplier,
                 "work": work_multiplier,
                 "other": other_multiplier,
+                "educ": educ_kwargs["multiplier"],
             },
         )
-    elif school_mode == "a_b_below":
+    elif educ_mode == "a_b_below":
         policies = get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff(
             contact_models=contact_models,
             block_info={
@@ -74,13 +76,13 @@ def create_scenario_policies(
                 "prefix": prefix,
             },
             multipliers={
-                "educ": educ_multiplier,
+                "educ": educ_kwargs["multiplier"],
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            age_cutoff=age_cutoff,
+            age_cutoff=educ_kwargs["age_cutoff"],
         )
-    elif school_mode == "a_b_above":
+    elif educ_mode == "a_b_above":
         policies = get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff(
             contact_models=contact_models,
             block_info={
@@ -89,16 +91,33 @@ def create_scenario_policies(
                 "prefix": prefix,
             },
             multipliers={
-                "educ": educ_multiplier,
+                "educ": educ_kwargs["multiplier"],
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            age_cutoff=age_cutoff,
+            age_cutoff=educ_kwargs["age_cutoff"],
         )
+    elif educ_mode == "a_b_general":
+        a_b_kwargs = {k: v for k, v in educ_kwargs.items() if k != "multiplier"}
+        policies = get_lockdown_with_multipliers_with_general_a_b_schooling(
+            contact_models=contact_models,
+            block_info={
+                "start_date": start_date,
+                "end_date": end_date,
+                "prefix": prefix,
+            },
+            multipliers={
+                "educ": educ_kwargs["multiplier"],
+                "work": work_multiplier,
+                "other": other_multiplier,
+            },
+            **a_b_kwargs,
+        )
+
     else:
         raise ValueError(
-            f"Unsupported school_mode: {school_mode}. Supported are 'open', "
-            "'a_b_below' and 'a_b_above."
+            f"Unsupported educ_mode: {educ_mode}. Supported are 'open', "
+            "'a_b_below', 'a_b_above' and 'a_b_general'."
         )
     return policies
 
@@ -188,7 +207,8 @@ def get_october_to_christmas_policies(
     other_multiplier=None,
     work_multiplier=None,
     work_fill_value=None,
-    educ_multiplier=0.8,
+    educ_mode="open",
+    educ_kwargs=None,
 ):
     """Policies from October 1st 2020 until Christmas 2020.
 
@@ -197,13 +217,18 @@ def get_october_to_christmas_policies(
         work_multiplier (pandas.Series, optional): Series from Oct 1st to Dec 23rd.
             values are between 0 and 1. If not given, the work_multipliers
             implied by the google mobility reports are used.
-        educ_multiplier (float, optional): This is the education multiplier used
-            starting 2nd of November. Default is 0.8, i.e. schools were normally
-            open until December, 16th.
         work_fill_value (float, optional): If given, the work_multiplier Series will
             be set to this value after November, 1st.
+        educ_mode (str): one of "open", a_b_below", "a_b_above" or "a_b_general".
+        educ_kwargs (dict): dictionary of the specification for the education policy.
+            If "open": a dictionary with a key "multiplier".
+            If "a_b_below" or "a_b_above": keys must be "multiplier" and "age_cutoff"
+            If "a_b_general": keys must be 'group_column', 'subgroup_query',
+                'others_attend' and 'hygiene_multiplier'.
 
     """
+    if educ_kwargs is None:
+        educ_kwargs = {"multiplier": 0.8}
     dates = pd.date_range("2020-10-01", "2020-12-23")
     if work_multiplier is None:
         work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
@@ -259,32 +284,140 @@ def get_october_to_christmas_policies(
                 "other": 0.65,
             },
         ),
-        get_lockdown_with_multipliers(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2020-11-02",
-                "end_date": "2020-11-22",
-                "prefix": "lockdown_light",
-            },
-            multipliers={
-                "educ": educ_multiplier,
-                "work": work_multiplier,
-                "other": 0.45 if other_multiplier is None else other_multiplier,
-            },
-        ),
-        get_lockdown_with_multipliers(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2020-11-23",
-                "end_date": "2020-12-15",
-                "prefix": "lockdown_light_with_fatigue",
-            },
-            multipliers={
-                "educ": educ_multiplier,
-                "work": work_multiplier,
-                "other": 0.55 if other_multiplier is None else other_multiplier,
-            },
-        ),
+    ]
+
+    if educ_mode == "open":
+        to_combine += [
+            get_lockdown_with_multipliers(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2020-11-02",
+                    "end_date": "2020-11-22",
+                    "prefix": "lockdown_light",
+                },
+                multipliers={
+                    "educ": educ_kwargs["multiplier"],
+                    "work": work_multiplier,
+                    "other": 0.45 if other_multiplier is None else other_multiplier,
+                },
+            ),
+            get_lockdown_with_multipliers(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2020-11-23",
+                    "end_date": "2020-12-15",
+                    "prefix": "lockdown_light_with_fatigue",
+                },
+                multipliers={
+                    "educ": educ_kwargs["multiplier"],
+                    "work": work_multiplier,
+                    "other": 0.55 if other_multiplier is None else other_multiplier,
+                },
+            ),
+        ]
+    elif educ_mode == "a_b_above":
+        to_combine += [
+            get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2020-11-02",
+                    "end_date": "2020-11-22",
+                    "prefix": "lockdown_light",
+                },
+                multipliers={
+                    "educ": educ_kwargs["multiplier"],
+                    "work": work_multiplier,
+                    "other": 0.45 if other_multiplier is None else other_multiplier,
+                },
+                age_cutoff=educ_kwargs["age_cutoff"],
+            ),
+            get_lockdown_with_multipliers_with_a_b_schooling_above_age_cutoff(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2020-11-23",
+                    "end_date": "2020-12-15",
+                    "prefix": "lockdown_light_with_fatigue",
+                },
+                multipliers={
+                    "educ": educ_kwargs["multiplier"],
+                    "work": work_multiplier,
+                    "other": 0.55 if other_multiplier is None else other_multiplier,
+                },
+                age_cutoff=educ_kwargs["age_cutoff"],
+            ),
+        ]
+
+    elif educ_mode == "a_b_below":
+        to_combine += [
+            get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2020-11-02",
+                    "end_date": "2020-11-22",
+                    "prefix": "lockdown_light",
+                },
+                multipliers={
+                    "educ": educ_kwargs["multiplier"],
+                    "work": work_multiplier,
+                    "other": 0.45 if other_multiplier is None else other_multiplier,
+                },
+                age_cutoff=educ_kwargs["age_cutoff"],
+            ),
+            get_lockdown_with_multipliers_with_a_b_schooling_below_age_cutoff(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2020-11-23",
+                    "end_date": "2020-12-15",
+                    "prefix": "lockdown_light_with_fatigue",
+                },
+                multipliers={
+                    "educ": educ_kwargs["multiplier"],
+                    "work": work_multiplier,
+                    "other": 0.55 if other_multiplier is None else other_multiplier,
+                },
+                age_cutoff=educ_kwargs["age_cutoff"],
+            ),
+        ]
+    elif educ_mode == "a_b_general":
+        a_b_kwargs = {k: v for k, v in educ_kwargs.items() if k != "multiplier"}
+        to_combine += [
+            get_lockdown_with_multipliers_with_general_a_b_schooling(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2020-11-02",
+                    "end_date": "2020-11-22",
+                    "prefix": "lockdown_light",
+                },
+                multipliers={
+                    "educ": educ_kwargs["multiplier"],
+                    "work": work_multiplier,
+                    "other": 0.45 if other_multiplier is None else other_multiplier,
+                },
+                **a_b_kwargs,
+            ),
+            get_lockdown_with_multipliers_with_general_a_b_schooling(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2020-11-23",
+                    "end_date": "2020-12-15",
+                    "prefix": "lockdown_light_with_fatigue",
+                },
+                multipliers={
+                    "educ": educ_kwargs["multiplier"],
+                    "work": work_multiplier,
+                    "other": 0.55 if other_multiplier is None else other_multiplier,
+                },
+                **a_b_kwargs,
+            ),
+        ]
+
+    else:
+        raise ValueError(
+            f"Unsupported educ_mode: {educ_mode}. Supported are 'open', "
+            "'a_b_below', 'a_b_above' and 'a_b_general'."
+        )
+
+    to_combine += [
         # Until start of Christmas vacation
         get_lockdown_with_multipliers(
             contact_models=contact_models,

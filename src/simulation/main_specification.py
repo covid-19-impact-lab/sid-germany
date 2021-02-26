@@ -6,6 +6,7 @@ import pandas as pd
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.contact_models.get_contact_models import get_all_contact_models
+from src.policies.policy_tools import combine_dictionaries
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -14,6 +15,13 @@ from src.testing.testing_models import process_tests
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-03-01")
+
+PRIMARY_AND_GRADUATION_CLASSES = {
+    "group_column": "school_group_a",
+    "subgroup_query": "occupation == 'school' & (age < 12 | age in [16, 17, 18])",
+    "others_attend": False,
+    "multiplier": 0.5,
+}
 
 
 def build_main_scenarios(base_path):
@@ -35,16 +43,18 @@ def build_main_scenarios(base_path):
     """
     n_seeds = 1 if FAST_FLAG else 15
 
-    base_scenario = {}  # use default values
+    base_scenario = {
+        "educ_mode": "a_b_general",
+        "educ_kwargs": PRIMARY_AND_GRADUATION_CLASSES,
+    }
 
     # November average work multiplier: 0.83
     # 1st lockdown (24.3.-08.04.) average work multiplier: 0.56
-    nov_home_office = {"work_fill_value": 0.83}
-    spring_home_office = {"work_fill_value": 0.56}
-    # school_mode is not supported for the fall scenarios yet.
-    # However, closing schools can be accomplished within an A/B setting
-    # because the multiplier is applied to all educ models.
-    schools_stay_closed = {"educ_multiplier": 0.0}
+    nov_home_office = combine_dictionaries([base_scenario, {"work_fill_value": 0.83}])
+    spring_home_office = combine_dictionaries(
+        [base_scenario, {"work_fill_value": 0.56}]
+    )
+    schools_stay_closed = {"educ_mode": "open", "educ_multiplier": 0.0}
 
     if FAST_FLAG:
         scenarios = {
