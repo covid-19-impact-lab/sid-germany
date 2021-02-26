@@ -15,6 +15,7 @@ from src.policies.policy_tools import combine_dictionaries
 from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import get_simulation_kwargs
 from src.simulation.main_specification import PREDICT_PATH
+from src.simulation.main_specification import SCENARIO_START
 
 
 NESTED_PARAMETRIZATION = build_main_scenarios(PREDICT_PATH)
@@ -52,10 +53,9 @@ if FAST_FLAG:
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
-    # start date = (pd.Timestamp.today() - pd.Timedelta(days=15)).normalize()
-    # end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
-    start_date = pd.Timestamp("2021-01-05")
-    end_date = pd.Timestamp.today().normalize() + pd.Timedelta(days=15)
+    start_date = pd.Timestamp("2021-02-01")
+
+    end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 
@@ -71,15 +71,14 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
     )
 
     scenario_name = produces.parent.name
-    today = str(pd.Timestamp.today().date())
     enacted_policies = get_enacted_policies_of_2021(
         contact_models=kwargs["contact_models"],
-        scenario_start=today,
+        scenario_start=SCENARIO_START,
     )
     scenario_policies = create_scenario_policies(
         contact_models=kwargs["contact_models"],
         prefix=scenario_name,
-        start_date=today,
+        start_date=SCENARIO_START,
         end_date=end_date,
         **scenario,
     )
