@@ -302,7 +302,6 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
     res = implement_a_b_education(
         contact_models,
         block_info,
-        group_column="school_group_a",
         subgroup_query="occupation == 'school' & age > 10",
         others_attend=True,
         hygiene_multiplier=0.5,
@@ -314,7 +313,7 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "end": "2020-10-20",
             "policy": partial(
                 a_b_education,
-                group_column="school_group_a",
+                group_id_column="school_id_1",
                 subgroup_query="occupation == 'school' & age > 10",
                 others_attend=True,
                 hygiene_multiplier=0.5,
@@ -326,7 +325,7 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "end": "2020-10-20",
             "policy": partial(
                 a_b_education,
-                group_column="school_group_a",
+                group_id_column="school_id_2",
                 subgroup_query="occupation == 'school' & age > 10",
                 others_attend=True,
                 hygiene_multiplier=0.5,
@@ -338,7 +337,7 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "end": "2020-10-20",
             "policy": partial(
                 a_b_education,
-                group_column="school_group_a",
+                group_id_column="preschool_id",
                 subgroup_query="occupation == 'school' & age > 10",
                 others_attend=True,
                 hygiene_multiplier=0.5,
@@ -350,7 +349,7 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "end": "2020-10-20",
             "policy": partial(
                 a_b_education,
-                group_column="school_group_a",
+                group_id_column="nursery_id",
                 subgroup_query="occupation == 'school' & age > 10",
                 others_attend=True,
                 hygiene_multiplier=0.5,
