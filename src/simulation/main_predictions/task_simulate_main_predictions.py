@@ -9,8 +9,8 @@ from src.config import SRC
 from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
-from src.policies.combine_policies_over_periods import create_scenario_policies
 from src.policies.combine_policies_over_periods import get_enacted_policies_of_2021
+from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import get_simulation_kwargs
@@ -75,13 +75,27 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
         contact_models=kwargs["contact_models"],
         scenario_start=SCENARIO_START,
     )
-    scenario_policies = create_scenario_policies(
-        contact_models=kwargs["contact_models"],
-        prefix=scenario_name,
+    work_multiplier = _process_work_multiplier(
         start_date=SCENARIO_START,
         end_date=end_date,
-        **scenario,
     )
+    scenario_policies = get_lockdown_with_multipliers(
+        contact_models=kwargs["contact_models"],
+        block_info={
+            "start_date": SCENARIO_START,
+            "end_date": end_date,
+            "prefix": scenario_name,
+        },
+        multipliers={
+            "work": work_multiplier,
+            "other": scenario["other_multiplier"]
+            if "other_multiplier" in scenario
+            else 0.45,
+            "educ": scenario["educ_multiplier"],
+        },
+        a_b_educ_options=scenario["a_b_educ_options"],
+    )
+
     policies = combine_dictionaries([enacted_policies, scenario_policies])
 
     simulate = get_simulate_func(
@@ -99,3 +113,28 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
         },
     )
     simulate(kwargs["params"])
+
+
+def _process_work_multiplier(
+    start_date,
+    end_date,
+    work_multiplier=None,
+    work_fill_value=0.68,  # level between 10th of Jan and carnival
+):
+    dates = pd.date_range(start_date, end_date)
+    assert (
+        work_fill_value is None or work_multiplier is None
+    ), "work_fill_value may only be supplied if work_multiplier is None or vice versa"
+
+    if isinstance(work_multiplier, float):
+        return pd.Series(data=work_multiplier, index=dates)
+    elif isinstance(work_multiplier, pd.Series):
+        assert (
+            work_multiplier.index == dates
+        ).all(), f"Index is not consecutive from {start_date} to {end_date}"
+    elif work_multiplier is None:
+        default_path = BLD / "policies" / "work_multiplier.csv"
+        default = pd.read_csv(default_path, parse_dates=["date"], index_col="date")
+        expanded = default.reindex(index=dates)
+        expanded = expanded.fillna(work_fill_value)
+    return expanded

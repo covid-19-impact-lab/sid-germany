@@ -12,8 +12,12 @@ def fake_func():
 def contact_models():
     contact_models = {
         "work": {"model": fake_func, "is_recurrent": False},
-        "educ_school": {"model": fake_func, "is_recurrent": True},
-        "educ_preschool": {"model": fake_func, "is_recurrent": True},
+        "educ_school_0": {"model": fake_func, "is_recurrent": True, "assort_by": "id1"},
+        "educ_preschool_0": {
+            "model": fake_func,
+            "is_recurrent": True,
+            "assort_by": "id2",
+        },
         "other": {"model": fake_func, "is_recurrent": False},
     }
     return contact_models
@@ -40,8 +44,8 @@ def multipliers():
 def expected_keys():
     keys = {
         "prefix_work",
-        "prefix_educ_school",
-        "prefix_educ_preschool",
+        "prefix_educ_school_0",
+        "prefix_educ_preschool_0",
         "prefix_other",
     }
     return keys
@@ -59,5 +63,25 @@ def test_get_german_reopening_phase_runs(
 def test_get_lockdown_with_multipliers_runs(
     contact_models, block_info, multipliers, expected_keys
 ):
-    res = get_lockdown_with_multipliers(contact_models, block_info, multipliers)
+    res = get_lockdown_with_multipliers(
+        contact_models, block_info, multipliers, a_b_educ_options={}
+    )
+    assert res.keys() == expected_keys
+
+
+def test_get_lockdown_with_multipliers_a_b_schooling(
+    contact_models, block_info, multipliers, expected_keys
+):
+    res = get_lockdown_with_multipliers(
+        contact_models,
+        block_info,
+        multipliers,
+        a_b_educ_options={
+            "school": {
+                "subgroup_query": None,
+                "others_attend": False,
+                "hygiene_multiplier": 0.8,
+            }
+        },
+    )
     assert res.keys() == expected_keys

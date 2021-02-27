@@ -287,12 +287,12 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "is_recurrent": True,
             "assort_by": ["school_id_2"],
         },
-        "educ_preschool": {
+        "educ_preschool_0": {
             "model": fake_func,
             "is_recurrent": True,
             "assort_by": ["preschool_id"],
         },
-        "educ_nursery": {
+        "educ_nursery_0": {
             "model": fake_func,
             "is_recurrent": True,
             "assort_by": ["nursery_id"],
@@ -302,9 +302,14 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
     res = implement_a_b_education(
         contact_models,
         block_info,
-        subgroup_query="occupation == 'school' & age > 10",
-        others_attend=True,
-        hygiene_multiplier=0.5,
+        a_b_educ_options={
+            "school": {
+                "subgroup_query": "occupation == 'school' & age > 10",
+                "others_attend": True,
+                "hygiene_multiplier": 0.3,
+            },
+        },
+        multiplier=0.5,
     )
     expected = {
         "test_educ_school_1": {
@@ -316,7 +321,7 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
                 group_id_column="school_id_1",
                 subgroup_query="occupation == 'school' & age > 10",
                 others_attend=True,
-                hygiene_multiplier=0.5,
+                hygiene_multiplier=0.3,
             ),
         },
         "test_educ_school_2": {
@@ -328,31 +333,25 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
                 group_id_column="school_id_2",
                 subgroup_query="occupation == 'school' & age > 10",
                 others_attend=True,
-                hygiene_multiplier=0.5,
+                hygiene_multiplier=0.3,
             ),
         },
-        "test_educ_preschool": {
-            "affected_contact_model": "educ_preschool",
+        "test_educ_preschool_0": {
+            "affected_contact_model": "educ_preschool_0",
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                a_b_education,
-                group_id_column="preschool_id",
-                subgroup_query="occupation == 'school' & age > 10",
-                others_attend=True,
-                hygiene_multiplier=0.5,
+                reduce_recurrent_model,
+                multiplier=0.5,
             ),
         },
-        "test_educ_nursery": {
-            "affected_contact_model": "educ_nursery",
+        "test_educ_nursery_0": {
+            "affected_contact_model": "educ_nursery_0",
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                a_b_education,
-                group_id_column="nursery_id",
-                subgroup_query="occupation == 'school' & age > 10",
-                others_attend=True,
-                hygiene_multiplier=0.5,
+                reduce_recurrent_model,
+                multiplier=0.5,
             ),
         },
     }

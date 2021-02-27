@@ -2,84 +2,7 @@ import pandas as pd
 
 from src.config import BLD
 from src.policies.full_policy_blocks import get_lockdown_with_multipliers
-from src.policies.full_policy_blocks import (
-    get_lockdown_with_multipliers_with_general_a_b_schooling,
-)
 from src.policies.policy_tools import combine_dictionaries
-
-
-def create_scenario_policies(
-    contact_models,
-    prefix,
-    start_date,
-    end_date,
-    educ_mode,
-    educ_kwargs,
-    work_multiplier=None,
-    work_fill_value=0.68,  # level between 10th of Jan and carnival
-    other_multiplier=0.45,
-):
-    """Create hypothetical policies.
-
-    Args:
-        contact_models (dict)
-        prefix (str): Name of the policy.
-        start_date (str)
-        end_date (str)
-        educ_mode (str): one of "open", "a_b_general".
-        educ_kwargs (dict): dictionary of the specification for the education policy.
-            If "open": a dictionary with a key "multiplier".
-            If "a_b_general": keys must be 'subgroup_query',
-                'others_attend' and 'hygiene_multiplier'.
-        work_multiplier (float, pandas.Series or None):
-            If None use the google mobility based work multiplier.
-        work_fill_value (float or None):
-            If not None, used to fill missing values in the work multiplier.
-        other_multiplier (float)
-
-    Returns:
-        policies (dict)
-
-    """
-
-    work_multiplier = _process_work_multiplier(
-        work_multiplier, work_fill_value, start_date, end_date
-    )
-
-    if educ_mode == "open":
-        policies = get_lockdown_with_multipliers(
-            contact_models=contact_models,
-            block_info={
-                "start_date": start_date,
-                "end_date": end_date,
-                "prefix": prefix,
-            },
-            multipliers={
-                "work": work_multiplier,
-                "other": other_multiplier,
-                "educ": educ_kwargs["multiplier"],
-            },
-        )
-    elif educ_mode == "a_b_general":
-        a_b_kwargs = {k: v for k, v in educ_kwargs.items() if k != "multiplier"}
-        policies = get_lockdown_with_multipliers_with_general_a_b_schooling(
-            contact_models=contact_models,
-            block_info={
-                "start_date": start_date,
-                "end_date": end_date,
-                "prefix": prefix,
-            },
-            multipliers={
-                "educ": educ_kwargs["multiplier"],
-                "work": work_multiplier,
-                "other": other_multiplier,
-            },
-            **a_b_kwargs,
-        )
-
-    else:
-        raise ValueError(f"Unsupported educ_mode: {educ_mode}.")
-    return policies
 
 
 def get_enacted_policies_of_2021(
@@ -142,7 +65,7 @@ def get_enacted_policies_of_2021(
         # sources:
         # - https://taz.de/Schulen-in-Coronazeiten/!5753515/
         # - https://tinyurl.com/2jfm4tp8
-        get_lockdown_with_multipliers_with_general_a_b_schooling(
+        get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-02-22",
@@ -156,8 +79,13 @@ def get_enacted_policies_of_2021(
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            subgroup_query="occupation == 'school' & age <= 12",
-            others_attend=False,
+            a_b_educ_options={
+                "school": {
+                    "subgroup_query": "age <= 12 | age >15",
+                    "others_attend": False,
+                    "hygiene_multiplier": 0.5,
+                },
+            },
         ),
     ]
     return combine_dictionaries(to_combine)
@@ -165,30 +93,34 @@ def get_enacted_policies_of_2021(
 
 def get_october_to_christmas_policies(
     contact_models,
+    a_b_educ_options=None,
+    educ_multiplier=0.8,
     other_multiplier=None,
     work_multiplier=None,
     work_fill_value=None,
-    educ_mode="open",
-    educ_kwargs=None,
 ):
     """Policies from October 1st 2020 until Christmas 2020.
 
     Args:
-        contact_models (dict)
+        a_b_educ_options (dict): For every education type ("school", "preschool",
+            "nursery") that is in an A/B schooling mode, add name of the mode
+            as key and the subgroup_query, others_attend and hygiene_multiplier.
+            Note to use the modes (e.g. school) and not the contact models
+            (e.g. educ_school_1) as keys.
+        educ_multiplier (float): The multiplier for the education contact models
+            that are not covered by the a_b_educ_options. This educ_multiplier is
+            not used on top of the supplied hygiene multiplier but only used for
+            education models that are not in A/B mode.
+
         work_multiplier (pandas.Series, optional): Series from Oct 1st to Dec 23rd.
             values are between 0 and 1. If not given, the work_multipliers
             implied by the google mobility reports are used.
         work_fill_value (float, optional): If given, the work_multiplier Series will
             be set to this value after November, 1st.
-        educ_mode (str): one of "open", "a_b_general".
-        educ_kwargs (dict): dictionary of the specification for the education policy.
-            If "open": a dictionary with a key "multiplier".
-            If "a_b_general": keys must be 'subgroup_query',
-                'others_attend' and 'hygiene_multiplier'.
 
     """
-    if educ_kwargs is None:
-        educ_kwargs = {"multiplier": 0.8}
+    if a_b_educ_options is None:
+        a_b_educ_options = {}
     dates = pd.date_range("2020-10-01", "2020-12-23")
     if work_multiplier is None:
         work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
@@ -244,73 +176,34 @@ def get_october_to_christmas_policies(
                 "other": 0.65,
             },
         ),
-    ]
-    if educ_mode == "open":
-        to_combine += [
-            get_lockdown_with_multipliers(
-                contact_models=contact_models,
-                block_info={
-                    "start_date": "2020-11-02",
-                    "end_date": "2020-11-22",
-                    "prefix": "lockdown_light",
-                },
-                multipliers={
-                    "educ": educ_kwargs["multiplier"],
-                    "work": work_multiplier,
-                    "other": 0.45 if other_multiplier is None else other_multiplier,
-                },
-            ),
-            get_lockdown_with_multipliers(
-                contact_models=contact_models,
-                block_info={
-                    "start_date": "2020-11-23",
-                    "end_date": "2020-12-15",
-                    "prefix": "lockdown_light_with_fatigue",
-                },
-                multipliers={
-                    "educ": educ_kwargs["multiplier"],
-                    "work": work_multiplier,
-                    "other": 0.55 if other_multiplier is None else other_multiplier,
-                },
-            ),
-        ]
-    elif educ_mode == "a_b_general":
-        a_b_kwargs = {k: v for k, v in educ_kwargs.items() if k != "multiplier"}
-        to_combine += [
-            get_lockdown_with_multipliers_with_general_a_b_schooling(
-                contact_models=contact_models,
-                block_info={
-                    "start_date": "2020-11-02",
-                    "end_date": "2020-11-22",
-                    "prefix": "lockdown_light",
-                },
-                multipliers={
-                    "educ": educ_kwargs["multiplier"],
-                    "work": work_multiplier,
-                    "other": 0.45 if other_multiplier is None else other_multiplier,
-                },
-                **a_b_kwargs,
-            ),
-            get_lockdown_with_multipliers_with_general_a_b_schooling(
-                contact_models=contact_models,
-                block_info={
-                    "start_date": "2020-11-23",
-                    "end_date": "2020-12-15",
-                    "prefix": "lockdown_light_with_fatigue",
-                },
-                multipliers={
-                    "educ": educ_kwargs["multiplier"],
-                    "work": work_multiplier,
-                    "other": 0.55 if other_multiplier is None else other_multiplier,
-                },
-                **a_b_kwargs,
-            ),
-        ]
-
-    else:
-        raise ValueError(f"Unsupported educ_mode: {educ_mode}.")
-
-    to_combine += [
+        get_lockdown_with_multipliers(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-11-02",
+                "end_date": "2020-11-22",
+                "prefix": "lockdown_light",
+            },
+            multipliers={
+                "educ": educ_multiplier,
+                "work": work_multiplier,
+                "other": 0.45 if other_multiplier is None else other_multiplier,
+            },
+            a_b_educ_options=a_b_educ_options,
+        ),
+        get_lockdown_with_multipliers(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2020-11-23",
+                "end_date": "2020-12-15",
+                "prefix": "lockdown_light_with_fatigue",
+            },
+            multipliers={
+                "educ": educ_multiplier,
+                "work": work_multiplier,
+                "other": 0.55 if other_multiplier is None else other_multiplier,
+            },
+            a_b_educ_options=a_b_educ_options,
+        ),
         # Until start of Christmas vacation
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -341,26 +234,6 @@ def get_october_to_christmas_policies(
         ),
     ]
     return combine_dictionaries(to_combine)
-
-
-def _process_work_multiplier(work_multiplier, fill_value, start_date, end_date):
-    dates = pd.date_range(start_date, end_date)
-    assert (
-        fill_value is None or work_multiplier is None
-    ), "fill_value may only be supplied if work_multiplier is None or vice versa"
-
-    if isinstance(work_multiplier, float):
-        return pd.Series(data=work_multiplier, index=dates)
-    elif isinstance(work_multiplier, pd.Series):
-        assert (
-            work_multiplier.index == dates
-        ).all(), f"Index is not consecutive from {start_date} to {end_date}"
-    elif work_multiplier is None:
-        default_path = BLD / "policies" / "work_multiplier.csv"
-        default = pd.read_csv(default_path, parse_dates=["date"], index_col="date")
-        expanded = default.reindex(index=dates)
-        expanded = expanded.fillna(fill_value)
-    return expanded
 
 
 def _get_work_multiplier(scenario_start):

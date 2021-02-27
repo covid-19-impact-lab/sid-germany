@@ -90,7 +90,7 @@ def reduce_educ_models(contact_models, block_info, multiplier):
         if contact_models[mod]["is_recurrent"]:
             policy["policy"] = partial(reduce_recurrent_model, multiplier=multiplier)
         else:
-            policy = multiplier
+            policy["policy"] = multiplier
 
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
@@ -130,34 +130,46 @@ def reopen_educ_models(
 def implement_a_b_education(
     contact_models,
     block_info,
-    subgroup_query,
-    others_attend,
-    hygiene_multiplier,
+    a_b_educ_options,
+    multiplier,
 ):
     """Split education groups for some children and apply a hygiene multiplier.
 
     Args:
-        subgroup_query (str, optional): string identifying the children that
-            are taught in split classes. If None, all children in all education
-            facilities attend in split classes.
-        others_attend (bool): if True, children not selected by the subgroup
-            query attend school normally. If False, children not selected by
-            the subgroup query stay home.
-        hygiene_multiplier (float): Applied to all children that still attend
-            educational facilities.
+        a_b_educ_options (dict): For every education type ("school", "preschool",
+            "nursery") that is in an A/B schooling mode, add name of the mode
+            as key and the subgroup_query, others_attend and hygiene_multiplier.
+            Note to use the modes (e.g. school) and not the contact models
+            (e.g. educ_school_1) as keys. The other supplied multiplier is
+            not used on top of the supplied hygiene multiplier.
+        multiplier (float): multiplier for the contact models without A/B
+            schooling. Set to zero to shut them down.
 
     """
     policies = {}
     educ_models = _get_educ_models(contact_models)
     for mod in educ_models:
         policy = _get_base_policy(mod, block_info)
-        policy["policy"] = partial(
-            a_b_education,
-            subgroup_query=subgroup_query,
-            others_attend=others_attend,
-            hygiene_multiplier=hygiene_multiplier,
-            group_id_column=contact_models[mod]["assort_by"][0],
-        )
+        educ_type = _determine_educ_type(mod)
+        if educ_type in a_b_educ_options:
+            policy["policy"] = partial(
+                a_b_education,
+                subgroup_query=a_b_educ_options[educ_type]["subgroup_query"],
+                others_attend=a_b_educ_options[educ_type]["others_attend"],
+                hygiene_multiplier=a_b_educ_options[educ_type]["hygiene_multiplier"],
+                group_id_column=contact_models[mod]["assort_by"][0],
+            )
+        else:
+            assert 0 <= multiplier <= 1, "Only multipliers in [0, 1] allowed."
+            if multiplier == 0:
+                policy["policy"] = shut_down_model
+            # currently all educ models are recurrent but don't want to assume it
+            elif contact_models[mod]["is_recurrent"]:
+                policy["policy"] = partial(
+                    reduce_recurrent_model, multiplier=multiplier
+                )
+            else:
+                policy["policy"] = multiplier
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
 
@@ -234,3 +246,25 @@ def _get_work_models(contact_models):
 
 def _get_other_models(contact_models):
     return [cm for cm in contact_models if "other" in cm]
+
+
+def _determine_educ_type(model_name):
+    """Determine whether an education model is school, preschool or nursery.
+
+    Args:
+        model_name (str): name of the education model, e.g. educ_school_0.
+
+    """
+    name_parts = model_name.split("_")
+    msg = f"The name of your education model {model_name} does not "
+    assert len(name_parts) == 3, msg + "consist of three parts."
+    assert name_parts[0] == "educ", (
+        msg + f"have educ as first part but {name_parts[0]}."
+    )
+    assert name_parts[1] in ["nursery", "preschool", "school"], (
+        msg + "belong to ['nursery', 'preschool', 'school']."
+    )
+    assert name_parts[2].isdigit(), (
+        msg + f"have a number as last part but {name_parts[2]}"
+    )
+    return name_parts[1]

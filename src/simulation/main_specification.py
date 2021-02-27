@@ -19,7 +19,7 @@ SCENARIO_START = pd.Timestamp("2021-03-01")
 PRIMARY_AND_GRADUATION_CLASSES = {
     "subgroup_query": "occupation == 'school' & (age < 12 | age in [16, 17, 18])",
     "others_attend": False,
-    "multiplier": 0.5,
+    "hygiene_multiplier": 0.5,
 }
 
 
@@ -43,8 +43,8 @@ def build_main_scenarios(base_path):
     n_seeds = 1 if FAST_FLAG else 15
 
     base_scenario = {
-        "educ_mode": "a_b_general",
-        "educ_kwargs": PRIMARY_AND_GRADUATION_CLASSES,
+        "a_b_educ_options": {"school": PRIMARY_AND_GRADUATION_CLASSES},
+        "educ_multiplier": 0.5,
     }
 
     # November average work multiplier: 0.83
@@ -53,7 +53,7 @@ def build_main_scenarios(base_path):
     spring_home_office = combine_dictionaries(
         [base_scenario, {"work_fill_value": 0.56}]
     )
-    schools_stay_closed = {"educ_mode": "open", "educ_multiplier": 0.0}
+    schools_stay_closed = {"a_b_educ_options": {}, "multiplier": 0.0}
 
     if FAST_FLAG:
         scenarios = {
