@@ -53,7 +53,7 @@ def build_main_scenarios(base_path):
     spring_home_office = combine_dictionaries(
         [base_scenario, {"work_fill_value": 0.56}]
     )
-    schools_stay_closed = {"a_b_educ_options": {}, "multiplier": 0.0}
+    schools_stay_closed = {"a_b_educ_options": {}, "educ_multiplier": 0.0}
 
     if FAST_FLAG:
         scenarios = {

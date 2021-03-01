@@ -54,9 +54,9 @@ def a_b_education(
     )
     contacts[a_b_children_staying_home] = 0
 
-    # ~ not supported for categorical columns which could appear in subgroup_query
-    children_not_in_a_b = states.eval(f"~educ_worker & not ({subgroup_query})")
     if not others_attend:
+        # ~ not supported for categorical columns which could appear in subgroup_query
+        children_not_in_a_b = states.eval(f"~educ_worker & not ({subgroup_query})")
         contacts[children_not_in_a_b] = 0
 
     # since our educ models are all recurrent and educ_workers must always attend
@@ -87,6 +87,8 @@ def _get_a_b_children_staying_home(states, subgroup_query, group_column, date):
 def _find_size_zero_classes(contacts, states, col):
     students_group_ids = states[~states["educ_worker"]][col]
     students_contacts = contacts[~states["educ_worker"]]
+    # the .drop(-1) is needed because we use -1 instead of NaN to identify
+    # individuals not participating in a recurrent contact model
     class_sizes = students_contacts.groupby(students_group_ids).sum().drop(-1)
     size_zero_classes = class_sizes[class_sizes == 0].index
     return size_zero_classes
