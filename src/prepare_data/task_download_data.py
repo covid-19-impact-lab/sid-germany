@@ -20,6 +20,10 @@ PARAMETRIZED_DOWNLOADS = [
         "3E410CDC013276FC28AD711373F5D82A.internet072?__blob=publicationFile",
         BLD / "data" / "raw_time_series" / "test_statistics.xlsx",
     ),
+    (
+        "https://www.gstatic.com/covid19/mobility/Region_Mobility_Report_CSVs.zip",
+        BLD / "data" / "raw_time_series" / "google_mobility.zip",
+    ),
 ]
 
 
