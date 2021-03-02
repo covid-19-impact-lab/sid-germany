@@ -53,7 +53,7 @@ if FAST_FLAG:
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
-    start_date = pd.Timestamp("2021-02-01")
+    start_date = pd.Timestamp("2021-02-15")
 
     end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
     init_start = start_date - pd.Timedelta(31, unit="D")
@@ -78,6 +78,8 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
     work_multiplier = _process_work_multiplier(
         start_date=SCENARIO_START,
         end_date=end_date,
+        # 0.68 was the level between 10th of Jan and carnival
+        work_fill_value=scenario.get("work_fill_value", 0.68),
     )
     scenario_policies = get_lockdown_with_multipliers(
         contact_models=kwargs["contact_models"],

@@ -40,7 +40,7 @@ def build_main_scenarios(base_path):
                 3. the seed to be used by sid.
 
     """
-    n_seeds = 1 if FAST_FLAG else 15
+    n_seeds = 1 if FAST_FLAG else 10
 
     if "predictions" in base_path.name:
         base_scenario = {
