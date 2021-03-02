@@ -42,10 +42,21 @@ def build_main_scenarios(base_path):
     """
     n_seeds = 1 if FAST_FLAG else 15
 
-    base_scenario = {
-        "a_b_educ_options": {"school": PRIMARY_AND_GRADUATION_CLASSES},
-        "educ_multiplier": 0.5,
-    }
+    if "predictions" in base_path:
+        base_scenario = {
+            "a_b_educ_options": {"school": PRIMARY_AND_GRADUATION_CLASSES},
+            "educ_multiplier": 0.5,
+        }
+    elif "fall" in base_path:
+        base_scenario = {
+            "a_b_educ_options": {},
+            "educ_multiplier": 0.8,
+        }
+    else:
+        raise ValueError(
+            f"Unknown situation: {base_path.name}. "
+            "Only fall and predictions supported at the moment."
+        )
 
     # November average work multiplier: 0.83
     # 1st lockdown (24.3.-08.04.) average work multiplier: 0.56
