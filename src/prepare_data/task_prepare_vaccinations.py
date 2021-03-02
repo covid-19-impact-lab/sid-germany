@@ -20,21 +20,32 @@ plt.rcParams.update(
 @pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "vaccinations.xlsx")
 @pytask.mark.produces(
     {
-        "share_immune": BLD / "data" / "processed_time_series" / "share_immune.pkl",
-        "fig_share_immune": BLD / "data" / "processed_time_series" / "share_immune.png",
         "fig_first_dose": BLD / "data" / "processed_time_series" / "first_dose.png",
+        "share_becoming_immune": BLD
+        / "data"
+        / "processed_time_series"
+        / "share_becoming_immune.pkl",
+        "fig_share_becoming_immune": BLD
+        / "data"
+        / "processed_time_series"
+        / "share_becoming_immune.png",
     }
 )
 def task_prepare_vaccination_data(depends_on, produces):
     df = pd.read_excel(depends_on, sheet_name="Impfungen_proTag")
     df = _clean_vaccination_data(df)
+    # this is for comparing with newspaper sites
     fig, ax = _plot_series(df["share_with_first_dose"], "Share with 1st Dose")
     fig.savefig(produces["fig_first_dose"], dpi=200, transparent=False, facecolor="w")
 
-    share_immune = _calculate_share_immune_from_vaccination(df)
-    share_immune.to_pickle(produces["share_immune"])
-    fig, ax = _plot_series(share_immune, "Share Immune Through Vaccination Over Time")
-    fig.savefig(produces["fig_share_immune"], dpi=200, transparent=False, facecolor="w")
+    share_becoming_immune = _calculate_share_receiving_immunization_from_vaccination(df)
+    share_becoming_immune.to_pickle(produces["share_becoming_immune"])
+    fig, ax = _plot_series(
+        share_becoming_immune, "Share Becoming Immune Through Vaccination"
+    )
+    fig.savefig(
+        produces["fig_share_becoming_immune"], dpi=200, transparent=False, facecolor="w"
+    )
 
 
 def _clean_vaccination_data(df):
@@ -49,8 +60,8 @@ def _clean_vaccination_data(df):
     return df
 
 
-def _calculate_share_immune_from_vaccination(df):
-    """Calculate the share of individuals immune from vaccination.
+def _calculate_share_receiving_immunization_from_vaccination(df):
+    """Calculate the share of individuals becoming immune from vaccination.
 
     We ignore booster shots and simply assume immunity will start
     21 days after the first shot (Hunter2021) with 75% probability
@@ -60,7 +71,8 @@ def _calculate_share_immune_from_vaccination(df):
     """
     share_immune = 0.75 * df["share_with_first_dose"]
     share_immune.index = share_immune.index + pd.Timedelta(weeks=3)
-    return share_immune
+    share_becoming_immune = share_immune.diff().dropna()
+    return share_becoming_immune
 
 
 def _plot_series(sr, title):
