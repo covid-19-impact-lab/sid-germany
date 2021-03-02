@@ -147,6 +147,8 @@ def _check_educ_group_ids(df):
 
     assert set(df["school_group_id_0_a_b"].unique()) == {0, 1}
     assert 0.49 < df["school_group_id_0_a_b"].mean() < 0.51
+    assert (df["school_group_id_0_a_b"] == df["school_group_id_1_a_b"]).all()
+    assert (df["school_group_id_0_a_b"] == df["school_group_id_2_a_b"]).all()
 
 
 def _check_educators(df):

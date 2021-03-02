@@ -2,7 +2,6 @@ from functools import partial
 
 import pytest
 
-from src.policies.a_b_education import a_b_education
 from src.policies.domain_level_policy_blocks import _get_base_policy
 from src.policies.domain_level_policy_blocks import implement_a_b_education
 from src.policies.domain_level_policy_blocks import reduce_educ_models
@@ -13,6 +12,7 @@ from src.policies.domain_level_policy_blocks import reopen_other_models
 from src.policies.domain_level_policy_blocks import reopen_work_models
 from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.domain_level_policy_blocks import shut_down_other_models
+from src.policies.single_policy_functions import a_b_education
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany

@@ -17,7 +17,7 @@ The functions here expect that the domain names are part of contact model names.
 """
 from functools import partial
 
-from src.policies.a_b_education import a_b_education
+from src.policies.single_policy_functions import a_b_education
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany

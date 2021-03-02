@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.policies.a_b_education import _find_size_zero_classes
-from src.policies.a_b_education import _get_a_b_children_staying_home
-from src.policies.a_b_education import a_b_education
+from src.policies.single_policy_functions import _find_size_zero_classes
+from src.policies.single_policy_functions import _get_a_b_children_staying_home
+from src.policies.single_policy_functions import a_b_education
 
 
 @pytest.fixture
