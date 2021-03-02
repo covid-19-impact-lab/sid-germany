@@ -21,16 +21,20 @@ plt.rcParams.update(
 @pytask.mark.produces(
     {
         "share_immune": BLD / "data" / "processed_time_series" / "share_immune.pkl",
-        "fig": BLD / "data" / "processed_time_series" / "share_immune.png",
+        "fig_share_immune": BLD / "data" / "processed_time_series" / "share_immune.png",
+        "fig_first_dose": BLD / "data" / "processed_time_series" / "first_dose.png",
     }
 )
 def task_prepare_vaccination_data(depends_on, produces):
     df = pd.read_excel(depends_on, sheet_name="Impfungen_proTag")
     df = _clean_vaccination_data(df)
+    fig, ax = _plot_series(df["share_with_first_dose"], "Share with 1st Dose")
+    fig.savefig(produces["fig_first_dose"], dpi=200, transparent=False, facecolor="w")
+
     share_immune = _calculate_share_immune_from_vaccination(df)
     share_immune.to_pickle(produces["share_immune"])
-    fig, ax = _plot_share_immune(share_immune)
-    fig.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
+    fig, ax = _plot_series(share_immune, "Share Immune Through Vaccination Over Time")
+    fig.savefig(produces["fig_share_immune"], dpi=200, transparent=False, facecolor="w")
 
 
 def _clean_vaccination_data(df):
@@ -59,10 +63,10 @@ def _calculate_share_immune_from_vaccination(df):
     return share_immune
 
 
-def _plot_share_immune(sr):
+def _plot_series(sr, title):
     fig, ax = plt.subplots(figsize=(10, 5))
     sns.lineplot(x=sr.index, y=sr)
-    ax.set_title("Share Immune Through Vaccination Over Time")
+    ax.set_title(title)
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     return fig, ax
