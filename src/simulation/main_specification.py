@@ -42,12 +42,12 @@ def build_main_scenarios(base_path):
     """
     n_seeds = 1 if FAST_FLAG else 15
 
-    if "predictions" in base_path:
+    if "predictions" in base_path.name:
         base_scenario = {
             "a_b_educ_options": {"school": PRIMARY_AND_GRADUATION_CLASSES},
             "educ_multiplier": 0.5,
         }
-    elif "fall" in base_path:
+    elif "fall" in base_path.name:
         base_scenario = {
             "a_b_educ_options": {},
             "educ_multiplier": 0.8,
@@ -69,6 +69,9 @@ def build_main_scenarios(base_path):
     if FAST_FLAG:
         scenarios = {
             "base_scenario": base_scenario,
+            "november_home_office_level": nov_home_office,
+            "spring_home_office_level": spring_home_office,
+            "keep_schools_closed": schools_stay_closed,
         }
     if not FAST_FLAG:
         scenarios = {

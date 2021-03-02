@@ -76,8 +76,8 @@ def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
             ax=ax,
             color=color,
             label=name_to_label[name] if name in name_to_label else name,
-            linewidth=2.5,
-            alpha=0.8,
+            linewidth=2.0,
+            alpha=0.6,
         )
         # plot individual runs to visualize statistical uncertainty
         for run in df.columns[:n_single_runs]:
