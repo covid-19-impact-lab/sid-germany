@@ -103,10 +103,13 @@ def get_october_to_christmas_policies(
 
     Args:
         a_b_educ_options (dict): For every education type ("school", "preschool",
-            "nursery") that is in an A/B schooling mode, add name of the mode
-            as key and the subgroup_query, others_attend and hygiene_multiplier.
-            Note to use the modes (e.g. school) and not the contact models
-            (e.g. educ_school_1) as keys.
+            "nursery") that is in an A/B schooling mode, add name of the type
+            as key and the others_attend, hygiene_multiplier and - if desired -
+            the subgroup_query, always_attend_query and rhythm as key-value dict.
+            Note to use the types (e.g. school) and not the contact models
+            (e.g. educ_school_1) as keys. The educ_multiplier is not used on top
+            of the supplied hygiene multiplier but only used for education models
+            that are not in A/B mode. Default is no A/B education.
         educ_multiplier (float): The multiplier for the education contact models
             that are not covered by the a_b_educ_options. This educ_multiplier is
             not used on top of the supplied hygiene multiplier but only used for

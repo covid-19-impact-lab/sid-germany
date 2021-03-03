@@ -137,8 +137,9 @@ def implement_a_b_education(
 
     Args:
         a_b_educ_options (dict): For every education type ("school", "preschool",
-            "nursery") that is in an A/B schooling mode, add name of the mode
-            as key and the subgroup_query, others_attend and hygiene_multiplier.
+            "nursery") that is in an A/B schooling mode, add name of the type
+            as key and the others_attend, hygiene_multiplier and - if desired -
+            the subgroup_query, always_attend_query and rhythm as key-value dict.
             Note to use the modes (e.g. school) and not the contact models
             (e.g. educ_school_1) as keys. The other supplied multiplier is
             not used on top of the supplied hygiene multiplier.
@@ -154,10 +155,8 @@ def implement_a_b_education(
         if educ_type in a_b_educ_options:
             policy["policy"] = partial(
                 a_b_education,
-                subgroup_query=a_b_educ_options[educ_type]["subgroup_query"],
-                others_attend=a_b_educ_options[educ_type]["others_attend"],
-                hygiene_multiplier=a_b_educ_options[educ_type]["hygiene_multiplier"],
                 group_id_column=contact_models[mod]["assort_by"][0],
+                **a_b_educ_options[educ_type],
             )
         else:
             assert 0 <= multiplier <= 1, "Only multipliers in [0, 1] allowed."
