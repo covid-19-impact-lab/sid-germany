@@ -17,7 +17,7 @@ PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-03-01")
 
 PRIMARY_AND_GRADUATION_CLASSES = {
-    "subgroup_query": "occupation == 'school' & (age < 12 | age in [16, 17, 18])",
+    "subgroup_query": "occupation == 'school' & (age < 11 | age in [16, 17, 18])",
     "others_attend": False,
     "hygiene_multiplier": 0.5,
 }
@@ -69,7 +69,6 @@ def build_main_scenarios(base_path):
     if FAST_FLAG:
         scenarios = {
             "base_scenario": base_scenario,
-            "november_home_office_level": nov_home_office,
             "spring_home_office_level": spring_home_office,
             "keep_schools_closed": schools_stay_closed,
         }
