@@ -99,11 +99,6 @@ def _build_initial_states(
 
     assert not df.index.duplicated().any()
     df["occupation"] = _create_occupation(df)
-    adult_at_home = (df["occupation"].isin(["stays home", "retired"])) & (
-        df["age"] >= 18
-    )
-    df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(any)
-    df["educ_contact_priority"] = _create_educ_contact_priority(df)
 
     df = add_contact_model_group_ids(
         df,
@@ -113,6 +108,12 @@ def _build_initial_states(
         other_weekly_dist=other_weekly_dist,
         seed=555,
     )
+
+    adult_at_home = (df["occupation"].isin(["stays home", "retired"])) & (
+        df["age"] >= 18
+    )
+    df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(any)
+    df["educ_contact_priority"] = _create_educ_contact_priority(df)
 
     df.index.name = "index"
     df = _only_keep_relevant_columns(df)
@@ -265,7 +266,7 @@ def _create_educ_contact_priority(df):
     at home.
 
     """
-    entitled_to_emergency_care = df["age"] < 13 & ~df["adult_in_hh_at_home"]
+    entitled_to_emergency_care = df.eval("age < 13 & ~adult_in_hh_at_home")
     share_entitled_children = entitled_to_emergency_care[df["age"] < 13].mean()
     threshold = 1 - share_entitled_children
 
