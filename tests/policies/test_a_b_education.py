@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from src.policies.single_policy_functions import _find_educ_workers_with_zero_students
 from src.policies.single_policy_functions import _find_size_zero_classes
 from src.policies.single_policy_functions import _get_a_b_children_staying_home
 from src.policies.single_policy_functions import _get_non_a_b_children_staying_home
@@ -215,3 +216,14 @@ def test_find_size_zero_classes():
     res = _find_size_zero_classes(contacts, states, col)
     expected = [22]
     assert res.tolist() == expected
+
+
+def test_find_educ_workers_with_zero_students():
+    col = "school_group_id_0"
+    states = pd.DataFrame()
+    states["educ_worker"] = [False, False, True, False, False, True, False]
+    states[col] = [11, 11, 11, 22, 22, 22, -1]
+    contacts = pd.Series([1, 1, 1, 0, 0, 1, 0])
+    res = _find_educ_workers_with_zero_students(contacts, states, col)
+    expected = pd.Series([False, False, False, False, False, True, False])
+    pd.testing.assert_series_equal(res, expected)

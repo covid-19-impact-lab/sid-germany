@@ -110,8 +110,8 @@ def _check_educ_contact_priority(df):
     assert (df[df["age"] >= 13]["educ_contact_priority"] == 0).all()
     children = df[df["age"] < 13]
     entitled = children["adult_in_hh_at_home"]
-    max_not_entitled = children[entitled]["educ_contact_priority"].max()
-    min_entitled = children[~entitled]["educ_contact_priority"].min()
+    max_not_entitled = children[~entitled]["educ_contact_priority"].max()
+    min_entitled = children[entitled]["educ_contact_priority"].min()
     assert max_not_entitled <= min_entitled
 
 
