@@ -8,6 +8,8 @@ Notes:
       people still go to work.
 
 """
+from zipfile import ZipFile
+
 import numpy as np
 import pandas as pd
 import pytask
@@ -18,19 +20,29 @@ from src.config import SRC
 
 @pytask.mark.depends_on(
     {
-        "mobility_data": SRC / "original_data" / "google_mobility_2021-02-10_DE.csv",
+        "mobility_data": BLD / "data" / "raw_time_series" / "google_mobility.zip",
         "hygiene_data": SRC / "original_data" / "cosmo_hygiene_2021-01-28.csv",
     }
 )
 @pytask.mark.produces(
     {
+        "mobility_raw": BLD
+        / "data"
+        / "raw_time_series"
+        / "2020_DE_Region_Mobility_Report.csv",
         "hygiene_score": BLD / "policies" / "hygiene_score.csv",
         "mobility_data": BLD / "policies" / "mobility_data.pkl",
         "work_multiplier": BLD / "policies" / "work_multiplier.csv",
     }
 )
 def task_process_mobility_and_hygiene_data(depends_on, produces):
-    mobility_data = pd.read_csv(depends_on["mobility_data"])
+    with ZipFile(depends_on["mobility_data"], "r") as zipobj:
+        zipobj.extract(
+            member="2020_DE_Region_Mobility_Report.csv",
+            path=produces["mobility_raw"].parent,
+        )
+
+    mobility_data = pd.read_csv(produces["mobility_raw"])
     hygiene_data = pd.read_csv(depends_on["hygiene_data"])
 
     hygiene_score = _calculate_hygiene_score_from_data(df=hygiene_data)

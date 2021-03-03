@@ -6,6 +6,7 @@ from src.config import BLD
 from src.config import SRC
 from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import PREDICT_PATH
+from src.simulation.main_specification import SCENARIO_START
 from src.simulation.plotting import plot_incidences
 from src.simulation.plotting import weekly_incidences_from_results
 
@@ -27,7 +28,9 @@ INCIDENCE_PATHS = {
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.produces(INCIDENCE_PATHS)
 def task_save_statistics_for_main_scenario(depends_on, produces):
+    # specs is not directly used as input, so drop it
     depends_on.pop("specs")
+
     results = {}
     scenario_names = NESTED_PARAMETRIZATION.keys()
     for name in scenario_names:
@@ -72,10 +75,10 @@ def task_plot_main_predictions(depends_on, outcome, title, produces):
     to_plot = {key[0]: df for key, df in incidences.items() if key[1] == outcome}
 
     name_to_label = {
-        "base_scenario": "Aktuelle Verordnungslage",
-        "nov_home_office_level": "Home-Office-Quote wie im November",
+        "base_scenario": "Status Quo beibehalten",
+        "november_home_office_level": "Home-Office-Quote wie im November",
         "spring_home_office_level": "Home-Office-Quote wie im 1. Lockdown",
-        "keep_schools_closed": "Schulen bleiben nach dem 15.2. geschlossen",
+        "keep_schools_closed": "Bildungseinrichtungen geschlossen",
     }
 
     fig, ax = plot_incidences(
@@ -85,5 +88,7 @@ def task_plot_main_predictions(depends_on, outcome, title, produces):
         name_to_label=name_to_label,
         rki=outcome,
     )
-    ax.axvline(pd.Timestamp("2021-02-15"), label="15. Februar")
-    fig.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
+    ax.axvline(SCENARIO_START, label="Szenarienbeginn")
+    fig.savefig(
+        produces["fig"], dpi=200, transparent=False, facecolor="w", bbox_inches="tight"
+    )

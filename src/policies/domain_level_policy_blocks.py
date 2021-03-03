@@ -17,7 +17,7 @@ The functions here expect that the domain names are part of contact model names.
 """
 from functools import partial
 
-from src.policies.single_policy_functions import implement_a_b_school_system_above_age
+from src.policies.single_policy_functions import a_b_education
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany
@@ -90,7 +90,7 @@ def reduce_educ_models(contact_models, block_info, multiplier):
         if contact_models[mod]["is_recurrent"]:
             policy["policy"] = partial(reduce_recurrent_model, multiplier=multiplier)
         else:
-            policy = multiplier
+            policy["policy"] = multiplier
 
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
@@ -127,31 +127,50 @@ def reopen_educ_models(
     return policies
 
 
-def implement_ab_schooling_with_reduced_other_educ_models(
+def implement_a_b_education(
     contact_models,
     block_info,
-    age_cutoff,
+    a_b_educ_options,
     multiplier,
 ):
-    """Split classes on a weekly basis for schools; keep other educ models open."""
-    policies = reduce_educ_models(contact_models, block_info, multiplier)
+    """Split education groups for some children and apply a hygiene multiplier.
 
+    Args:
+        a_b_educ_options (dict): For every education type ("school", "preschool",
+            "nursery") that is in an A/B schooling mode, add name of the mode
+            as key and the subgroup_query, others_attend and hygiene_multiplier.
+            Note to use the modes (e.g. school) and not the contact models
+            (e.g. educ_school_1) as keys. The other supplied multiplier is
+            not used on top of the supplied hygiene multiplier.
+        multiplier (float): multiplier for the contact models without A/B
+            schooling. Set to zero to shut them down.
+
+    """
+    policies = {}
     educ_models = _get_educ_models(contact_models)
-    school_models = [
-        cm for cm in educ_models if "school" in cm and "preschool" not in cm
-    ]
-
-    for mod in school_models:
-        pol_name = f"{block_info['prefix']}_{mod}"
-        assert pol_name in policies
-
-        new_policy = _get_base_policy(mod, block_info)
-        new_policy["policy"] = partial(
-            implement_a_b_school_system_above_age,
-            age_cutoff=age_cutoff,
-        )
-        policies[pol_name] = new_policy
-
+    for mod in educ_models:
+        policy = _get_base_policy(mod, block_info)
+        educ_type = _determine_educ_type(mod)
+        if educ_type in a_b_educ_options:
+            policy["policy"] = partial(
+                a_b_education,
+                subgroup_query=a_b_educ_options[educ_type]["subgroup_query"],
+                others_attend=a_b_educ_options[educ_type]["others_attend"],
+                hygiene_multiplier=a_b_educ_options[educ_type]["hygiene_multiplier"],
+                group_id_column=contact_models[mod]["assort_by"][0],
+            )
+        else:
+            assert 0 <= multiplier <= 1, "Only multipliers in [0, 1] allowed."
+            if multiplier == 0:
+                policy["policy"] = shut_down_model
+            # currently all educ models are recurrent but don't want to assume it
+            elif contact_models[mod]["is_recurrent"]:
+                policy["policy"] = partial(
+                    reduce_recurrent_model, multiplier=multiplier
+                )
+            else:
+                policy["policy"] = multiplier
+        policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
 
 
@@ -227,3 +246,25 @@ def _get_work_models(contact_models):
 
 def _get_other_models(contact_models):
     return [cm for cm in contact_models if "other" in cm]
+
+
+def _determine_educ_type(model_name):
+    """Determine whether an education model is school, preschool or nursery.
+
+    Args:
+        model_name (str): name of the education model, e.g. educ_school_0.
+
+    """
+    name_parts = model_name.split("_")
+    msg = f"The name of your education model {model_name} does not "
+    assert len(name_parts) == 3, msg + "consist of three parts."
+    assert name_parts[0] == "educ", (
+        msg + f"have educ as first part but {name_parts[0]}."
+    )
+    assert name_parts[1] in ["nursery", "preschool", "school"], (
+        msg + "belong to ['nursery', 'preschool', 'school']."
+    )
+    assert name_parts[2].isdigit(), (
+        msg + f"have a number as last part but {name_parts[2]}"
+    )
+    return name_parts[1]

@@ -76,8 +76,8 @@ def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
             ax=ax,
             color=color,
             label=name_to_label[name] if name in name_to_label else name,
-            linewidth=2.5,
-            alpha=0.8,
+            linewidth=2.0,
+            alpha=0.6,
         )
         # plot individual runs to visualize statistical uncertainty
         for run in df.columns[:n_single_runs]:
@@ -121,8 +121,6 @@ def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
     ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
     ax.set_title(title)
     ax.legend(loc="upper center", bbox_to_anchor=(-0.0, -0.5, 1, 0.2), ncol=2)
-    fig.tight_layout()
-
     return fig, ax
 
 

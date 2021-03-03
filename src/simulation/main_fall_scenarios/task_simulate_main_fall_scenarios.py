@@ -6,13 +6,14 @@ from sid import get_simulate_func
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.config import SRC
-from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
 from src.policies.combine_policies_over_periods import get_october_to_christmas_policies
 from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import FALL_PATH
+from src.simulation.main_specification import get_simulation_kwargs
+
 
 NESTED_PARAMETRIZATION = build_main_scenarios(FALL_PATH)
 PARAMETRIZATION = [
@@ -32,24 +33,28 @@ DEPENDENCIES = {
     "specs": SRC / "simulation" / "main_specification.py",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
+    "test_shares_by_age_group": BLD
+    / "data"
+    / "testing"
+    / "test_shares_by_age_group.pkl",
+    "positivity_rate_by_age_group": BLD
+    / "data"
+    / "testing"
+    / "positivity_rate_by_age_group.pkl",
+    "positivity_rate_overall": BLD / "data" / "testing" / "positivity_rate_overall.pkl",
 }
 if FAST_FLAG:
     DEPENDENCIES["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
 
 
-@pytask.mark.skip
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
+    # determine dates
     start_date = pd.Timestamp("2020-10-15")
     end_date = pd.Timestamp("2020-11-15") if FAST_FLAG else pd.Timestamp("2020-12-23")
-
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
-
-    initial_states = pd.read_parquet(depends_on["initial_states"])
-    share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
-    params = pd.read_pickle(depends_on["params"])
 
     initial_conditions = create_initial_conditions(
         start=init_start,
@@ -57,18 +62,19 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
         seed=344490,
         reporting_delay=5,
     )
-    contact_models = get_all_contact_models()
+
+    kwargs = get_simulation_kwargs(
+        depends_on, init_start, end_date, extend_ars_dfs=False
+    )
+
     policies = get_october_to_christmas_policies(
-        contact_models=contact_models, **scenario
+        contact_models=kwargs["contact_models"], **scenario
     )
     simulate = get_simulate_func(
-        params=params,
-        initial_states=initial_states,
-        contact_models=contact_models,
+        **kwargs,
         contact_policies=policies,
         duration={"start": start_date, "end": end_date},
         initial_conditions=initial_conditions,
-        share_known_cases=share_known_cases,
         path=produces.parent,
         seed=seed,
         saved_columns={
@@ -78,4 +84,4 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
             "other": ["new_known_case"],
         },
     )
-    simulate(params)
+    simulate(kwargs["params"])

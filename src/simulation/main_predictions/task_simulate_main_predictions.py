@@ -6,13 +6,17 @@ from sid import get_simulate_func
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.config import SRC
-from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (  # noqa
     create_initial_conditions,
 )
-from src.policies.combine_policies_over_periods import get_jan_to_april_2021_policies
+from src.policies.combine_policies_over_periods import get_enacted_policies_of_2021
+from src.policies.full_policy_blocks import get_lockdown_with_multipliers
+from src.policies.policy_tools import combine_dictionaries
 from src.simulation.main_specification import build_main_scenarios
+from src.simulation.main_specification import get_simulation_kwargs
 from src.simulation.main_specification import PREDICT_PATH
+from src.simulation.main_specification import SCENARIO_START
+
 
 NESTED_PARAMETRIZATION = build_main_scenarios(PREDICT_PATH)
 PARAMETRIZATION = [
@@ -32,24 +36,28 @@ DEPENDENCIES = {
     "specs": SRC / "simulation" / "main_specification.py",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
+    "test_shares_by_age_group": BLD
+    / "data"
+    / "testing"
+    / "test_shares_by_age_group.pkl",
+    "positivity_rate_by_age_group": BLD
+    / "data"
+    / "testing"
+    / "positivity_rate_by_age_group.pkl",
+    "positivity_rate_overall": BLD / "data" / "testing" / "positivity_rate_overall.pkl",
 }
 if FAST_FLAG:
     DEPENDENCIES["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
 
 
-@pytask.mark.skip
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
-    start_date = (pd.Timestamp.today() - pd.Timedelta(days=15)).normalize()
-    end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
+    start_date = pd.Timestamp("2021-02-15")
 
+    end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
-
-    initial_states = pd.read_parquet(depends_on["initial_states"])
-    share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
-    params = pd.read_pickle(depends_on["params"])
 
     initial_conditions = create_initial_conditions(
         start=init_start,
@@ -58,21 +66,45 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
         reporting_delay=5,
     )
 
-    contact_models = get_all_contact_models()
-    policies = get_jan_to_april_2021_policies(
-        contact_models=contact_models,
-        start_date=start_date,
-        end_date=end_date,
-        **scenario
+    kwargs = get_simulation_kwargs(
+        depends_on, init_start, end_date, extend_ars_dfs=True
     )
+
+    scenario_name = produces.parent.name
+    enacted_policies = get_enacted_policies_of_2021(
+        contact_models=kwargs["contact_models"],
+        scenario_start=SCENARIO_START,
+    )
+    work_multiplier = _process_work_multiplier(
+        start_date=SCENARIO_START,
+        end_date=end_date,
+        # 0.68 was the level between 10th of Jan and carnival
+        work_fill_value=scenario.get("work_fill_value", 0.68),
+    )
+    scenario_policies = get_lockdown_with_multipliers(
+        contact_models=kwargs["contact_models"],
+        block_info={
+            "start_date": SCENARIO_START,
+            "end_date": end_date,
+            "prefix": scenario_name,
+        },
+        multipliers={
+            "work": work_multiplier,
+            "other": scenario["other_multiplier"]
+            if "other_multiplier" in scenario
+            else 0.45,
+            "educ": scenario["educ_multiplier"],
+        },
+        a_b_educ_options=scenario["a_b_educ_options"],
+    )
+
+    policies = combine_dictionaries([enacted_policies, scenario_policies])
+
     simulate = get_simulate_func(
-        params=params,
-        initial_states=initial_states,
-        contact_models=contact_models,
+        **kwargs,
         contact_policies=policies,
         duration={"start": start_date, "end": end_date},
         initial_conditions=initial_conditions,
-        share_known_cases=share_known_cases,
         path=produces.parent,
         seed=seed,
         saved_columns={
@@ -82,4 +114,29 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
             "other": ["new_known_case"],
         },
     )
-    simulate(params)
+    simulate(kwargs["params"])
+
+
+def _process_work_multiplier(
+    start_date,
+    end_date,
+    work_multiplier=None,
+    work_fill_value=0.68,  # level between 10th of Jan and carnival
+):
+    dates = pd.date_range(start_date, end_date)
+    assert (
+        work_fill_value is None or work_multiplier is None
+    ), "work_fill_value may only be supplied if work_multiplier is None or vice versa"
+
+    if isinstance(work_multiplier, float):
+        return pd.Series(data=work_multiplier, index=dates)
+    elif isinstance(work_multiplier, pd.Series):
+        assert (
+            work_multiplier.index == dates
+        ).all(), f"Index is not consecutive from {start_date} to {end_date}"
+    elif work_multiplier is None:
+        default_path = BLD / "policies" / "work_multiplier.csv"
+        default = pd.read_csv(default_path, parse_dates=["date"], index_col="date")
+        expanded = default.reindex(index=dates)
+        expanded = expanded.fillna(work_fill_value)
+    return expanded

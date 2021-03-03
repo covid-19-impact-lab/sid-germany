@@ -5,50 +5,37 @@ from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 
 
-def get_jan_to_april_2021_policies(
+def get_enacted_policies_of_2021(
     contact_models,
-    start_date,
-    end_date,
+    scenario_start,
     other_multiplier=0.45,
-    work_multiplier=None,
-    work_fill_value=0.7,  # level of 1st half of January
-    educ_multiplier=0.8,  # ~ schools open Feb 15th
 ):
-    """Get policies for January to April 2021.
+    """Get enacted policies of 2021.
+
+    This will be updated continuously.
 
     Args:
-        contat_models (dict)
-        start_date: convertible to pandas.Timestamp
-        end_date: convertible to pandas.Timestamp
-        other_multiplier (float): leisure multiplier to be used for the entire
-            time period.
-        work_multiplier (float or pandas.Series or pandas.DataFrame):
-            If None, the google mobility data are used and the user must supply
-            a `work_fill_value`.
-            If the work_multiplier is a float it's constant for the entire
-            time period. If a Series or DataFrame is supplied the index must be
-            pandas.date_range(start_date, end_date) and possible columns are
-            the German federal states.
+        contact_models (dict)
+        scenario_start (str): date until which the policies should run.
+            Should be of format yyyy-mm-dd.
+
+    Returns:
+        policies (dict)
 
     """
-    assert pd.Timestamp(start_date) >= pd.Timestamp(
-        "2020-12-27"
-    ), "start date must lie after Dec, 26th."
-    assert pd.Timestamp(end_date) <= pd.Timestamp(
-        "2021-03-31"
-    ), "end date must lie before April, 1st."
-
-    work_multiplier = _process_work_multiplier(
-        work_multiplier, work_fill_value, start_date, end_date
+    assert pd.Timestamp(scenario_start) <= pd.Timestamp("2021-03-01"), (
+        "You must update the `get_enacted_policies_of_2021` function to support "
+        "such a late scenario start."
     )
 
+    work_multiplier = _get_work_multiplier(scenario_start)
     to_combine = [
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-01-02",
                 "end_date": "2021-01-31",
-                "prefix": "christmas_to_february",
+                "prefix": "january",
             },
             multipliers={
                 "educ": 0.0,
@@ -60,8 +47,8 @@ def get_jan_to_april_2021_policies(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-02-01",
-                "end_date": "2021-02-14",
-                "prefix": "first_half_february",
+                "end_date": "2021-02-21",
+                "prefix": "february1",
             },
             multipliers={
                 "educ": 0.0,
@@ -69,30 +56,35 @@ def get_jan_to_april_2021_policies(
                 "other": other_multiplier,
             },
         ),
+        # very varied schooling across German states
+        # very often A / B schooling, only primaries (1-4)
+        # and graduating classes are open
+        # we simplify to have up to grade 5 open everywhere
+        # in A / B schooling and older youths stay home.
+        # We ignore Notbetreuung like this.
+        # sources:
+        # - https://taz.de/Schulen-in-Coronazeiten/!5753515/
+        # - https://tinyurl.com/2jfm4tp8
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
-                "start_date": "2021-02-15",
-                "end_date": "2021-02-28",
-                "prefix": "2nd_feb_half",
+                "start_date": "2021-02-22",
+                "end_date": scenario_start,
+                "prefix": "educ_reopen_spring_2021",
             },
             multipliers={
-                "educ": educ_multiplier,
+                # in fall the educ multiplier was estimated to be 0.8.
+                # Here, it is 0.5 to capture additional hygiene measures.
+                "educ": 0.5,
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-        ),
-        get_lockdown_with_multipliers(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2021-03-01",
-                "end_date": "2021-03-31",
-                "prefix": "march",
-            },
-            multipliers={
-                "educ": educ_multiplier,
-                "work": work_multiplier,
-                "other": other_multiplier,
+            a_b_educ_options={
+                "school": {
+                    "subgroup_query": "age <= 12 | age >15",
+                    "others_attend": False,
+                    "hygiene_multiplier": 0.5,
+                },
             },
         ),
     ]
@@ -101,25 +93,34 @@ def get_jan_to_april_2021_policies(
 
 def get_october_to_christmas_policies(
     contact_models,
+    a_b_educ_options=None,
+    educ_multiplier=0.8,
     other_multiplier=None,
     work_multiplier=None,
     work_fill_value=None,
-    educ_multiplier=0.8,
 ):
     """Policies from October 1st 2020 until Christmas 2020.
 
     Args:
-        contact_models (dict)
+        a_b_educ_options (dict): For every education type ("school", "preschool",
+            "nursery") that is in an A/B schooling mode, add name of the mode
+            as key and the subgroup_query, others_attend and hygiene_multiplier.
+            Note to use the modes (e.g. school) and not the contact models
+            (e.g. educ_school_1) as keys.
+        educ_multiplier (float): The multiplier for the education contact models
+            that are not covered by the a_b_educ_options. This educ_multiplier is
+            not used on top of the supplied hygiene multiplier but only used for
+            education models that are not in A/B mode.
+
         work_multiplier (pandas.Series, optional): Series from Oct 1st to Dec 23rd.
             values are between 0 and 1. If not given, the work_multipliers
             implied by the google mobility reports are used.
-        educ_multiplier (float, optional): This is the education multiplier used
-            starting 2nd of November. Default is 0.8, i.e. schools were normally
-            open until December, 16th.
         work_fill_value (float, optional): If given, the work_multiplier Series will
             be set to this value after November, 1st.
 
     """
+    if a_b_educ_options is None:
+        a_b_educ_options = {}
     dates = pd.date_range("2020-10-01", "2020-12-23")
     if work_multiplier is None:
         work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
@@ -187,6 +188,7 @@ def get_october_to_christmas_policies(
                 "work": work_multiplier,
                 "other": 0.45 if other_multiplier is None else other_multiplier,
             },
+            a_b_educ_options=a_b_educ_options,
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -200,6 +202,7 @@ def get_october_to_christmas_policies(
                 "work": work_multiplier,
                 "other": 0.55 if other_multiplier is None else other_multiplier,
             },
+            a_b_educ_options=a_b_educ_options,
         ),
         # Until start of Christmas vacation
         get_lockdown_with_multipliers(
@@ -233,21 +236,13 @@ def get_october_to_christmas_policies(
     return combine_dictionaries(to_combine)
 
 
-def _process_work_multiplier(work_multiplier, fill_value, start_date, end_date):
-    dates = pd.date_range(start_date, end_date)
-    assert (
-        fill_value is None or work_multiplier is None
-    ), "fill_value may only be supplied if work_multiplier is None or vice versa"
-
-    if isinstance(work_multiplier, float):
-        return pd.Series(data=work_multiplier, index=dates)
-    elif isinstance(work_multiplier, pd.Series):
-        assert (
-            work_multiplier.index == dates
-        ).all(), f"Index is not consecutive from {start_date} to {end_date}"
-    elif work_multiplier is None:
-        default_path = BLD / "policies" / "work_multiplier.csv"
-        default = pd.read_csv(default_path, parse_dates=["date"], index_col="date")
-        expanded = default.reindex(index=dates)
-        expanded = expanded.fillna(fill_value)
-    return expanded
+def _get_work_multiplier(scenario_start):
+    work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
+    work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
+    work_multiplier = work_multiplier.set_index("date")
+    dates = pd.date_range(pd.Timestamp("2021-01-02"), pd.Timestamp(scenario_start))
+    if set(dates).issubset(work_multiplier.index):
+        work_multiplier = work_multiplier.loc[dates]
+    else:
+        work_multiplier = work_multiplier.reindex(dates).fillna(method="ffill")
+    return work_multiplier

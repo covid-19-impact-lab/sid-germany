@@ -22,8 +22,19 @@ def states():
     states["date"] = DATE
     # 1, 1, 2 infections => 4 newly_infected
     states["newly_infected"] = [True, False, True] + [False] * 5 + [True, True]
-    states["symptomatic"] = [True, False, True] + [False] * 6 + [True]
+    states["cd_symptoms_true"] = [-1, 2, -1] + [-5] * 6 + [-1]
     return states
+
+
+@pytest.fixture(scope="function")
+def params():
+    share_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
+    params = pd.DataFrame(
+        1.0,
+        columns=["value"],
+        index=pd.MultiIndex.from_tuples([share_tuple]),
+    )
+    return params
 
 
 def test_scale_demand_up_or_down(states):
@@ -59,8 +70,7 @@ def test_calculate_positive_tests_to_distribute_per_age_group():
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
-def test_demand_test_zero_remainder(states):
-    params = None
+def test_demand_test_zero_remainder(states, params):
     share_known_cases = 1
     positivity_rate_overall = 0.25
     test_shares_by_age_group = pd.Series(
@@ -76,21 +86,47 @@ def test_demand_test_zero_remainder(states):
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
-        seed=394,
+        seed=5999,
     )
-    expected = states["symptomatic"].copy(deep=True)
+    expected = states["cd_symptoms_true"] == -1
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
-def test_demand_test_non_zero_remainder(states):
-    params = None
+def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states, params):
+    params.loc[("test_demand", "symptoms", "share_symptomatic_requesting_test")] = 0.5
+    share_known_cases = 1
+    positivity_rate_overall = 0.25
+    test_shares_by_age_group = pd.Series(
+        [0.5, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
+    )
+    positivity_rate_by_age_group = pd.Series(
+        [0.125, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
+    )
+    states["infectious"] = states.index.isin([1, 4, 7])
+
+    expected = pd.Series(False, index=states.index)
+    expected.loc[0, 4, 7] = True
+
+    res = demand_test(
+        states=states,
+        params=params,
+        share_known_cases=share_known_cases,
+        positivity_rate_overall=positivity_rate_overall,
+        test_shares_by_age_group=test_shares_by_age_group,
+        positivity_rate_by_age_group=positivity_rate_by_age_group,
+        seed=394,
+    )
+    pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+def test_demand_test_non_zero_remainder(states, params):
     states["newly_infected"] = True
     states["infectious"] = (
         [True, True] + [True, True, False, False] + [True, False, True, True]
     )
     # tests to distribute: 2 per individual.
     # 0-4 get one extra. 5-14 are even. 15-34 have two tests removed.
-    states["symptomatic"] = [True, False] + [True, True, False, False] + [True] * 4
+    states["cd_symptomatic_true"] = [-1, 2] + [-1, -1, -10, 30] + [-1] * 4
 
     share_known_cases = 1
     positivity_rate_overall = 1 / 3

@@ -7,7 +7,6 @@ from src.policies.single_policy_functions import (
     _identify_individuals_with_risk_contacts,
 )
 from src.policies.single_policy_functions import _interpolate_activity_level
-from src.policies.single_policy_functions import implement_a_b_school_system_above_age
 from src.policies.single_policy_functions import (
     reduce_contacts_when_condition_among_recurrent_contacts,
 )
@@ -105,29 +104,6 @@ def test_reduce_recurrent_model_one_in_four():
 
     # check that people who stayed home before policy still stay home
     assert (calculated[contacts == 0]).sum() == 0
-
-
-def test_a_b_school_system_above_age_0(fake_states):
-    calculated = implement_a_b_school_system_above_age(
-        states=fake_states,
-        contacts=pd.Series(1, index=fake_states.index),
-        seed=123,
-        age_cutoff=0,
-    )
-
-    expected = pd.Series([0, 1] * 4 + [1, 1])
-    assert_series_equal(calculated, expected)
-
-
-def test_a_b_school_system_above_age_5(fake_states):
-    calculated = implement_a_b_school_system_above_age(
-        states=fake_states,
-        contacts=pd.Series(1, index=fake_states.index),
-        seed=123,
-        age_cutoff=5,
-    )
-    expected = pd.Series([1] * 6 + [0] + [1] * 3)
-    assert_series_equal(calculated, expected)
 
 
 def test_reduce_work_model(fake_states):

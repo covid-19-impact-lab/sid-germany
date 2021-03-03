@@ -20,16 +20,12 @@ this is defined as (1 - multiplier) or (1 / multiplier) which makes them error p
 Thus we do not use anything but multipliers here!
 
 """
-from src.policies.domain_level_policy_blocks import (
-    implement_ab_schooling_with_reduced_other_educ_models,
-)
-from src.policies.domain_level_policy_blocks import reduce_educ_models
+from src.policies.domain_level_policy_blocks import implement_a_b_education
 from src.policies.domain_level_policy_blocks import reduce_other_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
 from src.policies.domain_level_policy_blocks import reopen_educ_models
 from src.policies.domain_level_policy_blocks import reopen_other_models
 from src.policies.domain_level_policy_blocks import reopen_work_models
-from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.domain_level_policy_blocks import shut_down_other_models
 from src.policies.policy_tools import combine_dictionaries
 
@@ -91,19 +87,32 @@ def get_german_reopening_phase(
     return policies
 
 
-def get_lockdown_with_multipliers(contact_models, block_info, multipliers):
-    """Reduce all contact models except for households by multipliers."""
-    if multipliers["educ"] == 0.0:
-        educ_policies = shut_down_educ_models(contact_models, block_info)
-    elif multipliers["educ"] < 1.0:
-        educ_policies = reduce_educ_models(
-            contact_models, block_info, multipliers["educ"]
-        )
-    elif multipliers["educ"] == 1:
-        educ_policies = {}
-    else:
-        raise ValueError("Only education multipliers <= 1 allowed.")
+def get_lockdown_with_multipliers(
+    contact_models, block_info, multipliers, a_b_educ_options=None
+):
+    """Reduce all contact models except for households by multipliers.
 
+    Args:
+        multipliers (dict): Contains keys "educ", "work" and "other".
+            The "educ" entry is only applied to the education models
+            that are not in A/B mode.
+        a_b_educ_options (dict): For every education type ("school", "preschool",
+            "nursery") that is in an A/B schooling mode, add name of the mode
+            as key and the subgroup_query, others_attend and hygiene_multiplier.
+            Note to use the modes (e.g. school) and not the contact models
+            (e.g. educ_school_1) as keys. multipliers["educ"] is
+            not used on top of the supplied hygiene multiplier but only used for
+            education models that are not in A/B mode. Default is no A/B education.
+
+    """
+    if a_b_educ_options is None:
+        a_b_educ_options = {}
+    educ_policies = implement_a_b_education(
+        contact_models=contact_models,
+        block_info=block_info,
+        a_b_educ_options=a_b_educ_options,
+        multiplier=multipliers["educ"],
+    )
     work_policies = reduce_work_models(contact_models, block_info, multipliers["work"])
     if multipliers["other"] == 0.0:
         other_policies = shut_down_other_models(contact_models, block_info)
@@ -114,27 +123,8 @@ def get_lockdown_with_multipliers(contact_models, block_info, multipliers):
     elif multipliers["other"] == 1:
         other_policies = {}
     else:
-        raise ValueError("Only education multipliers <= 1 allowed.")
+        raise ValueError("Only other multipliers <= 1 allowed.")
 
     to_combine = [educ_policies, work_policies, other_policies]
-    policies = combine_dictionaries(to_combine)
-    return policies
-
-
-def get_lockdown_with_multipliers_with_ab_schooling(
-    contact_models, block_info, multipliers, age_cutoff
-):
-
-    to_combine = [
-        implement_ab_schooling_with_reduced_other_educ_models(
-            contact_models=contact_models,
-            block_info=block_info,
-            age_cutoff=age_cutoff,
-            multiplier=multipliers["educ"],
-        ),
-        reduce_work_models(contact_models, block_info, multipliers["work"]),
-        reduce_other_models(contact_models, block_info, multipliers["other"]),
-    ]
-
     policies = combine_dictionaries(to_combine)
     return policies

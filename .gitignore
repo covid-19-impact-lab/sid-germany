@@ -20,7 +20,6 @@ src/exploration/estimation/
 *.xml
 *.synctex.gz
 *.nav
-*.pdf
 *.snm
 *.toc
 *.bib.bak
