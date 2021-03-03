@@ -38,6 +38,7 @@ def task_check_initial_states(depends_on):
     other_weekly_dist = pd.read_pickle(depends_on["other_weekly_dist"])
 
     _check_work_contact_priority(df)
+    _check_educ_contact_priority(df)
     _check_educ_group_ids(df)
     _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
     _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
@@ -101,6 +102,17 @@ def _check_work_contact_priority(df):
     assert workers_priority.between(0.0, 1.0).all()
     assert workers_priority.std() > 0.2
     assert (workers_priority.mean() < 0.52) & (workers_priority.mean() > 0.48)
+
+
+def _check_educ_contact_priority(df):
+    assert df["adult_in_hh_at_home"].notnull().all()
+    assert df["educ_contact_priority"].between(0.0, 1.0).all()
+    assert (df[df["age"] >= 13]["educ_contact_priority"] == 0).all()
+    children = df[df["age"] < 13]
+    entitled = children["adult_in_hh_at_home"]
+    max_not_entitled = children[entitled]["educ_contact_priority"].max()
+    min_entitled = children[~entitled]["educ_contact_priority"].min()
+    assert max_not_entitled <= min_entitled
 
 
 def _check_educ_group_ids(df):

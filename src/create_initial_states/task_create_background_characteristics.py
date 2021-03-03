@@ -99,6 +99,11 @@ def _build_initial_states(
 
     assert not df.index.duplicated().any()
     df["occupation"] = _create_occupation(df)
+    adult_at_home = (df["occupation"].isin(["stays home", "retired"])) & (
+        df["age"] >= 18
+    )
+    df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(any)
+    df["educ_contact_priority"] = _create_educ_contact_priority(df)
 
     df = add_contact_model_group_ids(
         df,
@@ -251,6 +256,32 @@ def _create_occupation(df):
     return occupation
 
 
+def _create_educ_contact_priority(df):
+    """Create an educ contact priority Series.
+
+    The values are 0 for anyone above 12 and uniform from 0 to 1 below.
+    Children in households where no adult is retired or stays home have a
+    higher educ contact priority than chidldren where at least one adult is
+    at home.
+
+    """
+    entitled_to_emergency_care = df["age"] < 13 & ~df["adult_in_hh_at_home"]
+    share_entitled_children = entitled_to_emergency_care[df["age"] < 13].mean()
+    threshold = 1 - share_entitled_children
+
+    educ_contact_priority = pd.Series(0, index=df.index)
+    low_priorities = np.random.uniform(low=0, high=threshold, size=len(df))
+    high_priorities = np.random.uniform(low=threshold, high=1, size=len(df))
+    not_low_priority_children = entitled_to_emergency_care | (df["age"] >= 13)
+    educ_contact_priority = educ_contact_priority.where(
+        ~entitled_to_emergency_care, high_priorities
+    )
+    educ_contact_priority = educ_contact_priority.where(
+        not_low_priority_children, low_priorities
+    )
+    return educ_contact_priority
+
+
 def _only_keep_relevant_columns(df):
     keep = [
         "age",  # used by `implement_a_b_school_system_above_age`
@@ -282,6 +313,8 @@ def _only_keep_relevant_columns(df):
         "school_group_id_0_a_b",
         "school_group_id_1_a_b",
         "school_group_id_2_a_b",
+        "adult_in_hh_at_home",
+        "educ_contact_priority",
         "work_daily_group_id",
         "work_weekly_group_id_0",
         "work_weekly_group_id_1",
