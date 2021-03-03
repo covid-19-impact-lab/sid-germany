@@ -467,6 +467,41 @@ def a_b_education(
     return contacts
 
 
+def emergency_care(
+    states, contacts, seed, group_id_column, hygiene_multiplier, always_attend_query
+):
+    """Implement emergency care where only a fixed subset of children attend.
+
+    Args:
+        group_id_column (str): name of the column identifying which indivdiuals
+            attend class together, i.e. the assort by column of the current
+            contact model. We assume that the column identifying which
+            individuals belong to the A or B group is group_id_column + "_a_b".
+        hygiene_multiplier (float): Applied to all children that still attend
+            educational facilities.
+        always_attend_query (str, optional): query string that identifies
+            children always going to school.
+
+    """
+    contacts = contacts.copy(deep=True)
+    contacts[~states["educ_worker"] & ~states.eval(always_attend_query)] = 0
+
+    # since our educ models are all recurrent and educ_workers must always attend
+    # we only apply the hygiene multiplier to the students
+    contacts[~states["educ_worker"]] = reduce_recurrent_model(
+        states[~states["educ_worker"]],
+        contacts[~states["educ_worker"]],
+        seed,
+        hygiene_multiplier,
+    )
+
+    teachers_with_0_students = _find_educ_workers_with_zero_students(
+        contacts=contacts, states=states, group_id_column=group_id_column
+    )
+    contacts[teachers_with_0_students] = 0
+    return contacts
+
+
 def _get_a_b_children_staying_home(
     states, subgroup_query, group_column, always_attend_query, date, rhythm
 ):

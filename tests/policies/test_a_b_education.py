@@ -7,6 +7,7 @@ from src.policies.single_policy_functions import _find_size_zero_classes
 from src.policies.single_policy_functions import _get_a_b_children_staying_home
 from src.policies.single_policy_functions import _get_non_a_b_children_staying_home
 from src.policies.single_policy_functions import a_b_education
+from src.policies.single_policy_functions import emergency_care
 
 
 @pytest.fixture
@@ -226,4 +227,24 @@ def test_find_educ_workers_with_zero_students():
     contacts = pd.Series([1, 1, 1, 0, 0, 1, 0])
     res = _find_educ_workers_with_zero_students(contacts, states, col)
     expected = pd.Series([False, False, False, False, False, True, False])
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_emergency_care():
+    states = pd.DataFrame()
+    states["educ_worker"] = [True, False, True, False, False]
+    states["always_attend"] = [False, False, True, True, False]
+    states["school_group_id_0"] = [1, 1, 2, 2, -1]
+    contacts = pd.Series([1, 1, 1, 1, 0], index=states.index)
+    res = emergency_care(
+        contacts=contacts,
+        states=states,
+        seed=333,
+        group_id_column="school_group_id_0",
+        always_attend_query="always_attend",
+        hygiene_multiplier=1.0,
+    )
+    # educ_worker without class, child not in emergency care, educ_worker with class,
+    # attends, outside educ system
+    expected = pd.Series([0, 0, 1, 1, 0])
     pd.testing.assert_series_equal(res, expected)
