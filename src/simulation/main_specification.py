@@ -6,6 +6,10 @@ import pandas as pd
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.contact_models.get_contact_models import get_all_contact_models
+from src.policies.combine_policies_over_periods import (
+    emergency_care_with_vacation_effect,
+)
+from src.policies.combine_policies_over_periods import get_educ_options_starting_feb_22
 from src.policies.policy_tools import combine_dictionaries
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
@@ -15,12 +19,6 @@ from src.testing.testing_models import process_tests
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-03-01")
-
-PRIMARY_AND_GRADUATION_CLASSES = {
-    "subgroup_query": "occupation == 'school' & (age < 12 | age in [16, 17, 18])",
-    "others_attend": False,
-    "hygiene_multiplier": 0.5,
-}
 
 
 def build_main_scenarios(base_path):
@@ -43,15 +41,11 @@ def build_main_scenarios(base_path):
     n_seeds = 1 if FAST_FLAG else 10
 
     if "predictions" in base_path.name:
-        base_scenario = {
-            "a_b_educ_options": {"school": PRIMARY_AND_GRADUATION_CLASSES},
-            "educ_multiplier": 0.5,
-        }
+        base_scenario = combine_dictionaries(
+            [{"educ_multiplier": 0.5}, get_educ_options_starting_feb_22()]
+        )
     elif "fall" in base_path.name:
-        base_scenario = {
-            "a_b_educ_options": {},
-            "educ_multiplier": 0.8,
-        }
+        base_scenario = {"educ_multiplier": 0.8}
     else:
         raise ValueError(
             f"Unknown situation: {base_path.name}. "
@@ -64,12 +58,13 @@ def build_main_scenarios(base_path):
     spring_home_office = combine_dictionaries(
         [base_scenario, {"work_fill_value": 0.56}]
     )
-    schools_stay_closed = {"a_b_educ_options": {}, "educ_multiplier": 0.0}
+    schools_stay_closed = combine_dictionaries(
+        [{"educ_multiplier": None}, emergency_care_with_vacation_effect()]
+    )
 
     if FAST_FLAG:
         scenarios = {
             "base_scenario": base_scenario,
-            "november_home_office_level": nov_home_office,
             "spring_home_office_level": spring_home_office,
             "keep_schools_closed": schools_stay_closed,
         }
