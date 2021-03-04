@@ -29,16 +29,19 @@ def get_educ_options_starting_feb_22(school_multiplier=0.5):
         - https://bit.ly/2O3aS3h
 
     """
-    emergency_options = {}
-    a_b_educ_options = {
+    emergency_options = {
         "school": {
-            "others_attend": False,
             "hygiene_multiplier": school_multiplier,
-            # to cover graduating classes
-            "subgroup_query": "age in [16, 17, 18]",
             # Demand seems to be lower the older the children
             # but only data from Bavaria available: https://bit.ly/3sGHZbJ
             "always_attend_query": "educ_contact_priority > 0.9",
+        }
+    }
+    a_b_educ_options = {
+        "school": {
+            "others_attend": False,
+            # to cover graduating classes
+            "subgroup_query": "age in [16, 17, 18]",
             # only very anecdotally the current most common rhythm.
             "rhythm": "daily",
         }
@@ -76,6 +79,12 @@ def _expanded_emergency_care_with_graduating_classes_in_a_b_mode(
 
     """
     emergency_options = {
+        "school": {
+            "hygiene_multiplier": school_multiplier,
+            # Demand seems to be lower the older the children
+            # but only data from Bavaria available: https://bit.ly/3sGHZbJ
+            "always_attend_query": "educ_contact_priority > 0.9",
+        },
         "preschool": {
             "hygiene_multiplier": young_children_multiplier,
             "always_attend_query": "educ_contact_priority > 0.67",
@@ -88,12 +97,8 @@ def _expanded_emergency_care_with_graduating_classes_in_a_b_mode(
     a_b_educ_options = {
         "school": {
             "others_attend": False,
-            "hygiene_multiplier": school_multiplier,
             # to cover graduating classes
             "subgroup_query": "age in [16, 17, 18]",
-            # Demand seems to be lower the older the children
-            # but only data from Bavaria available: https://bit.ly/3sGHZbJ
-            "always_attend_query": "educ_contact_priority > 0.9",
             # only very anecdotally the current most common rhythm.
             "rhythm": "daily",
         }

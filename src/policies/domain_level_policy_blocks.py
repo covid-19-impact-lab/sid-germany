@@ -139,14 +139,15 @@ def implement_general_schooling_policy(
 
     Args:
         a_b_educ_options (dict): For every education type ("school", "preschool",
-            "nursery") that is in an A/B schooling mode, add name of the type
-            as key and the others_attend, hygiene_multiplier and - if desired -
-            the subgroup_query, always_attend_query and rhythm as key-value dict.
-            Note to use the modes (e.g. school) and not the contact models
-            (e.g. educ_school_1) as keys. The other supplied multiplier is
-            not used on top of the supplied hygiene multiplier.
+            "nursery") that has A/B schooling, add name of the type
+            as key and the others_attend, the subgroup_query, and rhythm as
+            key-value dict.
+            Note to use the types (e.g. school) and not the contact models
+            (e.g. educ_school_1) as keys.  multipliers["educ"] is not used on top
+            of the supplied hygiene multiplier but only used for open education models
+            Default is no A/B education.
         emergency_options (dict): For every education type ("school", "preschool",
-            "nursery") that is in emergency care mode, add name of the type as key
+            "nursery") that has emergency care, add name of the type as key
             and the hygiene_multiplier and always_attend_query as key-value dict.
             Note to use the modes (e.g. school) and not the contact models
             (e.g. educ_school_1) as keys. The other supplied multiplier is
@@ -156,12 +157,6 @@ def implement_general_schooling_policy(
 
     """
     policies = {}
-
-    overlap = set(a_b_educ_options).intersection(emergency_options)
-    assert len(overlap) == 0, (
-        "No overlap between the keys of a_b_educ_options and emergency_options "
-        f"allowed. {overlap} appear(s) in both."
-    )
     educ_models = _get_educ_models(contact_models)
     for mod in educ_models:
         policy = _get_base_policy(mod, block_info)
@@ -175,10 +170,11 @@ def implement_general_schooling_policy(
                 a_b_education,
                 group_id_column=contact_models[mod]["assort_by"][0],
                 **a_b_educ_options[educ_type],
+                **emergency_options.get(educ_type, {}),
             )
         elif educ_type in emergency_options:
             assert contact_models[mod]["is_recurrent"], (
-                "A/B schooling only available for recurrent models, "
+                "emergency care schooling only available for recurrent models, "
                 f"{mod} is non-recurrent."
             )
             policy["policy"] = partial(
