@@ -156,6 +156,12 @@ def implement_general_schooling_policy(
 
     """
     policies = {}
+
+    overlap = set(a_b_educ_options).intersection(emergency_options)
+    assert len(overlap) == 0, (
+        "No overlap between the keys of a_b_educ_options and emergency_options "
+        f"allowed. {overlap} appear(s) in both."
+    )
     educ_models = _get_educ_models(contact_models)
     for mod in educ_models:
         policy = _get_base_policy(mod, block_info)
