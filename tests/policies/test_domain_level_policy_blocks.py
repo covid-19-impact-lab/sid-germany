@@ -3,7 +3,7 @@ from functools import partial
 import pytest
 
 from src.policies.domain_level_policy_blocks import _get_base_policy
-from src.policies.domain_level_policy_blocks import implement_a_b_education
+from src.policies.domain_level_policy_blocks import implement_general_schooling_policy
 from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_other_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
@@ -13,6 +13,7 @@ from src.policies.domain_level_policy_blocks import reopen_work_models
 from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.domain_level_policy_blocks import shut_down_other_models
 from src.policies.single_policy_functions import a_b_education
+from src.policies.single_policy_functions import emergency_care
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany
@@ -299,7 +300,7 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
         },
         "other": {},
     }
-    res = implement_a_b_education(
+    res = implement_general_schooling_policy(
         contact_models,
         block_info,
         a_b_educ_options={
@@ -309,7 +310,10 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
                 "hygiene_multiplier": 0.3,
             },
         },
-        multiplier=0.5,
+        emergency_options={
+            "nursery": {"hygiene_multiplier": 0.8, "always_attend_query": "bla"}
+        },
+        other_educ_multiplier=0.5,
     )
     expected = {
         "test_educ_school_1": {
@@ -350,8 +354,10 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                reduce_recurrent_model,
-                multiplier=0.5,
+                emergency_care,
+                group_id_column="nursery_id",
+                hygiene_multiplier=0.8,
+                always_attend_query="bla",
             ),
         },
     }

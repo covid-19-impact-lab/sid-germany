@@ -2,9 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from src.policies.single_policy_functions import _find_educ_workers_with_zero_students
 from src.policies.single_policy_functions import _find_size_zero_classes
 from src.policies.single_policy_functions import _get_a_b_children_staying_home
+from src.policies.single_policy_functions import _get_non_a_b_children_staying_home
 from src.policies.single_policy_functions import a_b_education
+from src.policies.single_policy_functions import emergency_care
 
 
 @pytest.fixture
@@ -130,8 +133,78 @@ def test_get_a_b_children_staying_home():
     subgroup_query = "county == 2"
     date = pd.Timestamp("2021-01-04")  # week number 1
     res = _get_a_b_children_staying_home(
-        states, subgroup_query, group_column="group_col", date=date
+        states,
+        subgroup_query,
+        group_column="group_col",
+        date=date,
+        always_attend_query=None,
+        rhythm="weekly",
     )
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_get_a_b_children_staying_home_daily():
+    states = pd.DataFrame()
+    states["educ_worker"] = [False, False, True, False, False]
+    states["county"] = 2
+    states["group_col"] = [0, 1, 0, 1, 0]
+    states["always_attend"] = [False, False, False, False, True]
+    # non-school day, school day, educator, non-school day, always attend
+    expected = pd.Series([True, False, False, False, False])
+
+    subgroup_query = "county == 2"
+    date = pd.Timestamp("2021-01-05")
+    res = _get_a_b_children_staying_home(
+        states,
+        subgroup_query,
+        group_column="group_col",
+        date=date,
+        always_attend_query="always_attend",
+        rhythm="daily",
+    )
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_get_a_b_children_staying_home_daily2():
+    states = pd.DataFrame()
+    states["educ_worker"] = [False, False, True, False, False]
+    states["county"] = 2
+    states["group_col"] = [0, 1, 0, 1, 0]
+    states["always_attend"] = [False, False, False, False, True]
+    # school day, non-school day, educator, non school day, always attend
+    expected = pd.Series([False, True, False, True, False])
+
+    subgroup_query = "county == 2"
+    date = pd.Timestamp("2021-01-12")
+    res = _get_a_b_children_staying_home(
+        states,
+        subgroup_query,
+        group_column="group_col",
+        date=date,
+        always_attend_query="always_attend",
+        rhythm="daily",
+    )
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_get_non_a_b_children_staying_home_no_always_attend():
+    states = pd.DataFrame()
+    states["educ_worker"] = [False, False, True, False, False]
+    states["county"] = [1, 1, 2, 2, 2]
+    res = _get_non_a_b_children_staying_home(states, "county == 1", None)
+    # under A/B under A/B, educator, affected, affected
+    expected = pd.Series([False, False, False, True, True])
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_get_non_a_b_children_staying_home_with_always_attend():
+    states = pd.DataFrame()
+    states["educ_worker"] = [False, False, True, False, False]
+    states["county"] = [1, 1, 2, 2, 2]
+    states["always_attend"] = [False, True, False, False, True]
+    res = _get_non_a_b_children_staying_home(states, "county == 1", "always_attend")
+    # under A/B under A/B, educator, affected, always_attend
+    expected = pd.Series([False, False, False, True, False])
     pd.testing.assert_series_equal(res, expected)
 
 
@@ -144,3 +217,34 @@ def test_find_size_zero_classes():
     res = _find_size_zero_classes(contacts, states, col)
     expected = [22]
     assert res.tolist() == expected
+
+
+def test_find_educ_workers_with_zero_students():
+    col = "school_group_id_0"
+    states = pd.DataFrame()
+    states["educ_worker"] = [False, False, True, False, False, True, False]
+    states[col] = [11, 11, 11, 22, 22, 22, -1]
+    contacts = pd.Series([1, 1, 1, 0, 0, 1, 0])
+    res = _find_educ_workers_with_zero_students(contacts, states, col)
+    expected = pd.Series([False, False, False, False, False, True, False])
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_emergency_care():
+    states = pd.DataFrame()
+    states["educ_worker"] = [True, False, True, False, False]
+    states["always_attend"] = [False, False, True, True, False]
+    states["school_group_id_0"] = [1, 1, 2, 2, -1]
+    contacts = pd.Series([1, 1, 1, 1, 0], index=states.index)
+    res = emergency_care(
+        contacts=contacts,
+        states=states,
+        seed=333,
+        group_id_column="school_group_id_0",
+        always_attend_query="always_attend",
+        hygiene_multiplier=1.0,
+    )
+    # educ_worker without class, child not in emergency care, educ_worker with class,
+    # attends, outside educ system
+    expected = pd.Series([0, 0, 1, 1, 0])
+    pd.testing.assert_series_equal(res, expected)
