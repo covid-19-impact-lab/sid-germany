@@ -20,7 +20,7 @@ this is defined as (1 - multiplier) or (1 / multiplier) which makes them error p
 Thus we do not use anything but multipliers here!
 
 """
-from src.policies.domain_level_policy_blocks import implement_a_b_education
+from src.policies.domain_level_policy_blocks import implement_general_schooling_policy
 from src.policies.domain_level_policy_blocks import reduce_other_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
 from src.policies.domain_level_policy_blocks import reopen_educ_models
@@ -88,7 +88,11 @@ def get_german_reopening_phase(
 
 
 def get_lockdown_with_multipliers(
-    contact_models, block_info, multipliers, a_b_educ_options=None
+    contact_models,
+    block_info,
+    multipliers,
+    a_b_educ_options=None,
+    emergency_options=None,
 ):
     """Reduce all contact models except for households by multipliers.
 
@@ -97,21 +101,31 @@ def get_lockdown_with_multipliers(
             The "educ" entry is only applied to the education models
             that are not in A/B mode.
         a_b_educ_options (dict): For every education type ("school", "preschool",
-            "nursery") that is in an A/B schooling mode, add name of the mode
-            as key and the subgroup_query, others_attend and hygiene_multiplier.
+            "nursery") that has A/B schooling, add name of the type
+            as key and the others_attend, the subgroup_query, and rhythm as
+            key-value dict.
+            Note to use the types (e.g. school) and not the contact models
+            (e.g. educ_school_1) as keys.  multipliers["educ"] is not used on top
+            of the supplied hygiene multiplier but only used for open education models
+            Default is no A/B education.
+        emergency_options (dict): For every education type ("school", "preschool",
+            "nursery") that has emergency care, add name of the type as key
+            and the hygiene_multiplier and always_attend_query as key-value dict.
             Note to use the modes (e.g. school) and not the contact models
-            (e.g. educ_school_1) as keys. multipliers["educ"] is
-            not used on top of the supplied hygiene multiplier but only used for
-            education models that are not in A/B mode. Default is no A/B education.
+            (e.g. educ_school_1) as keys. The other supplied multiplier is
+            not used on top of the supplied hygiene multiplier.
 
     """
     if a_b_educ_options is None:
         a_b_educ_options = {}
-    educ_policies = implement_a_b_education(
+    if emergency_options is None:
+        emergency_options = {}
+    educ_policies = implement_general_schooling_policy(
         contact_models=contact_models,
         block_info=block_info,
         a_b_educ_options=a_b_educ_options,
-        multiplier=multipliers["educ"],
+        emergency_options=emergency_options,
+        other_educ_multiplier=multipliers["educ"],
     )
     work_policies = reduce_work_models(contact_models, block_info, multipliers["work"])
     if multipliers["other"] == 0.0:

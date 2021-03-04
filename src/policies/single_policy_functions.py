@@ -391,6 +391,8 @@ def a_b_education(
     others_attend,
     hygiene_multiplier,
     subgroup_query=None,
+    always_attend_query=None,
+    rhythm="weekly",
 ):
     """Implement education with split groups for some children.
 
@@ -413,9 +415,16 @@ def a_b_education(
             the subgroup query stay home.
         hygiene_multiplier (float): Applied to all children that still attend
             educational facilities.
-        subgroup_query (str, optional): string identifying the children that
-            are taught in split classes. If None, all children in all education
-            facilities attend in split classes.
+        subgroup_query (str, optional): pandas query  string identifying the
+            children that are taught in split classes. If None, all children
+            attend in split classes.
+        always_attend_query (str, optional): query string that identifies
+            children always going to school. This allows to model emergency
+            care. If None is given no emergency care is implemented.
+        rhythm (str, optional): one of "weekly" or "daily". Default is weekly.
+            If weekly, students rotate between attending and not attending on
+            a weekly basis. If daily, students rotate between attending and
+            not attending on a daily basis.
 
     """
     np.random.seed(seed)
@@ -429,14 +438,17 @@ def a_b_education(
         states=states,
         subgroup_query=subgroup_query,
         group_column=group_id_column + "_a_b",
+        always_attend_query=always_attend_query,
         date=date,
+        rhythm=rhythm,
     )
     contacts[a_b_children_staying_home] = 0
 
     if not others_attend:
-        # ~ not supported for categorical columns which could appear in subgroup_query
-        children_not_in_a_b = states.eval(f"~educ_worker & not ({subgroup_query})")
-        contacts[children_not_in_a_b] = 0
+        non_a_b_children_not_attending = _get_non_a_b_children_staying_home(
+            states, subgroup_query, always_attend_query
+        )
+        contacts[non_a_b_children_not_attending] = 0
 
     # since our educ models are all recurrent and educ_workers must always attend
     # we only apply the hygiene multiplier to the students
@@ -447,20 +459,111 @@ def a_b_education(
         hygiene_multiplier,
     )
 
-    # educ_workers of classes with 0 participants don't go to school
-    size_0_classes = _find_size_zero_classes(contacts, states, group_id_column)
-    has_no_students = states.query("educ_worker")[group_id_column].isin(size_0_classes)
-    teachers_with_0_students = states.query("educ_worker")[has_no_students].index
+    teachers_with_0_students = _find_educ_workers_with_zero_students(
+        contacts, states, group_id_column
+    )
     contacts[teachers_with_0_students] = 0
 
     return contacts
 
 
-def _get_a_b_children_staying_home(states, subgroup_query, group_column, date):
+def emergency_care(
+    states, contacts, seed, group_id_column, hygiene_multiplier, always_attend_query
+):
+    """Implement emergency care where only a fixed subset of children attend.
+
+    Args:
+        group_id_column (str): name of the column identifying which indivdiuals
+            attend class together, i.e. the assort by column of the current
+            contact model. We assume that the column identifying which
+            individuals belong to the A or B group is group_id_column + "_a_b".
+        hygiene_multiplier (float): Applied to all children that still attend
+            educational facilities.
+        always_attend_query (str, optional): query string that identifies
+            children always going to school.
+
+    """
+    contacts = contacts.copy(deep=True)
+    contacts[~states["educ_worker"] & ~states.eval(always_attend_query)] = 0
+
+    # since our educ models are all recurrent and educ_workers must always attend
+    # we only apply the hygiene multiplier to the students
+    contacts[~states["educ_worker"]] = reduce_recurrent_model(
+        states[~states["educ_worker"]],
+        contacts[~states["educ_worker"]],
+        seed,
+        hygiene_multiplier,
+    )
+
+    teachers_with_0_students = _find_educ_workers_with_zero_students(
+        contacts=contacts, states=states, group_id_column=group_id_column
+    )
+    contacts[teachers_with_0_students] = 0
+    return contacts
+
+
+def _get_a_b_children_staying_home(
+    states, subgroup_query, group_column, always_attend_query, date, rhythm
+):
+    """Identify children covered by A/B schooling that stay home.
+
+    Children staying home because of the A / B schooling are children to
+    which A / B schooling applies, which are not in emergency care (i.e.
+    fulfill the always attend query), are not educ_workers and fulfill
+    the subgroup_query.
+
+    Returns:
+        a_b_children_staying_home (pandas.Series): boolean Series with the
+            same index as states. True for children that are covered by the
+            A / B schooling and stay home because of it.
+
+    """
     a_b_children = states.eval(f"~educ_worker & ({subgroup_query})")
-    in_attend_group = states[group_column] == date.week % 2
+    if rhythm == "weekly":
+        in_attend_group = states[group_column] == date.week % 2
+    elif rhythm == "daily":
+        in_attend_group = states[group_column] == date.day % 2
+
     a_b_children_staying_home = a_b_children & ~in_attend_group
+    if always_attend_query is not None:
+        a_b_children_staying_home = a_b_children_staying_home & ~states.eval(
+            always_attend_query
+        )
     return a_b_children_staying_home
+
+
+def _get_non_a_b_children_staying_home(states, subgroup_query, always_attend_query):
+    """Return children that are not covered by the A / B schooling system and won't attend.
+
+    Returns:
+        non_a_b_children_not_attending (pandas.Series): boolean Series with the
+            same index as states. True for children that are not covered by the
+            A / B schooling and do not always attend.
+
+    """
+    # ~ not supported for categorical columns which could appear in subgroup_query
+    children_not_in_a_b = states.eval(f"~educ_worker & not ({subgroup_query})")
+    if always_attend_query is None:
+        non_a_b_children_not_attending = children_not_in_a_b
+    else:
+        non_a_b_children_not_attending = children_not_in_a_b & ~states.eval(
+            always_attend_query
+        )
+    return non_a_b_children_not_attending
+
+
+def _find_educ_workers_with_zero_students(contacts, states, group_id_column):
+    """Return educ_workers whose classes / groups don't have any children in them.
+
+    Returns:
+        has_no_class (pandas.Series): boolean Series with the
+            same index as states. True for educ_workers whose classes / groups
+            don't have any children in them.
+
+    """
+    size_0_classes = _find_size_zero_classes(contacts, states, group_id_column)
+    has_no_class = states["educ_worker"] & states[group_id_column].isin(size_0_classes)
+    return has_no_class
 
 
 def _find_size_zero_classes(contacts, states, col):

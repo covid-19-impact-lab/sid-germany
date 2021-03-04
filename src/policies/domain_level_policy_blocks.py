@@ -18,6 +18,7 @@ The functions here expect that the domain names are part of contact model names.
 from functools import partial
 
 from src.policies.single_policy_functions import a_b_education
+from src.policies.single_policy_functions import emergency_care
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany
@@ -127,23 +128,32 @@ def reopen_educ_models(
     return policies
 
 
-def implement_a_b_education(
+def implement_general_schooling_policy(
     contact_models,
     block_info,
     a_b_educ_options,
-    multiplier,
+    emergency_options,
+    other_educ_multiplier,
 ):
     """Split education groups for some children and apply a hygiene multiplier.
 
     Args:
         a_b_educ_options (dict): For every education type ("school", "preschool",
-            "nursery") that is in an A/B schooling mode, add name of the mode
-            as key and the subgroup_query, others_attend and hygiene_multiplier.
+            "nursery") that has A/B schooling, add name of the type
+            as key and the others_attend, the subgroup_query, and rhythm as
+            key-value dict.
+            Note to use the types (e.g. school) and not the contact models
+            (e.g. educ_school_1) as keys.  multipliers["educ"] is not used on top
+            of the supplied hygiene multiplier but only used for open education models
+            Default is no A/B education.
+        emergency_options (dict): For every education type ("school", "preschool",
+            "nursery") that has emergency care, add name of the type as key
+            and the hygiene_multiplier and always_attend_query as key-value dict.
             Note to use the modes (e.g. school) and not the contact models
             (e.g. educ_school_1) as keys. The other supplied multiplier is
             not used on top of the supplied hygiene multiplier.
-        multiplier (float): multiplier for the contact models without A/B
-            schooling. Set to zero to shut them down.
+        other_educ_multiplier (float): multiplier for the contact models without
+            A/B schooling. Set to zero to shut them down.
 
     """
     policies = {}
@@ -152,24 +162,39 @@ def implement_a_b_education(
         policy = _get_base_policy(mod, block_info)
         educ_type = _determine_educ_type(mod)
         if educ_type in a_b_educ_options:
+            assert contact_models[mod]["is_recurrent"], (
+                "A/B schooling only available for recurrent models, "
+                f"{mod} is non-recurrent."
+            )
             policy["policy"] = partial(
                 a_b_education,
-                subgroup_query=a_b_educ_options[educ_type]["subgroup_query"],
-                others_attend=a_b_educ_options[educ_type]["others_attend"],
-                hygiene_multiplier=a_b_educ_options[educ_type]["hygiene_multiplier"],
                 group_id_column=contact_models[mod]["assort_by"][0],
+                **a_b_educ_options[educ_type],
+                **emergency_options.get(educ_type, {}),
+            )
+        elif educ_type in emergency_options:
+            assert contact_models[mod]["is_recurrent"], (
+                "emergency care schooling only available for recurrent models, "
+                f"{mod} is non-recurrent."
+            )
+            policy["policy"] = partial(
+                emergency_care,
+                group_id_column=contact_models[mod]["assort_by"][0],
+                **emergency_options[educ_type],
             )
         else:
-            assert 0 <= multiplier <= 1, "Only multipliers in [0, 1] allowed."
-            if multiplier == 0:
+            assert (
+                0 <= other_educ_multiplier <= 1
+            ), "Only multipliers in [0, 1] allowed."
+            if other_educ_multiplier == 0:
                 policy["policy"] = shut_down_model
             # currently all educ models are recurrent but don't want to assume it
             elif contact_models[mod]["is_recurrent"]:
                 policy["policy"] = partial(
-                    reduce_recurrent_model, multiplier=multiplier
+                    reduce_recurrent_model, multiplier=other_educ_multiplier
                 )
             else:
-                policy["policy"] = multiplier
+                policy["policy"] = other_educ_multiplier
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
 
