@@ -90,12 +90,11 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
         },
         multipliers={
             "work": work_multiplier,
-            "other": scenario["other_multiplier"]
-            if "other_multiplier" in scenario
-            else 0.45,
+            "other": scenario.get("other_multiplier", 0.45),
             "educ": scenario["educ_multiplier"],
         },
-        a_b_educ_options=scenario["a_b_educ_options"],
+        a_b_educ_options=scenario.get("a_b_educ_options", None),
+        emergency_options=scenario.get("emergency_options", None),
     )
 
     policies = combine_dictionaries([enacted_policies, scenario_policies])

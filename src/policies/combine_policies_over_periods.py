@@ -5,92 +5,7 @@ from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 
 
-def _get_jan_first_half_educ_options(hygiene_multiplier=0.8):
-    """Get the a_b_educ_options and emergency_options for the 1st half of January.
-
-    1 in 10 children in 5th and 6th grade attends in emergency care (source only
-    for Bavaria, mid January: https://bit.ly/3sGHZbJ)
-
-    Jump from ~25% to 33% between first Jan week and later (https://bit.ly/3uGL1Pb).
-    This could be a vacation effect with more parents returning to work.
-
-    This abstracts from graduating classes opening early in some states, such as
-    Berlin (11 of Jan, https://bit.ly/385iCZk).
-
-    """
-    emergency_options = {
-        "school": {
-            "hygiene_multiplier": hygiene_multiplier,
-            # emergency care only until 6th grade
-            "always_attend_query": "educ_contact_priority > 0.9",
-        },
-        "preschool": {
-            "hygiene_multiplier": hygiene_multiplier,
-            "always_attend_query": "educ_contact_priority > 0.75",
-        },
-        "nursery": {
-            "hygiene_multiplier": hygiene_multiplier,
-            "always_attend_query": "educ_contact_priority > 0.75",
-        },
-    }
-    educ_options = {"a_b_educ_options": None, "emergency_options": emergency_options}
-    return educ_options
-
-
-def _get_mid_jan_to_mid_feb_educ_options(
-    young_children_multiplier=0.8, school_multiplier=0.5
-):
-    """Get the a_b_educ_options and emergency_options for the 2nd half of January.
-
-    In the secnd half of January, approx. 1 / 3 of children were in emergency care
-    (https://bit.ly/3uGL1Pb).
-
-    sources:
-        - Berlin: <40% (https://bit.ly/304R5ml)
-        - Niedersachsen: 38% (https://bit.ly/2PtPdSb)
-
-    In addition, many states opened graduating classes. We open them at the federal
-    level in A / B schooling on Jan 16th. This abstracts from state variety:
-        - Bavaria: started on 1 Feb (https://bit.ly/3e4p1YE)
-        - Baden-Württemberg started on 18 Jan (https://bit.ly/2Ofq9O7)
-        - Berlin started on  11 Jan (https://bit.ly/385iCZk)
-
-    Sources:
-        - https://taz.de/Schulen-in-Coronazeiten/!5753515/
-        - https://tinyurl.com/2jfm4tp8
-
-    """
-    emergency_options = {
-        "preschool": {
-            "hygiene_multiplier": young_children_multiplier,
-            "always_attend_query": "educ_contact_priority > 0.67",
-        },
-        "nursery": {
-            "hygiene_multiplier": young_children_multiplier,
-            "always_attend_query": "educ_contact_priority > 0.67",
-        },
-    }
-    a_b_educ_options = {
-        "school": {
-            "others_attend": False,
-            "hygiene_multiplier": school_multiplier,
-            # to cover graduating classes
-            "subgroup_query": "age in [16, 17, 18]",
-            # Demand seems to be lower the older the children
-            # but only data from Bavaria available: https://bit.ly/3sGHZbJ
-            "always_attend_query": "educ_contact_priority > 0.9",
-            # only very anecdotally the current most common rhythm.
-            "rhythm": "daily",
-        }
-    }
-    educ_options = {
-        "a_b_educ_options": a_b_educ_options,
-        "emergency_options": emergency_options,
-    }
-    return educ_options
-
-
-def _get_educ_options_starting_feb_22(school_multiplier=0.5):
+def get_educ_options_starting_feb_22(school_multiplier=0.5):
     """Get the a_b_educ_options and emergency_options from 22 Feb onwards.
 
     This assumes that nurseries and preschools are open normally (i.e. only the
@@ -135,6 +50,96 @@ def _get_educ_options_starting_feb_22(school_multiplier=0.5):
     return educ_options
 
 
+def _expanded_emergency_care_with_graduating_classes_in_a_b_mode(
+    young_children_multiplier=0.8, school_multiplier=0.5
+):
+    """Get expanded emergency care with graduating classes in A/B schooling.
+
+    This is what was in effect in the 2nd half of January.
+
+    In the second half of January, approx. 1 / 3 of children were in emergency care
+    (https://bit.ly/3uGL1Pb).
+
+    sources:
+        - Berlin: <40% (https://bit.ly/304R5ml)
+        - Niedersachsen: 38% (https://bit.ly/2PtPdSb)
+
+    In addition, many states opened graduating classes. We open them at the federal
+    level in A / B schooling on Jan 16th. This abstracts from state variety:
+        - Bavaria: started on 1 Feb (https://bit.ly/3e4p1YE)
+        - Baden-Württemberg started on 18 Jan (https://bit.ly/2Ofq9O7)
+        - Berlin started on  11 Jan (https://bit.ly/385iCZk)
+
+    sources:
+        - https://taz.de/Schulen-in-Coronazeiten/!5753515/
+        - https://tinyurl.com/2jfm4tp8
+
+    """
+    emergency_options = {
+        "preschool": {
+            "hygiene_multiplier": young_children_multiplier,
+            "always_attend_query": "educ_contact_priority > 0.67",
+        },
+        "nursery": {
+            "hygiene_multiplier": young_children_multiplier,
+            "always_attend_query": "educ_contact_priority > 0.67",
+        },
+    }
+    a_b_educ_options = {
+        "school": {
+            "others_attend": False,
+            "hygiene_multiplier": school_multiplier,
+            # to cover graduating classes
+            "subgroup_query": "age in [16, 17, 18]",
+            # Demand seems to be lower the older the children
+            # but only data from Bavaria available: https://bit.ly/3sGHZbJ
+            "always_attend_query": "educ_contact_priority > 0.9",
+            # only very anecdotally the current most common rhythm.
+            "rhythm": "daily",
+        }
+    }
+    educ_options = {
+        "a_b_educ_options": a_b_educ_options,
+        "emergency_options": emergency_options,
+    }
+    return educ_options
+
+
+def emergency_care_with_vacation_effect(hygiene_multiplier=0.8):
+    """Get the a_b_educ_options and emergency_options for reduced emergency care.
+
+    This is based on the data for the 1st half of January where many parents might
+    still have had vacations.
+
+    1 in 10 children in 5th and 6th grade attends in emergency care (source only
+    for Bavaria, mid January: https://bit.ly/3sGHZbJ)
+
+    Jump from ~25% to 33% between first Jan week and later (https://bit.ly/3uGL1Pb).
+    This could be a vacation effect with more parents returning to work.
+
+    For the first half of Jaunary this abstracts from graduating classes opening
+    early in some states, such as Berlin (11 of Jan, https://bit.ly/385iCZk).
+
+    """
+    emergency_options = {
+        "school": {
+            "hygiene_multiplier": hygiene_multiplier,
+            # emergency care only until 6th grade
+            "always_attend_query": "educ_contact_priority > 0.9",
+        },
+        "preschool": {
+            "hygiene_multiplier": hygiene_multiplier,
+            "always_attend_query": "educ_contact_priority > 0.75",
+        },
+        "nursery": {
+            "hygiene_multiplier": hygiene_multiplier,
+            "always_attend_query": "educ_contact_priority > 0.75",
+        },
+    }
+    educ_options = {"a_b_educ_options": None, "emergency_options": emergency_options}
+    return educ_options
+
+
 def get_enacted_policies_of_2021(
     contact_models,
     scenario_start,
@@ -172,7 +177,7 @@ def get_enacted_policies_of_2021(
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            **_get_jan_first_half_educ_options(),
+            **emergency_care_with_vacation_effect(),
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -186,7 +191,7 @@ def get_enacted_policies_of_2021(
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            **_get_mid_jan_to_mid_feb_educ_options(),
+            **_expanded_emergency_care_with_graduating_classes_in_a_b_mode(),
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -203,7 +208,7 @@ def get_enacted_policies_of_2021(
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            **_get_educ_options_starting_feb_22(),
+            **get_educ_options_starting_feb_22(),
         ),
     ]
     return combine_dictionaries(to_combine)
@@ -212,6 +217,7 @@ def get_enacted_policies_of_2021(
 def get_october_to_christmas_policies(
     contact_models,
     a_b_educ_options=None,
+    emergency_options=None,
     educ_multiplier=0.8,
     other_multiplier=None,
     work_multiplier=None,
@@ -310,6 +316,7 @@ def get_october_to_christmas_policies(
                 "other": 0.45 if other_multiplier is None else other_multiplier,
             },
             a_b_educ_options=a_b_educ_options,
+            emergency_options=emergency_options,
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -324,6 +331,7 @@ def get_october_to_christmas_policies(
                 "other": 0.55 if other_multiplier is None else other_multiplier,
             },
             a_b_educ_options=a_b_educ_options,
+            emergency_options=emergency_options,
         ),
         # Until start of Christmas vacation
         get_lockdown_with_multipliers(
@@ -334,10 +342,11 @@ def get_october_to_christmas_policies(
                 "prefix": "pre-christmas-lockdown-first-half",
             },
             multipliers={
-                "educ": 0.0,
+                "educ": None,
                 "work": work_multiplier,
                 "other": 0.55 if other_multiplier is None else other_multiplier,
             },
+            **emergency_care_with_vacation_effect(),
         ),
         # Until Christmas
         get_lockdown_with_multipliers(
