@@ -266,16 +266,16 @@ def _create_educ_contact_priority(df):
     at home.
 
     """
-    entitled_to_emergency_care = df.eval("age < 13 & ~adult_in_hh_at_home")
-    share_entitled_children = entitled_to_emergency_care[df["age"] < 13].mean()
-    threshold = 1 - share_entitled_children
+    high_priority_children = df.eval("age < 13 & ~adult_in_hh_at_home")
+    share_high_priority_children = high_priority_children[df["age"] < 13].mean()
+    threshold = 1 - share_high_priority_children
 
     educ_contact_priority = pd.Series(0, index=df.index)
     low_priorities = np.random.uniform(low=0, high=threshold, size=len(df))
     high_priorities = np.random.uniform(low=threshold, high=1, size=len(df))
-    not_low_priority_children = entitled_to_emergency_care | (df["age"] >= 13)
+    not_low_priority_children = high_priority_children | (df["age"] >= 13)
     educ_contact_priority = educ_contact_priority.where(
-        ~entitled_to_emergency_care, high_priorities
+        ~high_priority_children, high_priorities
     )
     educ_contact_priority = educ_contact_priority.where(
         not_low_priority_children, low_priorities
