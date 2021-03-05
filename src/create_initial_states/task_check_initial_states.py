@@ -75,6 +75,7 @@ def _check_occupation_column(df):
     df["occupation"] = df["occupation"].replace(
         {cat: "working" for cat in educ_worker_categories}
     )
+    assert df["educ_worker"].notnull().all()
 
     occupation_categories = [
         "working",
