@@ -40,8 +40,8 @@ def get_educ_options_starting_feb_22(school_multiplier=0.5):
     a_b_educ_options = {
         "school": {
             "others_attend": False,
-            # to cover graduating classes
-            "subgroup_query": "age in [16, 17, 18]",
+            # to cover primary schools and graduating classes
+            "subgroup_query": "(age < 13) | (age in [16, 17, 18])",
             # only very anecdotally the current most common rhythm.
             "rhythm": "daily",
         }
@@ -53,7 +53,7 @@ def get_educ_options_starting_feb_22(school_multiplier=0.5):
     return educ_options
 
 
-def _expanded_emergency_care_with_graduating_classes_in_a_b_mode(
+def _graduating_classes_in_a_b_plus_generous_emergency_care(
     young_children_multiplier=0.8, school_multiplier=0.5
 ):
     """Get expanded emergency care with graduating classes in A/B schooling.
@@ -110,8 +110,8 @@ def _expanded_emergency_care_with_graduating_classes_in_a_b_mode(
     return educ_options
 
 
-def emergency_care_with_vacation_effect(hygiene_multiplier=0.8):
-    """Get the a_b_educ_options and emergency_options for reduced emergency care.
+def strict_emergency_care(hygiene_multiplier=0.8):
+    """Get educ options with limited emergency care (as for example around vacations).
 
     This is based on the data for the 1st half of January where many parents might
     still have had vacations.
@@ -182,7 +182,7 @@ def get_enacted_policies_of_2021(
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            **emergency_care_with_vacation_effect(),
+            **strict_emergency_care(),
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -196,7 +196,7 @@ def get_enacted_policies_of_2021(
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            **_expanded_emergency_care_with_graduating_classes_in_a_b_mode(),
+            **_graduating_classes_in_a_b_plus_generous_emergency_care(),
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -351,7 +351,7 @@ def get_october_to_christmas_policies(
                 "work": work_multiplier,
                 "other": 0.55 if other_multiplier is None else other_multiplier,
             },
-            **emergency_care_with_vacation_effect(),
+            **strict_emergency_care(),
         ),
         # Until Christmas
         get_lockdown_with_multipliers(

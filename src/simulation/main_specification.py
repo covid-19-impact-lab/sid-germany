@@ -6,10 +6,10 @@ import pandas as pd
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.contact_models.get_contact_models import get_all_contact_models
-from src.policies.combine_policies_over_periods import (
-    emergency_care_with_vacation_effect,
-)
 from src.policies.combine_policies_over_periods import get_educ_options_starting_feb_22
+from src.policies.combine_policies_over_periods import (
+    strict_emergency_care,
+)
 from src.policies.policy_tools import combine_dictionaries
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
@@ -59,7 +59,7 @@ def build_main_scenarios(base_path):
         [base_scenario, {"work_fill_value": 0.56}]
     )
     schools_stay_closed = combine_dictionaries(
-        [{"educ_multiplier": None}, emergency_care_with_vacation_effect()]
+        [{"educ_multiplier": None}, strict_emergency_care()]
     )
 
     if FAST_FLAG:
