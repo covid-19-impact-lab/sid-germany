@@ -12,8 +12,7 @@ from src.policies.domain_level_policy_blocks import reopen_other_models
 from src.policies.domain_level_policy_blocks import reopen_work_models
 from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.domain_level_policy_blocks import shut_down_other_models
-from src.policies.single_policy_functions import a_b_education
-from src.policies.single_policy_functions import emergency_care
+from src.policies.single_policy_functions import apply_educ_policy
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_educ_model_germany
@@ -303,15 +302,13 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
     res = implement_general_schooling_policy(
         contact_models,
         block_info,
-        a_b_educ_options={
+        educ_options={
             "school": {
-                "subgroup_query": "occupation == 'school' & age > 10",
-                "others_attend": True,
+                "a_b_query": "occupation == 'school' & age > 10",
+                "non_a_b_attend": True,
                 "hygiene_multiplier": 0.3,
             },
-        },
-        emergency_options={
-            "nursery": {"hygiene_multiplier": 0.8, "always_attend_query": "bla"}
+            "nursery": {"hygiene_multiplier": 0.8, "always_attend_query": "bla"},
         },
         other_educ_multiplier=0.5,
     )
@@ -321,10 +318,10 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                a_b_education,
+                apply_educ_policy,
                 group_id_column="school_id_1",
-                subgroup_query="occupation == 'school' & age > 10",
-                others_attend=True,
+                a_b_query="occupation == 'school' & age > 10",
+                non_a_b_attend=True,
                 hygiene_multiplier=0.3,
             ),
         },
@@ -333,10 +330,10 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                a_b_education,
+                apply_educ_policy,
                 group_id_column="school_id_2",
-                subgroup_query="occupation == 'school' & age > 10",
-                others_attend=True,
+                a_b_query="occupation == 'school' & age > 10",
+                non_a_b_attend=True,
                 hygiene_multiplier=0.3,
             ),
         },
@@ -354,7 +351,7 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                emergency_care,
+                apply_educ_policy,
                 group_id_column="nursery_id",
                 hygiene_multiplier=0.8,
                 always_attend_query="bla",

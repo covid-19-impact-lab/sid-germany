@@ -29,28 +29,20 @@ def get_educ_options_starting_feb_22(school_multiplier=0.5):
         - https://bit.ly/2O3aS3h
 
     """
-    emergency_options = {
+    educ_options = {
         "school": {
             "hygiene_multiplier": school_multiplier,
             # Demand seems to be lower the older the children
             # but only data from Bavaria available: https://bit.ly/3sGHZbJ
             "always_attend_query": "educ_contact_priority > 0.9",
-        }
-    }
-    a_b_educ_options = {
-        "school": {
-            "others_attend": False,
+            "non_a_b_attend": False,
             # to cover primary schools and graduating classes
-            "subgroup_query": "(age < 13) | (age in [16, 17, 18])",
-            # only very anecdotally the current most common rhythm.
-            "rhythm": "daily",
+            "a_b_query": "(age < 13) | (age in [16, 17, 18])",
+            # only very anecdotally the current most common a_b_rhythm.
+            "a_b_rhythm": "daily",
         }
     }
-    educ_options = {
-        "a_b_educ_options": a_b_educ_options,
-        "emergency_options": emergency_options,
-    }
-    return educ_options
+    return {"educ_options": educ_options}
 
 
 def _graduating_classes_in_a_b_plus_generous_emergency_care(
@@ -78,36 +70,32 @@ def _graduating_classes_in_a_b_plus_generous_emergency_care(
         - https://tinyurl.com/2jfm4tp8
 
     """
-    emergency_options = {
+    educ_options = {
         "school": {
             "hygiene_multiplier": school_multiplier,
             # Demand seems to be lower the older the children
             # but only data from Bavaria available: https://bit.ly/3sGHZbJ
             "always_attend_query": "educ_contact_priority > 0.9",
+            "non_a_b_attend": False,
+            # to cover graduating classes
+            "a_b_query": "age in [16, 17, 18]",
+            # only very anecdotally the current most common a_b_rhythm.
+            "a_b_rhythm": "daily",
         },
         "preschool": {
             "hygiene_multiplier": young_children_multiplier,
             "always_attend_query": "educ_contact_priority > 0.67",
+            "non_a_b_attend": False,
+            "a_b_query": False,
         },
         "nursery": {
             "hygiene_multiplier": young_children_multiplier,
             "always_attend_query": "educ_contact_priority > 0.67",
+            "non_a_b_attend": False,
+            "a_b_query": False,
         },
     }
-    a_b_educ_options = {
-        "school": {
-            "others_attend": False,
-            # to cover graduating classes
-            "subgroup_query": "age in [16, 17, 18]",
-            # only very anecdotally the current most common rhythm.
-            "rhythm": "daily",
-        }
-    }
-    educ_options = {
-        "a_b_educ_options": a_b_educ_options,
-        "emergency_options": emergency_options,
-    }
-    return educ_options
+    return {"educ_options": educ_options}
 
 
 def strict_emergency_care(hygiene_multiplier=0.8):
@@ -126,23 +114,28 @@ def strict_emergency_care(hygiene_multiplier=0.8):
     early in some states, such as Berlin (11 of Jan, https://bit.ly/385iCZk).
 
     """
-    emergency_options = {
+    educ_options = {
         "school": {
             "hygiene_multiplier": hygiene_multiplier,
             # emergency care only until 6th grade
             "always_attend_query": "educ_contact_priority > 0.9",
+            "a_b_query": False,
+            "non_a_b_attend": False,
         },
         "preschool": {
             "hygiene_multiplier": hygiene_multiplier,
             "always_attend_query": "educ_contact_priority > 0.75",
+            "a_b_query": False,
+            "non_a_b_attend": False,
         },
         "nursery": {
             "hygiene_multiplier": hygiene_multiplier,
             "always_attend_query": "educ_contact_priority > 0.75",
+            "a_b_query": False,
+            "non_a_b_attend": False,
         },
     }
-    educ_options = {"a_b_educ_options": None, "emergency_options": emergency_options}
-    return educ_options
+    return {"educ_options": educ_options}
 
 
 def get_enacted_policies_of_2021(
@@ -221,8 +214,7 @@ def get_enacted_policies_of_2021(
 
 def get_october_to_christmas_policies(
     contact_models,
-    a_b_educ_options=None,
-    emergency_options=None,
+    educ_options=None,
     educ_multiplier=0.8,
     other_multiplier=None,
     work_multiplier=None,
@@ -231,14 +223,13 @@ def get_october_to_christmas_policies(
     """Policies from October 1st 2020 until Christmas 2020.
 
     Args:
-        a_b_educ_options (dict): For every education type ("school", "preschool",
-            "nursery") that is in an A/B schooling mode, add name of the type
-            as key and the others_attend, hygiene_multiplier and - if desired -
-            the subgroup_query, always_attend_query and rhythm as key-value dict.
+        educ_options (dict): For every education type ("school", "preschool",
+            "nursery") that has A/B schooling and/or emergency care, add name
+            of the type as key and the always_attend_query, a_b_query, non_a_b_attend,
+            hygiene_multiplier and a_b_rhythm as key-value dict.
             Note to use the types (e.g. school) and not the contact models
-            (e.g. educ_school_1) as keys. The educ_multiplier is not used on top
-            of the supplied hygiene multiplier but only used for education models
-            that are not in A/B mode. Default is no A/B education.
+            (e.g. educ_school_1) as keys.  multipliers["educ"] is not used on top
+            of the supplied hygiene multiplier but only used for open education models
         educ_multiplier (float): The multiplier for the education contact models
             that are not covered by the a_b_educ_options. This educ_multiplier is
             not used on top of the supplied hygiene multiplier but only used for
@@ -251,8 +242,6 @@ def get_october_to_christmas_policies(
             be set to this value after November, 1st.
 
     """
-    if a_b_educ_options is None:
-        a_b_educ_options = {}
     dates = pd.date_range("2020-10-01", "2020-12-23")
     if work_multiplier is None:
         work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
@@ -320,8 +309,7 @@ def get_october_to_christmas_policies(
                 "work": work_multiplier,
                 "other": 0.45 if other_multiplier is None else other_multiplier,
             },
-            a_b_educ_options=a_b_educ_options,
-            emergency_options=emergency_options,
+            educ_options=educ_options,
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -335,8 +323,7 @@ def get_october_to_christmas_policies(
                 "work": work_multiplier,
                 "other": 0.55 if other_multiplier is None else other_multiplier,
             },
-            a_b_educ_options=a_b_educ_options,
-            emergency_options=emergency_options,
+            educ_options=educ_options,
         ),
         # Until start of Christmas vacation
         get_lockdown_with_multipliers(
