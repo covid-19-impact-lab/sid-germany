@@ -11,7 +11,8 @@ def get_educ_options_starting_feb_22(hygiene_multiplier=0.5):
     This assumes that nurseries and preschools are open normally (i.e. only the
     general educ_multiplier is applied to them). Schools open for primary students
     and graduating classes in A/B while maintaining emergency care for children
-    with very high educ_contact_priority (>0.9).
+    with high educ_contact_priority (>0.9 for secondary students <13 and >0.66 for
+    primary students).
 
     Summary of actual policies of states with >=8 mio inhabitants:
         BW: nurseries and primary schools open Feb 22nd. No mention of preschools.
@@ -33,15 +34,18 @@ def get_educ_options_starting_feb_22(hygiene_multiplier=0.5):
             attend because they have a right to emergency care.
 
     """
+    primary_emergency_query = "(educ_contact_priority > 0.66 & age < 10)"
+    secondary_emergency_query = "(educ_contact_priority > 0.75 & age >= 10)"
+    always_attend_query = f"{primary_emergency_query} | {secondary_emergency_query}"
     educ_options = {
         "school": {
             "hygiene_multiplier": hygiene_multiplier,
             # Demand seems to be lower the older the children
             # but only data from Bavaria available: https://bit.ly/3sGHZbJ
-            "always_attend_query": "educ_contact_priority > 0.9",
+            "always_attend_query": always_attend_query,
+            # primary schools and graduating classes in A/B mode
+            "a_b_query": "age <= 10 | age >= 16",
             "non_a_b_attend": False,
-            # to cover primary schools and graduating classes
-            "a_b_query": "(age < 13) | (age in [16, 17, 18])",
             # only very anecdotally the current most common a_b_rhythm.
             "a_b_rhythm": "daily",
         }
@@ -50,16 +54,18 @@ def get_educ_options_starting_feb_22(hygiene_multiplier=0.5):
 
 
 def _graduating_classes_in_a_b_plus_generous_emergency_care(
-    young_children_multiplier=0.8, school_multiplier=0.5
+    young_children_multiplier=0.8, school_hygiene_multiplier=0.5
 ):
     """Get expanded emergency care with graduating classes in A/B schooling.
 
     This is what was in effect in the 2nd half of January.
 
-    In the second half of January, approx. 1 / 3 of children were in emergency care
-    (https://bit.ly/3uGL1Pb).
+    In the second half of January, approx. 1 / 3 of children below secondary
+    level were in emergency care
 
     sources:
+        - https://bit.ly/3uGL1Pb
+        - https://bit.ly/2PErr5T
         - Berlin: <40% (https://bit.ly/304R5ml)
         - Niedersachsen: 38% (https://bit.ly/2PtPdSb)
 
@@ -73,13 +79,26 @@ def _graduating_classes_in_a_b_plus_generous_emergency_care(
         - https://taz.de/Schulen-in-Coronazeiten/!5753515/
         - https://tinyurl.com/2jfm4tp8
 
+    Args:
+        young_children_multiplier (float): hygiene multiplier for children in
+            emergency care in preschools and nurseries. Higher by default than
+            in primaries and secondary schools because usually there are less
+            mask requirements for younger children and masks don't fit them as well.
+        school_hygiene_multiplier (float): hygiene multiplier for children in
+            emergency care in schools and graduating classes that attend in an
+            A/B schooling mode.
+
     """
+    primary_emergency_query = "(educ_contact_priority > 0.66 & age < 10)"
+    secondary_emergency_query = "(educ_contact_priority > 0.9 & age >= 10)"
+    always_attend_query = f"{primary_emergency_query} | {secondary_emergency_query}"
+
     educ_options = {
         "school": {
-            "hygiene_multiplier": school_multiplier,
+            "hygiene_multiplier": school_hygiene_multiplier,
             # Demand seems to be lower the older the children
             # but only data from Bavaria available: https://bit.ly/3sGHZbJ
-            "always_attend_query": "educ_contact_priority > 0.9",
+            "always_attend_query": always_attend_query,
             "non_a_b_attend": False,
             # to cover graduating classes
             "a_b_query": "age in [16, 17, 18]",
@@ -106,9 +125,8 @@ def strict_emergency_care(hygiene_multiplier=0.8):
     """Get educ options with limited emergency care (as for example around vacations).
 
     This is based on the data for the 1st half of January where many parents might
-    still have had vacations.
-
-    1 in 10 children in 5th and 6th grade attends in emergency care (source only
+    have still had vacations.
+    1 in 10 primary children attend in emergency care (source only
     for Bavaria, mid January: https://bit.ly/3sGHZbJ)
 
     Jump from ~25% to 33% between first Jan week and later (https://bit.ly/3uGL1Pb).
@@ -118,11 +136,14 @@ def strict_emergency_care(hygiene_multiplier=0.8):
     early in some states, such as Berlin (11 of Jan, https://bit.ly/385iCZk).
 
     """
+    primary_emergency_query = "(educ_contact_priority > 0.75 & age < 10)"
+    secondary_emergency_query = "(educ_contact_priority > 0.95 & age >= 10)"
+    always_attend_query = f"{primary_emergency_query} | {secondary_emergency_query}"
+
     educ_options = {
         "school": {
             "hygiene_multiplier": hygiene_multiplier,
-            # emergency care only until 6th grade
-            "always_attend_query": "educ_contact_priority > 0.9",
+            "always_attend_query": always_attend_query,
             "a_b_query": False,
             "non_a_b_attend": False,
         },
