@@ -50,7 +50,6 @@ if FAST_FLAG:
     DEPENDENCIES["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
 
 
-@pytask.mark.skip
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
@@ -94,8 +93,7 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
             "other": scenario.get("other_multiplier", 0.45),
             "educ": scenario["educ_multiplier"],
         },
-        a_b_educ_options=scenario.get("a_b_educ_options", None),
-        emergency_options=scenario.get("emergency_options", None),
+        educ_options=scenario.get("educ_options"),
     )
 
     policies = combine_dictionaries([enacted_policies, scenario_policies])

@@ -284,7 +284,7 @@ def _create_educ_contact_priority(df):
 
 
 def _only_keep_relevant_columns(df):
-    keep = [
+    background_vars = [
         "age",  # used by `implement_a_b_school_system_above_age`
         "age_group",  # assort_by variable
         "age_group_rki",  # for plotting and comparison
@@ -297,41 +297,32 @@ def _only_keep_relevant_columns(df):
         "work_contact_priority",
         "work_saturday",
         "work_sunday",
-        # contact group ids:
         "hh_model_group_id",
+        "adult_in_hh_at_home",
+        "educ_contact_priority",
+    ]
+
+    educ_contact_group_ids = [
         "nursery_group_id_0",
-        "nursery_group_id_0_a_b",
-        "other_daily_group_id",
-        "other_weekly_group_id_0",
-        "other_weekly_group_id_1",
-        "other_weekly_group_id_2",
-        "other_weekly_group_id_3",
         "preschool_group_id_0",
-        "preschool_group_id_0_a_b",
         "school_group_id_0",
         "school_group_id_1",
         "school_group_id_2",
-        "school_group_id_0_a_b",
-        "school_group_id_1_a_b",
-        "school_group_id_2_a_b",
-        "adult_in_hh_at_home",
-        "educ_contact_priority",
-        "work_daily_group_id",
-        "work_weekly_group_id_0",
-        "work_weekly_group_id_1",
-        "work_weekly_group_id_10",
-        "work_weekly_group_id_11",
-        "work_weekly_group_id_12",
-        "work_weekly_group_id_13",
-        "work_weekly_group_id_2",
-        "work_weekly_group_id_3",
-        "work_weekly_group_id_4",
-        "work_weekly_group_id_5",
-        "work_weekly_group_id_6",
-        "work_weekly_group_id_7",
-        "work_weekly_group_id_8",
-        "work_weekly_group_id_9",
     ]
+    a_b_vars = [var + "_a_b" for var in educ_contact_group_ids]
+
+    non_educ_contact_group_ids = (
+        [
+            "other_daily_group_id",
+            "work_daily_group_id",
+        ]
+        + [f"other_weekly_group_id_{i}" for i in range(4)]
+        + [f"work_weekly_group_id_{i}" for i in range(14)]
+    )
+
+    keep = (
+        background_vars + educ_contact_group_ids + a_b_vars + non_educ_contact_group_ids
+    )
 
     to_drop = [
         "gender",
