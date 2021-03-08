@@ -99,13 +99,23 @@ def get_lockdown_with_multipliers(
         multipliers (dict): Contains keys "educ", "work" and "other".
             The "educ" entry is only applied to the education models
             that are not in A/B mode.
-        educ_options (dict): For every education type ("school", "preschool",
-            "nursery") that has A/B schooling and/or emergency care, add name
-            of the type as key and the always_attend_query, a_b_query, non_a_b_attend,
-            hygiene_multiplier and a_b_rhythm as key-value dict.
+        educ_options (dict): Nested dictionary with the education types ("school",
+            "preschool" or "nursery") that have A/B schooling and/or emergency care as
+            keys. Values are dictionaries giving the always_attend_query, a_b_query,
+            non_a_b_attend, hygiene_multiplier and a_b_rhythm.
             Note to use the types (e.g. school) and not the contact models
-            (e.g. educ_school_1) as keys.  multipliers["educ"] is not used on top
-            of the supplied hygiene multiplier but only used for open education models
+            (e.g. educ_school_1) as keys. The multipliers["educ"] is not used on top
+            of the supplied hygiene multiplier for the contact models covered by the
+            educ_options.
+            For example:
+            {
+                "school": {
+                    "hygiene_multiplier": 0.8,
+                    "always_attend_query": "educ_contact_priority > 0.9",
+                    "a_b_query": "(age <= 10) | (age >= 16)",
+                    "non_a_b_attend": False,
+            }
+
 
     """
     if educ_options is None:

@@ -5,8 +5,8 @@ from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 
 
-def get_educ_options_starting_feb_22(school_multiplier=0.5):
-    """Get the a_b_educ_options and emergency_options from 22 Feb onwards.
+def get_educ_options_starting_feb_22(hygiene_multiplier=0.5):
+    """Get the educ_options from 22 Feb onwards.
 
     This assumes that nurseries and preschools are open normally (i.e. only the
     general educ_multiplier is applied to them). Schools open for primary students
@@ -28,10 +28,14 @@ def get_educ_options_starting_feb_22(school_multiplier=0.5):
         - https://www.mdr.de/brisant/corona-schule-geoeffnet-100.html
         - https://bit.ly/2O3aS3h
 
+    Args:
+        hygiene_multiplier (float): Hygiene multiplier for school children that
+            attend because they have a right to emergency care.
+
     """
     educ_options = {
         "school": {
-            "hygiene_multiplier": school_multiplier,
+            "hygiene_multiplier": hygiene_multiplier,
             # Demand seems to be lower the older the children
             # but only data from Bavaria available: https://bit.ly/3sGHZbJ
             "always_attend_query": "educ_contact_priority > 0.9",
@@ -223,13 +227,23 @@ def get_october_to_christmas_policies(
     """Policies from October 1st 2020 until Christmas 2020.
 
     Args:
-        educ_options (dict): For every education type ("school", "preschool",
-            "nursery") that has A/B schooling and/or emergency care, add name
-            of the type as key and the always_attend_query, a_b_query, non_a_b_attend,
-            hygiene_multiplier and a_b_rhythm as key-value dict.
+        educ_options (dict): Nested dictionary with the education types ("school",
+            "preschool" or "nursery") that have A/B schooling and/or emergency care as
+            keys. Values are dictionaries giving the always_attend_query, a_b_query,
+            non_a_b_attend, hygiene_multiplier and a_b_rhythm.
             Note to use the types (e.g. school) and not the contact models
-            (e.g. educ_school_1) as keys.  multipliers["educ"] is not used on top
-            of the supplied hygiene multiplier but only used for open education models
+            (e.g. educ_school_1) as keys. The educ_multiplier is not used on top
+            of the supplied hygiene multiplier for the contact models covered by the
+            educ_options.
+            For example:
+            {
+                "school": {
+                    "hygiene_multiplier": 0.8,
+                    "always_attend_query": "educ_contact_priority > 0.9",
+                    "a_b_query": "(age <= 10) | (age >= 16)",
+                    "non_a_b_attend": False,
+            }
+
         educ_multiplier (float): The multiplier for the education contact models
             that are not covered by the a_b_educ_options. This educ_multiplier is
             not used on top of the supplied hygiene multiplier but only used for
