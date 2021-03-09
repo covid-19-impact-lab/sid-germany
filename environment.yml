@@ -3,7 +3,6 @@ name: sid-germany
 channels:
   - conda-forge
   - janosg
-  - pytask
 
 dependencies:
   - python>=3.7
@@ -38,3 +37,4 @@ dependencies:
   - pip:
     - DFO-LS
     - Py-BOBYQA
+    - sid-dev==0.0.2
