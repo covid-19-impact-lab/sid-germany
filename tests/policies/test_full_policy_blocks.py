@@ -64,7 +64,7 @@ def test_get_lockdown_with_multipliers_runs(
     contact_models, block_info, multipliers, expected_keys
 ):
     res = get_lockdown_with_multipliers(
-        contact_models, block_info, multipliers, a_b_educ_options={}
+        contact_models, block_info, multipliers, educ_options={}
     )
     assert res.keys() == expected_keys
 
@@ -76,10 +76,10 @@ def test_get_lockdown_with_multipliers_a_b_schooling(
         contact_models,
         block_info,
         multipliers,
-        a_b_educ_options={
+        educ_options={
             "school": {
-                "subgroup_query": None,
-                "others_attend": False,
+                "a_b_query": None,
+                "non_a_b_attend": False,
                 "hygiene_multiplier": 0.8,
             }
         },
