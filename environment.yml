@@ -37,3 +37,4 @@ dependencies:
   - pip:
     - DFO-LS
     - Py-BOBYQA
+    - sid-dev==0.0.2
