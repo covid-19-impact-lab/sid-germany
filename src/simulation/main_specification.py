@@ -62,16 +62,15 @@ def build_main_scenarios(base_path):
         [{"educ_multiplier": None}, strict_emergency_care()]
     )
 
-    if FAST_FLAG:
-        scenarios = {"base_scenario": base_scenario}
-    if not FAST_FLAG:
+    if not FAST_FLAG and "predictions" in base_path.name:
         scenarios = {
             "base_scenario": base_scenario,
             "spring_home_office_level": spring_home_office,
             "emergency_child_care": emergency_child_care,
+            "november_home_office_level": nov_home_office,
         }
-        if "predictions" in base_path.name:
-            scenarios["november_home_office_level"] = nov_home_office
+    else:
+        scenarios = {"base_scenario": base_scenario}
 
     nested_parametrization = {}
     for name, scenario in scenarios.items():
