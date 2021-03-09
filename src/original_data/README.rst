@@ -1,9 +1,8 @@
-Google Mobility Data
----------------------
+Mutant Numbers from the City of Cologne
+-----------------------------------------
 
-downloaded from: https://www.gstatic.com/covid19/mobility/Region_Mobility_Report_CSVs.zip
+Übertragen aus Pressemeldungen der Stadt Köln: https://www.stadt-koeln.de/leben-in-koeln/gesundheit/infektionsschutz/corona-virus/pressemeldungen-infos-aus-twitter-koeln-zum-corona-virus
 
-We only use the data for Germany, which ends in "_DE".
 
 COSMO Hygiene Data
 -------------------
