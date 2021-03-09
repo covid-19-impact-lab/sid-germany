@@ -58,23 +58,20 @@ def build_main_scenarios(base_path):
     spring_home_office = combine_dictionaries(
         [base_scenario, {"work_fill_value": 0.56}]
     )
-    schools_stay_closed = combine_dictionaries(
+    emergency_child_care = combine_dictionaries(
         [{"educ_multiplier": None}, strict_emergency_care()]
     )
 
     if FAST_FLAG:
-        scenarios = {
-            "base_scenario": base_scenario,
-            "spring_home_office_level": spring_home_office,
-            "keep_schools_closed": schools_stay_closed,
-        }
+        scenarios = {"base_scenario": base_scenario}
     if not FAST_FLAG:
         scenarios = {
             "base_scenario": base_scenario,
-            "november_home_office_level": nov_home_office,
             "spring_home_office_level": spring_home_office,
-            "keep_schools_closed": schools_stay_closed,
+            "emergency_child_care": emergency_child_care,
         }
+        if "predictions" in base_path.name:
+            scenarios["november_home_office_level"] = nov_home_office
 
     nested_parametrization = {}
     for name, scenario in scenarios.items():
