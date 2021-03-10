@@ -78,7 +78,7 @@ def task_plot_main_predictions(depends_on, outcome, title, produces):
         "base_scenario": "Status Quo beibehalten",
         "november_home_office_level": "Home-Office-Quote wie im November",
         "spring_home_office_level": "Home-Office-Quote wie im 1. Lockdown",
-        "keep_schools_closed": "Bildungseinrichtungen bieten nur Notbetreuung an",
+        "emergency_child_care": "Bildungseinrichtungen bieten nur Notbetreuung an",
     }
 
     fig, ax = plot_incidences(
