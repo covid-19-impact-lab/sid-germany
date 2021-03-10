@@ -133,7 +133,7 @@ def test_demand_test_non_zero_remainder(states, params):
     )
     # tests to distribute: 2 per individual.
     # 0-4 get one extra. 5-14 are even. 15-34 have two tests removed.
-    states["cd_symptomatic_true"] = [-1, 2] + [-1, -1, -10, 30] + [-1] * 4
+    states["cd_symptoms_true"] = [-1, 2] + [-1, -1, -10, 30] + [-1] * 4
 
     share_known_cases = 1
     positivity_rate_overall = 1 / 3
@@ -149,6 +149,36 @@ def test_demand_test_non_zero_remainder(states, params):
         seed=333,
     )
     # the order of the last four is random and will change if the seed is changed!
+    expected = pd.Series(
+        [True, True] + [True, True, False, False] + [False, False, True, True],
+        index=states.index,
+    )
+    pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+def test_demand_test_with_teachers(states, params):
+    states["newly_infected"] = True
+    states["infectious"] = (
+        [True, True] + [True, True, False, False] + [True, False, True, True]
+    )
+    # tests to distribute: 2 per individual.
+    # 0-4 get one extra. 5-14 are even. 15-34 2 get tests because teacher
+    states["cd_symptoms_true"] = [-1, 2] + [-1, -1, -10, 30] + [2, 2, 2, 2]
+    states.loc[-2:, "educ_worker"] = True
+
+    share_known_cases = 1
+    positivity_rate_overall = 1 / 3
+    test_shares_by_age_group = pd.Series([1 / 3] * 3, index=["0-4", "5-14", "15-34"])
+    positivity_rate_by_age_group = pd.Series([0.2] * 3, index=["0-4", "5-14", "15-34"])
+    res = demand_test(
+        states=states,
+        params=params,
+        share_known_cases=share_known_cases,
+        positivity_rate_overall=positivity_rate_overall,
+        test_shares_by_age_group=test_shares_by_age_group,
+        positivity_rate_by_age_group=positivity_rate_by_age_group,
+        seed=333,
+    )
     expected = pd.Series(
         [True, True] + [True, True, False, False] + [False, False, True, True],
         index=states.index,
