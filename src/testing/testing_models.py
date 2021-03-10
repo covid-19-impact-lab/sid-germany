@@ -39,7 +39,7 @@ from src.contact_models.contact_model_functions import get_states_w_vacations
 def demand_test(
     states,
     params,
-    seed,  # noqa: U100
+    seed,
     share_known_cases,
     positivity_rate_overall,
     test_shares_by_age_group,
@@ -72,6 +72,7 @@ def demand_test(
         states (pandas.DataFrame): The states of the individuals.
         params (pandas.DataFrame): A DataFrame with parameters. It needs to contain
             the entry ("test_demand", "symptoms", "share_symptomatic_requesting_test").
+        seed (int): Seed for reproducibility.
         share_known_cases (pandas.Series): share of infections that is detected.
         positivity_rate_overall (pandas.Series): share of total tests that was positive.
         test_shares_by_age_group (pandas.Series or pandas.DataFrame):
@@ -88,6 +89,7 @@ def demand_test(
             which contains the probability for each individual demanding a test.
 
     """
+    np.random.seed(seed)
     n_newly_infected = states["newly_infected"].sum()
     symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
     share_symptomatic_requesting_test = params.loc[symptom_tuple, "value"]
@@ -132,7 +134,7 @@ def demand_test(
         demanded[drawn] = True
 
     if date > pd.Timestamp("2020-12-31"):
-        demanded = _allocate_tests_to_educ_workers(demanded, states, params)
+        demanded = _demand_test_for_educ_workers(demanded, states, params)
 
     demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
@@ -173,15 +175,36 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     return n_pos_tests_for_each_group
 
 
-def _allocate_tests_to_educ_workers(demanded, states, params):
+def _demand_test_for_educ_workers(demanded, states, params):
+    """Every working teacher who has not received a test in the last 7 days is tested.
+
+    At the moment we only distribute positive tests. As a result the
+    `cd_received_test_result_true` countdown does not give us who has been tested and
+    we only want to demand tests for education workers who will get a positive result.
+
+    We implement the tests for education workers as spread out across the week. This
+    is necessary because teachers use antigen tests for which no data is available.
+    Our test data is weekly PCR test data which we spread out to be evenly distributed
+    across the week. So we spread out the testing for teachers also across the week.
+    We use the index to decide who gets tested which day of the week. Since the states
+    are shuffeld this is not a problem.
+
+    We again assume that tests are perfect, i.e. no false positives or negatives.
+
+    """
     demanded = demanded.copy()
     date = get_date(states)
     states_w_vacations = get_states_w_vacations(date, params)
     on_vacation = states["state"].isin(states_w_vacations)
     working_teachers = states["educ_worker"] & ~on_vacation
-    not_tested_within_7_days = states["cd_received_test_result_true"] <= -7
-    to_be_tested = working_teachers & not_tested_within_7_days
-    demanded[to_be_tested] = 1
+
+    day_of_week = date.dayofweek
+    slice_start = int(day_of_week / 7 * len(states))
+    slice_end = int(((day_of_week + 1) / 7) * len(states))
+    in_slice = (slice_start <= states["index"]) & (states["index"] < slice_end)
+    to_be_tested = working_teachers & in_slice
+    to_receive_positive_test = to_be_tested & states["infectious"]
+    demanded[to_receive_positive_test] = True
     return demanded
 
 

@@ -1,10 +1,10 @@
 import pandas as pd
 import pytest
 
-from src.testing.testing_models import _allocate_tests_to_educ_workers
 from src.testing.testing_models import (
     _calculate_positive_tests_to_distribute_per_age_group,
 )
+from src.testing.testing_models import _demand_test_for_educ_workers
 from src.testing.testing_models import _scale_demand_up_or_down
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
@@ -23,10 +23,12 @@ def states():
     states["date"] = DATE
     # 1, 1, 2 infections => 4 newly_infected
     states["newly_infected"] = [True, False, True] + [False] * 5 + [True, True]
+    # 0, 2 and 9 are potential symptom test seekers b/c of recent symptoms
     states["cd_symptoms_true"] = [-1, 2, -1] + [-5] * 6 + [-1]
     states["educ_worker"] = False
     states["state"] = "Hessen"
     states["cd_received_test_result_true"] = -3
+    states["index"] = states.index
     return states
 
 
@@ -112,7 +114,15 @@ def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states, par
     states["infectious"] = states.index.isin([1, 4, 7])
 
     expected = pd.Series(False, index=states.index)
-    expected.loc[0, 4, 7] = True
+    # 1 test for each age group
+    # [0, 2, 9] developed symptoms yesterday and are without test
+    # 1 is drawn to demand a test because of symptoms: 2
+    expected.loc[2] = True
+    # after: 1 positive test remaining for 0-4 and 1 remaining for 15-34.
+    # in 0-4 only loc=1 is infectious -> that person gets the test
+    expected.loc[1] = True
+    # in 15-34 only loc=7 is infectious -> that person gets the test
+    expected.loc[7] = True
 
     res = demand_test(
         states=states,
@@ -150,7 +160,7 @@ def test_demand_test_non_zero_remainder(states, params):
     )
     # the order of the last four is random and will change if the seed is changed!
     expected = pd.Series(
-        [True, True] + [True, True, False, False] + [False, False, True, True],
+        [True, True] + [True, True, False, False] + [True, False, False, True],
         index=states.index,
     )
     pd.testing.assert_series_equal(res, expected, check_names=False)
@@ -165,6 +175,7 @@ def test_demand_test_with_teachers(states, params):
     # 0-4 get one extra. 5-14 are even. 15-34 2 get tests because teacher
     states["cd_symptoms_true"] = [-1, 2] + [-1, -1, -10, 30] + [2, 2, 2, 2]
     states.loc[-2:, "educ_worker"] = True
+    states["date"] = pd.Timestamp("2021-03-07")
 
     share_known_cases = 1
     positivity_rate_overall = 1 / 3
@@ -209,32 +220,40 @@ def test_process_tests(states):
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
-def test_allocate_tests_to_educ_workers(states, params):
+def test_demand_test_for_educ_workers(states, params):
     # adjust fixture
     states["educ_worker"] = [False] + [True] * 8 + [False]
     states["state"] = ["Bavaria"] * 6 + ["Hessen"] * 4
-    states["cd_received_test_result_true"] = [-9, -3, -8, -2, -9, -2] + [-12] * 3 + [-2]
-    states["date"] = pd.Timestamp("2021-05-02")
+    states["infectious"] = [True] + [False] + [True] * 8
 
-    demanded = pd.Series(0, index=states.index)
-    demanded.loc[3] = 1
-    demanded.loc[9] = 1
+    demanded = pd.Series(False, index=states.index)
+    demanded.loc[3] = True
+    demanded.loc[9] = True
+
+    states["date"] = pd.Timestamp("2021-03-09")  # Tuesday
 
     expected = pd.Series(
         [
-            0,  # not teacher
-            0,  # recently tested
-            1,  # gets test
-            1,  # already demanding test
-            1,  # gets test
-            0,  # recently tested
-            0,  # vacation state
-            0,  # vacation state
-            0,  # vacation state
-            1,  # already demanding test
+            # Monday
+            False,  # not teacher
+            # Tuesday
+            False,  # not infectious
+            # Wednesday
+            False,  # wrong day
+            True,  # already demanding test
+            # Thursday
+            False,  # wrong day
+            # Friday
+            False,  # wrong day
+            False,  # vacation state
+            # Saturday
+            False,  # vacation state
+            # Sunday
+            False,  # vacation state
+            True,  # already demanding test
         ],
         index=states.index,
     )
 
-    res = _allocate_tests_to_educ_workers(demanded, states, params)
+    res = _demand_test_for_educ_workers(demanded, states, params)
     pd.testing.assert_series_equal(res, expected, check_names=False)
