@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+from src.testing.testing_models import _allocate_tests_to_educ_workers
 from src.testing.testing_models import (
     _calculate_positive_tests_to_distribute_per_age_group,
 )
@@ -37,7 +38,7 @@ def params():
         columns=["value"],
         index=pd.MultiIndex.from_tuples([share_tuple]),
     )
-    params.loc[("FürImmerferien", "Hessen", "start")] = 1606777200  # 2020-12-01
+    params.loc[("FürImmerferien", "Hessen", "start")] = 1601503200  # 2020-10-01
     params.loc[("FürImmerferien", "Hessen", "end")] = 1635631200  # 2021-10-31
     params.index.names = ["category", "subcategory", "name"]
     return params
@@ -175,4 +176,35 @@ def test_process_tests(states):
         n_to_be_processed_tests=None, states=states, params=None, seed=13222
     )
     states.loc[:3, "pending_test"] = False
+    pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+def test_allocate_tests_to_educ_workers(states, params):
+    # adjust fixture
+    states["educ_worker"] = [False] + [True] * 8 + [False]
+    states["state"] = ["Bavaria"] * 6 + ["Hessen"] * 4
+    states["cd_received_test_result_true"] = [-9, -3, -8, -2, -9, -2] + [-12] * 3 + [-2]
+    states["date"] = pd.Timestamp("2021-05-02")
+
+    demanded = pd.Series(0, index=states.index)
+    demanded.loc[3] = 1
+    demanded.loc[9] = 1
+
+    expected = pd.Series(
+        [
+            0,  # not teacher
+            0,  # recently tested
+            1,  # gets test
+            1,  # already demanding test
+            1,  # gets test
+            0,  # recently tested
+            0,  # vacation state
+            0,  # vacation state
+            0,  # vacation state
+            1,  # already demanding test
+        ],
+        index=states.index,
+    )
+
+    res = _allocate_tests_to_educ_workers(demanded, states, params)
     pd.testing.assert_series_equal(res, expected, check_names=False)

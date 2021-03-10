@@ -131,7 +131,8 @@ def demand_test(
         demanded = pd.Series(False, index=states.index)
         demanded[drawn] = True
 
-    demanded = _allocate_tests_to_educ_workers(demanded, states, params)
+    if date > pd.Timestamp("2020-12-31"):
+        demanded = _allocate_tests_to_educ_workers(demanded, states, params)
 
     demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
@@ -173,14 +174,14 @@ def _calculate_positive_tests_to_distribute_per_age_group(
 
 
 def _allocate_tests_to_educ_workers(demanded, states, params):
+    demanded = demanded.copy()
     date = get_date(states)
-    if date > pd.Timestamp("2020-12-31"):
-        demanded = demanded.copy()
-        states_w_vacations = get_states_w_vacations(date, params)
-        on_vacation = states["state"].isin(states_w_vacations)
-        working_teachers = states["educ_worker"] & ~on_vacation
-        to_be_tested = working_teachers & states["cd_received_test_result_true"] <= -7
-        demanded[to_be_tested] = 1
+    states_w_vacations = get_states_w_vacations(date, params)
+    on_vacation = states["state"].isin(states_w_vacations)
+    working_teachers = states["educ_worker"] & ~on_vacation
+    not_tested_within_7_days = states["cd_received_test_result_true"] <= -7
+    to_be_tested = working_teachers & not_tested_within_7_days
+    demanded[to_be_tested] = 1
     return demanded
 
 
@@ -231,6 +232,7 @@ def _scale_demand_up_or_down(demanded, states, remaining):
                 f"There were {demanded.sum()} tests demanded "
                 f"which was {-remainder} above the number of available tests.\n\n\n"
             )
+
         if len(pool) >= n_to_draw:
             drawn = np.random.choice(pool, n_to_draw, replace=False)
         else:
