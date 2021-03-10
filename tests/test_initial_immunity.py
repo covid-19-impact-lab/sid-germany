@@ -20,7 +20,7 @@ def date(month, day):
 
 
 @pytest.fixture
-def empirical_data():
+def empirical_infections():
     df = pd.DataFrame()
     df["date"] = [date(3, 1), date(3, 1), date(3, 3), date(3, 5), date(3, 5)]
     df["county"] = ["A", "A", "A", "B", "B"]
@@ -121,14 +121,16 @@ def test_create_initial_immunity_lln(synthetic_data):
     cases_by_county_and_age_group = individual_level_cases.groupby(
         ["county", "age_group_rki"]
     ).sum()
-    empirical_data = cases_by_county_and_age_group.stack()
-    empirical_data.index.names = ["county", "age_group_rki", "date"]
-    empirical_data = empirical_data.reset_index()
-    empirical_data = empirical_data.set_index(["date", "county", "age_group_rki"])
-    empirical_data = empirical_data[0]
-    empirical_data.name = "newly_infected"
+    empirical_infections = cases_by_county_and_age_group.stack()
+    empirical_infections.index.names = ["county", "age_group_rki", "date"]
+    empirical_infections = empirical_infections.reset_index()
+    empirical_infections = empirical_infections.set_index(
+        ["date", "county", "age_group_rki"]
+    )
+    empirical_infections = empirical_infections[0]
+    empirical_infections.name = "newly_infected"
 
-    expected_shares = empirical_data["2020-03-03"] / empirical_group_sizes
+    expected_shares = empirical_infections["2020-03-03"] / empirical_group_sizes
 
     initial_infections = pd.DataFrame(index=full_synthetic_data.index)
     to_draw = len(full_synthetic_data)
@@ -139,7 +141,7 @@ def test_create_initial_immunity_lln(synthetic_data):
         a=[True, False], size=to_draw, p=[0.01, 0.99]
     )
     res = create_initial_immunity(
-        empirical_data=empirical_data,
+        empirical_infections=empirical_infections,
         synthetic_data=full_synthetic_data,
         initial_infections=initial_infections,
         population_size=population_size,

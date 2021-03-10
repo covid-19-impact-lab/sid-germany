@@ -39,11 +39,13 @@ def create_initial_conditions(
 
     """
     seed = it.count(seed)
-    empirical_data = load_dataset(reported_infections_path)["upscaled_newly_infected"]
+    empirical_infections = load_dataset(reported_infections_path)[
+        "upscaled_newly_infected"
+    ]
     synthetic_data = load_dataset(synthetic_data_path)[["county", "age_group_rki"]]
 
     initial_infections = create_initial_infections(
-        empirical_data=empirical_data,
+        empirical_infections=empirical_infections,
         synthetic_data=synthetic_data,
         start=start,
         end=end,
@@ -52,7 +54,7 @@ def create_initial_conditions(
     )
 
     initial_immunity = create_initial_immunity(
-        empirical_data=empirical_data,
+        empirical_infections=empirical_infections,
         synthetic_data=synthetic_data,
         date=end,
         initial_infections=initial_infections,

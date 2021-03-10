@@ -6,7 +6,7 @@ from src.config import POPULATION_GERMANY
 
 
 def create_initial_immunity(
-    empirical_data,
+    empirical_infections,
     synthetic_data,
     initial_infections,
     date,
@@ -17,9 +17,9 @@ def create_initial_immunity(
     """Create a Series with initial immunity.
 
     Args:
-        empirical_data (pandas.Series): Newly infected Series with the index levels
-            ["date", "county", "age_group_rki"]. These must already be corrected to
-            include undetected cases.
+        empirical_infections (pandas.Series): Newly infected Series with the index
+            levels ["date", "county", "age_group_rki"]. These must already be
+            corrected to include undetected cases.
         synthetic_data (pandas.DataFrame): Dataset with one row per simulated
             individual. Must contain the columns age_group_rki and county.
         initial_infections (pandas.DataFrame): DataFrame with same index as
@@ -30,14 +30,14 @@ def create_initial_immunity(
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
             demanded time frame.
-        population_size (int): Size of the population behind the empirical_data.
+        population_size (int): Size of the population behind the empirical_infections.
 
     Returns:
         pd.Series: Boolean series with same index as synthetic_data.
 
     """
     date_with_delay = pd.Timestamp(date) + pd.Timedelta(days=reporting_delay)
-    empirical_data = empirical_data[:date_with_delay].sort_index()
+    empirical_infections = empirical_infections[:date_with_delay].sort_index()
 
     initial_before_date = [
         pd.Timestamp(col) <= date_with_delay for col in initial_infections
@@ -45,14 +45,14 @@ def create_initial_immunity(
     assert all(initial_before_date), f"Initial infections must lie before {date}."
 
     index_cols = ["date", "county", "age_group_rki"]
-    correct_index_levels = empirical_data.index.names == index_cols
+    correct_index_levels = empirical_infections.index.names == index_cols
     assert correct_index_levels, f"Your data must have {index_cols} as index levels."
-    duplicates_in_index = empirical_data.index.duplicated().any()
+    duplicates_in_index = empirical_infections.index.duplicated().any()
     assert not duplicates_in_index, "Your index must not have any duplicates."
 
     endog_immune = initial_infections.any(axis=1)
 
-    total_immune = empirical_data.groupby(["age_group_rki", "county"]).sum()
+    total_immune = empirical_infections.groupby(["age_group_rki", "county"]).sum()
 
     total_immunity_prob = _calculate_total_immunity_prob(
         total_immune,
