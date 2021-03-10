@@ -23,6 +23,9 @@ def states():
     # 1, 1, 2 infections => 4 newly_infected
     states["newly_infected"] = [True, False, True] + [False] * 5 + [True, True]
     states["cd_symptoms_true"] = [-1, 2, -1] + [-5] * 6 + [-1]
+    states["educ_worker"] = False
+    states["state"] = "Hessen"
+    states["cd_received_test_result_true"] = -3
     return states
 
 
@@ -34,6 +37,9 @@ def params():
         columns=["value"],
         index=pd.MultiIndex.from_tuples([share_tuple]),
     )
+    params.loc[("FürImmerferien", "Hessen", "start")] = 1606777200  # 2020-12-01
+    params.loc[("FürImmerferien", "Hessen", "end")] = 1635631200  # 2021-10-31
+    params.index.names = ["category", "subcategory", "name"]
     return params
 
 

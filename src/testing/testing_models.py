@@ -33,10 +33,12 @@ import numpy as np
 import pandas as pd
 from sid.time import get_date
 
+from src.contact_models.contact_model_functions import get_states_w_vacations
+
 
 def demand_test(
     states,
-    params,  # noqa: U100
+    params,
     seed,  # noqa: U100
     share_known_cases,
     positivity_rate_overall,
@@ -61,7 +63,9 @@ def demand_test(
 
     In each age group we first distribute tests among those that recently developed
     symptoms but have no pending test and do not know their infection state yet.
-    We then distribute the remaining tests tests among the remaining currently
+    We then test all education workers such as teachers that have not been tested
+    in the last week and are not on vacation.
+    We then distribute the remaining tests among the remaining currently
     infectious such that we use up the full test budget in each age group.
 
     Args:
@@ -127,6 +131,8 @@ def demand_test(
         demanded = pd.Series(False, index=states.index)
         demanded[drawn] = True
 
+    demanded = _allocate_tests_to_educ_workers(demanded, states, params)
+
     demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
     demanded = _scale_demand_up_or_down(demanded, states, remaining)
@@ -164,6 +170,18 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     n_pos_tests_for_each_group = n_tests_for_each_group * positivity_rate_by_age_group
     n_pos_tests_for_each_group = n_pos_tests_for_each_group.astype(int)
     return n_pos_tests_for_each_group
+
+
+def _allocate_tests_to_educ_workers(demanded, states, params):
+    date = get_date(states)
+    if date > pd.Timestamp("2020-12-31"):
+        demanded = demanded.copy()
+        states_w_vacations = get_states_w_vacations(date, params)
+        on_vacation = states["state"].isin(states_w_vacations)
+        working_teachers = states["educ_worker"] & ~on_vacation
+        to_be_tested = working_teachers & states["cd_received_test_result_true"] <= -7
+        demanded[to_be_tested] = 1
+    return demanded
 
 
 def _scale_demand_up_or_down(demanded, states, remaining):
