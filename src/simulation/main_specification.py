@@ -65,9 +65,9 @@ def build_main_scenarios(base_path):
     if not FAST_FLAG and "predictions" in base_path.name:
         scenarios = {
             "base_scenario": base_scenario,
+            "november_home_office_level": nov_home_office,
             "spring_home_office_level": spring_home_office,
             "emergency_child_care": emergency_child_care,
-            "november_home_office_level": nov_home_office,
         }
     else:
         scenarios = {"base_scenario": base_scenario}
