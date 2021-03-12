@@ -50,7 +50,7 @@ def _prepare_data(df):
         "Kalenderwoche": "week_and_year",
         "Anzahl Testungen": "n_tests",
         "Positiv getestet": "n_positive_tests",
-        "Positivenquote (%)": "pct_tests_positive",
+        "Positivenanteil (%)": "pct_tests_positive",
         "Anzahl übermittelnder Labore": "n_laboratories",
     }
     df = df.rename(columns=translations)
