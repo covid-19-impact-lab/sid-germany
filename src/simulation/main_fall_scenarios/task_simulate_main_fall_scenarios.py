@@ -10,9 +10,9 @@ from src.create_initial_states.create_initial_conditions import (  # noqa
 )
 from src.policies.combine_policies_over_periods import get_october_to_christmas_policies
 from src.simulation.main_specification import build_main_scenarios
-from src.simulation.main_specification import DEPENDENCIES
 from src.simulation.main_specification import FALL_PATH
 from src.simulation.main_specification import get_simulation_kwargs
+from src.simulation.main_specification import SIMULATION_DEPENDENCIES
 
 
 NESTED_PARAMETRIZATION = build_main_scenarios(FALL_PATH)
@@ -22,10 +22,12 @@ PARAMETRIZATION = [
 """Each specification consists of a produces path, the scenario dictioary and a seed"""
 
 if FAST_FLAG:
-    DEPENDENCIES["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
+    SIMULATION_DEPENDENCIES["initial_states"] = (
+        BLD / "data" / "debug_initial_states.parquet"
+    )
 
 
-@pytask.mark.depends_on(DEPENDENCIES)
+@pytask.mark.depends_on(SIMULATION_DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
     # determine dates

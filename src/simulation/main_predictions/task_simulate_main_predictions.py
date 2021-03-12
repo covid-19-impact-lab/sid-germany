@@ -12,10 +12,10 @@ from src.policies.combine_policies_over_periods import get_enacted_policies_of_2
 from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 from src.simulation.main_specification import build_main_scenarios
-from src.simulation.main_specification import DEPENDENCIES
 from src.simulation.main_specification import get_simulation_kwargs
 from src.simulation.main_specification import PREDICT_PATH
 from src.simulation.main_specification import SCENARIO_START
+from src.simulation.main_specification import SIMULATION_DEPENDENCIES
 
 
 NESTED_PARAMETRIZATION = build_main_scenarios(PREDICT_PATH)
@@ -25,10 +25,12 @@ PARAMETRIZATION = [
 """Each specification consists of a produces path, the scenario dictioary and a seed"""
 
 if FAST_FLAG:
-    DEPENDENCIES["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
+    SIMULATION_DEPENDENCIES["initial_states"] = (
+        BLD / "data" / "debug_initial_states.parquet"
+    )
 
 
-@pytask.mark.depends_on(DEPENDENCIES)
+@pytask.mark.depends_on(SIMULATION_DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
     start_date = pd.Timestamp("2021-02-15")

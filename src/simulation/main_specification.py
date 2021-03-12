@@ -21,7 +21,7 @@ FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-03-01")
 
-DEPENDENCIES = {
+SIMULATION_DEPENDENCIES = {
     "initial_states": BLD / "data" / "initial_states.parquet",
     "share_known_cases": BLD
     / "data"
