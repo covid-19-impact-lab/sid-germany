@@ -29,7 +29,7 @@ def task_create_test_statistics(depends_on, produces):
     df = pd.read_excel(depends_on, sheet_name="1_Testzahlerfassung")
     df = _prepare_data(df)
     for col in OUT_COLS:
-        title = col.replace("_", " ").replace("n ", "Number of")
+        title = col.replace("_", " ").replace("n ", "Number of ")
         df.set_index("date")[col].to_csv(produces[col])
         fig, ax = plot_time_series(df=df, y=col, title=title)
         fig.savefig(produces[f"{col}_png"])
@@ -50,7 +50,7 @@ def _prepare_data(df):
         "Kalenderwoche": "week_and_year",
         "Anzahl Testungen": "n_tests",
         "Positiv getestet": "n_positive_tests",
-        "Positivenquote (%)": "pct_tests_positive",
+        "Positivenanteil (%)": "pct_tests_positive",
         "Anzahl übermittelnder Labore": "n_laboratories",
     }
     df = df.rename(columns=translations)

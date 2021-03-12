@@ -67,7 +67,7 @@ def _prepare_test_capacity_data(df):
 def _create_date(df):
     """Create year and week from string column and convert to true date."""
     time_col = "KW, für die die Angabe prognostisch erfolgt ist"
-    year_and_week = df[time_col].str.split(", KW", 1, expand=True)
+    year_and_week = df[time_col].str.split("/", 1, expand=True)
     year_and_week = year_and_week.astype(int)
-    year_and_week.columns = ["year", "week"]
+    year_and_week.columns = ["week", "year"]
     return year_and_week.apply(get_date_from_year_and_week, axis=1)
