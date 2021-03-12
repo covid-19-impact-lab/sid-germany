@@ -30,6 +30,14 @@ PARAMETRIZED_DOWNLOADS = [
         "3E410CDC013276FC28AD711373F5D82A.internet072?__blob=publicationFile",
         BLD / "data" / "raw_time_series" / "vaccinations.xlsx",
     ),
+    (
+        "https://impfdashboard.de/static/data/germany_vaccinations_timeseries_v2.tsv",
+        BLD / "data" / "raw_time_series" / "vaccinations_with_reason.tsv",
+    ),
+    (
+        "https://impfdashboard.de/static/data/germany_deliveries_timeseries_v2.tsv",
+        BLD / "data" / "raw_time_series" / "vaccination_deliveries.tsv",
+    ),
 ]
 
 
