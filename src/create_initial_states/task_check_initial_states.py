@@ -7,7 +7,6 @@ from pandas.api.types import is_categorical_dtype
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
-from src.simulation.plotting import style_plot
 
 
 @pytask.mark.depends_on(
@@ -79,7 +78,6 @@ def task_check_initial_states(depends_on, produces):
         "Difference between the shares in the initial states and in the "
         "general population\n(> 0 means over represented in the synthetic data)"
     )
-    fig, ax = style_plot(fig, ax)
     fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
 
 

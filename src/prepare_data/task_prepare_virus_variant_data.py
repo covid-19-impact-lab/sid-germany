@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pytask
 import seaborn as sns
+import statsmodels.api as sm
 from sid import get_colors
 
 from src.config import BLD
@@ -55,11 +57,22 @@ def task_prepare_virus_variant_data(depends_on, produces):
 
     # average over rki and cologne shares
     b117 = strain_data.groupby("date")["share_b117"].mean()
-    b117.to_pickle(produces["b117"])
     b1351 = strain_data.groupby("date")["share_b1351"].mean()
+
+    # change frequency to daily
+    daily_index = pd.date_range(pd.Timestamp("2020-03-01"), b117.index.max())
+    extended_b117 = b117.reindex(daily_index).interpolate()
+    # extrapolate into the past
+    extrapolated_fitted = _extrapolate_into_the_past(extended_b117)
+    extended_b117 = extended_b117.fillna(extrapolated_fitted)
+    extended_b117.to_pickle(produces["b117"])
+    b117.name = "raw_share_b117"
+
+    # we don't fit a model for b1351 because the values are too small.
+    b1351 = b1351.reindex(daily_index).interpolate().fillna(0)
     b1351.to_pickle(produces["b1351"])
 
-    fig, ax = _plot_final_shares(b117, b1351)
+    fig, ax = _plot_final_shares([b117, b1351, extended_b117])
     fig.savefig(produces["fig"])
 
 
@@ -162,11 +175,61 @@ def _merge_rki_and_cologne_data(rki, co_weekly):
     return strain_data
 
 
-def _plot_final_shares(b117, b1351):
+def _plot_final_shares(shares):
     fig, ax = plt.subplots(figsize=(10, 5))
-    colors = get_colors("categorical", 2)
-    sns.lineplot(x=b117.index, y=b117, color=colors[0], linewidth=2, label="b117")
-    sns.lineplot(x=b1351.index, y=b1351, color=colors[1], linewidth=2, label="b1351")
+    colors = get_colors("categorical", len(shares))
+    line_styles = ["-", "--", "dotted"]
+    for color, sr, style in zip(colors, shares, line_styles):
+        sns.lineplot(
+            x=sr.index,
+            y=sr,
+            color=color,
+            linewidth=2,
+            label=sr.name,
+            linestyle=style,
+        )
     ax.set_title("Share of Virus Variants Over Time")
     fig, ax = style_plot(fig, ax)
+    return fig, ax
+
+
+def _extrapolate_into_the_past(sr):
+    """Use data on the virus strains to extrapolate their incidence into the past."""
+    endog = np.log(sr.dropna())
+    exog = pd.DataFrame(index=endog.index)
+    exog["constant"] = 1
+    exog["days_since_start"] = (exog.index - exog.index.min()).days
+
+    model = sm.OLS(endog=endog, exog=exog)
+    results = model.fit()
+    results.summary()
+
+    assert results.rsquared > 0.9, (
+        "Your fit of the virus strain trend has worsened considerably. "
+        "Check the fitness plot in the "
+    )
+
+    full_x = pd.DataFrame(index=sr.index)
+    full_x["days_since_start"] = (full_x.index - exog.index.min()).days
+    full_x["constant"] = 1
+    extrapolated = np.exp(full_x.dot(results.params))
+    extrapolated.name = sr.name
+    return extrapolated
+
+
+def _fitness_plot(actual, fitted):
+    """Compare the actual and fitted share becoming immune."""
+    colors = get_colors("categorical", 4)
+    fig, ax = plt.subplots(figsize=(10, 5))
+    sns.lineplot(
+        x=actual.index,
+        y=actual,
+        label="actual data",
+        linewidth=2,
+        color=colors[0],
+    )
+    sns.lineplot(x=fitted.index, y=fitted, label="fitted", linewidth=2, color=colors[3])
+    ax.set_title("Fitness Plot")
+    fig, ax = style_plot(fig, ax)
+    fig.tight_layout()
     return fig, ax
