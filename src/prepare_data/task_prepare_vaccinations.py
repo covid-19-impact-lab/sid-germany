@@ -44,7 +44,7 @@ def task_prepare_vaccination_data(depends_on, produces):
     smoothed = share_becoming_immune.rolling(7, min_periods=1).mean().dropna()
     fitted, prediction = _get_vaccination_prediction(smoothed)
 
-    fig, ax = _fitness_plot(share_becoming_immune, smoothed, fitted)
+    fig, ax = fitness_plot(share_becoming_immune, smoothed, fitted)
     fig.savefig(produces["fig_fit"], dpi=200, transparent=False, facecolor="w")
 
     start_date = smoothed.index.min() - pd.Timedelta(days=1)
@@ -107,7 +107,7 @@ def _get_vaccination_prediction(smoothed):
     results = model.fit()
     assert results.rsquared > 0.85, (
         "Your fit of the vaccination trend has worsened considerably. "
-        "Check the fitness plot in the "
+        "Check the fitness plot: bld/data/vaccinations/fitness_prediction.png."
     )
     fitted = np.exp(exog.dot(results.params))
 
@@ -125,14 +125,14 @@ def _get_days_since_march_first(df):
     return (df.index - pd.Timestamp("2021-03-01")).days
 
 
-def _fitness_plot(share_becoming_immune, smoothed, fitted):
+def fitness_plot(actual, smoothed, fitted):
     """Compare the actual, smoothed and fitted share becoming immune."""
     colors = get_colors("categorical", 4)
     fig, ax = plt.subplots(figsize=(10, 5))
     sns.lineplot(
-        x=share_becoming_immune.index,
-        y=share_becoming_immune,
-        label="actual share becoming immune",
+        x=actual.index,
+        y=actual,
+        label="actual data",
         linewidth=2,
         color=colors[0],
     )
