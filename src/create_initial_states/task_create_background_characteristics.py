@@ -22,7 +22,10 @@ from src.shared import create_age_groups_rki
         / "original_data"
         / "population_structure"
         / "microcensus2010_cf.dta",
-        "county_probabilities": BLD / "data" / "counties.parquet",
+        "county_probabilities": BLD
+        / "data"
+        / "population_structure"
+        / "counties.parquet",
         "work_daily_dist": BLD
         / "contact_models"
         / "empirical_distributions"
