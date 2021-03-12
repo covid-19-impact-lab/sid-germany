@@ -81,7 +81,12 @@ def _prepare_co_data(co):
     co = co[co["n_b117_cum"].notnull() & co["n_tests_positive_cum"].notnull()]
     co["date"] = pd.to_datetime(co["date"], dayfirst=True)
     keep_cols = ["n_b117_cum", "n_b1351_cum", "n_tests_positive_cum"]
-    co = co.set_index("date")[keep_cols].astype(int).sort_index()
+    co = co.set_index("date")[keep_cols].astype(int)
+    # As the latest date is always added on top, this checks that there are no typos.
+    assert (
+        co.index.is_monotonic_decreasing
+    ), "Dates of the Cologne virus strain data are not monotonic. Typo?"
+    co = co.sort_index()
     for col in co:
         assert (co[col].diff().dropna() >= 0).all(), col
         co[col.replace("_cum", "")] = co[col].diff()
