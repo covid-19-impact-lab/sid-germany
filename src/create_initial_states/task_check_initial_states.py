@@ -1,10 +1,13 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytask
+import seaborn as sns
 from pandas.api.types import is_categorical_dtype
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
+from src.simulation.plotting import style_plot
 
 
 @pytask.mark.depends_on(
@@ -26,10 +29,16 @@ from src.config import POPULATION_GERMANY
         / "contact_models"
         / "empirical_distributions"
         / "other_recurrent_weekly.pkl",
+        "true_age_group_dist": BLD
+        / "data"
+        / "population_structure"
+        / "age_groups.parquet",
     }
 )
-def task_check_initial_states(depends_on):
+@pytask.mark.produces(BLD / "data" / "comparison_of_age_group_distributions.png")
+def task_check_initial_states(depends_on, produces):
     df = pd.read_parquet(depends_on["initial_states"])
+    true_age_shares = pd.read_parquet(depends_on["true_age_group_dist"])["weight"]
     _check_background_characteristics(df)
 
     work_daily_dist = pd.read_pickle(depends_on["work_daily_dist"])
@@ -52,6 +61,26 @@ def task_check_initial_states(depends_on):
     assert (
         len(not_categorical_group_ids) == 0
     ), f"There are non categorical group id columns: {not_categorical_group_ids}"
+
+    synthetic_age_shares = df["age_group"].value_counts(normalize=True)
+    diff = synthetic_age_shares - true_age_shares
+    assert np.abs(diff).max() <= 0.041, (
+        "The largest difference between the age group shares in the synthetic "
+        "and the true population clearly exceeds 4%."
+    )
+    assert np.abs(diff).mean() <= 0.015, (
+        "The mean difference between the age group shares in the synthetic "
+        "and the true population exceeds 1.5%."
+    )
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    sns.barplot(x=diff.index, y=diff, color="firebrick", alpha=0.6)
+    ax.set_title(
+        "Difference between the shares in the initial states and in the "
+        "general population\n(> 0 means over represented in the synthetic data)"
+    )
+    fig, ax = style_plot(fig, ax)
+    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
 
 
 def _check_background_characteristics(df):
