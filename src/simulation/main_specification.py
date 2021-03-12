@@ -5,6 +5,7 @@ import pandas as pd
 
 from src.config import BLD
 from src.config import FAST_FLAG
+from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 from src.policies.combine_policies_over_periods import get_educ_options_starting_feb_22
 from src.policies.combine_policies_over_periods import (
@@ -19,6 +20,33 @@ from src.testing.testing_models import process_tests
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-03-01")
+
+SIMULATION_DEPENDENCIES = {
+    "initial_states": BLD / "data" / "initial_states.parquet",
+    "share_known_cases": BLD
+    / "data"
+    / "processed_time_series"
+    / "share_known_cases.pkl",
+    "params": SRC / "simulation" / "estimated_params.pkl",
+    "contacts_py": SRC / "contact_models" / "get_contact_models.py",
+    "policies_py": SRC / "policies" / "combine_policies_over_periods.py",
+    "testing_py": SRC / "testing" / "testing_models.py",
+    "specs_py": SRC / "simulation" / "main_specification.py",
+    "initial_conditions_py": SRC
+    / "create_initial_states"
+    / "create_initial_conditions.py",
+    "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
+    "synthetic_data_path": BLD / "data" / "initial_states.parquet",
+    "test_shares_by_age_group": BLD
+    / "data"
+    / "testing"
+    / "test_shares_by_age_group.pkl",
+    "positivity_rate_by_age_group": BLD
+    / "data"
+    / "testing"
+    / "positivity_rate_by_age_group.pkl",
+    "positivity_rate_overall": BLD / "data" / "testing" / "positivity_rate_overall.pkl",
+}
 
 
 def build_main_scenarios(base_path):

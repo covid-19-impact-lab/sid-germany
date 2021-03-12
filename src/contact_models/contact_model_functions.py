@@ -373,14 +373,14 @@ def reduce_contacts_on_condition(
 def _pupils_having_vacations_do_not_attend(attends_facility, states, params):
     """Make pupils stay away from school if their state has vacations."""
     date = get_date(states)
-    states_w_vacations = _get_states_w_vacations(date, params)
+    states_w_vacations = get_states_w_vacations(date, params)
 
     attends_facility.loc[attends_facility & states.state.isin(states_w_vacations)] = 0
 
     return attends_facility
 
 
-def _get_states_w_vacations(date: pd.Timestamp, params: pd.DataFrame) -> List[str]:
+def get_states_w_vacations(date: pd.Timestamp, params: pd.DataFrame) -> List[str]:
     """Get states which currently have vacations for pupils."""
     vacations = params.filter(like="ferien", axis=0).copy()
     if vacations.empty:

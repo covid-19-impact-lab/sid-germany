@@ -64,7 +64,7 @@ def task_prepare_virus_variant_data(depends_on, produces):
 
 
 def _prepare_rki_data(rki):
-    rki = rki[rki["week"].notnull()]
+    rki = rki[rki["week"].notnull()].copy(deep=True)
     rki["year"] = 2021
     rki["date"] = rki.apply(get_date_from_year_and_week, axis=1)
     rki = rki.set_index("date")
@@ -77,11 +77,10 @@ def _prepare_rki_data(rki):
 
 
 def _prepare_co_data(co):
-    co = pd.read_csv(SRC / "original_data" / "virus_strains_cologne.csv")
-    co = co[co["n_b117_cum"].notnull() & co["n_tests_positive_cum"].notnull()]
+    keep_cols = ["n_b117_cum", "n_b1351_cum", "n_tests_positive_cum", "date"]
+    co = co[keep_cols].dropna().copy(deep=True)
     co["date"] = pd.to_datetime(co["date"], dayfirst=True)
-    keep_cols = ["n_b117_cum", "n_b1351_cum", "n_tests_positive_cum"]
-    co = co.set_index("date")[keep_cols].astype(int).sort_index()
+    co = co.set_index("date").astype(int).sort_index()
     for col in co:
         assert (co[col].diff().dropna() >= 0).all(), col
         co[col.replace("_cum", "")] = co[col].diff()
