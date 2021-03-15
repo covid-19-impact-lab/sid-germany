@@ -77,6 +77,7 @@ def task_prepare_virus_variant_data(depends_on, produces):
 
 
 def _prepare_rki_data(rki):
+    # The RKI data also contains info on P.1.
     rki = rki[rki["week"].notnull()].copy(deep=True)
     rki["year"] = 2021
     rki["date"] = rki.apply(get_date_from_year_and_week, axis=1)
