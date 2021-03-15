@@ -89,7 +89,7 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
             "initial_states": ["age_group_rki"],
             "disease_states": ["newly_infected"],
             "time": ["date"],
-            "other": ["new_known_case"],
+            "other": ["new_known_case", "virus_strain"],
         },
     )
     simulate(kwargs["params"])
