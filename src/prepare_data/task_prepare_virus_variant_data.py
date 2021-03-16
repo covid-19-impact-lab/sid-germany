@@ -61,6 +61,7 @@ def task_prepare_virus_variant_data(depends_on, produces):
 
     # change frequency to daily
     daily_index = pd.date_range(pd.Timestamp("2020-03-01"), b117.index.max())
+    # interpolate is piecewise linear. this fits the exponential curve well.
     extended_b117 = b117.reindex(daily_index).interpolate()
     # extrapolate into the past
     extrapolated_fitted = _extrapolate_into_the_past(extended_b117)
@@ -72,7 +73,10 @@ def task_prepare_virus_variant_data(depends_on, produces):
     b1351 = b1351.reindex(daily_index).interpolate().fillna(0)
     b1351.to_pickle(produces["b1351"])
 
-    fig, ax = _plot_final_shares([b117, b1351, extended_b117])
+    plot_start = pd.Timestamp("2021-01-10")
+    fig, ax = _plot_final_shares(
+        [b117[plot_start:], b1351[plot_start:], extended_b117[plot_start:]]
+    )
     fig.savefig(produces["fig"])
 
 
@@ -86,7 +90,14 @@ def _prepare_rki_data(rki):
     rki[as_float_cols] = rki[as_float_cols].astype(float)
     rki["share_b117"] = rki["pct_b117"] / 100
     rki["share_b1351"] = rki["pct_b1351"] / 100
-    rki = rki[["share_b117", "share_b1351", "n_tested_for_variants"]]
+    rki["share_base_strain"] = 1 - rki["share_b117"] - rki["share_b1351"]
+    keep_cols = [
+        "share_base_strain",
+        "share_b117",
+        "share_b1351",
+        "n_tested_for_variants",
+    ]
+    rki = rki[keep_cols]
     return rki
 
 
