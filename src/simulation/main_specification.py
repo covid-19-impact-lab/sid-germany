@@ -20,6 +20,7 @@ from src.testing.testing_models import process_tests
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-03-01")
+VIRUS_STRAINS = ["base_strain", "b117"]
 
 SIMULATION_DEPENDENCIES = {
     "initial_states": BLD / "data" / "initial_states.parquet",
@@ -153,7 +154,7 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
 
     kwargs["params"] = params
     kwargs["contact_models"] = get_all_contact_models()
-    kwargs["virus_strains"] = ["base_strain", "b117"]
+    kwargs["virus_strains"] = VIRUS_STRAINS
 
     return kwargs
 
