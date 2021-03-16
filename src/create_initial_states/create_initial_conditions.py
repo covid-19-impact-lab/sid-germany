@@ -1,6 +1,7 @@
 import itertools as it
 
 from src.config import BLD
+from src.config import POPULATION_GERMANY
 from src.create_initial_states.create_initial_immunity import create_initial_immunity
 from src.create_initial_states.create_initial_infections import (
     create_initial_infections,
@@ -12,10 +13,11 @@ def create_initial_conditions(
     start,
     end,
     seed,
+    virus_shares,
     reporting_delay=0,
     synthetic_data_path=BLD / "data" / "initial_states.parquet",
     reported_infections_path=BLD / "data" / "processed_time_series" / "rki.pkl",
-    virus_shares=None,
+    population_size=POPULATION_GERMANY,
 ):
     """Create the initial conditions, initial_infections and initial_immunity.
 
@@ -25,6 +27,9 @@ def create_initial_conditions(
         end (str or pd.Timestamp): End date for collection of initial
             infections and initial immunity.
         seed (int)
+        virus_shares (dict): Keys are the names of the virus strains. Values are
+            pandas.Series with a DatetimeIndex and the share among newly infected
+            individuals on each day as value.
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
             demanded time frame.
@@ -33,9 +38,6 @@ def create_initial_conditions(
         reported_infections_path (pathlib.Path or str): Path from which to load the
             reported infections. The function expects a DataFrame with a column
             named "newly_infected".
-        virus_shares (dict, optional): A mapping between the names
-            of the virus strains and their share among newly infected
-            individuals over time. If None, the b117 data is loaded as only strain.
 
     Returns:
         initial_conditions (dict): dictionary containing the initial infections and
@@ -45,9 +47,6 @@ def create_initial_conditions(
     seed = it.count(seed)
     empirical_data = load_dataset(reported_infections_path)["upscaled_newly_infected"]
     synthetic_data = load_dataset(synthetic_data_path)[["county", "age_group_rki"]]
-    if virus_shares is None:
-        b117 = load_dataset(BLD / "data" / "virus_strains" / "b117.pkl")
-        virus_shares = {"base_strain": 1 - b117, "b117": b117}
 
     initial_infections = create_initial_infections(
         empirical_data=empirical_data,
@@ -57,6 +56,7 @@ def create_initial_conditions(
         reporting_delay=reporting_delay,
         seed=next(seed),
         virus_shares=virus_shares,
+        population_size=population_size,
     )
 
     initial_immunity = create_initial_immunity(
@@ -66,6 +66,7 @@ def create_initial_conditions(
         initial_infections=initial_infections,
         reporting_delay=reporting_delay,
         seed=next(seed),
+        population_size=population_size,
     )
     return {
         "initial_infections": initial_infections,

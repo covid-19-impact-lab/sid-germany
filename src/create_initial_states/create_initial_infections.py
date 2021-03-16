@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from src.config import POPULATION_GERMANY
-
 
 def create_initial_infections(
     empirical_data,
@@ -10,9 +8,9 @@ def create_initial_infections(
     start,
     end,
     seed,
-    virus_shares=None,
-    reporting_delay=0,
-    population_size=POPULATION_GERMANY,
+    virus_shares,
+    reporting_delay,
+    population_size,
 ):
     """Create a DataFrame with initial infections.
 
@@ -31,9 +29,10 @@ def create_initial_infections(
         start (str or pd.Timestamp): Start date.
         end (str or pd.Timestamp): End date.
         seed (int)
-        virus_shares (dict, optional): A mapping between the names
-            of the virus strains and their share among newly infected
-            individuals over time. If None, no virus shares are implemented.
+        virus_shares (dict or None): If None, it is assumed that there is only one
+            strain. If dict, keys are the names of the virus strains and the values
+            are pandas.Series with a DatetimeIndex and the share among newly infected
+            individuals on each day as value.
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
             demanded time frame.
@@ -210,8 +209,9 @@ def _add_variant_info_to_infections(bool_df, virus_shares):
     for date in bool_df:
         n_infections = bool_df[date].sum()
         strain_probs = [virus_shares[v_name][date] for v_name in names]
-        strain_info = np.random.choice(a=names, p=strain_probs, size=n_infections)
-        strain_info = bool_df[date].replace({False: pd.NA, True: strain_info})
-        categorical_strain_info = pd.Categorical(strain_info, categories=names)
-        virus_strain_infections[date] = categorical_strain_info
+        sampled_strains = np.random.choice(a=names, p=strain_probs, size=n_infections)
+        strain_infections = bool_df[date].replace({False: pd.NA, True: sampled_strains})
+        virus_strain_infections[date] = pd.Categorical(
+            strain_infections, categories=names
+        )
     return virus_strain_infections
