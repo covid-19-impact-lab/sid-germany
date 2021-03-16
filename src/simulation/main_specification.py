@@ -22,6 +22,10 @@ PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-03-01")
 VIRUS_STRAINS = ["base_strain", "b117"]
 
+b117 = pd.read_pickle(BLD / "data" / "virus_strains" / "b117.pkl")
+VIRUS_SHARES = {"base_strain": 1 - b117, "b117": b117}
+
+
 SIMULATION_DEPENDENCIES = {
     "initial_states": BLD / "data" / "initial_states.parquet",
     "share_known_cases": BLD

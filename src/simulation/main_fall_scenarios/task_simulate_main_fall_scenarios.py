@@ -13,6 +13,7 @@ from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import FALL_PATH
 from src.simulation.main_specification import get_simulation_kwargs
 from src.simulation.main_specification import SIMULATION_DEPENDENCIES
+from src.simulation.main_specification import VIRUS_SHARES
 
 
 NESTED_PARAMETRIZATION = build_main_scenarios(FALL_PATH)
@@ -41,6 +42,7 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
         end=init_end,
         seed=344490,
         reporting_delay=5,
+        virus_shares=VIRUS_SHARES,
     )
 
     kwargs = get_simulation_kwargs(
