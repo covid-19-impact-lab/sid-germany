@@ -59,9 +59,14 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
         seed=seed,
         saved_columns={
             "initial_states": ["age_group_rki"],
-            "disease_states": ["newly_infected"],
+            "disease_states": ["newly_infected", "infectious", "ever_infected"],
             "time": ["date"],
-            "other": ["new_known_case"],
+            "other": [
+                "new_known_case",
+                "virus_strain",
+                "n_has_infected",
+                "pending_test",
+            ],
         },
     )
     simulate(kwargs["params"])
