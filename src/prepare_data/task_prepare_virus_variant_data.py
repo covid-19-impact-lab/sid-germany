@@ -110,7 +110,7 @@ def _extrapolate(df, y, start, end):
 
     model = smf.ols(f"np.log({y}) ~ days_since_start", data=data)
     results = model.fit()
-    if results.rsquared <= 0.8:
+    if results.rsquared <= 0.9:
         warnings.warn(
             f"\n\nYour fit of {y} has worsened to only {results.rsquared.round(2)}.\n\n"
         )

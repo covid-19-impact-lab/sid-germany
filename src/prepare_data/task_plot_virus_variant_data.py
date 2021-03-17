@@ -25,14 +25,14 @@ def task_plot_virus_variant_data(depends_on, produces):
         index_col="date",
     )
     final_strain_shares = pd.read_pickle(depends_on["final_strain_shares"])
-    final_strain_shares = final_strain_shares.loc["2021-01-10":"2021-03-15"]
+    final_strain_shares = final_strain_shares.loc["2020-12-15":]
 
     title = "Share of Virus Variants Over Time"
     fig, ax = _plot_shares(final_strain_shares, title=title)
     fig.savefig(produces)
 
     for col in final_strain_shares:
-        to_plot = [(final_strain_shares[col], "averaged")]
+        to_plot = [(final_strain_shares[col], "extrapolated")]
         if f"share_{col}" in rki_strains:
             to_plot.append((rki_strains[f"share_{col}"], "RKI Data"))
         if f"share_{col}" in cologne:
@@ -54,7 +54,7 @@ def _plot_shares(shares, title):
 
     fig, ax = plt.subplots(figsize=(10, 5))
     colors = get_colors("categorical", len(shares))
-    line_styles = ["-", "--", "-.", "dotted"]
+    line_styles = ["dotted", "--", "-.", "dotted"]
     for i, (color, (sr, label), style) in enumerate(zip(colors, shares, line_styles)):
         sns.lineplot(
             x=sr.index,
