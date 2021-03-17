@@ -8,7 +8,6 @@ from src.config import SRC
 from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import PREDICT_PATH
 from src.simulation.main_specification import SCENARIO_START
-from src.simulation.main_specification import VIRUS_STRAINS
 from src.simulation.plotting import calculate_virus_strain_shares
 from src.simulation.plotting import plot_incidences
 from src.simulation.plotting import weekly_incidences_from_results
@@ -128,13 +127,11 @@ def task_plot_main_prediction_incidences(depends_on, outcome, title, produces):
 
 
 @pytask.mark.depends_on(PLOT_DEPENDENCIES)
-@pytask.mark.produces(
-    {name: PREDICT_PATH / f"virus_strain_shares_{name}.png" for name in VIRUS_STRAINS}
-)
+@pytask.mark.produces({"b117": PREDICT_PATH / "virus_strain_shares_b117.png"})
 def task_plot_main_prediction_virus_shares(depends_on, produces):
     strain_shares = pd.read_pickle(depends_on["all_strain_shares"])
 
-    for strain in VIRUS_STRAINS:
+    for strain, path in produces.items():
         to_plot = {scenario: df[strain] for scenario, df in strain_shares.items()}
         if strain != "base_strain":
             title = f"Anteil von {strain.title()} an den Infektionen"
@@ -165,7 +162,7 @@ def task_plot_main_prediction_virus_shares(depends_on, produces):
         )
 
         fig.savefig(
-            produces[strain],
+            path,
             dpi=200,
             transparent=False,
             facecolor="w",

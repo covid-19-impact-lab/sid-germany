@@ -16,7 +16,6 @@ from src.simulation.main_specification import get_simulation_kwargs
 from src.simulation.main_specification import PREDICT_PATH
 from src.simulation.main_specification import SCENARIO_START
 from src.simulation.main_specification import SIMULATION_DEPENDENCIES
-from src.simulation.main_specification import VIRUS_SHARES
 
 
 NESTED_PARAMETRIZATION = build_main_scenarios(PREDICT_PATH)
@@ -34,6 +33,15 @@ if FAST_FLAG:
 @pytask.mark.depends_on(SIMULATION_DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
+    virus_strains = ["base_strain", "b117"]
+    strain_shares = pd.read_pickle(
+        BLD / "data" / "virus_strains" / "final_strain_shares.pkl"
+    )
+    virus_shares = {
+        "base_strain": 1 - strain_shares["b117"],
+        "b117": strain_shares["b117"],
+    }
+
     start_date = pd.Timestamp("2021-02-15")
 
     end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
@@ -45,7 +53,7 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
         end=init_end,
         seed=3930,
         reporting_delay=5,
-        virus_shares=VIRUS_SHARES,
+        virus_shares=virus_shares,
     )
 
     kwargs = get_simulation_kwargs(
@@ -98,6 +106,7 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
                 "pending_test",
             ],
         },
+        virus_strains=virus_strains,
     )
     simulate(kwargs["params"])
 

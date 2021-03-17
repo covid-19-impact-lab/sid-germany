@@ -20,10 +20,6 @@ from src.testing.testing_models import process_tests
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-03-01")
-VIRUS_STRAINS = ["base_strain", "b117"]
-
-b117 = pd.read_pickle(BLD / "data" / "virus_strains" / "b117.pkl")
-VIRUS_SHARES = {"base_strain": 1 - b117, "b117": b117}
 
 
 SIMULATION_DEPENDENCIES = {
@@ -44,7 +40,7 @@ SIMULATION_DEPENDENCIES = {
     / "testing"
     / "positivity_rate_by_age_group.pkl",
     "positivity_rate_overall": BLD / "data" / "testing" / "positivity_rate_overall.pkl",
-    "share_b117": BLD / "data" / "virus_strains" / "b117.pkl",
+    "share_b117": BLD / "data" / "virus_strains" / "final_strain_shares.pkl",
     # py files
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     "policies_py": SRC / "policies" / "combine_policies_over_periods.py",
@@ -158,7 +154,6 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
 
     kwargs["params"] = params
     kwargs["contact_models"] = get_all_contact_models()
-    kwargs["virus_strains"] = VIRUS_STRAINS
 
     return kwargs
 
