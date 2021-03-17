@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytask
@@ -37,12 +39,28 @@ def task_prepare_virus_variant_data(depends_on, produces):
     averaged = _average_over_co_and_rki(rki, cologne_smoothed)
 
     # extrapolate into the past
-    extrapolated = pd.DataFrame()
-    extrapolated["share_b117"] = _extrapolate_into_the_past(averaged, y="share_b117")
-    extrapolated["share_b1351"] = 0
-    extrapolated["share_p1"] = 0
+    past = pd.DataFrame()
+    past["share_b117"] = _extrapolate(
+        averaged,
+        y="share_b117",
+        start="2020-03-01",
+        end=averaged.index.min() - pd.Timedelta(days=1),
+    )
+    past["share_b1351"] = 0
+    past["share_p1"] = 0
 
-    strain_data = pd.concat([averaged, extrapolated], axis=0).sort_index()
+    # extrapolate into the future
+    future = pd.DataFrame()
+    future["share_b117"] = _extrapolate(
+        averaged,
+        y="share_b117",
+        start=averaged.index.max() + pd.Timedelta(days=1),
+        end=averaged.index.max() + pd.Timedelta(days=28),
+    )
+    future["share_b1351"] = averaged["share_b1351"].mean()
+    future["share_p1"] = 0
+
+    strain_data = pd.concat([past, averaged, future], axis=0).sort_index()
     strain_data.columns = [x.replace("share_", "") for x in strain_data.columns]
 
     assert strain_data.notnull().all().all()
@@ -134,20 +152,21 @@ def _average_over_co_and_rki(rki, cologne):
     return averaged
 
 
-def _extrapolate_into_the_past(df, y):
+def _extrapolate(df, y, start, end):
     """Use data on the virus strains to extrapolate their incidence into the past."""
     data = df[y].to_frame()
     data["days_since_start"] = (data.index - data.index.min()).days
 
     model = smf.ols(f"np.log({y}) ~ days_since_start", data=data)
     results = model.fit()
+    if results.rsquared <= 0.8:
+        warnings.warn(
+            f"\n\nYour fit of {y} has worsened to only {results.rsquared.round(2)}.\n\n"
+        )
 
-    assert results.rsquared > 0.8, f"Your fit of {y} has worsened. "
-
-    end_extrapolation = data.index.min() - pd.Timedelta(days=1)
-    full_x = pd.DataFrame(index=pd.date_range("2020-03-01", end_extrapolation))
-    full_x["days_since_start"] = (full_x.index - data.index.min()).days
+    full_x = pd.DataFrame(index=pd.date_range(start, end))
+    full_x["days_since_start"] = (full_x.index - df.index.min()).days
     extrapolated = np.exp(results.predict(full_x))
-    extrapolated = extrapolated.round(6)
+    extrapolated = extrapolated.round(6).clip(0, 1)
     extrapolated.name = y
     return extrapolated
