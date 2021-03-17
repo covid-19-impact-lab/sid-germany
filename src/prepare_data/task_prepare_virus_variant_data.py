@@ -25,26 +25,26 @@ STRAIN_FILES = {
 )
 @pytask.mark.produces(STRAIN_FILES)
 def task_prepare_virus_variant_data(depends_on, produces):
-    share_cols = ["share_b117", "share_b1351"]
-
     rki = pd.read_csv(depends_on["rki"])
     rki = _prepare_rki_data(rki)
     rki.to_csv(produces["rki_strains"])
 
     cologne = pd.read_csv(depends_on["cologne"])
-    cologne = _prepare_cologne_data(cologne, share_cols)
+    cologne = _prepare_cologne_data(cologne)
     cologne.to_csv(produces["cologne"])
 
     # extrapolate into the past
     past = pd.DataFrame()
-    past["share_b117"] = _extrapolate(
-        rki,
-        y="share_b117",
-        start="2020-03-01",
-        end=rki.index.min() - pd.Timedelta(days=1),
-    )
-    past["share_b1351"] = 0
-    past["share_p1"] = 0
+    for col in rki.columns:
+        if rki[col].mean() > 0.025:
+            past[col] = _extrapolate(
+                rki,
+                y=col,
+                start="2020-03-01",
+                end=rki.index.min() - pd.Timedelta(days=1),
+            )
+        else:
+            past[col] = 0
 
     strain_data = pd.concat([past, rki], axis=0).sort_index()
     strain_data.columns = [x.replace("share_", "") for x in strain_data.columns]
@@ -60,18 +60,12 @@ def _prepare_rki_data(df):
     df = df[df["week"].notnull()].copy(deep=True)
     df["year"] = 2021
     df["date"] = df.apply(get_date_from_year_and_week, axis=1)
-    df = df.set_index("date")
-    as_float_cols = ["pct_b117", "pct_b1351", "pct_p1", "n_tested_for_variants"]
-    df[as_float_cols] = df[as_float_cols].astype(float)
-    df["share_b117"] = df["pct_b117"] / 100
-    df["share_b1351"] = df["pct_b1351"] / 100
-    df["share_p1"] = df["pct_p1"] / 100
-    keep_cols = [
-        "share_b117",
-        "share_b1351",
-        "share_p1",
-    ]
-    df = df[keep_cols]
+    df = df.set_index("date").astype(float)
+    for col in df:
+        if col.startswith("pct_"):
+            df[f"share_{col.replace('pct_', '')}"] = df[col] / 100
+    share_cols = [col for col in df if col.startswith("share_")]
+    df = df[share_cols]
     dates = pd.date_range(df.index.min(), df.index.max())
     # no division by 7 necessary because the data only contains shares.
     df = df.reindex(dates).interpolate()
@@ -79,7 +73,7 @@ def _prepare_rki_data(df):
     return df
 
 
-def _prepare_cologne_data(df, share_cols):
+def _prepare_cologne_data(df):
     keep_cols = ["n_b117_cum", "n_b1351_cum", "n_tests_positive_cum", "date"]
     df = df[keep_cols].dropna().copy(deep=True)
     df["date"] = pd.to_datetime(df["date"], dayfirst=True)
@@ -92,6 +86,7 @@ def _prepare_cologne_data(df, share_cols):
         df[col.replace("_cum", "")] = df[col].diff()
     df["share_b117"] = df["n_b117"] / df["n_tests_positive"]
     df["share_b1351"] = df["n_b1351"] / df["n_tests_positive"]
+    share_cols = ["share_b117", "share_b1351"]
     df = df[share_cols]
     df.columns = [f"{col}_unsmoothed" for col in df.columns]
     # take 7 day average to remove weekend effects
