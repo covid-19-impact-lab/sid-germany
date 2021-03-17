@@ -35,32 +35,18 @@ def task_prepare_virus_variant_data(depends_on, produces):
     cologne = _prepare_cologne_data(cologne, share_cols)
     cologne.to_csv(produces["cologne"])
 
-    cologne_smoothed = cologne[share_cols].dropna()
-    averaged = _average_over_co_and_rki(rki, cologne_smoothed)
-
     # extrapolate into the past
     past = pd.DataFrame()
     past["share_b117"] = _extrapolate(
-        averaged,
+        rki,
         y="share_b117",
         start="2020-03-01",
-        end=averaged.index.min() - pd.Timedelta(days=1),
+        end=rki.index.min() - pd.Timedelta(days=1),
     )
     past["share_b1351"] = 0
     past["share_p1"] = 0
 
-    # extrapolate into the future
-    future = pd.DataFrame()
-    future["share_b117"] = _extrapolate(
-        averaged,
-        y="share_b117",
-        start=averaged.index.max() + pd.Timedelta(days=1),
-        end=averaged.index.max() + pd.Timedelta(days=28),
-    )
-    future["share_b1351"] = averaged["share_b1351"].mean()
-    future["share_p1"] = 0
-
-    strain_data = pd.concat([past, averaged, future], axis=0).sort_index()
+    strain_data = pd.concat([past, rki], axis=0).sort_index()
     strain_data.columns = [x.replace("share_", "") for x in strain_data.columns]
 
     assert strain_data.notnull().all().all()
@@ -115,41 +101,6 @@ def _prepare_cologne_data(df, share_cols):
     df[share_cols] = df[share_cols].interpolate()
     df.index.name = "date"
     return df
-
-
-def _average_over_co_and_rki(rki, cologne):
-    """Merge and average over the Cologne and RKI strains data.
-
-    Args:
-        rki (pandas.DataFrame): index are dates. columns are the shares
-            of the different virus strains according to the RKI data.
-        cologne (pandas.DataFrame): index are dates. columns are the shares
-            of the different virus strains according to the cologne data.
-
-    Returns:
-        averaged (pandas.DataFrame): index are dates. columns are the
-            averaged shares of the different virus strains between RKI
-            and cologne
-
-    """
-    assert all(
-        col.startswith("share_") for col in rki.columns
-    ), "RKI has non share columns"
-    assert all(
-        col.startswith("share_") for col in cologne.columns
-    ), "Cologne has non share columns"
-
-    # prepend index levels to identify source dataframe
-    cologne["source"] = "cologne"
-    rki["source"] = "rki"
-    cologne = cologne.set_index("source", append=True)
-    rki = rki.set_index("source", append=True)
-
-    merged = pd.concat([rki, cologne]).sort_index()
-    averaged = merged.groupby("date").mean()
-    # p1 only reported by RKI which only reports weekly. This can lead to NaN
-    averaged["share_p1"] = averaged["share_p1"].fillna(method="ffill")
-    return averaged
 
 
 def _extrapolate(df, y, start, end):
