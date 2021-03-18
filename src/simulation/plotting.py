@@ -64,9 +64,9 @@ def calculate_virus_strain_shares(results):
     """
     to_concat = []
     for res in results:
-        infectious = res[res["infectious"]]
-        n_infected_per_day = infectious["date"].value_counts().compute()
-        grouped = infectious.groupby("date")
+        new_known_case = res[res["new_known_case"]]
+        n_infected_per_day = new_known_case["date"].value_counts().compute()
+        grouped = new_known_case.groupby("date")
         # date and strain as MultiIndex
         n_strain_per_day = grouped["virus_strain"].value_counts()
         n_strain_per_day = n_strain_per_day.compute()

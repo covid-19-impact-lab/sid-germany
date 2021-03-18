@@ -40,7 +40,7 @@ SIMULATION_DEPENDENCIES = {
     / "testing"
     / "positivity_rate_by_age_group.pkl",
     "positivity_rate_overall": BLD / "data" / "testing" / "positivity_rate_overall.pkl",
-    "share_b117": BLD / "data" / "virus_strains" / "final_strain_shares.pkl",
+    "virus_shares": BLD / "data" / "virus_strains" / "final_strain_shares.pkl",
     # py files
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     "policies_py": SRC / "policies" / "combine_policies_over_periods.py",
@@ -147,9 +147,7 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
     # Virus Variant Specification --------------------------------------------
 
     kwargs["virus_strains"] = ["base_strain", "b117"]
-    strain_shares = pd.read_pickle(
-        BLD / "data" / "virus_strains" / "final_strain_shares.pkl"
-    )
+    strain_shares = pd.read_pickle(depends_on["virus_shares"])
     kwargs["virus_shares"] = {
         "base_strain": 1 - strain_shares["b117"],
         "b117": strain_shares["b117"],
