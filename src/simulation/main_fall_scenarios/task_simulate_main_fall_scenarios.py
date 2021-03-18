@@ -36,16 +36,16 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 
+    kwargs = get_simulation_kwargs(
+        depends_on, init_start, end_date, extend_ars_dfs=False
+    )
+
     initial_conditions = create_initial_conditions(
         start=init_start,
         end=init_end,
         seed=344490,
         reporting_delay=5,
-        virus_shares=None,
-    )
-
-    kwargs = get_simulation_kwargs(
-        depends_on, init_start, end_date, extend_ars_dfs=False
+        virus_shares=kwargs.pop("virus_shares"),
     )
 
     policies = get_october_to_christmas_policies(
@@ -64,6 +64,7 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
             "time": ["date"],
             "other": [
                 "new_known_case",
+                "virus_strain",
                 "n_has_infected",
                 "pending_test",
             ],

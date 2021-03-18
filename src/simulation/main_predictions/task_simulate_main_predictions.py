@@ -33,34 +33,50 @@ if FAST_FLAG:
 @pytask.mark.depends_on(SIMULATION_DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
-    virus_strains = ["base_strain", "b117"]
-    strain_shares = pd.read_pickle(
-        BLD / "data" / "virus_strains" / "final_strain_shares.pkl"
-    )
-    virus_shares = {
-        "base_strain": 1 - strain_shares["b117"],
-        "b117": strain_shares["b117"],
-    }
-
     start_date = pd.Timestamp("2021-02-15")
-
     end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
+
+    kwargs = get_simulation_kwargs(
+        depends_on, init_start, end_date, extend_ars_dfs=True
+    )
 
     initial_conditions = create_initial_conditions(
         start=init_start,
         end=init_end,
         seed=3930,
         reporting_delay=5,
-        virus_shares=virus_shares,
+        virus_shares=kwargs.pop("virus_shares"),
     )
 
-    kwargs = get_simulation_kwargs(
-        depends_on, init_start, end_date, extend_ars_dfs=True
+    policies = _get_prediction_policies(
+        kwargs, scenario, end_date, scenario_name=produces.parent.name
     )
 
-    scenario_name = produces.parent.name
+    simulate = get_simulate_func(
+        **kwargs,
+        contact_policies=policies,
+        duration={"start": start_date, "end": end_date},
+        initial_conditions=initial_conditions,
+        path=produces.parent,
+        seed=seed,
+        saved_columns={
+            "initial_states": ["age_group_rki"],
+            "disease_states": ["newly_infected", "infectious", "ever_infected"],
+            "time": ["date"],
+            "other": [
+                "new_known_case",
+                "virus_strain",
+                "n_has_infected",
+                "pending_test",
+            ],
+        },
+    )
+    simulate(kwargs["params"])
+
+
+def _get_prediction_policies(kwargs, scenario, end_date, scenario_name):
     enacted_policies = get_enacted_policies_of_2021(
         contact_models=kwargs["contact_models"],
         scenario_start=SCENARIO_START,
@@ -85,30 +101,8 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
         },
         educ_options=scenario.get("educ_options"),
     )
-
     policies = combine_dictionaries([enacted_policies, scenario_policies])
-
-    simulate = get_simulate_func(
-        **kwargs,
-        contact_policies=policies,
-        duration={"start": start_date, "end": end_date},
-        initial_conditions=initial_conditions,
-        path=produces.parent,
-        seed=seed,
-        saved_columns={
-            "initial_states": ["age_group_rki"],
-            "disease_states": ["newly_infected", "infectious", "ever_infected"],
-            "time": ["date"],
-            "other": [
-                "new_known_case",
-                "virus_strain",
-                "n_has_infected",
-                "pending_test",
-            ],
-        },
-        virus_strains=virus_strains,
-    )
-    simulate(kwargs["params"])
+    return policies
 
 
 def _process_work_multiplier(

@@ -142,6 +142,18 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
         **test_kwargs,
     )
     kwargs["initial_states"] = pd.read_parquet(depends_on["initial_states"])
+    kwargs["contact_models"] = get_all_contact_models()
+
+    # Virus Variant Specification --------------------------------------------
+
+    kwargs["virus_strains"] = ["base_strain", "b117"]
+    strain_shares = pd.read_pickle(
+        BLD / "data" / "virus_strains" / "final_strain_shares.pkl"
+    )
+    kwargs["virus_shares"] = {
+        "base_strain": 1 - strain_shares["b117"],
+        "b117": strain_shares["b117"],
+    }
 
     params = pd.read_pickle(depends_on["params"])
     params.loc[("virus_strain", "base_strain", "factor")] = 1.0
@@ -151,9 +163,9 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
     # reproduction number than preexisting variants"
     # currently we take the midpoint of 66%
     params.loc[("virus_strain", "b117", "factor")] = 1.67
-
     kwargs["params"] = params
-    kwargs["contact_models"] = get_all_contact_models()
+
+    # -----------------------------------------------------------------------
 
     return kwargs
 
