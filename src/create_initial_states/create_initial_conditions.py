@@ -14,7 +14,7 @@ def create_initial_conditions(
     end,
     seed,
     virus_shares,
-    reporting_delay=0,
+    reporting_delay,
     synthetic_data_path=BLD / "data" / "initial_states.parquet",
     reported_infections_path=BLD / "data" / "processed_time_series" / "rki.pkl",
     population_size=POPULATION_GERMANY,

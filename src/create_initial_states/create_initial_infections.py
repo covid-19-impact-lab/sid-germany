@@ -79,6 +79,8 @@ def create_initial_infections(
     )
 
     if virus_shares is not None:
+        for sr in virus_shares.values():
+            sr.index = sr.index - reporting_delay
         initially_infected = _add_variant_info_to_infections(
             initially_infected, virus_shares
         )
