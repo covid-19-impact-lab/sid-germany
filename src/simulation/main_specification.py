@@ -28,7 +28,8 @@ SIMULATION_DEPENDENCIES = {
     / "data"
     / "processed_time_series"
     / "share_known_cases.pkl",
-    "params": SRC / "simulation" / "estimated_params.pkl",
+    "params_2021": SRC / "simulation" / "estimated_params.pkl",
+    "params_2020": SRC / "simulation" / "fall_estimated_params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
     "test_shares_by_age_group": BLD
@@ -105,7 +106,12 @@ def build_main_scenarios(base_path):
             "emergency_child_care": emergency_child_care,
         }
     else:
-        scenarios = {"base_scenario": base_scenario}
+        scenarios = {
+            "base_scenario": base_scenario,
+            "november_home_office_level": nov_home_office,
+            "spring_home_office_level": spring_home_office,
+            "emergency_child_care": emergency_child_care,
+        }
 
     nested_parametrization = {}
     for name, scenario in scenarios.items():
@@ -146,25 +152,29 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
 
     # Virus Variant Specification --------------------------------------------
 
-    kwargs["virus_strains"] = ["base_strain", "b117"]
-    strain_shares = pd.read_pickle(depends_on["virus_shares"])
-    kwargs["virus_shares"] = {
-        "base_strain": 1 - strain_shares["b117"],
-        "b117": strain_shares["b117"],
-    }
+    if init_start > pd.Timestamp("2021-01-01"):
+        kwargs["virus_strains"] = ["base_strain", "b117"]
+        strain_shares = pd.read_pickle(depends_on["virus_shares"])
+        kwargs["virus_shares"] = {
+            "base_strain": 1 - strain_shares["b117"],
+            "b117": strain_shares["b117"],
+        }
 
-    params = pd.read_pickle(depends_on["params"])
-    params.loc[("virus_strain", "base_strain", "factor")] = 1.0
-    # source: https://doi.org/10.1101/2020.12.24.20248822
-    # "We estimate that this variant has a 43–90%
-    # (range of 95% credible intervals 38–130%) higher
-    # reproduction number than preexisting variants"
-    # currently we take the midpoint of 66%
-    params.loc[("virus_strain", "b117", "factor")] = 1.67
+        params = pd.read_pickle(depends_on["params_2021"])
+        params.loc[("virus_strain", "base_strain", "factor")] = 1.0
+        # source: https://doi.org/10.1101/2020.12.24.20248822
+        # "We estimate that this variant has a 43–90%
+        # (range of 95% credible intervals 38–130%) higher
+        # reproduction number than preexisting variants"
+        # currently we take the midpoint of 66%
+        params.loc[("virus_strain", "b117", "factor")] = 1.67
+
+    else:
+        kwargs["virus_strains"] = None
+        kwargs["virus_shares"] = None
+        params = pd.read_pickle(depends_on["params_2020"])
+
     kwargs["params"] = params
-
-    # -----------------------------------------------------------------------
-
     return kwargs
 
 
