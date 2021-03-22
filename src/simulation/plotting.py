@@ -95,7 +95,10 @@ def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
         fig, ax
 
     """
-    colors = get_colors("ordered", len(incidences))
+    colors = get_colors("categorical", len(incidences))
+    # 3rd entry is not well distinguishable from the first
+    if len(colors) >= 3:
+        colors[2] = "#2E8B57"  # seagreen
     fig, ax = plt.subplots(figsize=(6, 4))
     for name, color in zip(incidences, colors):
         df = incidences[name]

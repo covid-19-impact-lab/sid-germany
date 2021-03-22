@@ -64,7 +64,6 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
             "time": ["date"],
             "other": [
                 "new_known_case",
-                "virus_strain",
                 "n_has_infected",
                 "pending_test",
             ],
