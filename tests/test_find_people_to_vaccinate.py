@@ -18,3 +18,4 @@ def test_find_people_to_vaccinate():
             pd.Timestamp("2021-02-03"),
         ],
     )
+    assert False
