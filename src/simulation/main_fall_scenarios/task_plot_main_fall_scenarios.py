@@ -91,4 +91,3 @@ def task_plot_predictions_for_main_fall_scenarios(depends_on, outcome, title, pr
     fig.savefig(
         produces["fig"], dpi=200, transparent=False, facecolor="w", bbox_inches="tight"
     )
-    plt.close()

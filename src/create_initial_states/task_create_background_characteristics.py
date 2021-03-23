@@ -318,6 +318,8 @@ def _only_keep_relevant_columns(df):
         "hh_model_group_id",
         "adult_in_hh_at_home",
         "educ_contact_priority",
+        "vaccination_group",
+        "vaccination_rank",
     ]
 
     educ_contact_group_ids = [

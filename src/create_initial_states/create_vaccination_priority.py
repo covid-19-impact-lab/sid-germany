@@ -175,9 +175,9 @@ def _get_educators_of_young_children(states, vaccination_group):
     mean_age_of_classes = students.groupby("school_group_id_0")["age"].mean()
     # -1 identifies people who do not belong to any school class
     mean_age_of_classes[-1] = np.nan
-    age_of_class = states["school_group_id_0"].replace(mean_age_of_classes)
-    primary_class = age_of_class <= 10
-    primary_teachers = states["educ_worker"] & primary_class
+    primary_class_ids = mean_age_of_classes[mean_age_of_classes <= 10].index
+    primary_classes = states["school_group_id_0"].isin(primary_class_ids)
+    primary_teachers = states["educ_worker"] & primary_classes
     carers_for_youngsters = states["occupation"].isin(
         ["nursery_teacher", "preschool_teacher"]
     )

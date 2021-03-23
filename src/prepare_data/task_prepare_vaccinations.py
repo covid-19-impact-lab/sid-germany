@@ -25,9 +25,11 @@ OUT_PATH = BLD / "data" / "vaccinations"
 @pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "vaccinations.xlsx")
 @pytask.mark.produces(
     {
-        "fig_first_dose": OUT_PATH / "first_dose.png",
+        "vaccination_shares": OUT_PATH / "vaccination_shares.pkl",
         "share_becoming_immune": OUT_PATH / "share_becoming_immune.pkl",
-        "fig_share": OUT_PATH / "share_becoming_immune.png",
+        "fig_first_dose": OUT_PATH / "first_dose.png",
+        "fig_vaccination_shares": OUT_PATH / "vaccination_shares.png",
+        "fig_share_immune": OUT_PATH / "share_becoming_immune.png",
         "fig_fit": OUT_PATH / "fitness_prediction.png",
     }
 )
@@ -37,6 +39,14 @@ def task_prepare_vaccination_data(depends_on, produces):
     # this is for comparing with newspaper sites
     fig, ax = _plot_series(df["share_with_first_dose"], "Share with 1st Dose")
     fig.savefig(produces["fig_first_dose"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
+
+    vaccination_shares = df["share_with_first_dose"].diff().dropna()
+    vaccination_shares.to_pickle(produces["vaccination_shares"])
+    fig, ax = _plot_series(vaccination_shares, "Share Receiving 1st Dose Per Day")
+    fig.savefig(
+        produces["fig_vaccination_shares"], dpi=200, transparent=False, facecolor="w"
+    )
     plt.close()
 
     share_becoming_immune = _calculate_share_becoming_immune_from_vaccination(df)
@@ -65,7 +75,7 @@ def task_prepare_vaccination_data(depends_on, produces):
     sns.lineplot(
         x=share_becoming_immune.index, y=share_becoming_immune, label="actual data"
     )
-    fig.savefig(produces["fig_share"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["fig_share_immune"], dpi=200, transparent=False, facecolor="w")
     plt.close()
 
 
@@ -108,7 +118,7 @@ def _get_vaccination_prediction(smoothed):
 
     model = sm.OLS(endog=y, exog=exog)
     results = model.fit()
-    assert results.rsquared > 0.85, (
+    assert results.rsquared > 0.8, (
         "Your fit of the vaccination trend has worsened considerably. "
         "Check the fitness plot: bld/data/vaccinations/fitness_prediction.png."
     )
