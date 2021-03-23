@@ -9,6 +9,12 @@ from src.config import SRC
 from src.create_initial_states.create_contact_model_group_ids import (
     add_contact_model_group_ids,
 )
+from src.create_initial_states.create_vaccination_priority import (
+    create_vaccination_group,
+)
+from src.create_initial_states.create_vaccination_priority import (
+    create_vaccination_rank,
+)
 from src.shared import create_age_groups
 from src.shared import create_age_groups_rki
 
@@ -117,6 +123,15 @@ def _build_initial_states(
     )
     df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(any)
     df["educ_contact_priority"] = _create_educ_contact_priority(df)
+
+    df["vaccination_group"] = create_vaccination_group(states=df, seed=484)
+    # 80% of Germans are somewhat or definitely willing to be vaccinated.
+    # 12% are undecided. 8% are opposed to being vaccinated.
+    # We assume that 15% will refuse to be vaccinated.
+    # source: https://bit.ly/3c9mTgX (publication date: 2021-03-02)
+    df["vaccination_rank"] = create_vaccination_rank(
+        df["vaccination_group"], share_refuser=0.15, seed=909
+    )
 
     df.index.name = "index"
     df = _only_keep_relevant_columns(df)
