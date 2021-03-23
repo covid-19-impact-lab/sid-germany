@@ -4,6 +4,9 @@ import pandas.testing as pdt
 import pytest
 
 from src.create_initial_states.create_initial_infections import (
+    _add_variant_info_to_infections,
+)
+from src.create_initial_states.create_initial_infections import (
     _calculate_group_infection_probs,
 )
 
@@ -82,3 +85,25 @@ def test_calculate_group_infection_probs(synthetic_data, cases):
     )
     expected.index.names = ["county", "age_group_rki"]
     pdt.assert_frame_equal(res.sort_index(), expected.sort_index())
+
+
+def test_add_variant_info_to_infections():
+    df = pd.DataFrame()
+    dates = [pd.Timestamp("2021-03-14"), pd.Timestamp("2021-03-15")]
+    df[dates[0]] = [False, True] * 5
+    df[dates[1]] = [False] * 8 + [True, False]
+    virus_shares = {
+        "base_strain": pd.Series([1, 0.5], index=dates),
+        "other_strain": pd.Series([0, 0.5], index=dates),
+    }
+    np.random.seed(39223)
+    expected = pd.DataFrame()
+    expected[dates[0]] = pd.Categorical(
+        [np.nan, "base_strain"] * 5, categories=["base_strain", "other_strain"]
+    )
+    expected[dates[1]] = pd.Categorical(
+        [np.nan] * 8 + ["other_strain", np.nan],
+        categories=["base_strain", "other_strain"],
+    )
+    res = _add_variant_info_to_infections(bool_df=df, virus_shares=virus_shares)
+    pdt.assert_frame_equal(res, expected)

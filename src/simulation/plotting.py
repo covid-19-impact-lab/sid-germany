@@ -49,6 +49,36 @@ def weekly_incidences_from_results(results, outcome):
     return weekly_incidences
 
 
+def calculate_virus_strain_shares(results):
+    """Create the weekly incidences from a list of simulation runs.
+
+    Args:
+        results (list): list of DataFrames with the time series data from sid
+            simulations.
+
+    Returns:
+        virus_strain_shares (pandas.DataFrame): every column is the
+            weekly incidence over time for one simulation run.
+            The index are the dates of the simulation period.
+
+    """
+    to_concat = []
+    for res in results:
+        new_known_case = res[res["new_known_case"]]
+        n_infected_per_day = new_known_case["date"].value_counts().compute()
+        grouped = new_known_case.groupby("date")
+        # date and strain as MultiIndex
+        n_strain_per_day = grouped["virus_strain"].value_counts()
+        n_strain_per_day = n_strain_per_day.compute()
+        n_strain_per_day = n_strain_per_day.unstack()
+        share_strain_per_day = n_strain_per_day.divide(n_infected_per_day, axis=0)
+        to_concat.append(share_strain_per_day.stack())
+    strain_shares = pd.concat(to_concat, axis=1).unstack()
+    strain_shares = strain_shares.swaplevel(axis=1)
+    strain_shares.index.name = "date"
+    return strain_shares
+
+
 def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
     """Plot incidences.
 
@@ -65,7 +95,10 @@ def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
         fig, ax
 
     """
-    colors = get_colors("ordered", len(incidences))
+    colors = get_colors("categorical", len(incidences))
+    # 3rd entry is not well distinguishable from the first
+    if len(colors) >= 3:
+        colors[2] = "#2E8B57"  # seagreen
     fig, ax = plt.subplots(figsize=(6, 4))
     for name, color in zip(incidences, colors):
         df = incidences[name]
