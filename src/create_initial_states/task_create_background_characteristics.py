@@ -5,7 +5,7 @@ import pytask
 
 from src.config import BLD
 from src.config import N_HOUSEHOLDS
-from src.config import SRC
+from src.config import SRC, SHARE_REFUSE_VACCINATION
 from src.create_initial_states.create_contact_model_group_ids import (
     add_contact_model_group_ids,
 )
@@ -125,12 +125,8 @@ def _build_initial_states(
     df["educ_contact_priority"] = _create_educ_contact_priority(df)
 
     df["vaccination_group"] = create_vaccination_group(states=df, seed=484)
-    # 80% of Germans are somewhat or definitely willing to be vaccinated.
-    # 12% are undecided. 8% are opposed to being vaccinated.
-    # We assume that 15% will refuse to be vaccinated.
-    # source: https://bit.ly/3c9mTgX (publication date: 2021-03-02)
     df["vaccination_rank"] = create_vaccination_rank(
-        df["vaccination_group"], share_refuser=0.15, seed=909
+        df["vaccination_group"], share_refuser=SHARE_REFUSE_VACCINATION, seed=909
     )
 
     df.index.name = "index"
