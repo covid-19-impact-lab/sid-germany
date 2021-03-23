@@ -68,7 +68,7 @@ def task_prepare_vaccination_data(depends_on, produces):
 
 def _clean_vaccination_data(df):
     # drop last two rows (empty and total vaccinations)
-    df = df[:-2].copy()
+    df = df[df["Datum"].isnull().cumsum() == 0].copy(deep=True)
     df["date"] = pd.to_datetime(df["Datum"], format="%m/%d/%yyyy")
     # check date conversion was correct
     assert df["date"].min() == pd.Timestamp(year=2020, month=12, day=27)

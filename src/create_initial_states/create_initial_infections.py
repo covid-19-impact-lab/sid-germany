@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from src.config import POPULATION_GERMANY
-
 
 def create_initial_infections(
     empirical_infections,
@@ -10,8 +8,9 @@ def create_initial_infections(
     start,
     end,
     seed,
-    reporting_delay=0,
-    population_size=POPULATION_GERMANY,
+    virus_shares,
+    reporting_delay,
+    population_size,
 ):
     """Create a DataFrame with initial infections.
 
@@ -30,6 +29,10 @@ def create_initial_infections(
         start (str or pd.Timestamp): Start date.
         end (str or pd.Timestamp): End date.
         seed (int)
+        virus_shares (dict or None): If None, it is assumed that there is only one
+            strain. If dict, keys are the names of the virus strains and the values
+            are pandas.Series with a DatetimeIndex and the share among newly infected
+            individuals on each day as value.
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
             demanded time frame.
@@ -37,7 +40,8 @@ def create_initial_infections(
 
     Returns:
         pandas.DataFrame: DataFrame with same index as synthetic_data and one column
-            for each day between start and end. Dtype is boolean.
+            for each day between start and end. Dtype is boolean or categorical.
+            Values identify which individual gets infected with which variant.
 
     """
     np.random.seed(seed)
@@ -77,6 +81,14 @@ def create_initial_infections(
         group_by=["county", "age_group_rki"],
         probabilities=group_infection_probs,
     )
+
+    if virus_shares is not None:
+        for sr in virus_shares.values():
+            sr.index = sr.index - reporting_delay
+        initially_infected = _add_variant_info_to_infections(
+            initially_infected, virus_shares
+        )
+
     return initially_infected
 
 
@@ -123,7 +135,6 @@ def _draw_bools_by_group(synthetic_data, group_by, probabilities):
         probabilities (pd.DataFrame): The index levels are the
             group_by variables. There can be several columns with
             probabilities.
-
 
     Returns:
         pandas.DataFrame or pandas.Series
@@ -179,3 +190,34 @@ def _unbiased_sum_preserving_round(arr):
             arr[i] = floor_value
 
     return arr
+
+
+def _add_variant_info_to_infections(bool_df, virus_shares):
+    """Draw which infections are of which virus variant.
+
+    Args:
+        bool_df (pandas.DataFrame): DataFrame with same index as
+            synthetic_data and one column for each day between start and end.
+            True for individuals being infected on each day.
+        virus_shares (dict): A mapping between the names
+            of the virus strains and their share among newly infected
+            individuals over time.
+
+    Returns:
+        virus_strain_infections (pandas.DataFrame): DataFrame with same index as
+            synthetic_data and one column for each day between start and end.
+            Dtype is categorical, identifying which individual gets infected on
+            each day by which variant.
+
+    """
+    virus_strain_infections = pd.DataFrame()
+    names = sorted(virus_shares.keys())
+    for date in bool_df:
+        n_infections = bool_df[date].sum()
+        strain_probs = [virus_shares[v_name][date] for v_name in names]
+        sampled_strains = np.random.choice(a=names, p=strain_probs, size=n_infections)
+        strain_infections = bool_df[date].replace({False: pd.NA, True: sampled_strains})
+        virus_strain_infections[date] = pd.Categorical(
+            strain_infections, categories=names
+        )
+    return virus_strain_infections

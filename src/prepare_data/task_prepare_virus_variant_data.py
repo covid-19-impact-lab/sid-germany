@@ -1,15 +1,20 @@
-import matplotlib.pyplot as plt
+import warnings
+
+import numpy as np
 import pandas as pd
 import pytask
-import seaborn as sns
-from sid import get_colors
+import statsmodels.formula.api as smf
 
 from src.config import BLD
 from src.config import SRC
-from src.simulation.plotting import style_plot
 from src.testing.shared import get_date_from_year_and_week
 
-OUT_PATH = BLD / "data" / "virus_strains"
+
+STRAIN_FILES = {
+    "rki_strains": BLD / "data" / "virus_strains" / "rki_strains.csv",
+    "cologne": BLD / "data" / "virus_strains" / "cologne_strains.csv",
+    "final_strain_shares": BLD / "data" / "virus_strains" / "final_strain_shares.pkl",
+}
 
 
 @pytask.mark.depends_on(
@@ -18,161 +23,96 @@ OUT_PATH = BLD / "data" / "virus_strains"
         "cologne": SRC / "original_data" / "virus_strains_cologne.csv",
     }
 )
-@pytask.mark.produces(
-    {
-        "rki_strains": OUT_PATH / "rki_strains.csv",
-        "co_daily": OUT_PATH / "cologne_strains_daily.csv",
-        "co_weekly": OUT_PATH / "cologne_strains_weekly.csv",
-        "b117": OUT_PATH / "b117.pkl",
-        "b1351": OUT_PATH / "b1351.pkl",
-        "fig": OUT_PATH / "figures" / "averaged_strain_shares.png",
-    }
-)
+@pytask.mark.produces(STRAIN_FILES)
 def task_prepare_virus_variant_data(depends_on, produces):
-    fig_path = produces["fig"].parent
     rki = pd.read_csv(depends_on["rki"])
     rki = _prepare_rki_data(rki)
     rki.to_csv(produces["rki_strains"])
 
-    co_daily = pd.read_csv(depends_on["cologne"])
-    co_daily = _prepare_co_data(co_daily)
-    co_daily.to_csv(produces["co_daily"])
+    cologne = pd.read_csv(depends_on["cologne"])
+    cologne = _prepare_cologne_data(cologne)
+    cologne.to_csv(produces["cologne"])
 
-    co_weekly = _make_cologne_data_weekly(co_daily)
-    co_weekly.to_csv(produces["co_weekly"])
+    # extrapolate into the past
+    past = pd.DataFrame()
+    for col in rki.columns:
+        if rki[col].mean() > 0.025:
+            past[col] = _extrapolate(
+                rki,
+                y=col,
+                start="2020-03-01",
+                end=rki.index.min() - pd.Timedelta(days=1),
+            )
+        else:
+            past[col] = 0
 
-    for col in co_daily:
-        fig, ax = _plot_cologne_data(co_daily=co_daily, co_weekly=co_weekly, col=col)
-        path = fig_path / f"{col}_cologne.png"
-        fig.savefig(path, dpi=200, transparent=False, facecolor="w")
+    strain_data = pd.concat([past, rki], axis=0).sort_index()
+    strain_data.columns = [x.replace("share_", "") for x in strain_data.columns]
 
-    for col in co_weekly:
-        fig, ax = _rki_vs_cologne_data(rki=rki, co_weekly=co_weekly, col=col)
-        path = fig_path / f"{col}_rki_vs_cologne.png"
-        fig.savefig(path, dpi=200, transparent=False, facecolor="w")
-
-    strain_data = _merge_rki_and_cologne_data(rki, co_weekly)
-
-    # average over rki and cologne shares
-    b117 = strain_data.groupby("date")["share_b117"].mean()
-    b117.to_pickle(produces["b117"])
-    b1351 = strain_data.groupby("date")["share_b1351"].mean()
-    b1351.to_pickle(produces["b1351"])
-
-    fig, ax = _plot_final_shares(b117, b1351)
-    fig.savefig(produces["fig"])
+    assert strain_data.notnull().all().all()
+    expected_dates = pd.date_range(strain_data.index.min(), strain_data.index.max())
+    assert (strain_data.index == expected_dates).all()
+    strain_data.to_pickle(produces["final_strain_shares"])
 
 
-def _prepare_rki_data(rki):
-    rki = rki[rki["week"].notnull()].copy(deep=True)
-    rki["year"] = 2021
-    rki["date"] = rki.apply(get_date_from_year_and_week, axis=1)
-    rki = rki.set_index("date")
-    as_float_cols = ["pct_b117", "pct_b1351", "n_tested_for_variants"]
-    rki[as_float_cols] = rki[as_float_cols].astype(float)
-    rki["share_b117"] = rki["pct_b117"] / 100
-    rki["share_b1351"] = rki["pct_b1351"] / 100
-    rki = rki[["share_b117", "share_b1351", "n_tested_for_variants"]]
-    return rki
+def _prepare_rki_data(df):
+    # The RKI data also contains info on P.1.
+    df = df[df["week"].notnull()].copy(deep=True)
+    df["year"] = 2021
+    df["date"] = df.apply(get_date_from_year_and_week, axis=1)
+    df = df.set_index("date").astype(float)
+    for col in df:
+        if col.startswith("pct_"):
+            df[f"share_{col.replace('pct_', '')}"] = df[col] / 100
+    share_cols = [col for col in df if col.startswith("share_")]
+    df = df[share_cols]
+    dates = pd.date_range(df.index.min(), df.index.max())
+    # no division by 7 necessary because the data only contains shares.
+    df = df.reindex(dates).interpolate()
+    df.index.name = "date"
+    return df
 
 
-def _prepare_co_data(co):
+def _prepare_cologne_data(df):
     keep_cols = ["n_b117_cum", "n_b1351_cum", "n_tests_positive_cum", "date"]
-    co = co[keep_cols].dropna().copy(deep=True)
-    co["date"] = pd.to_datetime(co["date"], dayfirst=True)
-    keep_cols = ["n_b117_cum", "n_b1351_cum", "n_tests_positive_cum"]
-    co = co.set_index("date")[keep_cols].astype(int)
-    # As the latest date is always added on top, this checks that there are no typos.
-    assert (
-        co.index.is_monotonic_decreasing
-    ), "Dates of the Cologne virus strain data are not monotonic. Typo?"
-    co = co.sort_index()
-    for col in co:
-        assert (co[col].diff().dropna() >= 0).all(), col
-        co[col.replace("_cum", "")] = co[col].diff()
-    co = co.loc["2021-02-04":]
-    co["share_b117"] = co["n_b117"] / co["n_tests_positive"]
-    co["share_b1351"] = co["n_b1351"] / co["n_tests_positive"]
-    co = co.rename(columns={"n_tests_positive": "n_tested_for_variants"})
-    return co
+    df = df[keep_cols].dropna().copy(deep=True)
+    df["date"] = pd.to_datetime(df["date"], dayfirst=True)
+    df = df.set_index("date").astype(int).sort_index()
+    # Cologne started screening all PCR positive samples for mutatations at
+    # the end of January
+    df = df.loc[pd.Timestamp("2021-02-04") :]  # noqa
+    for col in df:
+        assert (df[col].diff().dropna() >= 0).all(), col
+        df[col.replace("_cum", "")] = df[col].diff()
+    df["share_b117"] = df["n_b117"] / df["n_tests_positive"]
+    df["share_b1351"] = df["n_b1351"] / df["n_tests_positive"]
+    share_cols = ["share_b117", "share_b1351"]
+    df = df[share_cols]
+    df.columns = [f"{col}_unsmoothed" for col in df.columns]
+    # take 7 day average to remove weekend effects
+    df[share_cols] = df.rolling(7, center=True).mean()
+    dates = pd.date_range(df.index.min(), df.index.max())
+    df = df.reindex(dates)
+    df[share_cols] = df[share_cols].interpolate()
+    df.index.name = "date"
+    return df
 
 
-def _make_cologne_data_weekly(co):
-    co_small = co[["n_b117", "n_b1351", "n_tested_for_variants"]].reset_index()
-    co_weekly = co_small.groupby(pd.Grouper(key="date", freq="W")).sum()
-    # remove latest, incomplete week
-    co_weekly = co_weekly[:-1]
-    co_weekly["share_b117"] = co_weekly["n_b117"] / co_weekly["n_tested_for_variants"]
-    co_weekly["share_b1351"] = co_weekly["n_b1351"] / co_weekly["n_tested_for_variants"]
-    co_weekly = co_weekly[["n_tested_for_variants", "share_b117", "share_b1351"]]
-    return co_weekly
+def _extrapolate(df, y, start, end):
+    """Use data on the virus strains to extrapolate their incidence into the past."""
+    data = df[y].to_frame()
+    data["days_since_start"] = (data.index - data.index.min()).days
 
-
-def _rki_vs_cologne_data(rki, co_weekly, col):
-    colors = get_colors("categorical", 2)
-    fig, ax = plt.subplots(figsize=(10, 5))
-    sns.lineplot(x=rki.index, y=rki[col], color=colors[0], linewidth=2, label="RKI")
-    sns.lineplot(
-        x=co_weekly.index,
-        y=co_weekly[col],
-        color=colors[1],
-        linewidth=2,
-        label="Cologne",
-    )
-    nice_name = col.replace("_", " ").title()
-    ax.set_title(f"{nice_name} Acc. to RKI and in Cologne")
-    fig, ax = style_plot(fig, ax)
-    return fig, ax
-
-
-def _plot_cologne_data(co_daily, co_weekly, col):
-    fig, ax = plt.subplots(figsize=(10, 5))
-    colors = get_colors("categorical", 3)
-    if col.endswith("_cum"):
-        color = colors[0]
-    elif col.startswith("share"):
-        color = colors[1]
-    else:
-        color = colors[2]
-    if col in co_weekly:
-        sns.lineplot(
-            x=co_weekly.index,
-            y=co_weekly[col],
-            color=color,
-            linewidth=2,
-            linestyle="--",
-            label="weekly",
+    model = smf.ols(f"np.log({y}) ~ days_since_start", data=data)
+    results = model.fit()
+    if results.rsquared <= 0.9:
+        warnings.warn(
+            f"\n\nYour fit of {y} has worsened to only {results.rsquared.round(2)}.\n\n"
         )
-        label = "daily"
-    else:
-        label = None
-    sns.lineplot(
-        x=co_daily.index, y=co_daily[col], color=color, linewidth=2, label=label
-    )
-    nice_name = col.replace("_", " ").title()
-    ax.set_title(f"{nice_name} in Cologne")
-    fig, ax = style_plot(fig, ax)
-    return fig, ax
 
-
-def _merge_rki_and_cologne_data(rki, co_weekly):
-    rki = rki.copy(deep=True)
-    co_weekly = co_weekly.copy(deep=True)
-
-    co_weekly["source"] = "cologne"
-    rki["source"] = "rki"
-    co_weekly = co_weekly.set_index("source", append=True)
-    rki = rki.set_index("source", append=True)
-
-    strain_data = pd.concat([rki, co_weekly]).sort_index()
-    return strain_data
-
-
-def _plot_final_shares(b117, b1351):
-    fig, ax = plt.subplots(figsize=(10, 5))
-    colors = get_colors("categorical", 2)
-    sns.lineplot(x=b117.index, y=b117, color=colors[0], linewidth=2, label="b117")
-    sns.lineplot(x=b1351.index, y=b1351, color=colors[1], linewidth=2, label="b1351")
-    ax.set_title("Share of Virus Variants Over Time")
-    fig, ax = style_plot(fig, ax)
-    return fig, ax
+    full_x = pd.DataFrame(index=pd.date_range(start, end))
+    full_x["days_since_start"] = (full_x.index - df.index.min()).days
+    extrapolated = np.exp(results.predict(full_x))
+    extrapolated = extrapolated.round(6).clip(0, 1)
+    extrapolated.name = y
+    return extrapolated

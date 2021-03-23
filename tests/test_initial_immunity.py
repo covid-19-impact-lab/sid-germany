@@ -147,6 +147,7 @@ def test_create_initial_immunity_lln(synthetic_data):
         population_size=population_size,
         date="2020-03-04",
         seed=3399,
+        reporting_delay=0,
     )
 
     full_synthetic_data["resulting_immune"] = res
