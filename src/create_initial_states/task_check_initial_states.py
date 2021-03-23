@@ -80,6 +80,7 @@ def task_check_initial_states(depends_on, produces):
         "general population\n(> 0 means over represented in the synthetic data)"
     )
     fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
 
 def _check_background_characteristics(df):

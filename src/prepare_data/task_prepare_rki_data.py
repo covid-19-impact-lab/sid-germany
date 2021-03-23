@@ -136,3 +136,4 @@ def task_prepare_rki_data(depends_on, produces):
     sns.despine()
     fig.tight_layout()
     fig.savefig(produces["plot"])
+    plt.close()

@@ -65,6 +65,7 @@ def task_prepare_ars_data(depends_on, produces):
     fig, ax = _plot_frame(test_shares_by_age_group)
     ax.set_title("Anteil der Tests, die auf die einzelnen Altersgruppen entfallen")
     fig.savefig(produces["test_shares_by_age_group_png"])
+    plt.close()
 
     positivity_rates = ars["positivity_rate"].unstack()
     positivity_rates = _convert_from_weekly_to_daily(positivity_rates)
@@ -74,6 +75,7 @@ def task_prepare_ars_data(depends_on, produces):
     fig, ax = _plot_frame(positivity_rates)
     ax.set_title("Anteil der Tests in jeder Altersgruppe, die positiv sind")
     fig.savefig(produces["positivity_rate_by_age_group_png"])
+    plt.close()
 
     positivity_rate_overall = (
         ars.groupby("date")["n_positive_tests"].sum()
@@ -86,12 +88,14 @@ def task_prepare_ars_data(depends_on, produces):
     fig, ax = _plot_frame(positivity_rate_overall.to_frame())
     ax.set_title("Anteil der Tests in den ARS Daten, die positiv ausfallen")
     fig.savefig(produces["positivity_rate_overall_png"])
+    plt.close()
 
     ars_weekly_cases = ars["n_positive_tests"].unstack()
     ars_coverage = ars_weekly_cases / rki_weekly_cases
     fig, ax = _plot_frame(ars_coverage)
     ax.set_title("Anteil der positiven Tests des RKI, die in den ARS Daten sind")
     fig.savefig(produces["ars_coverage"])
+    plt.close()
 
 
 def _clean_ars_data(ars):

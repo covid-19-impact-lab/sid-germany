@@ -37,6 +37,7 @@ def task_prepare_vaccination_data(depends_on, produces):
     # this is for comparing with newspaper sites
     fig, ax = _plot_series(df["share_with_first_dose"], "Share with 1st Dose")
     fig.savefig(produces["fig_first_dose"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
     share_becoming_immune = _calculate_share_becoming_immune_from_vaccination(df)
 
@@ -46,6 +47,7 @@ def task_prepare_vaccination_data(depends_on, produces):
 
     fig, ax = fitness_plot(share_becoming_immune, smoothed, fitted)
     fig.savefig(produces["fig_fit"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
     start_date = smoothed.index.min() - pd.Timedelta(days=1)
     past = pd.Series(data=0, index=pd.date_range("2020-01-01", start_date))
@@ -64,6 +66,7 @@ def task_prepare_vaccination_data(depends_on, produces):
         x=share_becoming_immune.index, y=share_becoming_immune, label="actual data"
     )
     fig.savefig(produces["fig_share"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
 
 def _clean_vaccination_data(df):

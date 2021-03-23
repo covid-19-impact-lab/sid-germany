@@ -45,25 +45,31 @@ def task_visualize_work_multipliers(depends_on, produces):
         title="Hygiene Score Acc. to the COSMOS Data",
     )
     fig.savefig(produces["hygiene"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
     fig, ax = _visualize_reductions_by_state(df=work_multiplier)
     fig.savefig(produces["by_state"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
     fig, ax = _plot_time_series(work_multiplier, title="Work Multiplier")
     fig.savefig(produces["de"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
     fig, ax = _plot_time_series(work_multiplier, title="Work Multiplier")
     fig.savefig(produces["de"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
     since_oct = work_multiplier[work_multiplier["date"] > "2020-10-01"]
     fig, ax = _plot_time_series(since_oct, title="Work Multiplier Since October")
     fig.savefig(produces["since_oct"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
     old_multipliers = _get_old_work_multipliers()
     sns.lineplot(
         x=old_multipliers.index, y=old_multipliers, ax=ax, label="old multipliers"
     )
     fig.savefig(produces["old_vs_new"], dpi=200, transparent=False, facecolor="w")
+    plt.close()
 
     this_year = work_multiplier[work_multiplier["date"] > "2021-01-03"]
     fig, ax = _plot_time_series(this_year, title="Reduction of Work Mobility in 2021")
@@ -79,6 +85,7 @@ def task_visualize_work_multipliers(depends_on, produces):
         transparent=False,
         facecolor="w",
     )
+    plt.close()
 
 
 def _visualize_reductions_by_state(df):

@@ -6,6 +6,7 @@ from src.config import POPULATION_GERMANY
 from src.testing.shared import convert_weekly_to_daily
 from src.testing.shared import get_date_from_year_and_week
 from src.testing.shared import plot_time_series
+import matplotlib.pyplot as plt
 
 
 OUT_PATH = BLD / "data" / "testing"
@@ -33,6 +34,7 @@ def task_create_test_statistics(depends_on, produces):
         df.set_index("date")[col].to_csv(produces[col])
         fig, ax = plot_time_series(df=df, y=col, title=title)
         fig.savefig(produces[f"{col}_png"])
+        plt.close()
 
 
 def _prepare_data(df):

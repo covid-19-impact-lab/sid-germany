@@ -30,6 +30,7 @@ def task_plot_virus_variant_data(depends_on, produces):
     title = "Share of Virus Variants Over Time"
     fig, ax = _plot_shares(final_strain_shares, title=title)
     fig.savefig(produces)
+    plt.close()
 
     for col in final_strain_shares:
         to_plot = [(final_strain_shares[col], "extrapolated")]
@@ -45,6 +46,7 @@ def task_plot_virus_variant_data(depends_on, produces):
         fig.savefig(
             produces.parent / f"{col}.png", dpi=200, transparent=False, facecolor="w"
         )
+        plt.close()
 
 
 def _plot_shares(shares, title):

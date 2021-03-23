@@ -116,6 +116,7 @@ def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
     sns.despine()
     fig.tight_layout()
     fig.savefig(produces[0])
+    plt.close()
 
     shares = approx_dist / approx_dist.sum()
     shares.to_pickle(produces[1])
