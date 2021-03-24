@@ -58,31 +58,20 @@ def task_prepare_vaccination_data(depends_on, produces):
 
     start_date = smoothed.index.min() - pd.Timedelta(days=1)
     past = pd.Series(data=0, index=pd.date_range("2020-01-01", start_date))
-    expanded = pd.concat([past, smoothed, prediction])
+    expanded = pd.concat([past, smoothed, prediction]).sort_index()
     assert expanded.index.is_monotonic, "vaccination_shares's index is not monotonic."
     assert (
         not expanded.index.duplicated().any()
     ), "Duplicate dates in the expanded vaccination_shares Series."
+    assert (
+        expanded.index
+        == pd.date_range(start=expanded.index.min(), end=expanded.index.max())
+    ).all()
     expanded.to_pickle(produces["vaccination_shares"])
 
-    title = "Actual and Extrapolated Share Receiving the Vaccination"
-    fig, ax = plt.subplots(figsize=(10, 5))
-    colors = get_colors("categorical", 4)
-    labeled = [
-        ("raw data", vaccination_shares),
-        ("smoothed", smoothed),
-        ("fitted", fitted),
-        ("prediction", prediction[:30]),
-    ]
-    for (label, sr), color in zip(labeled, colors):
-        sns.lineplot(
-            x=sr.index,
-            y=sr,
-            label="raw data",
-            linewidth=2,
-            color=color,
-        )
-    ax.set_title(title)
+    fig, ax = _plot_smoothed_fitted_and_prediction(
+        vaccination_shares, smoothed, fitted, prediction
+    )
     fig.savefig(
         produces["fig_vaccination_shares"], dpi=200, transparent=False, facecolor="w"
     )
@@ -160,5 +149,32 @@ def _plot_series(sr, title, label=None):
     sns.lineplot(x=sr.index, y=sr, label=label)
     ax.set_title(title)
     fig, ax = style_plot(fig, ax)
+    fig.tight_layout()
+    return fig, ax
+
+
+def _plot_smoothed_fitted_and_prediction(
+    vaccination_shares, smoothed, fitted, prediction
+):
+    title = "Actual and Extrapolated Share Receiving the Vaccination"
+    fig, ax = plt.subplots(figsize=(10, 5))
+    colors = get_colors("categorical", 4)
+    labeled = [
+        ("raw data", vaccination_shares),
+        ("smoothed", smoothed),
+        ("fitted", fitted),
+        ("prediction", prediction[:30]),
+    ]
+    for (label, sr), color in zip(labeled, colors):
+        sns.lineplot(
+            x=sr.index,
+            y=sr,
+            label=label,
+            linewidth=2,
+            color=color,
+        )
+    fig, ax = style_plot(fig, ax)
+    ax.set_title(title)
+    ax.set_ylabel("")
     fig.tight_layout()
     return fig, ax
