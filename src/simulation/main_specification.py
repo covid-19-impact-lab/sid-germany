@@ -11,11 +11,11 @@ from src.policies.combine_policies_over_periods import get_educ_options_starting
 from src.policies.combine_policies_over_periods import (
     strict_emergency_care,
 )
+from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import combine_dictionaries
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
-from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 
 
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"

@@ -5,7 +5,8 @@ import pytask
 
 from src.config import BLD
 from src.config import N_HOUSEHOLDS
-from src.config import SRC, SHARE_REFUSE_VACCINATION
+from src.config import SHARE_REFUSE_VACCINATION
+from src.config import SRC
 from src.create_initial_states.create_contact_model_group_ids import (
     add_contact_model_group_ids,
 )

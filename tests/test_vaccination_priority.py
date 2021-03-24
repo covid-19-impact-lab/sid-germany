@@ -1,12 +1,17 @@
-from src.create_initial_states.create_vaccination_priority import (
-    create_vaccination_rank,
-    _get_sticko_2nd_and_3rd_priority,
-    _get_educators_of_young_children,
-    _get_third_priority,
-)
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
+
+from src.create_initial_states.create_vaccination_priority import (
+    _get_educators_of_young_children,
+)
+from src.create_initial_states.create_vaccination_priority import (
+    _get_sticko_2nd_and_3rd_priority,
+)
+from src.create_initial_states.create_vaccination_priority import _get_third_priority
+from src.create_initial_states.create_vaccination_priority import (
+    create_vaccination_rank,
+)
 
 
 def test_create_vaccination_rank():
