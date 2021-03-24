@@ -6,7 +6,7 @@ from src.create_initial_states.create_vaccination_priority import (
     _get_educators_of_young_children,
 )
 from src.create_initial_states.create_vaccination_priority import (
-    _get_sticko_2nd_and_3rd_priority,
+    _get_second_priority_people_acc_to_stiko,
 )
 from src.create_initial_states.create_vaccination_priority import _get_third_priority
 from src.create_initial_states.create_vaccination_priority import (
@@ -14,16 +14,16 @@ from src.create_initial_states.create_vaccination_priority import (
 )
 
 
-def test_create_vaccination_rank():
+def test_create_vaccination_rank_without_refusals():
     vaccination_group = pd.Series([3, 1, 1, 2, 4, 4])
     # ranks 3, 0, 1, 2, 4, 5
     expected = pd.Series([0.6, 0.0, 0.2, 0.4, 0.8, 1.0])
-    res = create_vaccination_rank(vaccination_group, 0.0, 333)
+    res = create_vaccination_rank(vaccination_group, share_refuser=0.0, seed=333)
     res_sorted_index = res.sort_index()
     pd.testing.assert_series_equal(res_sorted_index, expected, check_index_type=False)
 
 
-def test_create_vaccination_rank_llln():
+def test_create_vaccination_rank_lln():
     vaccination_group = pd.Series([1, 2, 3] * 500_000)
     res = create_vaccination_rank(vaccination_group, share_refuser=0.5, seed=1114)
 
@@ -43,12 +43,12 @@ def test_create_vaccination_rank_llln():
     assert share_diff.max() < 0.001
 
 
-def test_get_sticko_2nd_and_3rd_priority():
+def test_get_second_priority_people_acc_to_stiko():
     states = pd.DataFrame()
     states["age"] = [75, 30] + [75] * 3 + [30] * 15
 
     vaccination_group = pd.Series([1, np.nan] + [np.nan] * 3 + [2] * 15)
-    res = _get_sticko_2nd_and_3rd_priority(
+    res = _get_second_priority_people_acc_to_stiko(
         states=states, vaccination_group=vaccination_group
     )
     expected = pd.Series(
@@ -62,14 +62,14 @@ def test_get_sticko_2nd_and_3rd_priority():
     pd.testing.assert_series_equal(res, expected)
 
 
-def test_get_sticko_2nd_and_3rd_priority_no_elderly():
+def test_get_second_priority_people_acc_to_stiko_no_elderly():
     states = pd.DataFrame()
     states["age"] = [58] * 6666 + [28] * 3334 + [75] * 5
 
     vaccination_group = pd.Series(np.nan, index=states.index)
 
     np.random.seed(8899)
-    res = _get_sticko_2nd_and_3rd_priority(
+    res = _get_second_priority_people_acc_to_stiko(
         states=states, vaccination_group=vaccination_group
     )
     # among non-elderly 15.5% chosen to be in 2nd or 3rd group

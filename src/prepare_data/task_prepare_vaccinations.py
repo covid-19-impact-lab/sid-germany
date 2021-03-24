@@ -50,7 +50,7 @@ def task_prepare_vaccination_data(depends_on, produces):
 
     # because of strong weekend effects we smooth and extrapolate into the future
     smoothed = vaccination_shares.rolling(7, min_periods=1).mean().dropna()
-    fitted, prediction = _get_vaccination_prediction(smoothed)
+    fitted, prediction = _get_vaccination_prediction(vaccination_shares)
 
     fig, ax = fitness_plot(vaccination_shares, smoothed, fitted)
     fig.savefig(produces["fig_fit"], dpi=200, transparent=False, facecolor="w")
@@ -90,9 +90,9 @@ def _clean_vaccination_data(df):
     return df
 
 
-def _get_vaccination_prediction(smoothed):
-    """Predict the vaccination data into the future using log smoothed data."""
-    to_use = smoothed["2021-02-01":"2021-03-14"]
+def _get_vaccination_prediction(data):
+    """Predict the vaccination data into the future using log data."""
+    to_use = data["2021-02-01":"2021-03-14"]
     # stop there because of AstraZeneca stop
     y = np.log(to_use)
     exog = pd.DataFrame(index=y.index)
@@ -103,8 +103,8 @@ def _get_vaccination_prediction(smoothed):
     results = model.fit()
     fitted = np.exp(exog.dot(results.params))
 
-    start_date = smoothed.index[-1] + pd.Timedelta(days=1)
-    start_point = np.log(smoothed[-1])
+    start_date = data.index[-1] + pd.Timedelta(days=1)
+    start_point = np.log(data[-1])
     log_daily_increase = results.params["days_since_march"]
     days_to_extrapolate = 56  # 8 weeks
     log_prediction = start_point + np.arange(days_to_extrapolate) * log_daily_increase

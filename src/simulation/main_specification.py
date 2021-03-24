@@ -5,7 +5,7 @@ import pandas as pd
 
 from src.config import BLD
 from src.config import FAST_FLAG
-from src.config import SRC
+from src.config import SRC, SHARE_REFUSE_VACCINATION
 from src.contact_models.get_contact_models import get_all_contact_models
 from src.policies.combine_policies_over_periods import get_educ_options_starting_feb_22
 from src.policies.combine_policies_over_periods import (
@@ -183,7 +183,7 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
         kwargs["vaccination_model"] = partial(
             find_people_to_vaccinate,
             vaccination_shares=vaccination_shares,
-            no_vaccination_share=0.15,
+            no_vaccination_share=SHARE_REFUSE_VACCINATION,
         )
 
     # cd_is_immune_by_vaccine is required even when no vaccination model

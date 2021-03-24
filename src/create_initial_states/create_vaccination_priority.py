@@ -136,7 +136,9 @@ def create_vaccination_group(states, seed):
     first_priority = states.eval("80 <= age | work_contact_priority >= 0.90")
     vaccination_group[first_priority] = 1
 
-    second_priority_stiko = _get_sticko_2nd_and_3rd_priority(states, vaccination_group)
+    second_priority_stiko = _get_second_priority_people_acc_to_stiko(
+        states, vaccination_group
+    )
     assert 0.145 < second_priority_stiko.mean() < 0.155, second_priority_stiko.mean()
     vaccination_group[second_priority_stiko] = 2
     educators_of_young_children = _get_educators_of_young_children(
@@ -151,7 +153,7 @@ def create_vaccination_group(states, seed):
     return vaccination_group
 
 
-def _get_sticko_2nd_and_3rd_priority(states, vaccination_group):
+def _get_second_priority_people_acc_to_stiko(states, vaccination_group):
     """People aged 70 to 80 and people with serious preconditions."""
     elderly = states.eval("70 <= age < 80") & vaccination_group.isnull()
 
