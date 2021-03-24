@@ -25,7 +25,10 @@ SCENARIO_START = pd.Timestamp("2021-03-01")
 
 SIMULATION_DEPENDENCIES = {
     "initial_states": BLD / "data" / "initial_states.parquet",
-    "vaccination_shares": BLD / "data" / "vaccinations" / "vaccination_shares.pkl",
+    "vaccination_shares": BLD
+    / "data"
+    / "vaccinations"
+    / "vaccination_shares_quadratic.pkl",
     "share_known_cases": BLD
     / "data"
     / "processed_time_series"
@@ -154,27 +157,21 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
 
     # Virus Variant Specification --------------------------------------------
 
-    if init_start > pd.Timestamp("2021-01-01"):
-        kwargs["virus_strains"] = ["base_strain", "b117"]
-        strain_shares = pd.read_pickle(depends_on["virus_shares"])
-        kwargs["virus_shares"] = {
-            "base_strain": 1 - strain_shares["b117"],
-            "b117": strain_shares["b117"],
-        }
+    kwargs["virus_strains"] = ["base_strain", "b117"]
+    strain_shares = pd.read_pickle(depends_on["virus_shares"])
+    kwargs["virus_shares"] = {
+        "base_strain": 1 - strain_shares["b117"],
+        "b117": strain_shares["b117"],
+    }
 
-        params = pd.read_pickle(depends_on["params_2021"])
-        params.loc[("virus_strain", "base_strain", "factor")] = 1.0
-        # source: https://doi.org/10.1101/2020.12.24.20248822
-        # "We estimate that this variant has a 43–90%
-        # (range of 95% credible intervals 38–130%) higher
-        # reproduction number than preexisting variants"
-        # currently we take the midpoint of 66%
-        params.loc[("virus_strain", "b117", "factor")] = 1.67
-
-    else:
-        kwargs["virus_strains"] = None
-        kwargs["virus_shares"] = None
-        params = pd.read_pickle(depends_on["params_2020"])
+    params = pd.read_pickle(depends_on["params_2021"])
+    params.loc[("virus_strain", "base_strain", "factor")] = 1.0
+    # source: https://doi.org/10.1101/2020.12.24.20248822
+    # "We estimate that this variant has a 43–90%
+    # (range of 95% credible intervals 38–130%) higher
+    # reproduction number than preexisting variants"
+    # currently we take the midpoint of 66%
+    params.loc[("virus_strain", "b117", "factor")] = 1.67
 
     # Vaccination Model ----------------------------------------------------
 
