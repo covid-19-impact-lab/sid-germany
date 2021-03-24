@@ -33,8 +33,7 @@ SIMULATION_DEPENDENCIES = {
     / "data"
     / "processed_time_series"
     / "share_known_cases.pkl",
-    "params_2021": SRC / "simulation" / "estimated_params.pkl",
-    "params_2020": SRC / "simulation" / "fall_estimated_params.pkl",
+    "params": SRC / "simulation" / "estimated_params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
     "test_shares_by_age_group": BLD
@@ -164,7 +163,7 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
         "b117": strain_shares["b117"],
     }
 
-    params = pd.read_pickle(depends_on["params_2021"])
+    params = pd.read_pickle(depends_on["params"])
     params.loc[("virus_strain", "base_strain", "factor")] = 1.0
     # source: https://doi.org/10.1101/2020.12.24.20248822
     # "We estimate that this variant has a 43–90%

@@ -3,7 +3,12 @@ from sid import get_date
 
 
 def find_people_to_vaccinate(
-    states, params, seed, vaccination_shares, no_vaccination_share  # noqa: U100
+    states,
+    params,  # noqa: U100
+    seed,  # noqa: U100
+    vaccination_shares,
+    no_vaccination_share,
+    init_start,
 ):
     """Find people that have to be vaccinated on a given day.
 
@@ -19,12 +24,16 @@ def find_people_to_vaccinate(
             that day.
         no_vaccination_share (float): Share of people who refuse to get
             vaccinated.
-
+        init_start (pd.Timestamp): start date of the burn in period. On the
+            init_start all vaccinations that have been done until then are
+            handed out on that day.
 
     """
     date = get_date(states)
     cutoffs = vaccination_shares.sort_index().cumsum()
-    lower_candidate = cutoffs.get(date - pd.Timedelta(1, unit="day"), 0)
+    cutoffs[: init_start - pd.Timedelta(days=1)] = 0
+
+    lower_candidate = cutoffs[date - pd.Timedelta(days=1)]
     upper_candidate = cutoffs[date]
     lower = min(lower_candidate, no_vaccination_share)
     upper = min(upper_candidate, no_vaccination_share)

@@ -26,6 +26,7 @@ def test_find_people_to_vaccinate_no_refusers():
         seed=33,
         vaccination_shares=vaccination_shares,
         no_vaccination_share=1.0,
+        init_start=pd.Timestamp("2021-01-15"),
     )
 
     pd.testing.assert_series_equal(expected, res, check_names=False)
@@ -54,6 +55,35 @@ def test_find_people_to_vaccinate_with_refusers():
         seed=33,
         vaccination_shares=vaccination_shares,
         no_vaccination_share=0.5,
+        init_start=pd.Timestamp("2021-01-15"),
+    )
+
+    pd.testing.assert_series_equal(expected, res, check_names=False)
+
+
+def test_find_people_to_vaccinate_start_date():
+    states = pd.DataFrame()
+    states["vaccination_rank"] = [0.35, 0.45, 0.25, 0.15, 0.85, 0.55]
+    states["date"] = pd.Timestamp("2021-02-03")
+
+    vaccination_shares = pd.Series(
+        [0.1, 0.2, 0.1],
+        index=[
+            pd.Timestamp("2021-02-01"),
+            pd.Timestamp("2021-02-02"),
+            pd.Timestamp("2021-02-03"),
+        ],
+    )
+    # everyone up to 0.4 should be vaccinated
+    expected = pd.Series([True, False, True, True, False, False])
+
+    res = find_people_to_vaccinate(
+        states=states,
+        params=None,
+        seed=33,
+        vaccination_shares=vaccination_shares,
+        no_vaccination_share=1.0,
+        init_start=pd.Timestamp("2021-02-03"),
     )
 
     pd.testing.assert_series_equal(expected, res, check_names=False)
