@@ -26,10 +26,10 @@ OUT_PATH = BLD / "data" / "vaccinations"
 @pytask.mark.produces(
     {
         "vaccination_shares": OUT_PATH / "vaccination_shares.pkl",
+        "vaccination_shares_raw": OUT_PATH / "vaccination_shares_raw.pkl",
         "share_becoming_immune": OUT_PATH / "share_becoming_immune.pkl",
         "fig_first_dose": OUT_PATH / "first_dose.png",
         "fig_vaccination_shares": OUT_PATH / "vaccination_shares.png",
-        "fig_share_immune": OUT_PATH / "share_becoming_immune.png",
         "fig_fit": OUT_PATH / "fitness_prediction.png",
     }
 )
@@ -42,40 +42,40 @@ def task_prepare_vaccination_data(depends_on, produces):
     plt.close()
 
     vaccination_shares = df["share_with_first_dose"].diff().dropna()
-    vaccination_shares.to_pickle(produces["vaccination_shares"])
-    fig, ax = _plot_series(vaccination_shares, "Share Receiving 1st Dose Per Day")
-    fig.savefig(
-        produces["fig_vaccination_shares"], dpi=200, transparent=False, facecolor="w"
-    )
-    plt.close()
-
-    share_becoming_immune = _calculate_share_becoming_immune_from_vaccination(df)
+    vaccination_shares.to_pickle(produces["vaccination_shares_raw"])
+    # the first individuals to be vaccinated were nursing homes which are not
+    # in our synthetic data so we exclude the first 1% of vaccinations to
+    # be going to them.
+    vaccination_shares[vaccination_shares.cumsum() <= 0.01] = 0
 
     # because of strong weekend effects we smooth and extrapolate into the future
-    smoothed = share_becoming_immune.rolling(7, min_periods=1).mean().dropna()
+    smoothed = vaccination_shares.rolling(7, min_periods=1).mean().dropna()
     fitted, prediction = _get_vaccination_prediction(smoothed)
 
-    fig, ax = fitness_plot(share_becoming_immune, smoothed, fitted)
+    fig, ax = fitness_plot(vaccination_shares, smoothed, fitted)
     fig.savefig(produces["fig_fit"], dpi=200, transparent=False, facecolor="w")
     plt.close()
 
     start_date = smoothed.index.min() - pd.Timedelta(days=1)
     past = pd.Series(data=0, index=pd.date_range("2020-01-01", start_date))
     expanded = pd.concat([past, smoothed, prediction])
-    assert (
-        expanded.index.is_monotonic
-    ), "share_becoming_immune's index is not monotonic."
+    assert expanded.index.is_monotonic, "vaccination_shares's index is not monotonic."
     assert (
         not expanded.index.duplicated().any()
-    ), "Duplicate dates in the expanded share_becoming_immune Series."
-    expanded.to_pickle(produces["share_becoming_immune"])
+    ), "Duplicate dates in the expanded vaccination_shares Series."
+    expanded.to_pickle(produces["vaccination_shares"])
 
-    title = "Actual and Extrapolated Share Becoming Immune Through Vaccination"
-    fig, ax = _plot_series(expanded["2021-01-01":], title, label="extrapolated")
-    sns.lineplot(
-        x=share_becoming_immune.index, y=share_becoming_immune, label="actual data"
+    title = "Actual and Extrapolated Share Receiving the Vaccination"
+    fig, ax = plt.subplots(figsize=(15, 10))
+    sns.lineplot(x=vaccination_shares.index, y=vaccination_shares)
+    sns.lineplot(x=smoothed.index, y=smoothed, label="smoothed")
+    sns.lineplot(x=fitted.index, y=fitted, label="fitted")
+    sns.lineplot(x=prediction[:30].index, y=prediction[:30], label="prediction")
+    ax.set_title(title)
+    sns.despine()
+    fig.savefig(
+        produces["fig_vaccination_shares"], dpi=200, transparent=False, facecolor="w"
     )
-    fig.savefig(produces["fig_share_immune"], dpi=200, transparent=False, facecolor="w")
     plt.close()
 
 
@@ -109,8 +109,8 @@ def _calculate_share_becoming_immune_from_vaccination(df):
 
 def _get_vaccination_prediction(smoothed):
     """Predict the vaccination data into the future using log smoothed data."""
-    # exponential trend since March
-    to_use = smoothed["2021-03-01":]
+    to_use = smoothed["2021-02-01":"2021-03-14"]
+    # stop there because of AstraZeneca stop
     y = np.log(to_use)
     exog = pd.DataFrame(index=y.index)
     exog["constant"] = 1
@@ -118,18 +118,20 @@ def _get_vaccination_prediction(smoothed):
 
     model = sm.OLS(endog=y, exog=exog)
     results = model.fit()
-    assert results.rsquared > 0.8, (
-        "Your fit of the vaccination trend has worsened considerably. "
-        "Check the fitness plot: bld/data/vaccinations/fitness_prediction.png."
-    )
     fitted = np.exp(exog.dot(results.params))
 
-    start = exog.index.max() + pd.Timedelta(days=1)
-    end = start + pd.Timedelta(weeks=8)
-    future_x = pd.DataFrame(index=pd.date_range(start, end))
-    future_x["days_since_march"] = _get_days_since_march_first(future_x)
-    future_x["constant"] = 1
-    prediction = np.exp(future_x.dot(results.params))
+    start_date = smoothed.index[-1] + pd.Timedelta(days=1)
+    start_point = np.log(smoothed[-1])
+    log_daily_increase = results.params["days_since_march"]
+    days_to_extrapolate = 60
+    log_prediction = start_point + np.arange(days_to_extrapolate) * log_daily_increase
+    dates = pd.date_range(
+        start=start_date,
+        end=start_date + pd.Timedelta(days=days_to_extrapolate - 1),
+    )
+    prediction = np.exp(log_prediction)
+    prediction = pd.Series(prediction, index=dates)
+
     return fitted, prediction
 
 
