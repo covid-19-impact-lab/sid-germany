@@ -5,7 +5,7 @@ from sid import get_date
 def find_people_to_vaccinate(
     states, params, seed, vaccination_shares, no_vaccination_share  # U100
 ):
-    """Finde peopl that have to be vaccinated on a given day.
+    """Find people that have to be vaccinated on a given day.
 
     Args:
         states (pandas.DataFrame): States DataFrame that must contain the
@@ -29,8 +29,7 @@ def find_people_to_vaccinate(
     lower = min(lower_candidate, no_vaccination_share)
     upper = min(upper_candidate, no_vaccination_share)
 
-    to_vaccinate = pd.Series(
-        data=lower <= states["vaccination_rank"] < upper,
-        index=states.index,
+    to_vaccinate = (lower <= states["vaccination_rank"]) & (
+        states["vaccination_rank"] < upper
     )
     return to_vaccinate
