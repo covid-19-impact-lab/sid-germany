@@ -185,6 +185,9 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
             vaccination_shares=vaccination_shares,
             no_vaccination_share=0.15,
         )
+
+    # cd_is_immune_by_vaccine is required even when no vaccination model
+    # is used.
     params.loc[("cd_is_immune_by_vaccine", "all", -1)] = 0.25
     params.loc[("cd_is_immune_by_vaccine", "all", 14)] = 0.35
     params.loc[("cd_is_immune_by_vaccine", "all", 21)] = 0.4

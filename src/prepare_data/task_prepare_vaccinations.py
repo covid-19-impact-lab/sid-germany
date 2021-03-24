@@ -27,7 +27,6 @@ OUT_PATH = BLD / "data" / "vaccinations"
     {
         "vaccination_shares": OUT_PATH / "vaccination_shares.pkl",
         "vaccination_shares_raw": OUT_PATH / "vaccination_shares_raw.pkl",
-        "share_becoming_immune": OUT_PATH / "share_becoming_immune.pkl",
         "fig_first_dose": OUT_PATH / "first_dose.png",
         "fig_vaccination_shares": OUT_PATH / "vaccination_shares.png",
         "fig_fit": OUT_PATH / "fitness_prediction.png",
@@ -43,6 +42,7 @@ def task_prepare_vaccination_data(depends_on, produces):
 
     vaccination_shares = df["share_with_first_dose"].diff().dropna()
     vaccination_shares.to_pickle(produces["vaccination_shares_raw"])
+
     # the first individuals to be vaccinated were nursing homes which are not
     # in our synthetic data so we exclude the first 1% of vaccinations to
     # be going to them.
@@ -66,13 +66,23 @@ def task_prepare_vaccination_data(depends_on, produces):
     expanded.to_pickle(produces["vaccination_shares"])
 
     title = "Actual and Extrapolated Share Receiving the Vaccination"
-    fig, ax = plt.subplots(figsize=(15, 10))
-    sns.lineplot(x=vaccination_shares.index, y=vaccination_shares)
-    sns.lineplot(x=smoothed.index, y=smoothed, label="smoothed")
-    sns.lineplot(x=fitted.index, y=fitted, label="fitted")
-    sns.lineplot(x=prediction[:30].index, y=prediction[:30], label="prediction")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    colors = get_colors("categorical", 4)
+    labeled = [
+        ("raw data", vaccination_shares),
+        ("smoothed", smoothed),
+        ("fitted", fitted),
+        ("prediction", prediction[:30]),
+    ]
+    for (label, sr), color in zip(labeled, colors):
+        sns.lineplot(
+            x=sr.index,
+            y=sr,
+            label="raw data",
+            linewidth=2,
+            color=color,
+        )
     ax.set_title(title)
-    sns.despine()
     fig.savefig(
         produces["fig_vaccination_shares"], dpi=200, transparent=False, facecolor="w"
     )
@@ -91,22 +101,6 @@ def _clean_vaccination_data(df):
     return df
 
 
-def _calculate_share_becoming_immune_from_vaccination(df):
-    """Calculate the share of individuals becoming immune from vaccination.
-
-    We ignore booster shots and simply assume immunity will start
-    21 days after the first shot (Hunter2021) with 75% probability
-    (90% for Pfizer but AstraZeneca is lower and protection against
-    mutations is lower)
-
-    """
-    share_immune = 0.75 * df["share_with_first_dose"]
-    share_immune.index = share_immune.index + pd.Timedelta(weeks=3)
-    share_becoming_immune = share_immune.diff().dropna()
-    share_becoming_immune.name = "share_becoming_immune"
-    return share_becoming_immune
-
-
 def _get_vaccination_prediction(smoothed):
     """Predict the vaccination data into the future using log smoothed data."""
     to_use = smoothed["2021-02-01":"2021-03-14"]
@@ -123,7 +117,7 @@ def _get_vaccination_prediction(smoothed):
     start_date = smoothed.index[-1] + pd.Timedelta(days=1)
     start_point = np.log(smoothed[-1])
     log_daily_increase = results.params["days_since_march"]
-    days_to_extrapolate = 60
+    days_to_extrapolate = 56  # 8 weeks
     log_prediction = start_point + np.arange(days_to_extrapolate) * log_daily_increase
     dates = pd.date_range(
         start=start_date,
