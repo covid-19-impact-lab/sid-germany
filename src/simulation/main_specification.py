@@ -15,6 +15,7 @@ from src.policies.policy_tools import combine_dictionaries
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
+from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 
 
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
@@ -24,6 +25,7 @@ SCENARIO_START = pd.Timestamp("2021-03-01")
 
 SIMULATION_DEPENDENCIES = {
     "initial_states": BLD / "data" / "initial_states.parquet",
+    "vaccination_shares": BLD / "data" / "vaccinations" / "vaccination_shares.pkl",
     "share_known_cases": BLD
     / "data"
     / "processed_time_series"
@@ -173,6 +175,19 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
         kwargs["virus_strains"] = None
         kwargs["virus_shares"] = None
         params = pd.read_pickle(depends_on["params_2020"])
+
+    # Vaccination Model ----------------------------------------------------
+
+    if init_start > pd.Timestamp("2021-01-01"):
+        vaccination_shares = pd.read_pickle(depends_on["vaccination_shares"])
+        kwargs["vaccination_model"] = partial(
+            find_people_to_vaccinate,
+            vaccination_shares=vaccination_shares,
+            no_vaccination_share=0.15,
+        )
+    params.loc[("cd_is_immune_by_vaccine", "all", -1)] = 0.25
+    params.loc[("cd_is_immune_by_vaccine", "all", 14)] = 0.35
+    params.loc[("cd_is_immune_by_vaccine", "all", 21)] = 0.4
 
     kwargs["params"] = params
     return kwargs
