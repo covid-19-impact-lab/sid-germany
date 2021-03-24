@@ -163,12 +163,12 @@ def _get_second_priority_people_acc_to_stiko(states, vaccination_group):
 
     share_random_2nd_priority = 0.155
     to_distribute = share_random_2nd_priority * len(states) - elderly.sum()
-    sampled_for_second_priority = _sample_random_vaccinations(
-        n_to_distribute=to_distribute,
+    sampled_for_second_priority = _sample_from_subgroups(
+        n_to_sample=to_distribute,
         states=states,
         age_cutoff=50,
-        share_above=0.67,
-        vaccination_group=vaccination_group,
+        share_to_sample_above_age_cutoff=0.67,
+        vaccination_groups_so_far=vaccination_group,
     )
     second_priority = elderly | sampled_for_second_priority
     return second_priority
@@ -198,12 +198,12 @@ def _get_third_priority(states, vaccination_group):
     )
     third_priority_non_random = states.eval(third_priority_non_random_str)
     third_priority_to_distribute = 0.066 * len(states)
-    third_priority_sampled = _sample_random_vaccinations(
-        n_to_distribute=third_priority_to_distribute,
+    third_priority_sampled = _sample_from_subgroups(
+        n_to_sample=third_priority_to_distribute,
         states=states,
-        vaccination_group=vaccination_group,
+        vaccination_groups_so_far=vaccination_group,
         age_cutoff=45,
-        share_above=0.33,
+        share_to_sample_above_age_cutoff=0.33,
     )
     third_priority = vaccination_group.isnull() & (
         third_priority_non_random | third_priority_sampled
@@ -211,24 +211,28 @@ def _get_third_priority(states, vaccination_group):
     return third_priority
 
 
-def _sample_random_vaccinations(
-    n_to_distribute, states, age_cutoff, share_above, vaccination_group
+def _sample_from_subgroups(
+    n_to_sample,
+    states,
+    age_cutoff,
+    share_to_sample_above_age_cutoff,
+    vaccination_groups_so_far,
 ):
-    """Distribute a fixed number among unvaccinated adults.
+    """Sample a fixed number of adults from subgroups.
 
-    Adults are split into those below 50 and those above 50 and each group receives
-    a certain share of the vaccines to be distributed.
+    Adults are split into those below and above *age_cutoff* and from each group a share
+    of n_to_sample is drawn.
 
     Args:
-        n_to_distribute (int): number of doses to distribute. Due to rounding errors
+        n_to_sample (int): number of doses to distribute. Due to rounding errors
             it might not be matched exactly.
         states (pandas.DataFrame): sid states DataFrame with an "age" column.
-        age_cutoff (int): The *share_above* of the *n_to_distribute* is randomly
-            distributed among unvaccinated individuals above this cutoff. The
-            rest is distributed among adults bleow the cutoff.
-        share_above (float): share of n_to_distribute that is distributed among
-            individuals > age_cutoff.
-        vaccination_group (pandas.Series): Series with the same index as states
+        age_cutoff (int): The *share_to_sample_above_age_cutoff* of the *n_to_sample*
+            is randomly individuals above this cutoff. The rest is distributed among
+            adults bleow the cutoff.
+        share_to_sample_above_age_cutoff (float): share of *n_to_sample* that is
+            distributed among individuals > age_cutoff.
+        vaccination_groups_so_far (pandas.Series): Series with the same index as states
             that is NaN for individuals that have not received a vaccine priority yet.
 
     Returns:
@@ -237,14 +241,16 @@ def _sample_random_vaccinations(
             receive a vaccine and False for everyone else.
 
     """
-    assert 0 <= share_above <= 1, "share_above must lie in [0, 1]."
-    assert n_to_distribute >= 0, "Only non-negative n_to_distribute allowed."
+    assert (
+        0 <= share_to_sample_above_age_cutoff <= 1
+    ), "share_to_sample_above_age_cutoff must lie in [0, 1]."
+    assert n_to_sample >= 0, "Only non-negative n_to_sample allowed."
 
-    n_young = int((1 - share_above) * n_to_distribute)
-    n_old = int(share_above * n_to_distribute)
+    n_young = int((1 - share_to_sample_above_age_cutoff) * n_to_sample)
+    n_old = int(share_to_sample_above_age_cutoff * n_to_sample)
 
-    pool = states[vaccination_group.isnull()]
-    young_pool = pool[pool["age"].between(19, age_cutoff)].index
+    pool = states[states["age"] >= 19 & vaccination_groups_so_far.isnull()]
+    young_pool = pool[pool["age"] < age_cutoff].index
     old_pool = pool[pool["age"] >= age_cutoff].index
 
     assert n_young < len(young_pool), f"{n_young}, {len(young_pool)}"
