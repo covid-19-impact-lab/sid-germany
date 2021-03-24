@@ -180,6 +180,7 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
             find_people_to_vaccinate,
             vaccination_shares=vaccination_shares,
             no_vaccination_share=SHARE_REFUSE_VACCINATION,
+            init_start=init_start,
         )
 
     # cd_is_immune_by_vaccine is required even when no vaccination model

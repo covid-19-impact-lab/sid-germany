@@ -106,10 +106,14 @@ def create_vaccination_rank(vaccination_group, share_refuser, seed):
 
     """
     np.random.seed(seed)
-    sampled_to_refuse = vaccination_group.sample(frac=share_refuser).index
-    with_refusers = vaccination_group.copy(deep=True)
-    with_refusers[sampled_to_refuse] = with_refusers.max() + 1
-    vaccination_order = with_refusers.sort_values().rank(method="first", pct=True)
+    sampled_to_refuse = np.random.choice(
+        a=[True, False],
+        size=len(vaccination_group),
+        p=[share_refuser, 1 - share_refuser],
+    )
+    refuser_value = vaccination_group.max() + 1
+    with_refusers = vaccination_group.where(~sampled_to_refuse, refuser_value)
+    vaccination_order = with_refusers.rank(method="first", pct=True)
     min_at_zero = vaccination_order - vaccination_order.min()
     scaled = min_at_zero / min_at_zero.max()
     return scaled

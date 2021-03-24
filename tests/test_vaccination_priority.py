@@ -25,6 +25,10 @@ def test_create_vaccination_rank_without_refusals():
 
 def test_create_vaccination_rank_lln():
     vaccination_group = pd.Series([1, 2, 3] * 500_000)
+    # this does not necessarily work for other seeds
+    # That is because np.random.choice does not always fit exactly the share of
+    # refusers leading to the mis-identification of non_refusers / refusers
+    # through the res[res < 0.5] specification
     res = create_vaccination_rank(vaccination_group, share_refuser=0.5, seed=1114)
 
     non_refusers = res[res < 0.5]
@@ -40,7 +44,7 @@ def test_create_vaccination_rank_lln():
     refuser_group_shares = refuser_groups.value_counts(normalize=True).sort_index()
     expected_group_shares = pd.Series(1 / 3, index=[1, 2, 3])
     share_diff = np.abs(refuser_group_shares - expected_group_shares)
-    assert share_diff.max() < 0.001
+    assert share_diff.max() < 0.002
 
 
 def test_get_second_priority_people_acc_to_stiko():
