@@ -3,7 +3,7 @@ from sid import get_date
 
 
 def find_people_to_vaccinate(
-    states, params, seed, vaccination_shares, no_vaccination_share  # U100
+    states, params, seed, vaccination_shares, no_vaccination_share  # noqa: U100
 ):
     """Find people that have to be vaccinated on a given day.
 
