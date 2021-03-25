@@ -26,10 +26,14 @@ from src.config import SRC
 )
 @pytask.mark.produces(
     {
-        "mobility_raw": BLD
+        "mobility_raw_2020": BLD
         / "data"
         / "raw_time_series"
         / "2020_DE_Region_Mobility_Report.csv",
+        "mobility_raw_2021": BLD
+        / "data"
+        / "raw_time_series"
+        / "2021_DE_Region_Mobility_Report.csv",
         "hygiene_score": BLD / "policies" / "hygiene_score.csv",
         "mobility_data": BLD / "policies" / "mobility_data.pkl",
         "work_multiplier": BLD / "policies" / "work_multiplier.csv",
@@ -39,10 +43,19 @@ def task_process_mobility_and_hygiene_data(depends_on, produces):
     with ZipFile(depends_on["mobility_data"], "r") as zipobj:
         zipobj.extract(
             member="2020_DE_Region_Mobility_Report.csv",
-            path=produces["mobility_raw"].parent,
+            path=produces["mobility_raw_2020"].parent,
         )
 
-    mobility_data = pd.read_csv(produces["mobility_raw"])
+    with ZipFile(depends_on["mobility_data"], "r") as zipobj:
+        zipobj.extract(
+            member="2021_DE_Region_Mobility_Report.csv",
+            path=produces["mobility_raw_2021"].parent,
+        )
+
+    mobility_data_2020 = pd.read_csv(produces["mobility_raw_2020"])
+    mobility_data_2021 = pd.read_csv(produces["mobility_raw_2021"])
+    mobility_data = pd.concat([mobility_data_2020, mobility_data_2021], axis=0)
+
     hygiene_data = pd.read_csv(depends_on["hygiene_data"])
 
     hygiene_score = _calculate_hygiene_score_from_data(df=hygiene_data)
