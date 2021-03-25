@@ -5,7 +5,8 @@ import pandas as pd
 
 from src.config import BLD
 from src.config import FAST_FLAG
-from src.config import SRC, SHARE_REFUSE_VACCINATION
+from src.config import SHARE_REFUSE_VACCINATION
+from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 from src.policies.combine_policies_over_periods import get_educ_options_starting_feb_22
 from src.policies.combine_policies_over_periods import (
@@ -58,6 +59,9 @@ SIMULATION_DEPENDENCIES = {
     / "create_initial_states"
     / "create_initial_infections.py",
     "initial_immunity_py": SRC / "create_initial_states" / "create_initial_immunity.py",
+    "inital_states_must_be_checked": BLD
+    / "data"
+    / "comparison_of_age_group_distributions.png",
 }
 
 
