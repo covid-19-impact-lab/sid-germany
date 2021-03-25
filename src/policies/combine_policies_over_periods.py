@@ -25,6 +25,9 @@ def get_educ_options_mid_march_to_easter(hygiene_multiplier=0.5):
             - source: https://bit.ly/3f9O4Kp (WDR)
             - A/B schooling since March 15th
 
+    -> We simplify this to A/B schooling for everyone plus emergency care
+       and graduating classes
+
     """
     primary_emergency_query = "(educ_contact_priority > 0.66 & age < 10)"
     secondary_emergency_query = "(educ_contact_priority > 0.75 & age >= 10)"
@@ -221,8 +224,7 @@ def get_enacted_policies_of_2021(
     """
     assert pd.Timestamp(scenario_start) <= pd.Timestamp("2021-04-05"), (
         "You must update the `get_enacted_policies_of_2021` function to support "
-        "such a late scenario start "
-        "(at the moment until schools open after Easter in the first state)."
+        f"scenario starst after {scenario_start}."
     )
 
     work_multiplier = _get_work_multiplier(scenario_start)

@@ -12,6 +12,11 @@ def find_people_to_vaccinate(
 ):
     """Find people that have to be vaccinated on a given day.
 
+    On the init_start date all individuals that should have been vaccinated until
+    that day get vaccinated. Since vaccinations take effect within three weeks
+    and the burn in period is four weeks this does not lead to jumps in the
+    simulation period.
+
     Args:
         states (pandas.DataFrame): States DataFrame that must contain the
             column vaccination_rank. This column is a float with values
@@ -31,6 +36,9 @@ def find_people_to_vaccinate(
     """
     date = get_date(states)
     cutoffs = vaccination_shares.sort_index().cumsum()
+    # set all cutoffs before the init_start to 0.
+    # that way on the init_start date everyone who should have been vaccinated
+    # until that day gets vaccinated.
     cutoffs[: init_start - pd.Timedelta(days=1)] = 0
 
     lower_candidate = cutoffs[date - pd.Timedelta(days=1)]

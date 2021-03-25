@@ -162,9 +162,9 @@ def _get_second_priority_people_acc_to_stiko(states, vaccination_group):
     elderly = states.eval("70 <= age < 80") & vaccination_group.isnull()
 
     share_random_2nd_priority = 0.155
-    to_distribute = share_random_2nd_priority * len(states) - elderly.sum()
+    n_to_sample = share_random_2nd_priority * len(states) - elderly.sum()
     sampled_for_second_priority = _sample_from_subgroups(
-        n_to_sample=to_distribute,
+        n_to_sample=n_to_sample,
         states=states,
         age_cutoff=50,
         share_to_sample_above_age_cutoff=0.67,
@@ -197,9 +197,9 @@ def _get_third_priority(states, vaccination_group):
         "(60 <= age <= 70) | educ_worker | work_contact_priority > 0.85"
     )
     third_priority_non_random = states.eval(third_priority_non_random_str)
-    third_priority_to_distribute = 0.075 * len(states)
+    n_third_priority_random = 0.075 * len(states)
     third_priority_sampled = _sample_from_subgroups(
-        n_to_sample=third_priority_to_distribute,
+        n_to_sample=n_third_priority_random,
         states=states,
         vaccination_groups_so_far=vaccination_group,
         age_cutoff=45,

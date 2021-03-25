@@ -61,7 +61,9 @@ SIMULATION_DEPENDENCIES = {
     / "create_initial_states"
     / "create_initial_infections.py",
     "initial_immunity_py": SRC / "create_initial_states" / "create_initial_immunity.py",
-    "inital_states_must_be_checked": BLD
+    # to ensure that the checks on the initial states run before the simulations
+    # we add the output of task_check_initial_states here even though we don't use it.
+    "output_of_check_initial_states": BLD
     / "data"
     / "comparison_of_age_group_distributions.png",
 }
