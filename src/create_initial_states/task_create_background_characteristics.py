@@ -25,6 +25,7 @@ from src.shared import create_age_groups_rki
         "py1": SRC / "create_initial_states" / "create_contact_model_group_ids.py",
         "py2": SRC / "create_initial_states" / "add_weekly_ids.py",
         "py3": SRC / "create_initial_states" / "make_educ_group_columns.py",
+        "py4": SRC / "create_initial_states" / "create_vaccination_priority.py",
         "hh_data": SRC
         / "original_data"
         / "population_structure"
