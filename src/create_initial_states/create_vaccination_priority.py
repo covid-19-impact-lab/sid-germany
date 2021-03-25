@@ -197,7 +197,7 @@ def _get_third_priority(states, vaccination_group):
         "(60 <= age <= 70) | educ_worker | work_contact_priority > 0.85"
     )
     third_priority_non_random = states.eval(third_priority_non_random_str)
-    third_priority_to_distribute = 0.066 * len(states)
+    third_priority_to_distribute = 0.07 * len(states)
     third_priority_sampled = _sample_from_subgroups(
         n_to_sample=third_priority_to_distribute,
         states=states,
