@@ -8,7 +8,9 @@ from src.config import FAST_FLAG
 from src.config import SHARE_REFUSE_VACCINATION
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
-from src.policies.combine_policies_over_periods import get_educ_options_starting_feb_22
+from src.policies.combine_policies_over_periods import (
+    get_educ_options_mid_march_to_easter,
+)
 from src.policies.combine_policies_over_periods import (
     strict_emergency_care,
 )
@@ -21,7 +23,7 @@ from src.testing.testing_models import process_tests
 
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
-SCENARIO_START = pd.Timestamp("2021-03-01")
+SCENARIO_START = pd.Timestamp("2021-04-01")
 
 
 SIMULATION_DEPENDENCIES = {
@@ -86,7 +88,7 @@ def build_main_scenarios(base_path):
 
     if "predictions" in base_path.name:
         base_scenario = combine_dictionaries(
-            [{"educ_multiplier": 0.5}, get_educ_options_starting_feb_22()]
+            [{"educ_multiplier": 0.5}, get_educ_options_mid_march_to_easter()]
         )
     elif "fall" in base_path.name:
         base_scenario = {"educ_multiplier": 0.8}

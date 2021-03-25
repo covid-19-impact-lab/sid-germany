@@ -5,8 +5,48 @@ from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 
 
-def get_educ_options_starting_feb_22(hygiene_multiplier=0.5):
-    """Get the educ_options from 22 Feb onwards.
+def get_educ_options_mid_march_to_easter(hygiene_multiplier=0.5):
+    """Get the educ_options starting March 15th.
+
+    Situation:
+        - BY:
+            - source: https://bit.ly/3lOZowy
+            - <50 incidence: normal schooling
+            - 50-100 incidence: A/B schooling
+            - >100 incidence: distance for all except graduation classes
+
+        - BW:
+            - source: https://km-bw.de/Coronavirus (accessed: March 25th)
+            - primaries and 5th, 6th grade open normally since 15/3
+            - graduating classes open since 22/2
+            - rest continues distance learning
+
+        - NRW:
+            - source: https://bit.ly/3f9O4Kp (WDR)
+            - A/B schooling since March 15th
+
+    """
+    primary_emergency_query = "(educ_contact_priority > 0.66 & age < 10)"
+    secondary_emergency_query = "(educ_contact_priority > 0.75 & age >= 10)"
+    always_attend_query = f"{primary_emergency_query} | {secondary_emergency_query}"
+    educ_options = {
+        "school": {
+            "hygiene_multiplier": hygiene_multiplier,
+            # Demand seems to be lower the older the children
+            # but only data from Bavaria available: https://bit.ly/3sGHZbJ
+            "always_attend_query": always_attend_query,
+            # simplify to A/B schooling for everyone
+            "a_b_query": "age == age",
+            "non_a_b_attend": False,
+            # only very anecdotally the current most common a_b_rhythm.
+            "a_b_rhythm": "daily",
+        }
+    }
+    return {"educ_options": educ_options}
+
+
+def _get_educ_options_feb_22_to_march_15(hygiene_multiplier=0.5):
+    """Get the educ_options from February 22nd to March 15th.
 
     This assumes that nurseries and preschools are open normally (i.e. only the
     general educ_multiplier is applied to them). Schools open for primary students
@@ -19,8 +59,6 @@ def get_educ_options_starting_feb_22(hygiene_multiplier=0.5):
             graduating classes attend.
         BY: nurseries and primary schools open Feb 22nd. No mention of preschools.
             graduating classes attend.
-        Niedersachsen: primaries and graduating classes in A/B since January.
-            nurseries only in emergency care. No mention of preschools.
         NRW: nurseries pretty normal since Feb 22nd. Primaries and graduating classes
             start Feb 22nd, A/B or full depending on local incidecne.
             (https://bit.ly/3uSp6Ey)
@@ -181,9 +219,10 @@ def get_enacted_policies_of_2021(
         policies (dict)
 
     """
-    assert pd.Timestamp(scenario_start) <= pd.Timestamp("2021-03-01"), (
+    assert pd.Timestamp(scenario_start) <= pd.Timestamp("2021-04-05"), (
         "You must update the `get_enacted_policies_of_2021` function to support "
-        "such a late scenario start."
+        "such a late scenario start "
+        "(at the moment until schools open after Easter in the first state)."
     )
 
     work_multiplier = _get_work_multiplier(scenario_start)
@@ -220,7 +259,7 @@ def get_enacted_policies_of_2021(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-02-22",
-                "end_date": scenario_start,
+                "end_date": "2021-03-14",
                 "prefix": "educ_reopen_spring_2021",
             },
             multipliers={
@@ -231,7 +270,21 @@ def get_enacted_policies_of_2021(
                 "work": work_multiplier,
                 "other": other_multiplier,
             },
-            **get_educ_options_starting_feb_22(),
+            **_get_educ_options_feb_22_to_march_15(),
+        ),
+        get_lockdown_with_multipliers(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-03-15",
+                "end_date": scenario_start - pd.Timedelta(days=1),
+                "prefix": "mid_march_unitl_easter",
+            },
+            multipliers={
+                "educ": 0.5,
+                "work": work_multiplier,
+                "other": other_multiplier,
+            },
+            **get_educ_options_mid_march_to_easter(),
         ),
     ]
     return combine_dictionaries(to_combine)
