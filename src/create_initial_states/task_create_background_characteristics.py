@@ -5,9 +5,16 @@ import pytask
 
 from src.config import BLD
 from src.config import N_HOUSEHOLDS
+from src.config import SHARE_REFUSE_VACCINATION
 from src.config import SRC
 from src.create_initial_states.create_contact_model_group_ids import (
     add_contact_model_group_ids,
+)
+from src.create_initial_states.create_vaccination_priority import (
+    create_vaccination_group,
+)
+from src.create_initial_states.create_vaccination_priority import (
+    create_vaccination_rank,
 )
 from src.shared import create_age_groups
 from src.shared import create_age_groups_rki
@@ -18,11 +25,15 @@ from src.shared import create_age_groups_rki
         "py1": SRC / "create_initial_states" / "create_contact_model_group_ids.py",
         "py2": SRC / "create_initial_states" / "add_weekly_ids.py",
         "py3": SRC / "create_initial_states" / "make_educ_group_columns.py",
+        "py4": SRC / "create_initial_states" / "create_vaccination_priority.py",
         "hh_data": SRC
         / "original_data"
         / "population_structure"
         / "microcensus2010_cf.dta",
-        "county_probabilities": BLD / "data" / "counties.parquet",
+        "county_probabilities": BLD
+        / "data"
+        / "population_structure"
+        / "counties.parquet",
         "work_daily_dist": BLD
         / "contact_models"
         / "empirical_distributions"
@@ -114,6 +125,11 @@ def _build_initial_states(
     )
     df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(any)
     df["educ_contact_priority"] = _create_educ_contact_priority(df)
+
+    df["vaccination_group"] = create_vaccination_group(states=df, seed=484)
+    df["vaccination_rank"] = create_vaccination_rank(
+        df["vaccination_group"], share_refuser=SHARE_REFUSE_VACCINATION, seed=909
+    )
 
     df.index.name = "index"
     df = _only_keep_relevant_columns(df)
@@ -300,6 +316,8 @@ def _only_keep_relevant_columns(df):
         "hh_model_group_id",
         "adult_in_hh_at_home",
         "educ_contact_priority",
+        "vaccination_group",
+        "vaccination_rank",
     ]
 
     educ_contact_group_ids = [

@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def create_initial_infections(
-    empirical_data,
+    empirical_infections,
     synthetic_data,
     start,
     end,
@@ -21,9 +21,9 @@ def create_initial_infections(
         than in the empirical data.
 
     Args:
-        empirical_data (pandas.Series): Newly infected Series with the index levels
-            ["date", "county", "age_group_rki"]. Should already be corrected upwards
-            to include undetected cases.
+        empirical_infections (pandas.Series): Newly infected Series with the index
+            levels ["date", "county", "age_group_rki"]. Should already be corrected
+            upwards to include undetected cases.
         synthetic_data (pandas.DataFrame): Dataset with one row per simulated
             individual. Must contain the columns age_group_rki and county.
         start (str or pd.Timestamp): Start date.
@@ -36,7 +36,7 @@ def create_initial_infections(
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
             demanded time frame.
-        population_size (int): Size of the population behind the empirical_data.
+        population_size (int): Population size behind the empirical_infections.
 
     Returns:
         pandas.DataFrame: DataFrame with same index as synthetic_data and one column
@@ -51,21 +51,25 @@ def create_initial_infections(
     start = pd.Timestamp(start) + reporting_delay
     end = pd.Timestamp(end) + reporting_delay
     index_cols = ["date", "county", "age_group_rki"]
-    correct_index_levels = empirical_data.index.names == index_cols
+    correct_index_levels = empirical_infections.index.names == index_cols
     assert correct_index_levels, f"Your data must have {index_cols} as index levels."
 
-    dates = empirical_data.index.get_level_values("date").unique()
+    dates = empirical_infections.index.get_level_values("date").unique()
     expected_dates = pd.date_range(start, end)
     missing_dates = [str(x.date()) for x in expected_dates if x.date() not in dates]
     assert len(missing_dates) == 0, f"The following dates are missing: {missing_dates}"
 
-    empirical_data = empirical_data.loc[pd.Timestamp(start) : pd.Timestamp(end)]  # noqa
+    empirical_infections = empirical_infections.loc[
+        pd.Timestamp(start) : pd.Timestamp(end)  # noqa
+    ]
 
-    assert empirical_data.notnull().all().all(), "No NaN allowed in the empirical data"
-    duplicates_in_index = empirical_data.index.duplicated().any()
+    assert (
+        empirical_infections.notnull().all().all()
+    ), "No NaN allowed in the empirical data"
+    duplicates_in_index = empirical_infections.index.duplicated().any()
     assert not duplicates_in_index, "Your index must not have any duplicates."
 
-    cases = empirical_data.to_frame().unstack("date")
+    cases = empirical_infections.to_frame().unstack("date")
     cases.columns = [str(x.date() - reporting_delay) for x in cases.columns.droplevel()]
 
     group_infection_probs = _calculate_group_infection_probs(

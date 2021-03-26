@@ -75,7 +75,9 @@ def _smooth_and_scale_daily_outcome_per_individual(
         scaled = scaled.clip(1)
         scaled = np.log(scaled)
     if groupby:
-        scaled = scaled.compute().unstack()
+        if not isinstance(scaled, (pd.Series, pd.DataFrame)):
+            scaled = scaled.compute()
+        scaled = scaled.unstack()
     smoothed = scaled.rolling(
         window=window, min_periods=min_periods, center=center
     ).mean()

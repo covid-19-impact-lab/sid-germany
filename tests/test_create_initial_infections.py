@@ -12,7 +12,7 @@ from src.create_initial_states.create_initial_infections import (
 
 
 @pytest.fixture
-def empirical_data():
+def empirical_infections():
     start = pd.Timestamp("2020-09-30")
     a_day = pd.Timedelta(days=1)
     df = pd.DataFrame()

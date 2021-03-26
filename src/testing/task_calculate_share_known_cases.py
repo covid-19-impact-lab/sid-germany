@@ -52,6 +52,7 @@ def task_calculate_and_plot_share_known_cases(depends_on, produces):
     fig, ax = _plot_time_series(share_known, title="Share of Known Cases")
     ax.axvline(pd.Timestamp("2020-12-24"))
     fig.savefig(produces["share_known_cases_fig"])
+    plt.close()
 
 
 def _calculate_share_known_cases(df):

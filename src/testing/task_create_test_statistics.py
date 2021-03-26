@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 
@@ -33,6 +34,7 @@ def task_create_test_statistics(depends_on, produces):
         df.set_index("date")[col].to_csv(produces[col])
         fig, ax = plot_time_series(df=df, y=col, title=title)
         fig.savefig(produces[f"{col}_png"])
+        plt.close()
 
 
 def _prepare_data(df):

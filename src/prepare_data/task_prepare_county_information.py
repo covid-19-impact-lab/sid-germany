@@ -84,7 +84,10 @@ def _prepare_counties(df, states):
     ]
 )
 @pytask.mark.produces(
-    [BLD / "data" / "federal_states.parquet", BLD / "data" / "counties.parquet"]
+    [
+        BLD / "data" / "population_structure" / "federal_states.parquet",
+        BLD / "data" / "population_structure" / "counties.parquet",
+    ]
 )
 def task_prepare_geographical_data_de(depends_on, produces):
     df = _prepare_general_data(depends_on)

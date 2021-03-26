@@ -13,9 +13,10 @@ def _prepare_vacations(path):
         .rename(columns={"Bundesland": "state"})
         .dropna()
     )
-    dates = vacations.date.str.split(" - ", expand=True).rename(
-        columns={0: "start", 1: "end"}
-    )
+
+    cleaned_str_dates = vacations.date.str.replace(" – ", " - ")
+    raw_dates = cleaned_str_dates.str.split(" - ", expand=True)
+    dates = raw_dates.rename(columns={0: "start", 1: "end"})
     dates["end"] = dates["end"].fillna(dates["start"])
     dates["start"] = pd.to_datetime(dates["start"], format="%d.%m.%Y")
     dates["end"] = pd.to_datetime(dates["end"], format="%d.%m.%Y")

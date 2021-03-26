@@ -5,12 +5,16 @@ import pandas as pd
 
 from src.config import BLD
 from src.config import FAST_FLAG
+from src.config import SHARE_REFUSE_VACCINATION
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
-from src.policies.combine_policies_over_periods import get_educ_options_starting_feb_22
+from src.policies.combine_policies_over_periods import (
+    get_educ_options_mid_march_to_easter,
+)
 from src.policies.combine_policies_over_periods import (
     strict_emergency_care,
 )
+from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import combine_dictionaries
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
@@ -19,17 +23,20 @@ from src.testing.testing_models import process_tests
 
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
-SCENARIO_START = pd.Timestamp("2021-03-01")
+SCENARIO_START = pd.Timestamp("2021-04-01")
 
 
 SIMULATION_DEPENDENCIES = {
     "initial_states": BLD / "data" / "initial_states.parquet",
+    "vaccination_shares": BLD
+    / "data"
+    / "vaccinations"
+    / "vaccination_shares_quadratic.pkl",
     "share_known_cases": BLD
     / "data"
     / "processed_time_series"
     / "share_known_cases.pkl",
-    "params_2021": SRC / "simulation" / "estimated_params.pkl",
-    "params_2020": SRC / "simulation" / "fall_estimated_params.pkl",
+    "params": SRC / "simulation" / "estimated_params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
     "test_shares_by_age_group": BLD
@@ -54,6 +61,11 @@ SIMULATION_DEPENDENCIES = {
     / "create_initial_states"
     / "create_initial_infections.py",
     "initial_immunity_py": SRC / "create_initial_states" / "create_initial_immunity.py",
+    # to ensure that the checks on the initial states run before the simulations
+    # we add the output of task_check_initial_states here even though we don't use it.
+    "output_of_check_initial_states": BLD
+    / "data"
+    / "comparison_of_age_group_distributions.png",
 }
 
 
@@ -78,7 +90,7 @@ def build_main_scenarios(base_path):
 
     if "predictions" in base_path.name:
         base_scenario = combine_dictionaries(
-            [{"educ_multiplier": 0.5}, get_educ_options_starting_feb_22()]
+            [{"educ_multiplier": 0.5}, get_educ_options_mid_march_to_easter()]
         )
     elif "fall" in base_path.name:
         base_scenario = {"educ_multiplier": 0.8}
@@ -152,27 +164,32 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
 
     # Virus Variant Specification --------------------------------------------
 
+    kwargs["virus_strains"] = ["base_strain", "b117"]
+    strain_shares = pd.read_pickle(depends_on["virus_shares"])
+    kwargs["virus_shares"] = {
+        "base_strain": 1 - strain_shares["b117"],
+        "b117": strain_shares["b117"],
+    }
+
+    params = pd.read_pickle(depends_on["params"])
+    params.loc[("virus_strain", "base_strain", "factor")] = 1.0
+    # source: https://doi.org/10.1101/2020.12.24.20248822
+    # "We estimate that this variant has a 43–90%
+    # (range of 95% credible intervals 38–130%) higher
+    # reproduction number than preexisting variants"
+    # currently we take the midpoint of 66%
+    params.loc[("virus_strain", "b117", "factor")] = 1.67
+
+    # Vaccination Model ----------------------------------------------------
+
     if init_start > pd.Timestamp("2021-01-01"):
-        kwargs["virus_strains"] = ["base_strain", "b117"]
-        strain_shares = pd.read_pickle(depends_on["virus_shares"])
-        kwargs["virus_shares"] = {
-            "base_strain": 1 - strain_shares["b117"],
-            "b117": strain_shares["b117"],
-        }
-
-        params = pd.read_pickle(depends_on["params_2021"])
-        params.loc[("virus_strain", "base_strain", "factor")] = 1.0
-        # source: https://doi.org/10.1101/2020.12.24.20248822
-        # "We estimate that this variant has a 43–90%
-        # (range of 95% credible intervals 38–130%) higher
-        # reproduction number than preexisting variants"
-        # currently we take the midpoint of 66%
-        params.loc[("virus_strain", "b117", "factor")] = 1.67
-
-    else:
-        kwargs["virus_strains"] = None
-        kwargs["virus_shares"] = None
-        params = pd.read_pickle(depends_on["params_2020"])
+        vaccination_shares = pd.read_pickle(depends_on["vaccination_shares"])
+        kwargs["vaccination_model"] = partial(
+            find_people_to_vaccinate,
+            vaccination_shares=vaccination_shares,
+            no_vaccination_share=SHARE_REFUSE_VACCINATION,
+            init_start=init_start,
+        )
 
     kwargs["params"] = params
     return kwargs

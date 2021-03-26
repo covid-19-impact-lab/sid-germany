@@ -33,7 +33,7 @@ def task_eu_age_distribution(depends_on, produces):
     age_data = age_data.unstack()["2019 "].astype(int).T
     age_data = age_data / total_pop
     age_data.columns.name = "country"
-    age_data.to_csv(produces)
+    age_data.to_pickle(produces)
 
 
 @pytask.mark.depends_on(
