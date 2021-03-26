@@ -161,6 +161,9 @@ def task_plot_main_prediction_virus_shares(depends_on, produces):
             color="firebrick",
         )
 
+        # move legend outside the plot
+        ax.legend(loc="upper center", bbox_to_anchor=(0.2, -0.4, 1, 0.2), ncol=2)
+
         fig.savefig(
             path,
             dpi=200,
