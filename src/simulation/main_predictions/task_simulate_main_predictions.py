@@ -24,7 +24,7 @@ PARAMETRIZATION = [
 ]
 """Each specification consists of a produces path, the scenario dictioary and a seed"""
 
-if FAST_FLAG:
+if FAST_FLAG == "debug":
     SIMULATION_DEPENDENCIES["initial_states"] = (
         BLD / "data" / "debug_initial_states.parquet"
     )
@@ -33,8 +33,12 @@ if FAST_FLAG:
 @pytask.mark.depends_on(SIMULATION_DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
-    start_date = pd.Timestamp("2021-03-13") if FAST_FLAG else pd.Timestamp("2021-02-15")
-    end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG else 8)
+    start_date = (
+        pd.Timestamp("2021-03-13")
+        if FAST_FLAG == "debug"
+        else pd.Timestamp("2021-02-15")
+    )
+    end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG == "debug" else 12)
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 

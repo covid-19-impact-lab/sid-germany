@@ -86,7 +86,16 @@ def build_main_scenarios(base_path):
                 3. the seed to be used by sid.
 
     """
-    n_seeds = 1 if FAST_FLAG else 20
+    if FAST_FLAG == "debug":
+        n_seeds = 1
+    elif FAST_FLAG == "verify":
+        n_seeds = 10 if "fall" in base_path.name else 5
+    elif FAST_FLAG == "full":
+        n_seeds = 20
+    else:
+        raise ValueError(
+            f"Unknown FAST_FLAG: {FAST_FLAG}. Must be one of 'debug', 'verify', 'full'."
+        )
 
     if "predictions" in base_path.name:
         base_scenario = combine_dictionaries(
@@ -110,13 +119,8 @@ def build_main_scenarios(base_path):
         [{"educ_multiplier": None}, strict_emergency_care()]
     )
 
-    if not FAST_FLAG and "predictions" in base_path.name:
-        scenarios = {
-            "base_scenario": base_scenario,
-            "november_home_office_level": nov_home_office,
-            "spring_home_office_level": spring_home_office,
-            "emergency_child_care": emergency_child_care,
-        }
+    if FAST_FLAG == "debug" or (FAST_FLAG == "verify" and "fall" in base_path.name):
+        scenarios = {"base_scenario": base_scenario}
     else:
         scenarios = {
             "base_scenario": base_scenario,
