@@ -130,7 +130,7 @@ def test_get_third_priority():
 
     # age right, educ_worker, high priority, already has priority
     assert (res[:4] == [True, True, True, False]).all()
-    assert 0.065 < res[4:].mean() < 0.067
+    assert 0.072 < res[4:].mean() < 0.078
     # share above is 0.33, so young_to_old should be approximately 2
     # with equally sized groups
     young_to_old = res[states["age"] == 40].mean() / res[states["age"] == 50].mean()
