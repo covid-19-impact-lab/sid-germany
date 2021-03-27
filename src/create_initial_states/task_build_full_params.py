@@ -2,7 +2,8 @@ import pandas as pd
 import pytask
 from sid import load_epidemiological_parameters
 
-from src.config import BLD, SRC
+from src.config import BLD
+from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 
 
