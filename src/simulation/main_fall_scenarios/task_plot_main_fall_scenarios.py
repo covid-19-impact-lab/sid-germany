@@ -12,7 +12,8 @@ from src.simulation.plotting import weekly_incidences_from_results
 NESTED_PARAMETRIZATION = build_main_scenarios(FALL_PATH)
 
 DEPENDENCIES = {
-    "specs": SRC / "simulation" / "main_specification.py",
+    ("", "specs_py"): SRC / "simulation" / "main_specification.py",
+    ("", "plotting_py"): SRC / "simulation" / "plotting.py",
 }
 for name, seed_list in NESTED_PARAMETRIZATION.items():
     for path, _, seed in seed_list:
@@ -27,9 +28,6 @@ INCIDENCE_PATHS = {
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.produces(INCIDENCE_PATHS)
 def task_save_statistics_for_main_fall_scenarios(depends_on, produces):
-    # specs is not directly used as input, so drop it
-    depends_on.pop("specs")
-
     results = {}
     scenario_names = NESTED_PARAMETRIZATION.keys()
     for name in scenario_names:

@@ -1,7 +1,19 @@
 import warnings
 from pathlib import Path
 
-FAST_FLAG = True
+FAST_FLAG = "debug"
+"""One of 'debug', 'verify', 'full'.
+
+If 'debug' only the debug initial states are used and only one run of every scenario
+is done. Do **not** interpret the results.
+
+If 'verify' only 10 seeds and the base scenario are done in the fall scenarios.
+In the main_predictions we use 5 seeds for each scenario.
+This means there 30 simulation runs overall.
+
+If 'full' 20 seeds are used for each scenario.
+
+"""
 
 try:
     import pyarrow  # noqa: F401

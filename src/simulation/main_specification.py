@@ -36,7 +36,7 @@ SIMULATION_DEPENDENCIES = {
     / "data"
     / "processed_time_series"
     / "share_known_cases.pkl",
-    "params": SRC / "simulation" / "estimated_params.pkl",
+    "params": BLD / "params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
     "test_shares_by_age_group": BLD
@@ -86,7 +86,21 @@ def build_main_scenarios(base_path):
                 3. the seed to be used by sid.
 
     """
-    n_seeds = 1 if FAST_FLAG else 20
+    if FAST_FLAG == "debug":
+        n_seeds = 1
+    elif FAST_FLAG == "full":
+        n_seeds = 20
+    elif FAST_FLAG == "verify":
+        # with the verify fast flag only base scenario is run for the fall
+        # -> 10 * 2 + 3 * 3 = 29
+        if "base" in base_path.name:
+            n_seeds = 10
+        else:
+            n_seeds = 3
+    else:
+        raise ValueError(
+            f"Unknown FAST_FLAG: {FAST_FLAG}. Must be one of 'debug', 'verify', 'full'."
+        )
 
     if "predictions" in base_path.name:
         base_scenario = combine_dictionaries(
@@ -110,13 +124,8 @@ def build_main_scenarios(base_path):
         [{"educ_multiplier": None}, strict_emergency_care()]
     )
 
-    if not FAST_FLAG and "predictions" in base_path.name:
-        scenarios = {
-            "base_scenario": base_scenario,
-            "november_home_office_level": nov_home_office,
-            "spring_home_office_level": spring_home_office,
-            "emergency_child_care": emergency_child_care,
-        }
+    if FAST_FLAG == "debug" or (FAST_FLAG == "verify" and "fall" in base_path.name):
+        scenarios = {"base_scenario": base_scenario}
     else:
         scenarios = {
             "base_scenario": base_scenario,
@@ -136,8 +145,8 @@ def build_main_scenarios(base_path):
     return nested_parametrization
 
 
-def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False):
-    test_kwargs = {
+def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=False):
+    test_inputs = {
         "test_shares_by_age_group": pd.read_pickle(
             depends_on["test_shares_by_age_group"]
         ),
@@ -151,22 +160,22 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
     }
 
     if extend_ars_dfs:
-        for name, df in test_kwargs.items():
-            test_kwargs[name] = _extend_df_into_future(df, end_date=end_date)
+        for name, df in test_inputs.items():
+            test_inputs[name] = _extend_df_into_future(df, end_date=end_date)
 
-    kwargs = _get_testing_models(
+    simulation_inputs = _get_testing_models(
         init_start=init_start,
         end_date=end_date,
-        **test_kwargs,
+        **test_inputs,
     )
-    kwargs["initial_states"] = pd.read_parquet(depends_on["initial_states"])
-    kwargs["contact_models"] = get_all_contact_models()
+    simulation_inputs["initial_states"] = pd.read_parquet(depends_on["initial_states"])
+    simulation_inputs["contact_models"] = get_all_contact_models()
 
     # Virus Variant Specification --------------------------------------------
 
-    kwargs["virus_strains"] = ["base_strain", "b117"]
+    simulation_inputs["virus_strains"] = ["base_strain", "b117"]
     strain_shares = pd.read_pickle(depends_on["virus_shares"])
-    kwargs["virus_shares"] = {
+    virus_shares = {
         "base_strain": 1 - strain_shares["b117"],
         "b117": strain_shares["b117"],
     }
@@ -184,15 +193,15 @@ def get_simulation_kwargs(depends_on, init_start, end_date, extend_ars_dfs=False
 
     if init_start > pd.Timestamp("2021-01-01"):
         vaccination_shares = pd.read_pickle(depends_on["vaccination_shares"])
-        kwargs["vaccination_model"] = partial(
+        simulation_inputs["vaccination_model"] = partial(
             find_people_to_vaccinate,
             vaccination_shares=vaccination_shares,
             no_vaccination_share=SHARE_REFUSE_VACCINATION,
             init_start=init_start,
         )
 
-    kwargs["params"] = params
-    return kwargs
+    simulation_inputs["params"] = params
+    return virus_shares, simulation_inputs
 
 
 def _extend_df_into_future(df, end_date):
