@@ -208,6 +208,8 @@ def get_enacted_policies_of_2021(
     contact_models,
     scenario_start,
     other_multiplier=0.45,
+    easter_holiday_other_multiplier=0.15,
+    easter_holiday_work_multiplier=0.15,
 ):
     """Get enacted policies of 2021.
 
@@ -217,6 +219,11 @@ def get_enacted_policies_of_2021(
         contact_models (dict)
         scenario_start (str): date until which the policies should run.
             Should be of format yyyy-mm-dd.
+        other_multiplier (float): other multiplier used until the easter holidays
+        easter_holiday_other_multiplier (float): other multiplier used during the easter
+            holidays.
+        easter_holiday_work_multiplier (float): work multiplier used during the easter
+            holidays.
 
     Returns:
         policies (dict)
@@ -298,8 +305,8 @@ def get_enacted_policies_of_2021(
             },
             multipliers={
                 "educ": 0.0,
-                "work": 0.15,
-                "other": 0.15,
+                "work": easter_holiday_work_multiplier,
+                "other": easter_holiday_other_multiplier,
                 **get_educ_options_mid_march_to_easter(),
             },
         ),
