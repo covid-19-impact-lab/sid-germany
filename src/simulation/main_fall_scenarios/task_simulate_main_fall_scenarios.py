@@ -11,7 +11,7 @@ from src.create_initial_states.create_initial_conditions import (  # noqa
 from src.policies.combine_policies_over_periods import get_october_to_christmas_policies
 from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import FALL_PATH
-from src.simulation.main_specification import get_simulation_kwargs
+from src.simulation.main_specification import load_simulation_inputs
 from src.simulation.main_specification import SIMULATION_DEPENDENCIES
 
 
@@ -21,7 +21,7 @@ PARAMETRIZATION = [
 ]
 """Each specification consists of a produces path, the scenario dictioary and a seed"""
 
-if FAST_FLAG:
+if FAST_FLAG == "debug":
     SIMULATION_DEPENDENCIES["initial_states"] = (
         BLD / "data" / "debug_initial_states.parquet"
     )
@@ -32,11 +32,18 @@ if FAST_FLAG:
 def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
     # determine dates
     start_date = pd.Timestamp("2020-10-15")
-    end_date = pd.Timestamp("2020-11-15") if FAST_FLAG else pd.Timestamp("2020-12-23")
+
+    early_end_date = pd.Timestamp("2020-11-15")
+    late_end_date = pd.Timestamp("2020-12-23")
+    if FAST_FLAG == "debug":
+        end_date = early_end_date
+    else:
+        end_date = late_end_date
+
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 
-    kwargs = get_simulation_kwargs(
+    virus_shares, simulation_inputs = load_simulation_inputs(
         depends_on, init_start, end_date, extend_ars_dfs=False
     )
 
@@ -45,14 +52,14 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
         end=init_end,
         seed=344490,
         reporting_delay=5,
-        virus_shares=kwargs.pop("virus_shares"),
+        virus_shares=virus_shares,
     )
 
     policies = get_october_to_christmas_policies(
-        contact_models=kwargs["contact_models"], **scenario
+        contact_models=simulation_inputs["contact_models"], **scenario
     )
     simulate = get_simulate_func(
-        **kwargs,
+        **simulation_inputs,
         contact_policies=policies,
         duration={"start": start_date, "end": end_date},
         initial_conditions=initial_conditions,
@@ -69,4 +76,4 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
             ],
         },
     )
-    simulate(kwargs["params"])
+    simulate(simulation_inputs["params"])
