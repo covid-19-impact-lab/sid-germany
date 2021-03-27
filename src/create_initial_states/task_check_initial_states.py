@@ -40,7 +40,7 @@ def task_check_initial_states(depends_on, produces):
     df = pd.read_parquet(depends_on["initial_states"])
     true_age_shares = pd.read_parquet(depends_on["true_age_group_dist"])["weight"]
     vacations = pd.read_pickle(depends_on["vacations"])
-    _check_states_and_vacations_overlap(df, vacations)
+    _check_federal_states_overlap_btw_initial_states_and_vacation_data(df, vacations)
     _check_background_characteristics(df)
 
     work_daily_dist = pd.read_pickle(depends_on["work_daily_dist"])
@@ -86,7 +86,7 @@ def task_check_initial_states(depends_on, produces):
     plt.close()
 
 
-def _check_states_and_vacations_overlap(df, vacations):
+def _check_federal_states_overlap_btw_initial_states_and_vacation_data(df, vacations):
     df_states = set(df["state"].unique())
     vacc_states = set(vacations.index.get_level_values("subcategory").unique())
     assert (

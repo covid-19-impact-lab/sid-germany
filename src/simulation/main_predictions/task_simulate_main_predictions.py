@@ -33,12 +33,21 @@ if FAST_FLAG == "debug":
 @pytask.mark.depends_on(SIMULATION_DEPENDENCIES)
 @pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
 def task_simulate_main_prediction(depends_on, produces, scenario, seed):
-    start_date = (
-        pd.Timestamp("2021-03-13")
-        if FAST_FLAG == "debug"
-        else pd.Timestamp("2021-02-15")
-    )
-    end_date = start_date + pd.Timedelta(weeks=4 if FAST_FLAG == "debug" else 12)
+    early_start_date = pd.Timestamp("2021-02-15")
+    late_start_date = pd.Timestamp("2021-03-13")
+    if FAST_FLAG == "debug":
+        start_date = late_start_date
+    else:
+        start_date = early_start_date
+
+    if FAST_FLAG == "debug":
+        duration = pd.Timedelta(weeks=4)
+    elif FAST_FLAG == "verify":
+        duration = pd.Timedelta(weeks=8)
+    elif FAST_FLAG == "full":
+        duration = pd.Timedelta(weeks=12)
+
+    end_date = start_date + duration
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 

@@ -12,7 +12,8 @@ from src.simulation.plotting import weekly_incidences_from_results
 NESTED_PARAMETRIZATION = build_main_scenarios(FALL_PATH)
 
 DEPENDENCIES = {
-    "specs": SRC / "simulation" / "main_specification.py",
+    ("", "specs_py"): SRC / "simulation" / "main_specification.py",
+    ("", "plotting_py"): SRC / "simulation" / "plotting.py",
 }
 for name, seed_list in NESTED_PARAMETRIZATION.items():
     for path, _, seed in seed_list:

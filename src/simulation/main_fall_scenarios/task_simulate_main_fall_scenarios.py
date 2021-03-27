@@ -32,11 +32,14 @@ if FAST_FLAG == "debug":
 def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
     # determine dates
     start_date = pd.Timestamp("2020-10-15")
-    end_date = (
-        pd.Timestamp("2020-11-15")
-        if FAST_FLAG != "debug"
-        else pd.Timestamp("2020-12-23")
-    )
+
+    early_end_date = pd.Timestamp("2020-11-15")
+    late_end_date = pd.Timestamp("2020-12-23")
+    if FAST_FLAG == "debug":
+        end_date = early_end_date
+    else:
+        end_date = late_end_date
+
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 
