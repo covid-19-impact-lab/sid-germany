@@ -27,9 +27,6 @@ INCIDENCE_PATHS = {
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.produces(INCIDENCE_PATHS)
 def task_save_statistics_for_main_fall_scenarios(depends_on, produces):
-    # specs is not directly used as input, so drop it
-    depends_on.pop("specs")
-
     results = {}
     scenario_names = NESTED_PARAMETRIZATION.keys()
     for name in scenario_names:

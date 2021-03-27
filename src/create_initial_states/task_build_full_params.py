@@ -32,8 +32,8 @@ from src.contact_models.get_contact_models import get_all_contact_models
 @pytask.mark.produces(BLD / "params.pkl")
 def task_create_full_params(depends_on, produces):
     epi_params = load_epidemiological_parameters()
-    vacations = pd.read_pickle(depends_on.pop("vacations"))
-    infection_probs = pd.read_pickle(depends_on.pop("infection_probs"))
+    vacations = pd.read_pickle(depends_on["vacations"])
+    infection_probs = pd.read_pickle(depends_on["infection_probs"])
 
     distributions = {
         name[5:]: path for name, path in depends_on.items() if name.startswith("dist_")
@@ -45,11 +45,10 @@ def task_create_full_params(depends_on, produces):
         dist_params.append(dist)
     dist_params = pd.concat(dist_params, axis=0)
 
-    age_assort_params = {
-        name[7:]: pd.read_pickle(path)
-        for name, path in depends_on.items()
-        if name.startswith("assort")
-    }
+    age_assort_params = {}
+    for name, path in depends_on.items():
+        if name.startswith("assort"):
+            age_assort_params[name[7:]] = pd.read_pickle(path)
 
     contact_models = get_all_contact_models()
 
