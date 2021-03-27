@@ -71,7 +71,7 @@ def task_create_full_params(depends_on, produces):
     params.loc[("testing", "processing", "rel_available_capacity"), "value"] = 100_000
     params.loc[
         ("test_demand", "symptoms", "share_symptomatic_requesting_test"), "value"
-    ] = 0.67
+    ] = 0.5
 
     params = _convert_index_to_int_where_possible(params)
     params.to_pickle(produces)
