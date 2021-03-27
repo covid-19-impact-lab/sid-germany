@@ -12,7 +12,7 @@ from src.policies.combine_policies_over_periods import get_enacted_policies_of_2
 from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 from src.simulation.main_specification import build_main_scenarios
-from src.simulation.main_specification import get_simulation_kwargs
+from src.simulation.main_specification import load_simulation_inputs
 from src.simulation.main_specification import PREDICT_PATH
 from src.simulation.main_specification import SCENARIO_START
 from src.simulation.main_specification import SIMULATION_DEPENDENCIES
@@ -51,7 +51,7 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 
-    kwargs = get_simulation_kwargs(
+    virus_shares, simulation_inputs = load_simulation_inputs(
         depends_on, init_start, end_date, extend_ars_dfs=True
     )
 
@@ -60,15 +60,18 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
         end=init_end,
         seed=3930,
         reporting_delay=5,
-        virus_shares=kwargs.pop("virus_shares"),
+        virus_shares=virus_shares,
     )
 
     policies = _get_prediction_policies(
-        kwargs, scenario, end_date, scenario_name=produces.parent.name
+        contact_models=simulation_inputs["contact_models"],
+        scenario=scenario,
+        end_date=end_date,
+        scenario_name=produces.parent.name,
     )
 
     simulate = get_simulate_func(
-        **kwargs,
+        **simulation_inputs,
         contact_policies=policies,
         duration={"start": start_date, "end": end_date},
         initial_conditions=initial_conditions,
@@ -86,12 +89,12 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
             ],
         },
     )
-    simulate(kwargs["params"])
+    simulate(simulation_inputs["params"])
 
 
-def _get_prediction_policies(kwargs, scenario, end_date, scenario_name):
+def _get_prediction_policies(contact_models, scenario, end_date, scenario_name):
     enacted_policies = get_enacted_policies_of_2021(
-        contact_models=kwargs["contact_models"],
+        contact_models=contact_models,
         scenario_start=SCENARIO_START,
     )
     work_multiplier = _process_work_multiplier(
@@ -101,7 +104,7 @@ def _get_prediction_policies(kwargs, scenario, end_date, scenario_name):
         work_fill_value=scenario.get("work_fill_value", 0.68),
     )
     scenario_policies = get_lockdown_with_multipliers(
-        contact_models=kwargs["contact_models"],
+        contact_models=contact_models,
         block_info={
             "start_date": SCENARIO_START,
             "end_date": end_date,
