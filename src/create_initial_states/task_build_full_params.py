@@ -2,7 +2,7 @@ import pandas as pd
 import pytask
 from sid import load_epidemiological_parameters
 
-from src.config import BLD
+from src.config import BLD, SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 
 
@@ -25,12 +25,14 @@ from src.contact_models.get_contact_models import get_all_contact_models
         / "age_assort_params"
         / "work_non_recurrent.pkl",
         "vacations": BLD / "data" / "vacations.pkl",
+        "infection_probs": SRC / "simulation" / "infection_probs.pkl",
     }
 )
-@pytask.mark.produces(BLD / "start_params.pkl")
+@pytask.mark.produces(BLD / "params.pkl")
 def task_create_full_params(depends_on, produces):
     epi_params = load_epidemiological_parameters()
     vacations = pd.read_pickle(depends_on.pop("vacations"))
+    infection_probs = pd.read_pickle(depends_on.pop("infection_probs"))
 
     distributions = {
         name[5:]: path for name, path in depends_on.items() if name.startswith("dist_")
@@ -54,6 +56,7 @@ def task_create_full_params(depends_on, produces):
 
     reaction_params = _build_reaction_params(contact_models)
     param_slices = [
+        infection_probs,
         reaction_params,
         dist_params,
         assort_params,
@@ -66,6 +69,11 @@ def task_create_full_params(depends_on, produces):
     # per individual
     params.loc[("testing", "allocation", "rel_available_tests"), "value"] = 100_000
     params.loc[("testing", "processing", "rel_available_capacity"), "value"] = 100_000
+    params.loc[
+        ("test_demand", "symptoms", "share_symptomatic_requesting_test"), "value"
+    ] = 0.67
+
+    params = _convert_index_to_int_where_possible(params)
     params.to_pickle(produces)
 
 
@@ -120,3 +128,18 @@ def _build_reaction_params(contact_models):
             else:
                 df.loc[(cm, name, name)] = multiplier
     return df
+
+
+def _convert_index_to_int_where_possible(params):
+    params = params.reset_index().copy(deep=True)
+    params["name"] = params["name"].apply(_convert_to_int_if_possible)
+    params = params.set_index(["category", "subcategory", "name"])
+    return params
+
+
+def _convert_to_int_if_possible(x):
+    """pd.to_numeric did not correctly work."""
+    try:
+        return int(x)
+    except ValueError:
+        return x

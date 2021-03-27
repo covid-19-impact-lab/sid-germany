@@ -36,7 +36,7 @@ SIMULATION_DEPENDENCIES = {
     / "data"
     / "processed_time_series"
     / "share_known_cases.pkl",
-    "params": SRC / "simulation" / "estimated_params.pkl",
+    "params": BLD / "params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
     "test_shares_by_age_group": BLD
