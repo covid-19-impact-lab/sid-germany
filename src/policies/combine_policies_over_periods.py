@@ -222,9 +222,10 @@ def get_enacted_policies_of_2021(
         policies (dict)
 
     """
-    assert pd.Timestamp(scenario_start) <= pd.Timestamp("2021-04-05"), (
+    last_date = pd.Timestamp("2021-04-06")
+    assert pd.Timestamp(scenario_start) <= last_date, (
         "You must update the `get_enacted_policies_of_2021` function to support "
-        f"scenario starst after {scenario_start}."
+        f"scenario starst after {scenario_start} (only until {last_date.date()}."
     )
 
     work_multiplier = _get_work_multiplier(scenario_start)
@@ -278,7 +279,7 @@ def get_enacted_policies_of_2021(
             contact_models=contact_models,
             block_info={
                 "start_date": "2021-03-15",
-                "end_date": scenario_start - pd.Timedelta(days=1),
+                "end_date": "2021-04-01",
                 "prefix": "mid_march_unitl_easter",
             },
             multipliers={
@@ -287,6 +288,20 @@ def get_enacted_policies_of_2021(
                 "other": other_multiplier,
             },
             **get_educ_options_mid_march_to_easter(),
+        ),
+        get_lockdown_with_multipliers(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-04-02",
+                "end_date": "2021-04-05",
+                "prefix": "easter_holidays",
+            },
+            multipliers={
+                "educ": 0.0,
+                "work": 0.15,
+                "other": 0.15,
+                **get_educ_options_mid_march_to_easter(),
+            },
         ),
     ]
     return combine_dictionaries(to_combine)
