@@ -23,6 +23,7 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
+from src.testing.shared import get_share_known_cases_series
 
 
 DROPPPED_COLUMNS = [
@@ -63,10 +64,7 @@ AGE_GROUPS_TO_INTERVALS = {
 @pytask.mark.depends_on(
     {
         "rki": BLD / "data" / "raw_time_series" / "rki.csv",
-        "share_known_cases": BLD
-        / "data"
-        / "processed_time_series"
-        / "share_known_cases.pkl",
+        "params": BLD / "params.pkl",
     }
 )
 @pytask.mark.produces(
@@ -79,6 +77,11 @@ def task_prepare_rki_data(depends_on, produces):
     df = pd.read_csv(depends_on["rki"], parse_dates=["Refdatum"])
     df = df.drop(columns=DROPPPED_COLUMNS)
     df = df.rename(columns=RENAME_COLUMNS)
+
+    params = pd.read_pickle(depends_on["params"])
+    share_known_cases = get_share_known_cases_series(
+        params.loc[("share_known_cases", "share_known_cases")]
+    )
 
     df["age_group_rki"] = (
         df["age_group"].replace(AGE_GROUPS_TO_INTERVALS).astype("category")
@@ -99,7 +102,6 @@ def task_prepare_rki_data(depends_on, produces):
     cropped = summed.loc[pd.Timestamp("2020-02-09") : one_week_ago]  # noqa: E203
     cropped = cropped.sort_index()
 
-    share_known_cases = pd.read_pickle(depends_on["share_known_cases"])
     undetected_multiplier = 1 / share_known_cases
     cropped["date"] = cropped.index.get_level_values("date")
     cropped["undetected_multiplier"] = cropped["date"].replace(undetected_multiplier)

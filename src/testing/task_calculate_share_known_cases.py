@@ -5,6 +5,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import SRC
+from src.testing.shared import get_share_known_cases_series
 
 
 @pytask.mark.depends_on(
@@ -17,6 +18,7 @@ from src.config import SRC
         / "original_data"
         / "testing"
         / "detected_and_undetected_infections_new.csv",
+        "params": BLD / "params.pkl",
     }
 )
 @pytask.mark.produces(
@@ -49,7 +51,22 @@ def task_calculate_and_plot_share_known_cases(depends_on, produces):
 
     share_known.to_pickle(produces["share_known_cases"])
 
-    fig, ax = _plot_time_series(share_known, title="Share of Known Cases")
+    params = pd.read_pickle(depends_on["params"])
+    params_slice = params.loc[("share_known_cases", "share_known_cases")]
+    share_known_from_params = get_share_known_cases_series(params_slice)
+
+    fig, ax = plt.subplots(figsize=(8, 3))
+    sns.lineplot(x=share_known.index, y=share_known, ax=ax, label="Dunkelzifferradar")
+    sns.lineplot(
+        x=share_known_from_params.index,
+        y=share_known_from_params,
+        ax=ax,
+        label="Interpolated",
+    )
+    ax.set_title("Share of known cases")
+    sns.despine()
+    fig.tight_layout()
+
     ax.axvline(pd.Timestamp("2020-12-24"))
     fig.savefig(produces["share_known_cases_fig"])
     plt.close()
@@ -100,12 +117,3 @@ def _calculate_share_known_cases(df):
         == pd.date_range(start="2020-01-01", end=extrapolation_end_date)
     ).all()
     return share_known_cases
-
-
-def _plot_time_series(sr, title):
-    fig, ax = plt.subplots(figsize=(8, 3))
-    sns.lineplot(x=sr.index, y=sr, ax=ax)
-    ax.set_title(title)
-    sns.despine()
-    fig.tight_layout()
-    return fig, ax

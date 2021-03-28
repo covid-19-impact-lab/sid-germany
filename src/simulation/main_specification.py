@@ -32,10 +32,6 @@ SIMULATION_DEPENDENCIES = {
     / "data"
     / "vaccinations"
     / "vaccination_shares_quadratic.pkl",
-    "share_known_cases": BLD
-    / "data"
-    / "processed_time_series"
-    / "share_known_cases.pkl",
     "params": BLD / "params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
@@ -156,7 +152,6 @@ def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=Fals
         "positivity_rate_overall": pd.read_pickle(
             depends_on["positivity_rate_overall"]
         ),
-        "share_known_cases": pd.read_pickle(depends_on["share_known_cases"]),
     }
 
     if extend_ars_dfs:
@@ -227,14 +222,12 @@ def _extend_df_into_future(df, end_date):
 def _get_testing_models(
     init_start,
     end_date,
-    share_known_cases,
     positivity_rate_overall,
     test_shares_by_age_group,
     positivity_rate_by_age_group,
 ):
     demand_test_func = partial(
         demand_test,
-        share_known_cases=share_known_cases,
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
