@@ -28,6 +28,7 @@ dependencies:
   - python-snappy
   - scipy
   - seaborn
+  - sid-dev =0.0.3
   - snakeviz
   - xlrd<=1.2.0
   - virtualenv=20.0.33
@@ -37,4 +38,3 @@ dependencies:
   - pip:
     - DFO-LS
     - Py-BOBYQA
-    - sid-dev==0.0.3
