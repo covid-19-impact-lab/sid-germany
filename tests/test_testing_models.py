@@ -21,6 +21,8 @@ def states():
     states["pending_test"] = False
     states["knows_immune"] = False
     states["date"] = DATE
+    states["symptomatic"] = False
+    states["cd_infectious_true"] = -10
     # 1, 1, 2 infections => 4 newly_infected
     states["newly_infected"] = [True, False, True] + [False] * 5 + [True, True]
     # 0, 2 and 9 are potential symptom test seekers b/c of recent symptoms
@@ -42,6 +44,12 @@ def params():
     )
     params.loc[("FürImmerferien", "Hessen", "start")] = 1601503200  # 2020-10-01
     params.loc[("FürImmerferien", "Hessen", "end")] = 1635631200  # 2021-10-31
+    params.loc[
+        ("share_known_cases", "share_known_cases", pd.Timestamp("2020-01-01"))
+    ] = -1.0
+    params.loc[
+        ("share_known_cases", "share_known_cases", pd.Timestamp("2022-01-01"))
+    ] = -1.0
     params.index.names = ["category", "subcategory", "name"]
     return params
 
@@ -80,7 +88,6 @@ def test_calculate_positive_tests_to_distribute_per_age_group():
 
 
 def test_demand_test_zero_remainder(states, params):
-    share_known_cases = 1
     positivity_rate_overall = 0.25
     test_shares_by_age_group = pd.Series(
         [0.5, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
@@ -88,10 +95,11 @@ def test_demand_test_zero_remainder(states, params):
     positivity_rate_by_age_group = pd.Series(
         [0.125, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
     )
+    params.loc["share_known_cases"] = 1.0
+
     res = demand_test(
         states=states,
         params=params,
-        share_known_cases=share_known_cases,
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
@@ -103,7 +111,7 @@ def test_demand_test_zero_remainder(states, params):
 
 def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states, params):
     params.loc[("test_demand", "symptoms", "share_symptomatic_requesting_test")] = 0.5
-    share_known_cases = 1
+    params.loc["share_known_cases"] = 1
     positivity_rate_overall = 0.25
     test_shares_by_age_group = pd.Series(
         [0.5, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
@@ -127,7 +135,6 @@ def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states, par
     res = demand_test(
         states=states,
         params=params,
-        share_known_cases=share_known_cases,
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
@@ -145,14 +152,13 @@ def test_demand_test_non_zero_remainder(states, params):
     # 0-4 get one extra. 5-14 are even. 15-34 have two tests removed.
     states["cd_symptoms_true"] = [-1, 2] + [-1, -1, -10, 30] + [-1] * 4
 
-    share_known_cases = 1
+    params.loc["share_known_cases"] = 1
     positivity_rate_overall = 1 / 3
     test_shares_by_age_group = pd.Series([1 / 3] * 3, index=["0-4", "5-14", "15-34"])
     positivity_rate_by_age_group = pd.Series([0.2] * 3, index=["0-4", "5-14", "15-34"])
     res = demand_test(
         states=states,
         params=params,
-        share_known_cases=share_known_cases,
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
@@ -177,14 +183,13 @@ def test_demand_test_with_teachers(states, params):
     states.loc[-2:, "educ_worker"] = True
     states["date"] = pd.Timestamp("2021-03-07")
 
-    share_known_cases = 1
+    params.loc["share_known_cases"] = 1
     positivity_rate_overall = 1 / 3
     test_shares_by_age_group = pd.Series([1 / 3] * 3, index=["0-4", "5-14", "15-34"])
     positivity_rate_by_age_group = pd.Series([0.2] * 3, index=["0-4", "5-14", "15-34"])
     res = demand_test(
         states=states,
         params=params,
-        share_known_cases=share_known_cases,
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
