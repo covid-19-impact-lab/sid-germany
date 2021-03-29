@@ -1,15 +1,16 @@
 """This module contains functions to assign rapid tests."""
-from sid import get_date
-import pandas as pd
 from typing import Tuple
+
+import pandas as pd
+from sid import get_date
 
 
 def assign_rapid_test_to_group(
-    receives_rapid_test,
+    receives_rapid_test,  # noqa: U100
     states,
-    params,
-    contacts,
-    seed,
+    params,  # noqa: U100
+    contacts,  # noqa: U100
+    seed,  # noqa: U100
     unit_interval_column,
     n_days,
     n_repetitions_per_week,
