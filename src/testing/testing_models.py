@@ -148,12 +148,14 @@ def demand_test(
     if (remaining < 0).any():
         info = pd.concat([demands_by_age_group, n_pos_tests_for_each_group], axis=1)
         info.columns = ["demand", "target demand"]
-        info["difference"] = (info["demand"] - info["target demand"]) / info["target demand"]
+        info["difference"] = (info["demand"] - info["target demand"]) / info[
+            "target demand"
+        ]
         info = info.T.round(2)
         warnings.warn(
-            f"Too much endogenous test demand on {date}. This is an indication that "
-            "the share of symptomatic infections is too high or that too many "
-            f"symptomatic people demand a test:\n{info.to_string()}"
+            f"Too much endogenous test demand on {date.date()} ({date.day_name()}). "
+            "This is an indication that the share of symptomatic infections is too high or"
+            f"that too many symptomatic people demand a test:\n\n{info.to_string()}"
         )
 
     return demanded
@@ -251,34 +253,63 @@ def _scale_demand_up_or_down(demanded, states, remaining):
     """
     demanded = demanded.copy(deep=True)
     for group, remainder in remaining.items():
-        n_to_draw = int(abs(remainder))
-        selection_string = f"age_group_rki == '{group}' & ~pending_test & ~knows_immune"
         if remainder == 0:
             continue
         elif remainder > 0:
-            # this is the case where we have additional positive tests to distribute.
-            selection_string += " & infectious"
-            pool = states[~demanded].query(selection_string).index
-        else:  # remainder < 0
-            # this is the case where symptomatics already exceed the designated
-            # number of positive tests.
-            pool = states[demanded].query(selection_string).index
-
-        if len(pool) >= n_to_draw:
-            drawn = np.random.choice(pool, n_to_draw, replace=False)
-        else:
-            type_of_operation = "allocated" if remainder > 0 else "removed"
-            warnings.warn(
-                f"The number of tests to be {type_of_operation} exceeds the number of "
-                f"candidate individuals. As a result only {len(pool)} rather than "
-                f"{n_to_draw} tests were {type_of_operation}. This indicates that your "
-                "model parameters (either the infection probabilities, the probability "
-                "to become symptomatic or the test demand parameters) are incompatible."
-                f" The remainder was {remainder} in group {group} on "
-                f"{get_date(states).date()}.\n\n\n"
+            n_undemanded_tests = int(abs(remainder))
+            demanded = _increase_test_demand(
+                demanded, states, n_undemanded_tests, group
             )
-            drawn = pool
-        demanded.loc[drawn] = True if remainder > 0 else False
+        else:  # remainder < 0
+            n_to_remove = int(abs(remainder))
+            demanded = _decrease_test_demand(demanded, states, n_to_remove, group)
+    return demanded
+
+
+def _decrease_test_demand(demanded, states, n_to_remove, group):
+    """Decrease the number of tests demanded in an age group by a certain number.
+
+    This is called when the endogenously demanded tests (symptomatics + educ workers)
+    already exceed the designated number of positive tests in an age group.
+
+    """
+    demanded = demanded.copy(deep=True)
+    age_str = f"age_group_rki == '{group}'"
+    demanding_test_in_age_group = states[demanded].query(age_str).index
+    if len(demanding_test_in_age_group) >= n_to_remove:
+        drawn = np.random.choice(
+            a=demanding_test_in_age_group, size=n_to_remove, replace=False
+        )
+        demanded.loc[drawn] = False
+    else:
+        raise ValueError(
+            "Trying to remove more test demands than there are "
+            f"individuals requesting a test in age group {group}."
+        )
+    return demanded
+
+
+def _increase_test_demand(demanded, states, n_undemanded_tests, group):
+    """Randomly increase the number of tests demanded in an age group.
+    This is the case where we have additional positive tests to distribute.
+
+    """
+    demanded = demanded.copy(deep=True)
+    age_query = f"(age_group_rki == '{group}')"
+    infected_query = "(infectious | symptomatic | (cd_infectious_true >= 0))"
+    untested_query = "(~pending_test & ~knows_immune)"
+    selection_string = age_query + " & " + infected_query + " & " + untested_query
+    infected_untested = states[~demanded].query(selection_string).index
+    if len(infected_untested) >= n_undemanded_tests:
+        drawn = np.random.choice(infected_untested, n_undemanded_tests, replace=False)
+    else:
+        date = get_date(states)
+        warnings.warn(
+            f"\n\nThe implied share_known_cases for age group {group} is >1 "
+            f"on date {date.date()} ({date.day_name()}).\n\n"
+        )
+        drawn = infected_untested
+    demanded.loc[drawn] = True
     return demanded
 
 
