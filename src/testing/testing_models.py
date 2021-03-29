@@ -144,6 +144,18 @@ def demand_test(
     demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
     demanded = _scale_demand_up_or_down(demanded, states, remaining)
+
+    if (remaining < 0).any():
+        info = pd.concat([demands_by_age_group, n_pos_tests_for_each_group], axis=1)
+        info.columns = ["demand", "target demand"]
+        info["difference"] = (info["demand"] - info["target demand"]) / info["target demand"]
+        info = info.T.round(2)
+        warnings.warn(
+            f"Too much endogenous test demand on {date}. This is an indication that "
+            "the share of symptomatic infections is too high or that too many "
+            f"symptomatic people demand a test:\n{info.to_string()}"
+        )
+
     return demanded
 
 
@@ -251,15 +263,6 @@ def _scale_demand_up_or_down(demanded, states, remaining):
             # this is the case where symptomatics already exceed the designated
             # number of positive tests.
             pool = states[demanded].query(selection_string).index
-            warnings.warn(
-                f"The demand for tests by symptomatic individuals in age group {group} "
-                "exceeds the number of positive tests calculated by the share known "
-                "cases. This is an indication that one or both of the following model "
-                "parameters are incorrect: 1. The share of infected people who become "
-                "symptomatic. 2. The share of sympomatic people who demand a test."
-                f"There were {demanded.sum()} tests demanded "
-                f"which was {-remainder} above the number of available tests.\n\n\n"
-            )
 
         if len(pool) >= n_to_draw:
             drawn = np.random.choice(pool, n_to_draw, replace=False)
