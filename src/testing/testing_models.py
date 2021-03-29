@@ -153,9 +153,9 @@ def demand_test(
         ]
         info = info.T.round(2)
         warnings.warn(
-            f"Too much endogenous test demand on {date.date()} ({date.day_name()}). "
+            f"\n\nToo much endogenous test demand on {date.date()} ({date.day_name()}). "
             "This is an indication that the share of symptomatic infections is too high or"
-            f"that too many symptomatic people demand a test:\n\n{info.to_string()}"
+            f"that too many symptomatic people demand a test:\n\n{info.to_string()}\n\n"
         )
 
     return demanded
@@ -274,18 +274,14 @@ def _decrease_test_demand(demanded, states, n_to_remove, group):
 
     """
     demanded = demanded.copy(deep=True)
-    age_str = f"age_group_rki == '{group}'"
-    demanding_test_in_age_group = states[demanded].query(age_str).index
-    if len(demanding_test_in_age_group) >= n_to_remove:
-        drawn = np.random.choice(
-            a=demanding_test_in_age_group, size=n_to_remove, replace=False
-        )
-        demanded.loc[drawn] = False
-    else:
-        raise ValueError(
-            "Trying to remove more test demands than there are "
-            f"individuals requesting a test in age group {group}."
-        )
+
+    demanding_test_in_age_group = (
+        states[demanded].query(f"age_group_rki == '{group}'").index
+    )
+    drawn = np.random.choice(
+        a=demanding_test_in_age_group, size=n_to_remove, replace=False
+    )
+    demanded.loc[drawn] = False
     return demanded
 
 
@@ -295,11 +291,14 @@ def _increase_test_demand(demanded, states, n_undemanded_tests, group):
 
     """
     demanded = demanded.copy(deep=True)
-    age_query = f"(age_group_rki == '{group}')"
-    infected_query = "(infectious | symptomatic | (cd_infectious_true >= 0))"
-    untested_query = "(~pending_test & ~knows_immune)"
-    selection_string = age_query + " & " + infected_query + " & " + untested_query
+
+    right_age_group = f"(age_group_rki == '{group}')"
+    currently_infected = "(infectious | symptomatic | (cd_infectious_true >= 0))"
+    untested = "(~pending_test & ~knows_immune)"
+    selection_string = right_age_group + " & " + currently_infected + " & " + untested
+
     infected_untested = states[~demanded].query(selection_string).index
+
     if len(infected_untested) >= n_undemanded_tests:
         drawn = np.random.choice(infected_untested, n_undemanded_tests, replace=False)
     else:
