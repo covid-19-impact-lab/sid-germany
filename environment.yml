@@ -3,6 +3,7 @@ name: sid-germany
 channels:
   - conda-forge
   - janosg
+  - nodefaults
 
 dependencies:
   - python>=3.7
@@ -28,6 +29,7 @@ dependencies:
   - python-snappy
   - scipy
   - seaborn
+  # - sid =0.0.4
   - snakeviz
   - xlrd<=1.2.0
   - virtualenv=20.0.33
@@ -37,4 +39,3 @@ dependencies:
   - pip:
     - DFO-LS
     - Py-BOBYQA
-    - sid-dev==0.0.3
