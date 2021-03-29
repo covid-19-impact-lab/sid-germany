@@ -106,9 +106,12 @@ def demand_test(
             f"[0, 1] interval, you specified {share_symptomatic_requesting_test}"
         )
 
-    share_known_cases = get_share_known_cases_for_one_day(
-        date=date, params_slice=params.loc[("share_known_cases", "share_known_cases")]
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        params_slice = params.loc[("share_known_cases", "share_known_cases")]
+    share_known_cases = get_share_known_cases_for_one_day(date, params_slice)
 
     n_pos_tests_for_each_group = _calculate_positive_tests_to_distribute_per_age_group(
         n_newly_infected=n_newly_infected,

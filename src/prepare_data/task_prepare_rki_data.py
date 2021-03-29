@@ -13,6 +13,7 @@ Explanation on the coding of the variables
 - https://covid19-de-stats.sourceforge.io/rki-fall-tabelle.html
 
 """
+import warnings
 from datetime import datetime
 from datetime import timedelta
 
@@ -79,9 +80,12 @@ def task_prepare_rki_data(depends_on, produces):
     df = df.rename(columns=RENAME_COLUMNS)
 
     params = pd.read_pickle(depends_on["params"])
-    share_known_cases = get_share_known_cases_series(
-        params.loc[("share_known_cases", "share_known_cases")]
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        params_slice = params.loc[("share_known_cases", "share_known_cases")]
+    share_known_cases = get_share_known_cases_series(params_slice)
 
     df["age_group_rki"] = (
         df["age_group"].replace(AGE_GROUPS_TO_INTERVALS).astype("category")

@@ -1,3 +1,5 @@
+import warnings
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
@@ -52,7 +54,11 @@ def task_calculate_and_plot_share_known_cases(depends_on, produces):
     share_known.to_pickle(produces["share_known_cases"])
 
     params = pd.read_pickle(depends_on["params"])
-    params_slice = params.loc[("share_known_cases", "share_known_cases")]
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        params_slice = params.loc[("share_known_cases", "share_known_cases")]
     share_known_from_params = get_share_known_cases_series(params_slice)
 
     fig, ax = plt.subplots(figsize=(8, 3))
