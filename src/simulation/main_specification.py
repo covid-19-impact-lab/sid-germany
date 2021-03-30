@@ -19,6 +19,7 @@ from src.policies.policy_tools import combine_dictionaries
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
+from src.simulation.calculate_susceptibility import calculate_susceptibility
 
 
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
@@ -165,6 +166,7 @@ def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=Fals
     )
     simulation_inputs["initial_states"] = pd.read_parquet(depends_on["initial_states"])
     simulation_inputs["contact_models"] = get_all_contact_models()
+    simulation_inputs["susceptibility_factor_model"] = calculate_susceptibility
 
     # Virus Variant Specification --------------------------------------------
 

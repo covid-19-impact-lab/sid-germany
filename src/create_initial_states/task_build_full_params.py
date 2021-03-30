@@ -36,7 +36,7 @@ def task_create_full_params(depends_on, produces):
     vacations = pd.read_pickle(depends_on["vacations"])
     infection_probs = pd.read_pickle(depends_on["infection_probs"])
     susceptibility = pd.read_csv(depends_on["susceptibility"])
-    susceptibility = susceptibility.set_index(["catgeory", "subcategory", "name"])
+    susceptibility = susceptibility.set_index(["category", "subcategory", "name"])
 
     distributions = {
         name[5:]: path for name, path in depends_on.items() if name.startswith("dist_")
