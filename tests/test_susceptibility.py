@@ -30,7 +30,7 @@ def test_calculate_susceptiblitiy(params):
     # every age group appears once
     states = pd.read_pickle(SRC.parent / "tests" / "age_groups.pkl")
 
-    res = calculate_susceptibility(states=states, params=params)
+    res = calculate_susceptibility(states=states, params=params, seed=None)
     expected = pd.Series(
         [0.5, 0.3, 0.2, 0.1, 0.6, 0.7, 0.0, 0.8, 0.4],
         index=states.index,

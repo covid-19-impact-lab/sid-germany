@@ -1,4 +1,4 @@
-def calculate_susceptibility(states, params):
+def calculate_susceptibility(states, params, seed):  # noqa: U100
     """Calculate the susceptibility factor for each individual.
 
     Parameters are loaded from params. The defaults in sid-germany
@@ -12,6 +12,7 @@ def calculate_susceptibility(states, params):
             entries whose first two values are "susceptibility" and whose
             last index value are the values age_group can take. The "value"
             column values must be floats.
+        seed (int): not used.
 
     Returns:
         susceptibility (pandas.Series): Series with the same index as states.
