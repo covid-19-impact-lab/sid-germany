@@ -23,7 +23,7 @@ from src.testing.testing_models import process_tests
 
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / "main_predictions"
-SCENARIO_START = pd.Timestamp("2021-04-01")
+SCENARIO_START = pd.Timestamp("2021-04-06")  # after Easter holidays
 
 
 SIMULATION_DEPENDENCIES = {
