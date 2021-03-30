@@ -27,6 +27,7 @@ from src.contact_models.get_contact_models import get_all_contact_models
         / "work_non_recurrent.pkl",
         "vacations": BLD / "data" / "vacations.pkl",
         "infection_probs": SRC / "simulation" / "infection_probs.pkl",
+        "susceptibility": SRC / "original_data" / "susceptibility.csv",
     }
 )
 @pytask.mark.produces(BLD / "params.pkl")
@@ -34,6 +35,8 @@ def task_create_full_params(depends_on, produces):
     epi_params = load_epidemiological_parameters()
     vacations = pd.read_pickle(depends_on["vacations"])
     infection_probs = pd.read_pickle(depends_on["infection_probs"])
+    susceptibility = pd.read_csv(depends_on["susceptibility"])
+    susceptibility = susceptibility.set_index(["catgeory", "subcategory", "name"])
 
     distributions = {
         name[5:]: path for name, path in depends_on.items() if name.startswith("dist_")
@@ -64,6 +67,7 @@ def task_create_full_params(depends_on, produces):
         epi_params,
         vacations,
         share_known_cases_params,
+        susceptibility,
     ]
     params = pd.concat(param_slices, axis=0)
     # number of available tests is implemented in the test demand model.
