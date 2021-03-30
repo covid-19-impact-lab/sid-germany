@@ -299,8 +299,10 @@ def get_enacted_policies_of_2021(
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
+                # both dates are inclusive.
+                # 2nd April is Good Friday. 4th is Easter Monday
                 "start_date": "2021-04-02",
-                "end_date": "2021-04-05",
+                "end_date": "2021-04-04",
                 "prefix": "easter_holidays",
             },
             multipliers={
