@@ -121,9 +121,12 @@ def demand_test(
         positivity_rate_by_age_group=positivity_rate_by_age_group,
     )
     developed_symptoms_yesterday = states["cd_symptoms_true"] == -1
-    symptomatic_without_test = (
-        developed_symptoms_yesterday & ~states["pending_test"] & ~states["knows_immune"]
-    )
+
+    if developed_symptoms_yesterday.all():  # this means it's the first day
+        symptomatic_without_test = pd.Series(False, index=states.index)
+    else:
+        untested = ~states["pending_test"] & ~states["knows_immune"]
+        symptomatic_without_test = developed_symptoms_yesterday & untested
     if share_symptomatic_requesting_test == 1.0:
         demanded = symptomatic_without_test
     else:
