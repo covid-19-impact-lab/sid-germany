@@ -20,7 +20,8 @@ then gets us the number of positive tests to distribute in each age group.
 Using the RKI and ARS data therefore allows us to reflect the German testing strategy
 over age groups, e.g .preferential testing of older individuals.
 
-We assume that symptomatic individuals preferentially demand and receive tests.
+We assume that symptomatic individuals preferentially demand and receive tests and
+that teachers are tested on a weekly basis while working.
 The remaining tests are distributed uniformly among the infectious in each age group.
 We plan to further enhance the testing demand model by further variables such as contact
 tracing.
@@ -49,17 +50,6 @@ def demand_test(
 
     Test demand is calculated in such a way that the demand fits to the empirical
     distribution of positive tests in the empirical data.
-
-    We calculate the tests designated in each age group as follows:
-    Firstly, we calculate from the number of infected people in the simulation and the
-    share_known_cases from the DunkelzifferRadar project how many positive tests are to
-    be distributed in the whole population. From this, using the overall positivity rate
-    of tests we get to the full budget of tests to be distributed across the population.
-    Using the ARS data, we get the share of tests (positive and negative) going to each
-    age group. Using the age specific positivity rate - also reported in the ARS data -
-    then gets us the number of positive tests to distribute in each age group.
-    Using the RKI and ARS data therefore allows us to reflect the German testing
-    strategy over age groups, e.g .preferential testing of older individuals.
 
     In each age group we first distribute tests among those that recently developed
     symptoms but have no pending test and do not know their infection state yet.
@@ -93,6 +83,7 @@ def demand_test(
     n_newly_infected = states["newly_infected"].sum()
     symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
     share_symptomatic_requesting_test = params.loc[symptom_tuple, "value"]
+
     date = get_date(states)
     if isinstance(test_shares_by_age_group, pd.DataFrame):
         test_shares_by_age_group = test_shares_by_age_group.loc[date]
@@ -120,7 +111,7 @@ def demand_test(
         developed_symptoms_yesterday & ~states["pending_test"] & ~states["knows_immune"]
     )
     if share_symptomatic_requesting_test == 1.0:
-        demanded = symptomatic_without_test
+        unconstrained_demanded = symptomatic_without_test
     else:
         # this ignores the designated number of tests per age group.
         # Adjusting the number of tests to the designated number is done in
@@ -130,15 +121,17 @@ def demand_test(
         )
         pool = states[symptomatic_without_test].index
         drawn = np.random.choice(size=n_to_demand, a=pool, replace=False)
-        demanded = pd.Series(False, index=states.index)
-        demanded[drawn] = True
+        unconstrained_demanded = pd.Series(False, index=states.index)
+        unconstrained_demanded[drawn] = True
 
     if date > pd.Timestamp("2020-12-31"):
-        demanded = _demand_test_for_educ_workers(demanded, states, params)
+        unconstrained_demanded = _demand_test_for_educ_workers(
+            unconstrained_demanded, states, params
+        )
 
-    demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
+    demands_by_age_group = unconstrained_demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
-    demanded = _scale_demand_up_or_down(demanded, states, remaining)
+    demanded = _scale_demand_up_or_down(unconstrained_demanded, states, remaining)
     return demanded
 
 
@@ -151,7 +144,21 @@ def _calculate_positive_tests_to_distribute_per_age_group(
 ):
     """Calculate how many positive test results each age group gets.
 
+    Using the RKI and ARS data allows us to reflect the German testing
+    strategy over age groups, e.g .preferential testing of older individuals.
+
     Note this ignores inaccuracy of tests (false positives and negatives).
+
+    We calculate the number of positive tests designated in each age group as follows:
+
+    Firstly, we calculate from the number of infected people in the simulation and the
+    share_known_cases how many tests are to be distributed in the whole population.
+    From this, using the overall positivity rate of tests we get to the full budget
+    of tests to be distributed across the population.
+    Using the ARS data on the share of all tests that go to each age group, we get
+    the number of (positive and negative) tests going to each age group.
+    Using the age specific positivity rate - also reported in the ARS data -
+    then gets us the number of positive tests to distribute in each age group.
 
     Args:
         n_newly_infected (int): number of newly infected individuals.
