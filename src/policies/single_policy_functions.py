@@ -164,7 +164,7 @@ def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
         assert set(states["state"].unique()).issubset(
             threshold.index
         ), "work multipliers not supplied for all states."
-        threshold = states["state"].replace(threshold)
+        threshold = states["state"].map(threshold.get)
 
     above_threshold = states["work_contact_priority"] > threshold
     reduced_contacts = contacts.where(above_threshold, 0)
@@ -439,12 +439,13 @@ def apply_educ_policy(
 
     # since our educ models are all recurrent and educ_workers must always attend
     # we only apply the hygiene multiplier to the students
-    contacts[~states["educ_worker"]] = reduce_recurrent_model(
-        states[~states["educ_worker"]],
-        contacts[~states["educ_worker"]],
-        seed,
-        hygiene_multiplier,
+    all_reduced = reduce_recurrent_model(
+        states,
+        contacts,
+        seed=seed,
+        multiplier=hygiene_multiplier,
     )
+    contacts = contacts.where(states["educ_worker"], other=all_reduced)
 
     teachers_with_0_students = _find_educ_workers_with_zero_students(
         contacts, states, group_id_column
