@@ -300,7 +300,7 @@ def _increase_test_demand(demanded, states, n_undemanded_tests, group):
     untested = "(~pending_test & ~knows_immune)"
     selection_string = right_age_group + " & " + currently_infected + " & " + untested
 
-    infected_untested = states[~demanded].query(selection_string).index
+    infected_untested = states.index[states.eval(selection_string) & ~demanded]
 
     if len(infected_untested) >= n_undemanded_tests:
         drawn = np.random.choice(infected_untested, n_undemanded_tests, replace=False)
