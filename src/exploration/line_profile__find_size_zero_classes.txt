@@ -1,0 +1,16 @@
+Timer unit: 1e-06 s
+
+Total time: 5.26555 s
+File: /home/klara/Dropbox/Projects/sid-germany/src/policies/single_policy_functions.py
+Function: _find_size_zero_classes at line 523
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   523                                           def _find_size_zero_classes(contacts, states, col):
+   524       121     475183.0   3927.1      9.0      students_group_ids = states[col][~states["educ_worker"]]
+   525       121     469378.0   3879.2      8.9      students_contacts = contacts[~states["educ_worker"]]
+   526                                               # the .drop(-1) is needed because we use -1 instead of NaN to identify
+   527                                               # individuals not participating in a recurrent contact model
+   528       121    4213580.0  34823.0     80.0      class_sizes = students_contacts.groupby(students_group_ids).sum().drop(-1)
+   529       121     107315.0    886.9      2.0      size_zero_classes = class_sizes[class_sizes == 0].index
+   530       121         98.0      0.8      0.0      return size_zero_classes

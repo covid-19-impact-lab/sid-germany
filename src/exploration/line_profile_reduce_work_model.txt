@@ -1,0 +1,44 @@
+Timer unit: 1e-06 s
+
+Total time: 8.83066 s
+File: /home/klara/Dropbox/Projects/sid-germany/src/policies/single_policy_functions.py
+Function: reduce_work_model at line 147
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   147                                           def reduce_work_model(states, contacts, seed, multiplier, is_recurrent):  # noqa: U100
+   148                                               """Reduce contacts for the working population.
+   149                                           
+   150                                               Args:
+   151                                                   multiplier (float, pandas.Series, pandas.DataFrame):
+   152                                                       share of workers that have work contacts.
+   153                                                       If it is a Series or DataFrame, the index must be dates.
+   154                                                       If it is a DataFrame the columns must be the values of
+   155                                                       the "state" column in the states.
+   156                                                   is_recurrent (bool): True if the contact model is recurernt
+   157                                           
+   158                                               """
+   159       464       1185.0      2.6      0.0      if isinstance(multiplier, (pd.Series, pd.DataFrame)):
+   160       464      18222.0     39.3      0.2          date = get_date(states)
+   161       464     116035.0    250.1      1.3          multiplier = multiplier.loc[date]
+   162                                           
+   163       464      19594.0     42.2      0.2      msg = f"Work multiplier not in [0, 1] on {get_date(states)}"
+   164       464        506.0      1.1      0.0      if isinstance(multiplier, (float, int)):
+   165                                                   assert 0 <= multiplier <= 1, msg
+   166                                               else:
+   167       464     115234.0    248.3      1.3          assert (multiplier >= 0).all(), msg
+   168       464     100245.0    216.0      1.1          assert (multiplier <= 1).all(), msg
+   169                                           
+   170       464      84753.0    182.7      1.0      threshold = 1 - multiplier
+   171       464        441.0      1.0      0.0      if isinstance(threshold, pd.Series):
+   172       928    2967469.0   3197.7     33.6          assert set(states["state"].unique()).issubset(
+   173       464        779.0      1.7      0.0              threshold.index
+   174                                                   ), "work multipliers not supplied for all states."
+   175       464    2023232.0   4360.4     22.9          threshold = states["state"].map(threshold.get)
+   176                                           
+   177       464     611315.0   1317.5      6.9      above_threshold = states["work_contact_priority"] > threshold
+   178       464        342.0      0.7      0.0      if not is_recurrent:
+   179        29     424398.0  14634.4      4.8          reduced_contacts = contacts.where(above_threshold, 0)
+   180       464        187.0      0.4      0.0      if is_recurrent:
+   181       435    2346268.0   5393.7     26.6          reduced_contacts = contacts.where(above_threshold, False)
+   182       464        452.0      1.0      0.0      return reduced_contacts

@@ -1,0 +1,41 @@
+Timer unit: 1e-06 s
+
+Total time: 19.8127 s
+File: /home/klara/Dropbox/Projects/sid-germany/src/policies/single_policy_functions.py
+Function: reduce_recurrent_model at line 112
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   112                                               return contacts
+   113                                           
+   114                                           
+   115                                           def reduce_recurrent_model(states, contacts, seed, multiplier):
+   116                                               """Reduce the number of recurrent contacts taking place by a multiplier.
+   117                                           
+   118                                               For recurrent contacts the contacts Series is boolean.
+   119                                               Therefore, simply multiplying the number of contacts with it would not have
+   120                                               an effect on the number of contacts taking place. Instead we make a random share of
+   121                                               individuals scheduled to participate not participate.
+   122                                           
+   123                                               Args:
+   124                                                   multiplier (float or pd.Series): Must be smaller or equal to one. If a
+   125                                                       Series is supplied the index must be dates.
+   126                                           
+   127       806       4686.0      5.8      0.0  
+   128       806        927.0      1.2      0.0      Returns:
+   129                                                   reduced (pandas.Series): same index as states. For a *multiplier* fraction
+   130                                                       of the population the contacts have been set to False. The more individuals
+   131                                                       already had a False there, the smaller the effect.
+   132       806       9726.0     12.1      0.0  
+   133      1612   16742287.0  10386.0     84.5      """
+   134       806       3691.0      4.6      0.0      np.random.seed(seed)
+   135                                               if isinstance(multiplier, pd.Series):
+   136       806    2872268.0   3563.6     14.5          date = get_date(states)
+   137       806     179122.0    222.2      0.9          multiplier = multiplier[date]
+   138                                           
+   139                                               contacts = contacts.to_numpy()
+   140                                               resampled_contacts = np.random.choice(
+   141                                                   [True, False], size=len(states), p=[multiplier, 1 - multiplier]
+   142                                               )
+   143                                               reduced = np.where(contacts, resampled_contacts, contacts)
+   144                                               return pd.Series(reduced, index=states.index)

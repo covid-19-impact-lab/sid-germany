@@ -1,0 +1,20 @@
+Timer unit: 1e-06 s
+
+Total time: 10.9241 s
+File: /home/klara/Dropbox/Projects/sid-germany/src/policies/single_policy_functions.py
+Function: _find_educ_workers_with_zero_students at line 509
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   509                                           def _find_educ_workers_with_zero_students(contacts, states, group_id_column):
+   510                                               """Return educ_workers whose classes / groups don't have any children in them.
+   511                                           
+   512                                               Returns:
+   513                                                   has_no_class (pandas.Series): boolean Series with the
+   514                                                       same index as states. True for educ_workers whose classes / groups
+   515                                                       don't have any children in them.
+   516                                           
+   517                                               """
+   518       121    5225900.0  43189.3     47.8      size_0_classes = _find_size_zero_classes(contacts, states, group_id_column)
+   519       121    5698086.0  47091.6     52.2      has_no_class = states["educ_worker"] & states[group_id_column].isin(size_0_classes)
+   520       121        143.0      1.2      0.0      return has_no_class
