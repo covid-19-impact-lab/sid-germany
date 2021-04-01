@@ -1,6 +1,6 @@
 Timer unit: 1e-06 s
 
-Total time: 12.6276 s
+Total time: 13.4639 s
 File: /home/klara/Dropbox/Projects/sid-germany/src/testing/testing_models.py
 Function: demand_test at line 40
 
@@ -58,76 +58,76 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     89                                                       which contains the probability for each individual demanding a test.
     90                                           
     91                                               """
-    92        60        539.0      9.0      0.0      np.random.seed(seed)
-    93        60      70645.0   1177.4      0.6      n_newly_infected = states["newly_infected"].sum()
-    94        60         67.0      1.1      0.0      symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
-    95        60      20212.0    336.9      0.2      share_symptomatic_requesting_test = params.loc[symptom_tuple, "value"]
-    96        60       4054.0     67.6      0.0      date = get_date(states)
-    97        60         74.0      1.2      0.0      if isinstance(test_shares_by_age_group, pd.DataFrame):
-    98        60      13371.0    222.8      0.1          test_shares_by_age_group = test_shares_by_age_group.loc[date]
-    99        60         80.0      1.3      0.0      if isinstance(positivity_rate_by_age_group, pd.DataFrame):
-   100        60      12132.0    202.2      0.1          positivity_rate_by_age_group = positivity_rate_by_age_group.loc[date]
-   101        60         75.0      1.2      0.0      if isinstance(positivity_rate_overall, pd.Series):
-   102        60       3600.0     60.0      0.0          positivity_rate_overall = positivity_rate_overall.loc[date]
-   103        60        147.0      2.5      0.0      if share_symptomatic_requesting_test > 1.0 or share_symptomatic_requesting_test < 0:
+    92        60        557.0      9.3      0.0      np.random.seed(seed)
+    93        60      73731.0   1228.8      0.5      n_newly_infected = states["newly_infected"].sum()
+    94        60         70.0      1.2      0.0      symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
+    95        60      21717.0    361.9      0.2      share_symptomatic_requesting_test = params.loc[symptom_tuple, "value"]
+    96        60       4299.0     71.7      0.0      date = get_date(states)
+    97        60         83.0      1.4      0.0      if isinstance(test_shares_by_age_group, pd.DataFrame):
+    98        60      14236.0    237.3      0.1          test_shares_by_age_group = test_shares_by_age_group.loc[date]
+    99        60         98.0      1.6      0.0      if isinstance(positivity_rate_by_age_group, pd.DataFrame):
+   100        60      13171.0    219.5      0.1          positivity_rate_by_age_group = positivity_rate_by_age_group.loc[date]
+   101        60         85.0      1.4      0.0      if isinstance(positivity_rate_overall, pd.Series):
+   102        60       3847.0     64.1      0.0          positivity_rate_overall = positivity_rate_overall.loc[date]
+   103        60        155.0      2.6      0.0      if share_symptomatic_requesting_test > 1.0 or share_symptomatic_requesting_test < 0:
    104                                                   raise ValueError(
    105                                                       "The share of symptomatic individuals requesting a test must lie in the "
    106                                                       f"[0, 1] interval, you specified {share_symptomatic_requesting_test}"
    107                                                   )
    108                                           
-   109        60        470.0      7.8      0.0      with warnings.catch_warnings():
-   110       120       1152.0      9.6      0.0          warnings.filterwarnings(
-   111        60         41.0      0.7      0.0              "ignore", message="indexing past lexsort depth may impact performance."
+   109        60        508.0      8.5      0.0      with warnings.catch_warnings():
+   110       120       1213.0     10.1      0.0          warnings.filterwarnings(
+   111        60         45.0      0.8      0.0              "ignore", message="indexing past lexsort depth may impact performance."
    112                                                   )
-   113        60      34266.0    571.1      0.3          params_slice = params.loc[("share_known_cases", "share_known_cases")]
-   114        60      83388.0   1389.8      0.7      share_known_cases = get_share_known_cases_for_one_day(date, params_slice)
+   113        60      35835.0    597.2      0.3          params_slice = params.loc[("share_known_cases", "share_known_cases")]
+   114        60      88086.0   1468.1      0.7      share_known_cases = get_share_known_cases_for_one_day(date, params_slice)
    115                                           
-   116       120      67937.0    566.1      0.5      n_pos_tests_for_each_group = _calculate_positive_tests_to_distribute_per_age_group(
-   117        60         42.0      0.7      0.0          n_newly_infected=n_newly_infected,
-   118        60         42.0      0.7      0.0          share_known_cases=share_known_cases,
-   119        60         44.0      0.7      0.0          positivity_rate_overall=positivity_rate_overall,
-   120        60         50.0      0.8      0.0          test_shares_by_age_group=test_shares_by_age_group,
-   121        60         43.0      0.7      0.0          positivity_rate_by_age_group=positivity_rate_by_age_group,
+   116       120      71320.0    594.3      0.5      n_pos_tests_for_each_group = _calculate_positive_tests_to_distribute_per_age_group(
+   117        60         44.0      0.7      0.0          n_newly_infected=n_newly_infected,
+   118        60         43.0      0.7      0.0          share_known_cases=share_known_cases,
+   119        60         36.0      0.6      0.0          positivity_rate_overall=positivity_rate_overall,
+   120        60         41.0      0.7      0.0          test_shares_by_age_group=test_shares_by_age_group,
+   121        60         39.0      0.7      0.0          positivity_rate_by_age_group=positivity_rate_by_age_group,
    122                                               )
-   123        60      26258.0    437.6      0.2      developed_symptoms_yesterday = states["cd_symptoms_true"] == -1
+   123        60      27152.0    452.5      0.2      developed_symptoms_yesterday = states["cd_symptoms_true"] == -1
    124                                           
-   125        60       5404.0     90.1      0.0      if developed_symptoms_yesterday.all():  # this means it's the first day
+   125        60       5674.0     94.6      0.0      if developed_symptoms_yesterday.all():  # this means it's the first day
    126                                                   symptomatic_without_test = pd.Series(False, index=states.index)
    127                                               else:
-   128        60      67182.0   1119.7      0.5          untested = ~states["pending_test"] & ~states["knows_immune"]
-   129        60      26287.0    438.1      0.2          symptomatic_without_test = developed_symptoms_yesterday & untested
-   130        60        112.0      1.9      0.0      if share_symptomatic_requesting_test == 1.0:
+   128        60      70350.0   1172.5      0.5          untested = ~states["pending_test"] & ~states["knows_immune"]
+   129        60      30171.0    502.9      0.2          symptomatic_without_test = developed_symptoms_yesterday & untested
+   130        60        117.0      1.9      0.0      if share_symptomatic_requesting_test == 1.0:
    131                                                   demanded = symptomatic_without_test
    132                                               else:
    133                                                   # this ignores the designated number of tests per age group.
    134                                                   # Adjusting the number of tests to the designated number is done in
    135                                                   # `_scale_demand_up_or_down` below.
-   136       120        156.0      1.3      0.0          n_to_demand = int(
-   137        60      67176.0   1119.6      0.5              share_symptomatic_requesting_test * symptomatic_without_test.sum()
+   136       120        160.0      1.3      0.0          n_to_demand = int(
+   137        60      70101.0   1168.3      0.5              share_symptomatic_requesting_test * symptomatic_without_test.sum()
    138                                                   )
-   139        60     393937.0   6565.6      3.1          pool = states[symptomatic_without_test].index
-   140        60       3124.0     52.1      0.0          drawn = np.random.choice(size=n_to_demand, a=pool, replace=False)
-   141        60      10859.0    181.0      0.1          demanded = pd.Series(False, index=states.index)
-   142        60      96083.0   1601.4      0.8          demanded[drawn] = True
+   139        60     420789.0   7013.1      3.1          pool = states[symptomatic_without_test].index
+   140        60       3258.0     54.3      0.0          drawn = np.random.choice(size=n_to_demand, a=pool, replace=False)
+   141        60      11597.0    193.3      0.1          demanded = pd.Series(False, index=states.index)
+   142        60     101073.0   1684.5      0.8          demanded[drawn] = True
    143                                           
-   144        60        879.0     14.7      0.0      if date > pd.Timestamp("2020-12-31"):
-   145        60    1179118.0  19652.0      9.3          demanded = _demand_test_for_educ_workers(demanded, states, params)
+   144        60        999.0     16.6      0.0      if date > pd.Timestamp("2020-12-31"):
+   145        60    1245938.0  20765.6      9.3          demanded = _demand_test_for_educ_workers(demanded, states, params)
    146                                           
-   147        60     688943.0  11482.4      5.5      demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
-   148        60     111186.0   1853.1      0.9      remaining = n_pos_tests_for_each_group - demands_by_age_group
-   149        60    8914607.0 148576.8     70.6      demanded = _scale_demand_up_or_down(demanded, states, remaining)
+   147        60     721805.0  12030.1      5.4      demands_by_age_group = demanded.groupby(states["age_group_rki"]).sum()
+   148        60     117465.0   1957.8      0.9      remaining = n_pos_tests_for_each_group - demands_by_age_group
+   149        60    9553096.0 159218.3     71.0      demanded = _scale_demand_up_or_down(demanded, states, remaining)
    150                                           
-   151        60      14830.0    247.2      0.1      if (remaining < 0).any():
-   152        56     307981.0   5499.7      2.4          info = pd.concat([demands_by_age_group, n_pos_tests_for_each_group], axis=1)
-   153        56      11398.0    203.5      0.1          info.columns = ["demand", "target demand"]
-   154       112      59306.0    529.5      0.5          info["difference"] = (info["demand"] - info["target demand"]) / info[
-   155        56         60.0      1.1      0.0              "target demand"
+   151        60      15110.0    251.8      0.1      if (remaining < 0).any():
+   152        56     317079.0   5662.1      2.4          info = pd.concat([demands_by_age_group, n_pos_tests_for_each_group], axis=1)
+   153        56      11643.0    207.9      0.1          info.columns = ["demand", "target demand"]
+   154       112      61787.0    551.7      0.5          info["difference"] = (info["demand"] - info["target demand"]) / info[
+   155        56         67.0      1.2      0.0              "target demand"
    156                                                   ]
-   157        56     153220.0   2736.1      1.2          info = info.T.round(2)
-   158       112        285.0      2.5      0.0          warnings.warn(
-   159        56     176692.0   3155.2      1.4              f"\n\nToo much endogenous test demand on {date.date()} ({date.day_name()}). "
+   157        56     163134.0   2913.1      1.2          info = info.T.round(2)
+   158       112        304.0      2.7      0.0          warnings.warn(
+   159        56     185692.0   3315.9      1.4              f"\n\nToo much endogenous test demand on {date.date()} ({date.day_name()}). "
    160                                                       "This is an indication that the share of symptomatic infections is too high or"
    161                                                       f"that too many symptomatic people demand a test:\n\n{info.to_string()}\n\n"
    162                                                   )
    163                                           
-   164        60         44.0      0.7      0.0      return demanded
+   164        60         58.0      1.0      0.0      return demanded

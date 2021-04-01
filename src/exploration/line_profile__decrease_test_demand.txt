@@ -1,0 +1,25 @@
+Timer unit: 1e-06 s
+
+Total time: 8.62131 s
+File: /home/klara/Dropbox/Projects/sid-germany/src/testing/testing_models.py
+Function: _decrease_test_demand at line 272
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   272                                           def _decrease_test_demand(demanded, states, n_to_remove, group):
+   273                                               """Decrease the number of tests demanded in an age group by a certain number.
+   274                                           
+   275                                               This is called when the endogenously demanded tests (symptomatics + educ workers)
+   276                                               already exceed the designated number of positive tests in an age group.
+   277                                           
+   278                                               """
+   279       300      65644.0    218.8      0.8      demanded = demanded.copy(deep=True)
+   280                                           
+   281       300        309.0      1.0      0.0      demanding_test_in_age_group = (
+   282       300    8076594.0  26922.0     93.7          states[demanded].query(f"age_group_rki == '{group}'").index
+   283                                               )
+   284       600      13189.0     22.0      0.2      drawn = np.random.choice(
+   285       300        110.0      0.4      0.0          a=demanding_test_in_age_group, size=n_to_remove, replace=False
+   286                                               )
+   287       300     465215.0   1550.7      5.4      demanded.loc[drawn] = False
+   288       300        248.0      0.8      0.0      return demanded
