@@ -77,14 +77,14 @@ def test_reopen_educ_model_germany_multiplier_0(fake_states):
 
 def test_reduce_recurrent_model_set_zero():
     states = pd.DataFrame(index=[0, 1, 2, 3])
-    contacts = pd.Series([1.0, 1.0, 0, 0])
+    contacts = pd.Series([True, True, False, False])
     calculated = reduce_recurrent_model(states, contacts, 333, multiplier=0.0)
     assert (calculated == 0).all()
 
 
 def test_reduce_recurrent_model_no_change():
     states = pd.DataFrame(index=[0, 1, 2, 3])
-    contacts = pd.Series([1.0, 1.0, 0, 0])
+    contacts = pd.Series([True, True, False, False])
     calculated = reduce_recurrent_model(states, contacts, 333, multiplier=1.0)
     assert np.allclose(contacts, calculated)
 
@@ -92,7 +92,7 @@ def test_reduce_recurrent_model_no_change():
 def test_reduce_recurrent_model_one_in_four():
     n_obs = 10_000
     states = pd.DataFrame(index=np.arange(n_obs))
-    contacts = pd.Series([1, 0] * int(n_obs / 2))
+    contacts = pd.Series([True, False] * int(n_obs / 2))
     calculated = reduce_recurrent_model(
         states=states, contacts=contacts, seed=1234, multiplier=0.25
     )
@@ -103,7 +103,7 @@ def test_reduce_recurrent_model_one_in_four():
     assert np.allclose(calculated_mean, expected_mean, rtol=0.005, atol=0.005)
 
     # check that people who stayed home before policy still stay home
-    assert (calculated[contacts == 0]).sum() == 0
+    assert not calculated[~contacts].any()
 
 
 def test_reduce_work_model(fake_states):
@@ -116,6 +116,7 @@ def test_reduce_work_model(fake_states):
         contacts=contacts,
         seed=123,
         multiplier=0.5,
+        is_recurrent=False,
     )
     expected = pd.Series([1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index)
     assert_series_equal(calculated, expected)
@@ -123,16 +124,20 @@ def test_reduce_work_model(fake_states):
 
 def test_reduce_work_model_multiplier_series(fake_states):
     fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
-    contacts = pd.Series(1, index=fake_states.index)
-    contacts[2] = 0
+    contacts = pd.Series(True, index=fake_states.index)
+    contacts[2] = False
 
     calculated = reduce_work_model(
         states=fake_states,
         contacts=contacts,
         seed=123,
         multiplier=pd.Series([0.5], index=[pd.Timestamp("2020-04-23")]),
+        is_recurrent=True,
     )
-    expected = pd.Series([1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index)
+    expected = pd.Series(
+        [True, True, False, True, False, False, False, False, False, False],
+        index=fake_states.index,
+    )
     assert_series_equal(calculated, expected)
 
 
@@ -149,6 +154,7 @@ def test_reduce_work_model_multiplier_frame_missing_state(fake_states):
             contacts=contacts,
             seed=123,
             multiplier=multiplier,
+            is_recurrent=False,
         )
 
 
@@ -165,6 +171,7 @@ def test_reduce_work_model_multiplier_frame(fake_states):
         contacts=contacts,
         seed=123,
         multiplier=multiplier,
+        is_recurrent=False,
     )
     expected = pd.Series([1, 1, 0, 1, 1, 1, 0, 1, 0, 0], index=fake_states.index)
     assert_series_equal(calculated, expected)
@@ -211,6 +218,7 @@ def test_reopen_work_model(fake_states):
         end_multiplier=1,
         start_date="2020-03-15",
         end_date="2020-03-25",
+        is_recurrent=False,
     )
 
     expected = pd.Series([0] + [1] * 6 + [0] * 3)

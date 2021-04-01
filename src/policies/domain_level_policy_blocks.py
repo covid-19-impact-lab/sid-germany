@@ -42,7 +42,11 @@ def reduce_work_models(contact_models, block_info, multiplier):
     work_models = _get_work_models(contact_models)
     for mod in work_models:
         policy = _get_base_policy(mod, block_info)
-        policy["policy"] = partial(reduce_work_model, multiplier=multiplier)
+        policy["policy"] = partial(
+            reduce_work_model,
+            multiplier=multiplier,
+            is_recurrent=contact_models[mod]["is_recurrent"],
+        )
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
 
@@ -59,6 +63,7 @@ def reopen_work_models(contact_models, block_info, start_multiplier, end_multipl
             end_date=block_info["end_date"],
             start_multiplier=start_multiplier,
             end_multiplier=end_multiplier,
+            is_recurrent=contact_models[mod]["is_recurrent"],
         )
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies

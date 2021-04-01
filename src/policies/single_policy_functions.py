@@ -180,7 +180,14 @@ def reduce_work_model(states, contacts, seed, multiplier, is_recurrent):  # noqa
 
 
 def reopen_work_model(
-    states, contacts, seed, start_multiplier, end_multiplier, start_date, end_date
+    states,
+    contacts,
+    seed,
+    start_multiplier,
+    end_multiplier,
+    start_date,
+    end_date,
+    is_recurrent,
 ):
     """Reduce work contacts to active people in gradual opening or closing phase.
 
@@ -208,7 +215,11 @@ def reopen_work_model(
         end_date=end_date,
     )
     contacts = reduce_work_model(
-        states=states, contacts=contacts, seed=seed, multiplier=multiplier
+        states=states,
+        contacts=contacts,
+        seed=seed,
+        multiplier=multiplier,
+        is_recurrent=is_recurrent,
     )
 
     return contacts
