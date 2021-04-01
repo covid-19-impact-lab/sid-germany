@@ -43,7 +43,7 @@ def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
     date = get_date(states)
     day = date.day_name()
     if day != day_of_week:
-        attends_meeting = pd.Series(data=0, index=states.index)
+        attends_meeting = pd.Series(data=False, index=states.index)
     else:
         attends_meeting = states[group_col_name] != -1
         for params_entry, condition in [
@@ -142,7 +142,7 @@ def attends_educational_facility(states, params, id_column, seed):
     date = get_date(states)
     day = date.day_name()
     if day in ["Saturday", "Sunday"]:
-        attends_facility = pd.Series(data=0, index=states.index)
+        attends_facility = pd.Series(data=False, index=states.index)
     else:
         attends_facility = states[id_column] != -1
         attends_facility = _pupils_having_vacations_do_not_attend(
@@ -372,10 +372,11 @@ def reduce_contacts_on_condition(
 
 def _pupils_having_vacations_do_not_attend(attends_facility, states, params):
     """Make pupils stay away from school if their state has vacations."""
+    attends_facility = attends_facility.copy(deep=True)
     date = get_date(states)
     states_w_vacations = get_states_w_vacations(date, params)
-
-    attends_facility.loc[attends_facility & states.state.isin(states_w_vacations)] = 0
+    has_vacation = states.state.isin(states_w_vacations)
+    attends_facility.loc[attends_facility & has_vacation] = False
 
     return attends_facility
 
