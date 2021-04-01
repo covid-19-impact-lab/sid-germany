@@ -18,9 +18,12 @@ from scipy.interpolate import interp1d
 from sid.time import get_date
 
 
-def shut_down_model(states, contacts, seed):
+def shut_down_model(states, contacts, seed, is_recurrent):
     """Set all contacts to zero independent of incoming contacts."""
-    return pd.Series(0, index=states.index)
+    if is_recurrent:
+        return pd.Series(False, index=states.index)
+    else:
+        return pd.Series(0, index=states.index)
 
 
 def reopen_educ_model_germany(
@@ -454,7 +457,7 @@ def apply_educ_policy(
         attends_for_any_reason = attends_for_any_reason | ~states.eval(a_b_query)
 
     staying_home = ~attends_for_any_reason
-    contacts[staying_home] = 0
+    contacts[staying_home] = False
 
     # since our educ models are all recurrent and educ_workers must always attend
     # we only apply the hygiene multiplier to the students
@@ -469,8 +472,7 @@ def apply_educ_policy(
     teachers_with_0_students = _find_educ_workers_with_zero_students(
         contacts, states, group_id_column
     )
-    contacts[teachers_with_0_students] = 0
-
+    contacts[teachers_with_0_students] = False
     return contacts
 
 

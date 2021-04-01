@@ -34,11 +34,19 @@ def fake_states():
     return states
 
 
-def test_shut_down_model():
+def test_shut_down_model_non_recurrent():
     contacts = pd.Series(np.arange(3))
     states = pd.DataFrame(index=["a", "b", "c"])
-    calculated = shut_down_model(states, contacts, 123)
+    calculated = shut_down_model(states, contacts, 123, is_recurrent=False)
     expected = pd.Series(0, index=["a", "b", "c"])
+    assert_series_equal(calculated, expected)
+
+
+def test_shut_down_model_recurrent():
+    contacts = pd.Series(np.arange(3))
+    states = pd.DataFrame(index=["a", "b", "c"])
+    calculated = shut_down_model(states, contacts, 123, is_recurrent=True)
+    expected = pd.Series(False, index=["a", "b", "c"])
     assert_series_equal(calculated, expected)
 
 

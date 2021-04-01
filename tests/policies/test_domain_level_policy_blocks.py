@@ -67,10 +67,10 @@ def test_shut_down_educ_models(contact_models):
             "affected_contact_model": "educ1",
             "start": "2020-10-01",
             "end": "2020-10-31",
-            "policy": shut_down_model,
+            "policy": partial(shut_down_model, is_recurrent=True),
         },
     }
-    assert res == expected
+    compare_policy_dicts(res, expected)
 
 
 def test_shut_down_other_models(contact_models):
@@ -87,7 +87,7 @@ def test_shut_down_other_models(contact_models):
             "affected_contact_model": "other1",
             "start": "2020-10-01",
             "end": "2020-10-31",
-            "policy": shut_down_model,
+            "policy": partial(shut_down_model, is_recurrent=False),
         },
     }
     compare_policy_dicts(res, expected)
