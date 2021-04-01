@@ -45,7 +45,7 @@ def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
     if day != day_of_week:
         attends_meeting = pd.Series(data=0, index=states.index)
     else:
-        attends_meeting = (states[group_col_name] != -1).astype(int)
+        attends_meeting = states[group_col_name] != -1
         for params_entry, condition in [
             ("symptomatic_multiplier", "symptomatic"),
             ("positive_test_multiplier", IS_POSITIVE_CASE),
@@ -80,7 +80,7 @@ def go_to_daily_work_meeting(states, params, seed):
 
     attends_work = states.eval(
         "(occupation == 'working') & (work_daily_group_id != -1)"
-    ).astype(int)
+    )
     if day in ["Saturday", "Sunday"]:
         attends_work = attends_work & states[f"work_{day.lower()}"]
     else:
@@ -100,7 +100,7 @@ def go_to_daily_work_meeting(states, params, seed):
 
 
 def meet_daily_other_contacts(states, params, group_col_name, seed):
-    attends_meeting = (states[group_col_name] != -1).astype(int)
+    attends_meeting = states[group_col_name] != -1
     for params_entry, condition in [
         ("symptomatic_multiplier", "symptomatic"),
         ("positive_test_multiplier", IS_POSITIVE_CASE),
@@ -144,7 +144,7 @@ def attends_educational_facility(states, params, id_column, seed):
     if day in ["Saturday", "Sunday"]:
         attends_facility = pd.Series(data=0, index=states.index)
     else:
-        attends_facility = (states[id_column] != -1).astype(int)
+        attends_facility = states[id_column] != -1
         attends_facility = _pupils_having_vacations_do_not_attend(
             attends_facility, states, params
         )
@@ -181,7 +181,7 @@ def meet_hh_members(states, params, seed):
     if date in pd.date_range("2020-12-24", "2020-12-26"):
         meet_hh = pd.Series(0, index=states.index)
     else:
-        meet_hh = (states["hh_model_group_id"] != -1).astype(int)
+        meet_hh = states["hh_model_group_id"] != -1
         for params_entry, condition in [
             ("symptomatic_multiplier", "symptomatic"),
             ("positive_test_multiplier", IS_POSITIVE_CASE),
