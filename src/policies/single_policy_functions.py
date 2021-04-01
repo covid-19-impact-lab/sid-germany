@@ -169,10 +169,10 @@ def reduce_work_model(states, contacts, seed, multiplier, is_recurrent):  # noqa
 
     threshold = 1 - multiplier
     if isinstance(threshold, pd.Series):
-        assert set(states["state"].unique()).issubset(
-            threshold.index
-        ), "work multipliers not supplied for all states."
         threshold = states["state"].map(threshold.get)
+        # this assert could be skipped because we check in
+        # task_check_initial_states that the federal state names overlap.
+        assert threshold.notnull().all()
 
     above_threshold = states["work_contact_priority"] > threshold
     if not is_recurrent:
