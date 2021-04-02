@@ -34,9 +34,13 @@ def states():
 
 @pytest.fixture(scope="function")
 def params():
-    share_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
+    share_tuple = [
+        ("test_demand", "symptoms", "share_symptomatic_requesting_test"),
+        ("test_demand", "rapid_tests", "share_w_positive_rapid_test_requesting_test"),
+    ]
+
     params = pd.DataFrame(
-        1.0,
+        1,
         columns=["value"],
         index=pd.MultiIndex.from_tuples([share_tuple]),
     )

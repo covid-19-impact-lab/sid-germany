@@ -51,6 +51,7 @@ def demand_test(
     distribution of positive tests in the empirical data.
 
     We calculate the tests designated in each age group as follows:
+
     Firstly, we calculate from the number of infected people in the simulation and the
     share_known_cases from the DunkelzifferRadar project how many positive tests are to
     be distributed in the whole population. From this, using the overall positivity rate
@@ -62,11 +63,11 @@ def demand_test(
     strategy over age groups, e.g .preferential testing of older individuals.
 
     In each age group we first distribute tests among those that recently developed
-    symptoms but have no pending test and do not know their infection state yet.
-    We then test all education workers such as teachers that have not been tested
-    in the last week and are not on vacation.
-    We then distribute the remaining tests among the remaining currently
-    infectious such that we use up the full test budget in each age group.
+    symptoms but have no pending test and do not know their infection state yet. We then
+    test all education workers such as teachers that have not been tested in the last
+    week and are not on vacation. We then distribute the remaining tests among the
+    remaining currently infectious such that we use up the full test budget in each age
+    group.
 
     Args:
         states (pandas.DataFrame): The states of the individuals.
@@ -91,8 +92,17 @@ def demand_test(
     """
     np.random.seed(seed)
     n_newly_infected = states["newly_infected"].sum()
+
     symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
     share_symptomatic_requesting_test = params.loc[symptom_tuple, "value"]
+
+    rapid_tests_tuple = (
+        "test_demand",
+        "rapid_tests",
+        "share_w_positive_rapid_test_requesting_test",
+    )
+    share_w_positive_rapid_test_requesting_test = params.loc[rapid_tests_tuple, "value"]
+
     date = get_date(states)
     if isinstance(test_shares_by_age_group, pd.DataFrame):
         test_shares_by_age_group = test_shares_by_age_group.loc[date]
@@ -102,10 +112,17 @@ def demand_test(
         positivity_rate_overall = positivity_rate_overall.loc[date]
     if isinstance(share_known_cases, pd.Series):
         share_known_cases = share_known_cases.loc[date]
-    if share_symptomatic_requesting_test > 1.0 or share_symptomatic_requesting_test < 0:
+
+    if not 0 <= share_symptomatic_requesting_test <= 1:
         raise ValueError(
             "The share of symptomatic individuals requesting a test must lie in the "
-            f"[0, 1] interval, you specified {share_symptomatic_requesting_test}"
+            f"[0, 1] interval, you specified {share_symptomatic_requesting_test}."
+        )
+    if not 0 <= share_w_positive_rapid_test_requesting_test <= 1:
+        raise ValueError(
+            "The share of individuals with a positive rapid test requesting a test "
+            "must lie in the [0, 1] interval, you specified "
+            f"{share_w_positive_rapid_test_requesting_test}."
         )
 
     n_pos_tests_for_each_group = _calculate_positive_tests_to_distribute_per_age_group(
@@ -119,7 +136,7 @@ def demand_test(
     symptomatic_without_test = (
         developed_symptoms_yesterday & ~states["pending_test"] & ~states["knows_immune"]
     )
-    if share_symptomatic_requesting_test == 1.0:
+    if share_symptomatic_requesting_test == 1:
         demanded = symptomatic_without_test
     else:
         # this ignores the designated number of tests per age group.

@@ -10,6 +10,9 @@ from src.config import SRC
 from src.create_initial_states.create_contact_model_group_ids import (
     add_contact_model_group_ids,
 )
+from src.create_initial_states.create_rapid_test_unit_intervals import (
+    create_rapid_test_unit_intervals,
+)
 from src.create_initial_states.create_vaccination_priority import (
     create_vaccination_group,
 )
@@ -18,9 +21,6 @@ from src.create_initial_states.create_vaccination_priority import (
 )
 from src.shared import create_age_groups
 from src.shared import create_age_groups_rki
-from src.create_initial_states.create_rapid_test_unit_intervals import (
-    create_rapid_test_unit_intervals,
-)
 
 
 @pytask.mark.depends_on(
