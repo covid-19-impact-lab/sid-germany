@@ -220,7 +220,7 @@ def get_enacted_policies_of_2021(
         contact_models (dict)
         scenario_start (str): date until which the policies should run.
             Should be of format yyyy-mm-dd.
-        other_multiplier_until_mid_march (float): other multiplier used until mid of March
+        other_multiplier_until_mid_march (float): other multiplier until mid of March
         other_multiplier_mid_march_until_easter (float): other multiplier used from
             mid of March until after the Easter holidays.
         easter_holiday_other_multiplier (float): other multiplier used during the easter
