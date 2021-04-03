@@ -147,7 +147,7 @@ def demand_test(
 
     demands_by_age_group = unconstrained_demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
-    demanded = _scale_demand_up_or_down(demanded, states, remaining)
+    demanded = _scale_demand_up_or_down(unconstrained_demanded, states, remaining)
 
     if (remaining < 0).any():
         info = pd.concat([demands_by_age_group, n_pos_tests_for_each_group], axis=1)
