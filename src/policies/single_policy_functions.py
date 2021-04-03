@@ -18,7 +18,7 @@ from scipy.interpolate import interp1d
 from sid.time import get_date
 
 
-def shut_down_model(states, contacts, seed, is_recurrent):
+def shut_down_model(states, contacts, seed, is_recurrent, params=None):  # noqa: U100
     """Set all contacts to zero independent of incoming contacts."""
     if is_recurrent:
         return pd.Series(False, index=states.index)
@@ -35,6 +35,7 @@ def reopen_educ_model_germany(
     switching_date,
     reopening_dates,
     is_recurrent,
+    params=None,  # noqa: U100
 ):
     """Reopen an educ model at state specific dates
 
@@ -112,7 +113,9 @@ def reopen_educ_model_germany(
     return contacts
 
 
-def reduce_recurrent_model(states, contacts, seed, multiplier):
+def reduce_recurrent_model(
+    states, contacts, seed, multiplier, params=None  # noqa: U100
+):
     """Reduce the number of recurrent contacts taking place by a multiplier.
 
     For recurrent contacts the contacts Series is boolean.
@@ -144,7 +147,14 @@ def reduce_recurrent_model(states, contacts, seed, multiplier):
     return pd.Series(reduced, index=states.index)
 
 
-def reduce_work_model(states, contacts, seed, multiplier, is_recurrent):  # noqa: U100
+def reduce_work_model(
+    states,
+    contacts,
+    seed,
+    multiplier,
+    is_recurrent,
+    params=None,  # noqa: U100
+):
     """Reduce contacts for the working population.
 
     Args:
@@ -191,6 +201,7 @@ def reopen_work_model(
     start_date,
     end_date,
     is_recurrent,
+    params=None,  # noqa: U100
 ):
     """Reduce work contacts to active people in gradual opening or closing phase.
 
@@ -237,6 +248,7 @@ def reopen_other_model(
     start_date,
     end_date,
     is_recurrent,
+    params=None,  # noqa: U100
 ):
     """Reduce non-work contacts to active people in gradual opening or closing phase.
 
@@ -415,6 +427,7 @@ def apply_educ_policy(
     non_a_b_attend,
     hygiene_multiplier,
     a_b_rhythm="weekly",
+    params=None,  # noqa: U100
 ):
     """Apply a education policy, including potential emergency care and A/B mode.
 
