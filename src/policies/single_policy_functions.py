@@ -521,7 +521,7 @@ def _find_educ_workers_with_zero_students(contacts, states, group_id_column):
 
 
 def _find_size_zero_classes(contacts, states, col):
-    students_group_ids = states[col][~states["educ_worker"]]
+    students_group_ids = states.loc[~states["educ_worker"], col]
     students_contacts = contacts[~states["educ_worker"]]
     # the .drop(-1) is needed because we use -1 instead of NaN to identify
     # individuals not participating in a recurrent contact model
