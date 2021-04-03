@@ -175,10 +175,10 @@ def reduce_work_model(states, contacts, seed, multiplier, is_recurrent):  # noqa
         threshold = states["state"].map(threshold.get)
 
     above_threshold = states["work_contact_priority"] > threshold
-    if not is_recurrent:
-        reduced_contacts = contacts.where(above_threshold, 0)
     if is_recurrent:
         reduced_contacts = contacts.where(above_threshold, False)
+    else:
+        reduced_contacts = contacts.where(above_threshold, 0)
     return reduced_contacts
 
 
