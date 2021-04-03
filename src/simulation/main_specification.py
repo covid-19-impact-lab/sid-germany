@@ -16,10 +16,10 @@ from src.policies.combine_policies_over_periods import (
 )
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import combine_dictionaries
+from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
-from src.simulation.calculate_susceptibility import calculate_susceptibility
 
 
 FALL_PATH = BLD / "simulations" / "main_fall_scenarios"

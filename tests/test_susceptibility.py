@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
-from src.simulation.calculate_susceptibility import calculate_susceptibility
-from src.config import SRC
 import pytest
+
+from src.config import SRC
+from src.simulation.calculate_susceptibility import calculate_susceptibility
 
 
 @pytest.fixture
