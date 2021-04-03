@@ -11,7 +11,7 @@ reflect the true positive tests but the negative tests don't.
 Who gets a test as follows is completely determined in the demand_test function:
 
 Firstly, we calculate from the number of infected people in the simulation and the
-share_known_cases from the DunkelzifferRadar project how many positive tests are to
+share_known_cases how many positive tests are to
 be distributed in the whole population. From this, using the overall positivity rate
 of tests we get to the full budget of tests to be distributed across the population.
 Using the ARS data, we get the share of tests (positive and negative) going to each
@@ -35,13 +35,13 @@ import pandas as pd
 from sid.time import get_date
 
 from src.contact_models.contact_model_functions import get_states_w_vacations
+from src.testing.shared import get_share_known_cases_for_one_day
 
 
 def demand_test(
     states,
     params,
     seed,
-    share_known_cases,
     positivity_rate_overall,
     test_shares_by_age_group,
     positivity_rate_by_age_group,
@@ -50,6 +50,17 @@ def demand_test(
 
     Test demand is calculated in such a way that the demand fits to the empirical
     distribution of positive tests in the empirical data.
+
+    We calculate the tests designated in each age group as follows:
+    Firstly, we calculate from the number of infected people in the simulation and the
+    share_known_cases how many positive tests are to
+    be distributed in the whole population. From this, using the overall positivity rate
+    of tests we get to the full budget of tests to be distributed across the population.
+    Using the ARS data, we get the share of tests (positive and negative) going to each
+    age group. Using the age specific positivity rate - also reported in the ARS data -
+    then gets us the number of positive tests to distribute in each age group.
+    Using the RKI and ARS data therefore allows us to reflect the German testing
+    strategy over age groups, e.g .preferential testing of older individuals.
 
     In each age group we first distribute tests among those that recently developed
     symptoms but have no pending test and do not know their infection state yet.
@@ -91,13 +102,18 @@ def demand_test(
         positivity_rate_by_age_group = positivity_rate_by_age_group.loc[date]
     if isinstance(positivity_rate_overall, pd.Series):
         positivity_rate_overall = positivity_rate_overall.loc[date]
-    if isinstance(share_known_cases, pd.Series):
-        share_known_cases = share_known_cases.loc[date]
     if share_symptomatic_requesting_test > 1.0 or share_symptomatic_requesting_test < 0:
         raise ValueError(
             "The share of symptomatic individuals requesting a test must lie in the "
             f"[0, 1] interval, you specified {share_symptomatic_requesting_test}"
         )
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        params_slice = params.loc[("share_known_cases", "share_known_cases")]
+    share_known_cases = get_share_known_cases_for_one_day(date, params_slice)
 
     n_pos_tests_for_each_group = _calculate_positive_tests_to_distribute_per_age_group(
         n_newly_infected=n_newly_infected,
@@ -107,9 +123,9 @@ def demand_test(
         positivity_rate_by_age_group=positivity_rate_by_age_group,
     )
     developed_symptoms_yesterday = states["cd_symptoms_true"] == -1
-    symptomatic_without_test = (
-        developed_symptoms_yesterday & ~states["pending_test"] & ~states["knows_immune"]
-    )
+
+    untested = ~states["pending_test"] & ~states["knows_immune"]
+    symptomatic_without_test = developed_symptoms_yesterday & untested
     if share_symptomatic_requesting_test == 1.0:
         unconstrained_demanded = symptomatic_without_test
     else:
@@ -132,6 +148,21 @@ def demand_test(
     demands_by_age_group = unconstrained_demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
     demanded = _scale_demand_up_or_down(unconstrained_demanded, states, remaining)
+
+    if (remaining < 0).any():
+        info = pd.concat([demands_by_age_group, n_pos_tests_for_each_group], axis=1)
+        info.columns = ["demand", "target demand"]
+        info["difference"] = (info["demand"] - info["target demand"]) / info[
+            "target demand"
+        ]
+        info = info.T.round(2)
+        warnings.warn(
+            f"\nToo much endogenous test demand on {date.date()} ({date.day_name()}). "
+            "This is an indication that the share of symptomatic infections is too "
+            "high or too many symptomatic people demand a test:"
+            f"\n\n{info.to_string()}\n\n"
+        )
+
     return demanded
 
 
@@ -241,43 +272,62 @@ def _scale_demand_up_or_down(demanded, states, remaining):
     """
     demanded = demanded.copy(deep=True)
     for group, remainder in remaining.items():
-        n_to_draw = int(abs(remainder))
-        selection_string = f"age_group_rki == '{group}' & ~pending_test & ~knows_immune"
         if remainder == 0:
             continue
         elif remainder > 0:
-            # this is the case where we have additional positive tests to distribute.
-            selection_string += " & infectious"
-            pool = states[~demanded].query(selection_string).index
+            n_undemanded_tests = int(abs(remainder))
+            demanded = _increase_test_demand(
+                demanded, states, n_undemanded_tests, group
+            )
         else:  # remainder < 0
-            # this is the case where symptomatics already exceed the designated
-            # number of positive tests.
-            pool = states[demanded].query(selection_string).index
-            warnings.warn(
-                f"The demand for tests by symptomatic individuals in age group {group} "
-                "exceeds the number of positive tests calculated by the share known "
-                "cases. This is an indication that one or both of the following model "
-                "parameters are incorrect: 1. The share of infected people who become "
-                "symptomatic. 2. The share of sympomatic people who demand a test."
-                f"There were {demanded.sum()} tests demanded "
-                f"which was {-remainder} above the number of available tests.\n\n\n"
-            )
+            n_to_remove = int(abs(remainder))
+            demanded = _decrease_test_demand(demanded, states, n_to_remove, group)
+    return demanded
 
-        if len(pool) >= n_to_draw:
-            drawn = np.random.choice(pool, n_to_draw, replace=False)
-        else:
-            type_of_operation = "allocated" if remainder > 0 else "removed"
-            warnings.warn(
-                f"The number of tests to be {type_of_operation} exceeds the number of "
-                f"candidate individuals. As a result only {len(pool)} rather than "
-                f"{n_to_draw} tests were {type_of_operation}. This indicates that your "
-                "model parameters (either the infection probabilities, the probability "
-                "to become symptomatic or the test demand parameters) are incompatible."
-                f" The remainder was {remainder} in group {group} on "
-                f"{get_date(states).date()}.\n\n\n"
-            )
-            drawn = pool
-        demanded.loc[drawn] = True if remainder > 0 else False
+
+def _decrease_test_demand(demanded, states, n_to_remove, group):
+    """Decrease the number of tests demanded in an age group by a certain number.
+
+    This is called when the endogenously demanded tests (symptomatics + educ workers)
+    already exceed the designated number of positive tests in an age group.
+
+    """
+    demanded = demanded.copy(deep=True)
+
+    demanding_test_in_age_group = (
+        states[demanded].query(f"age_group_rki == '{group}'").index
+    )
+    drawn = np.random.choice(
+        a=demanding_test_in_age_group, size=n_to_remove, replace=False
+    )
+    demanded.loc[drawn] = False
+    return demanded
+
+
+def _increase_test_demand(demanded, states, n_undemanded_tests, group):
+    """Randomly increase the number of tests demanded in an age group.
+    This is the case where we have additional positive tests to distribute.
+
+    """
+    demanded = demanded.copy(deep=True)
+
+    right_age_group = f"(age_group_rki == '{group}')"
+    currently_infected = "(infectious | symptomatic | (cd_infectious_true >= 0))"
+    untested = "(~pending_test & ~knows_immune)"
+    selection_string = right_age_group + " & " + currently_infected + " & " + untested
+
+    infected_untested = states.index[states.eval(selection_string) & ~demanded]
+
+    if len(infected_untested) >= n_undemanded_tests:
+        drawn = np.random.choice(infected_untested, n_undemanded_tests, replace=False)
+    else:
+        date = get_date(states)
+        warnings.warn(
+            f"\n\nThe implied share_known_cases for age group {group} is >1 "
+            f"on date {date.date()} ({date.day_name()}).\n\n"
+        )
+        drawn = infected_untested
+    demanded.loc[drawn] = True
     return demanded
 
 

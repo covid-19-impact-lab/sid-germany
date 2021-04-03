@@ -27,6 +27,7 @@ from src.contact_models.get_contact_models import get_all_contact_models
         / "work_non_recurrent.pkl",
         "vacations": BLD / "data" / "vacations.pkl",
         "infection_probs": SRC / "simulation" / "infection_probs.pkl",
+        "susceptibility": SRC / "original_data" / "susceptibility.csv",
     }
 )
 @pytask.mark.produces(BLD / "params.pkl")
@@ -34,6 +35,9 @@ def task_create_full_params(depends_on, produces):
     epi_params = load_epidemiological_parameters()
     vacations = pd.read_pickle(depends_on["vacations"])
     infection_probs = pd.read_pickle(depends_on["infection_probs"])
+    susceptibility = pd.read_csv(
+        depends_on["susceptibility"], index_col=["category", "subcategory", "name"]
+    )
 
     distributions = {
         name[5:]: path for name, path in depends_on.items() if name.startswith("dist_")
@@ -55,6 +59,7 @@ def task_create_full_params(depends_on, produces):
     assort_params = _build_assort_params(contact_models, age_assort_params)
 
     reaction_params = _build_reaction_params(contact_models)
+    share_known_cases_params = _build_share_known_cases_params()
     param_slices = [
         infection_probs,
         reaction_params,
@@ -62,6 +67,8 @@ def task_create_full_params(depends_on, produces):
         assort_params,
         epi_params,
         vacations,
+        share_known_cases_params,
+        susceptibility,
     ]
     params = pd.concat(param_slices, axis=0)
     # number of available tests is implemented in the test demand model.
@@ -134,6 +141,31 @@ def _convert_index_to_int_where_possible(params):
     params = params.reset_index().copy(deep=True)
     params["name"] = params["name"].apply(_convert_to_int_if_possible)
     params = params.set_index(["category", "subcategory", "name"])
+    return params
+
+
+def _build_share_known_cases_params():
+    params_slice = pd.Series(
+        {
+            # from dunkelzifferradar
+            "2020-01-01": 0.07,
+            "2020-03-01": 0.07,
+            "2020-03-17": 0.2,
+            "2020-06-15": 0.2,
+            "2020-07-10": 0.46,
+            "2020-09-01": 0.67,
+            "2020-09-25": 0.6,
+            "2020-12-23": 0.22,
+            # free parameters
+            "2021-02-28": 0.25,
+            "2021-04-30": 0.35,
+        },
+        name="value",
+    ).to_frame()
+    params = pd.concat([params_slice], keys=["share_known_cases"])
+    params = pd.concat(
+        [params], keys=["share_known_cases"], names=["category", "subcategory", "name"]
+    )
     return params
 
 

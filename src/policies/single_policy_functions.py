@@ -18,9 +18,12 @@ from scipy.interpolate import interp1d
 from sid.time import get_date
 
 
-def shut_down_model(states, contacts, seed):
+def shut_down_model(states, contacts, seed, is_recurrent):
     """Set all contacts to zero independent of incoming contacts."""
-    return pd.Series(0, index=states.index)
+    if is_recurrent:
+        return pd.Series(False, index=states.index)
+    else:
+        return pd.Series(0, index=states.index)
 
 
 def reopen_educ_model_germany(
@@ -112,16 +115,20 @@ def reopen_educ_model_germany(
 def reduce_recurrent_model(states, contacts, seed, multiplier):
     """Reduce the number of recurrent contacts taking place by a multiplier.
 
-    For recurrent contacts only whether the contacts Series is > 0 plays a role.
+    For recurrent contacts the contacts Series is boolean.
     Therefore, simply multiplying the number of contacts with it would not have
     an effect on the number of contacts taking place. Instead we make a random share of
     individuals scheduled to participate not participate.
 
-    This function returns a Series of 0s and 1s.
-
     Args:
         multiplier (float or pd.Series): Must be smaller or equal to one. If a
             Series is supplied the index must be dates.
+
+
+    Returns:
+        reduced (pandas.Series): same index as states. For a *multiplier* fraction
+            of the population the contacts have been set to False. The more individuals
+            already had a False there, the smaller the effect.
 
     """
     np.random.seed(seed)
@@ -131,13 +138,13 @@ def reduce_recurrent_model(states, contacts, seed, multiplier):
 
     contacts = contacts.to_numpy()
     resampled_contacts = np.random.choice(
-        [1, 0], size=len(states), p=[multiplier, 1 - multiplier]
+        [True, False], size=len(states), p=[multiplier, 1 - multiplier]
     )
-    reduced = np.where(contacts > 0, resampled_contacts, contacts)
+    reduced = np.where(contacts, resampled_contacts, contacts)
     return pd.Series(reduced, index=states.index)
 
 
-def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
+def reduce_work_model(states, contacts, seed, multiplier, is_recurrent):  # noqa: U100
     """Reduce contacts for the working population.
 
     Args:
@@ -146,6 +153,7 @@ def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
             If it is a Series or DataFrame, the index must be dates.
             If it is a DataFrame the columns must be the values of
             the "state" column in the states.
+        is_recurrent (bool): True if the contact model is recurernt
 
     """
     if isinstance(multiplier, (pd.Series, pd.DataFrame)):
@@ -164,15 +172,25 @@ def reduce_work_model(states, contacts, seed, multiplier):  # noqa: U100
         assert set(states["state"].unique()).issubset(
             threshold.index
         ), "work multipliers not supplied for all states."
-        threshold = states["state"].replace(threshold)
+        threshold = states["state"].map(threshold.get)
 
     above_threshold = states["work_contact_priority"] > threshold
-    reduced_contacts = contacts.where(above_threshold, 0)
+    if is_recurrent:
+        reduced_contacts = contacts.where(above_threshold, False)
+    else:
+        reduced_contacts = contacts.where(above_threshold, 0)
     return reduced_contacts
 
 
 def reopen_work_model(
-    states, contacts, seed, start_multiplier, end_multiplier, start_date, end_date
+    states,
+    contacts,
+    seed,
+    start_multiplier,
+    end_multiplier,
+    start_date,
+    end_date,
+    is_recurrent,
 ):
     """Reduce work contacts to active people in gradual opening or closing phase.
 
@@ -200,7 +218,11 @@ def reopen_work_model(
         end_date=end_date,
     )
     contacts = reduce_work_model(
-        states=states, contacts=contacts, seed=seed, multiplier=multiplier
+        states=states,
+        contacts=contacts,
+        seed=seed,
+        multiplier=multiplier,
+        is_recurrent=is_recurrent,
     )
 
     return contacts
@@ -435,22 +457,22 @@ def apply_educ_policy(
         attends_for_any_reason = attends_for_any_reason | ~states.eval(a_b_query)
 
     staying_home = ~attends_for_any_reason
-    contacts[staying_home] = 0
+    contacts[staying_home] = False
 
     # since our educ models are all recurrent and educ_workers must always attend
     # we only apply the hygiene multiplier to the students
-    contacts[~states["educ_worker"]] = reduce_recurrent_model(
-        states[~states["educ_worker"]],
-        contacts[~states["educ_worker"]],
-        seed,
-        hygiene_multiplier,
+    all_reduced = reduce_recurrent_model(
+        states,
+        contacts,
+        seed=seed,
+        multiplier=hygiene_multiplier,
     )
+    contacts = contacts.where(states["educ_worker"], other=all_reduced)
 
     teachers_with_0_students = _find_educ_workers_with_zero_students(
         contacts, states, group_id_column
     )
-    contacts[teachers_with_0_students] = 0
-
+    contacts[teachers_with_0_students] = False
     return contacts
 
 
@@ -499,7 +521,7 @@ def _find_educ_workers_with_zero_students(contacts, states, group_id_column):
 
 
 def _find_size_zero_classes(contacts, states, col):
-    students_group_ids = states[~states["educ_worker"]][col]
+    students_group_ids = states.loc[~states["educ_worker"], col]
     students_contacts = contacts[~states["educ_worker"]]
     # the .drop(-1) is needed because we use -1 instead of NaN to identify
     # individuals not participating in a recurrent contact model

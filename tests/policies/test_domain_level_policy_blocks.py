@@ -67,10 +67,10 @@ def test_shut_down_educ_models(contact_models):
             "affected_contact_model": "educ1",
             "start": "2020-10-01",
             "end": "2020-10-31",
-            "policy": shut_down_model,
+            "policy": partial(shut_down_model, is_recurrent=True),
         },
     }
-    assert res == expected
+    compare_policy_dicts(res, expected)
 
 
 def test_shut_down_other_models(contact_models):
@@ -87,7 +87,7 @@ def test_shut_down_other_models(contact_models):
             "affected_contact_model": "other1",
             "start": "2020-10-01",
             "end": "2020-10-31",
-            "policy": shut_down_model,
+            "policy": partial(shut_down_model, is_recurrent=False),
         },
     }
     compare_policy_dicts(res, expected)
@@ -105,13 +105,13 @@ def test_reduce_work_models(contact_models):
             "affected_contact_model": "work1",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": partial(reduce_work_model, multiplier=0.5),
+            "policy": partial(reduce_work_model, multiplier=0.5, is_recurrent=False),
         },
         "reduce_work_work2": {
             "affected_contact_model": "work2",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": partial(reduce_work_model, multiplier=0.5),
+            "policy": partial(reduce_work_model, multiplier=0.5, is_recurrent=True),
         },
     }
     compare_policy_dicts(res, expected)
@@ -215,13 +215,13 @@ def test_reopen_work_models(contact_models):
             "affected_contact_model": "work1",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": work_func,
+            "policy": partial(work_func, is_recurrent=False),
         },
         "reduce_work2": {
             "affected_contact_model": "work2",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": work_func,
+            "policy": partial(work_func, is_recurrent=True),
         },
     }
     compare_policy_dicts(res, expected)
