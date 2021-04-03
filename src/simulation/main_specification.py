@@ -191,12 +191,14 @@ def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=Fals
     if init_start > pd.Timestamp("2021-01-01"):
         vaccination_shares = pd.read_pickle(depends_on["vaccination_shares"])
         simulation_inputs["vaccination_models"] = {
-            "model": partial(
-                find_people_to_vaccinate,
-                vaccination_shares=vaccination_shares,
-                no_vaccination_share=SHARE_REFUSE_VACCINATION,
-                init_start=init_start,
-            )
+            "standard": {
+                "model": partial(
+                    find_people_to_vaccinate,
+                    vaccination_shares=vaccination_shares,
+                    no_vaccination_share=SHARE_REFUSE_VACCINATION,
+                    init_start=init_start,
+                )
+            }
         }
 
     simulation_inputs["params"] = params
