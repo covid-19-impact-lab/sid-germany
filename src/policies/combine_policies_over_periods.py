@@ -207,7 +207,8 @@ def strict_emergency_care(hygiene_multiplier=0.8):
 def get_enacted_policies_of_2021(
     contact_models,
     scenario_start,
-    other_multiplier=0.45,
+    other_multiplier_until_mid_march=0.45,
+    other_multiplier_mid_march_until_easter=0.4,
     easter_holiday_other_multiplier=0.15,
     easter_holiday_work_multiplier=0.15,
 ):
@@ -219,7 +220,9 @@ def get_enacted_policies_of_2021(
         contact_models (dict)
         scenario_start (str): date until which the policies should run.
             Should be of format yyyy-mm-dd.
-        other_multiplier (float): other multiplier used until the easter holidays
+        other_multiplier_until_mid_march (float): other multiplier used until mid of March
+        other_multiplier_mid_march_until_easter (float): other multiplier used from
+            mid of March until after the Easter holidays.
         easter_holiday_other_multiplier (float): other multiplier used during the easter
             holidays.
         easter_holiday_work_multiplier (float): work multiplier used during the easter
@@ -247,7 +250,7 @@ def get_enacted_policies_of_2021(
             multipliers={
                 "educ": None,
                 "work": work_multiplier,
-                "other": other_multiplier,
+                "other": other_multiplier_until_mid_march,
             },
             **strict_emergency_care(),
         ),
@@ -261,7 +264,7 @@ def get_enacted_policies_of_2021(
             multipliers={
                 "educ": None,
                 "work": work_multiplier,
-                "other": other_multiplier,
+                "other": other_multiplier_until_mid_march,
             },
             **_graduating_classes_in_a_b_plus_generous_emergency_care(),
         ),
@@ -278,7 +281,7 @@ def get_enacted_policies_of_2021(
                 # This multiplier applies to nurseries and preschools.
                 "educ": 0.5,
                 "work": work_multiplier,
-                "other": other_multiplier,
+                "other": other_multiplier_until_mid_march,
             },
             **_get_educ_options_feb_22_to_march_15(),
         ),
@@ -292,7 +295,7 @@ def get_enacted_policies_of_2021(
             multipliers={
                 "educ": 0.5,
                 "work": work_multiplier,
-                "other": other_multiplier,
+                "other": other_multiplier_mid_march_until_easter,
             },
             **get_educ_options_mid_march_to_easter(),
         ),
