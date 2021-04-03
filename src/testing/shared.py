@@ -70,8 +70,8 @@ def get_share_known_cases_for_one_day(date, params_slice):
 
     """
     date = pd.Timestamp(date)
-    sr = get_share_known_cases_series(params_slice)
-    value = sr.loc[date]
+    s = get_share_known_cases_series(params_slice)
+    value = s.loc[date]
     return value
 
 

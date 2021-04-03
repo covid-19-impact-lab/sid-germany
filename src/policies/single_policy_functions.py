@@ -169,10 +169,10 @@ def reduce_work_model(states, contacts, seed, multiplier, is_recurrent):  # noqa
 
     threshold = 1 - multiplier
     if isinstance(threshold, pd.Series):
+        assert set(states["state"].unique()).issubset(
+            threshold.index
+        ), "work multipliers not supplied for all states."
         threshold = states["state"].map(threshold.get)
-        # this assert could be skipped because we check in
-        # task_check_initial_states that the federal state names overlap.
-        assert threshold.notnull().all()
 
     above_threshold = states["work_contact_priority"] > threshold
     if is_recurrent:
@@ -521,7 +521,7 @@ def _find_educ_workers_with_zero_students(contacts, states, group_id_column):
 
 
 def _find_size_zero_classes(contacts, states, col):
-    students_group_ids = states[col][~states["educ_worker"]]
+    students_group_ids = states.loc[~states["educ_worker"], col]
     students_contacts = contacts[~states["educ_worker"]]
     # the .drop(-1) is needed because we use -1 instead of NaN to identify
     # individuals not participating in a recurrent contact model

@@ -3,6 +3,7 @@ from sid import get_date
 
 
 def find_people_to_vaccinate(
+    receives_vaccine,  # noqa: U100
     states,
     params,  # noqa: U100
     seed,  # noqa: U100
