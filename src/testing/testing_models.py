@@ -156,9 +156,10 @@ def demand_test(
         ]
         info = info.T.round(2)
         warnings.warn(
-            f"\n\nToo much endogenous test demand on {date.date()} ({date.day_name()}). "
-            "This is an indication that the share of symptomatic infections is too high or"
-            f"that too many symptomatic people demand a test:\n\n{info.to_string()}\n\n"
+            f"\nToo much endogenous test demand on {date.date()} ({date.day_name()}). "
+            "This is an indication that the share of symptomatic infections is too "
+            "high or too many symptomatic people demand a test:"
+            f"\n\n{info.to_string()}\n\n"
         )
 
     return demanded
