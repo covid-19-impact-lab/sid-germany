@@ -19,4 +19,6 @@ COSMO Hygiene Data
 Susceptibility Data
 ---------------------
 
-Taken from https://go.nature.com/3foGBaf (Extended Data Fig. 4)
+Taken from the Nature artile https://go.nature.com/3foGBaf.
+The data is in the appendix, in Extended Data Fig. 4:
+https://www.nature.com/articles/s41591-020-0962-9/figures/8
