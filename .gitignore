@@ -41,3 +41,6 @@ src/exploration/*/*.parquet
 *.idea/
 src/manfred/*.png
 src/original_data/population_structure/microcensus2010_cf.dta
+
+*/*/Untitled.ipynb
+Untitled.ipynb
