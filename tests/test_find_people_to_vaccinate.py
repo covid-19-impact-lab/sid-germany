@@ -21,6 +21,7 @@ def test_find_people_to_vaccinate_no_refusers():
     expected = pd.Series([True] + [False] * 5)
 
     res = find_people_to_vaccinate(
+        receives_vaccine=None,
         states=states,
         params=None,
         seed=33,
@@ -50,6 +51,7 @@ def test_find_people_to_vaccinate_with_refusers():
     expected = pd.Series([True, True] + [False] * 4)
 
     res = find_people_to_vaccinate(
+        receives_vaccine=None,
         states=states,
         params=None,
         seed=33,
@@ -78,6 +80,7 @@ def test_find_people_to_vaccinate_start_date():
     expected = pd.Series([True, False, True, True, False, False])
 
     res = find_people_to_vaccinate(
+        receives_vaccine=None,
         states=states,
         params=None,
         seed=33,
