@@ -11,7 +11,7 @@ from src.create_initial_states.create_contact_model_group_ids import (
     add_contact_model_group_ids,
 )
 from src.create_initial_states.create_rapid_test_unit_intervals import (
-    create_rapid_test_unit_intervals,
+    create_unit_intervals_for_rapid_tests,
 )
 from src.create_initial_states.create_vaccination_priority import (
     create_vaccination_group,
@@ -133,7 +133,7 @@ def _build_initial_states(
     df["vaccination_rank"] = create_vaccination_rank(
         df["vaccination_group"], share_refuser=SHARE_REFUSE_VACCINATION, seed=909
     )
-    df = create_rapid_test_unit_intervals(df)
+    df = create_unit_intervals_for_rapid_tests(df)
 
     df.index.name = "index"
     df = _only_keep_relevant_columns(df)
