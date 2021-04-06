@@ -158,6 +158,7 @@ def _build_share_known_cases_params():
             "2020-12-23": 0.22,
             # free parameters
             "2021-02-28": 0.25,
+            "2021-04-30": 0.35,
             "2021-05-15": 0.35,
         },
         name="value",
