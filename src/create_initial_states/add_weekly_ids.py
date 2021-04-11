@@ -79,10 +79,8 @@ def add_weekly_ids(
 
 
 def _create_pairs(states, nr_of_weekly_contacts, county_assortativeness, seed):
-    group_codes_per_individual, _ = factorize_assortative_variables(
-        states, ["county"], is_recurrent=False
-    )
-    indexer = _create_group_indexer(states, ["county"], is_recurrent=False)
+    group_codes_per_individual, _ = factorize_assortative_variables(states, ["county"])
+    indexer = _create_group_indexer(states, ["county"])
     fake_params = pd.DataFrame(
         data=county_assortativeness,
         columns=["value"],
@@ -181,7 +179,7 @@ def _create_participation_array(nr_of_contacts, seed):
 
 
 def _create_group_indexer(
-    states: pd.DataFrame, assort_by: Dict[str, List[str]], is_recurrent
+    states: pd.DataFrame, assort_by: Dict[str, List[str]]
 ) -> nb.typed.List:
     """Create the group indexer.
 
@@ -201,7 +199,6 @@ def _create_group_indexer(
     Args:
         states (pandas.DataFrame): See :ref:`states`
         assort_by (List[str]): List of variables that influence matching probabilities.
-        is_recurrent (bool)
 
     Returns:
         indexer (numba.typed.List): The i_th entry are the indices of the i_th group.
@@ -210,9 +207,7 @@ def _create_group_indexer(
     states = states.reset_index()
     if assort_by:
         groups = states.groupby(assort_by).groups
-        _, group_codes_values = factorize_assortative_variables(
-            states, assort_by, is_recurrent
-        )
+        _, group_codes_values = factorize_assortative_variables(states, assort_by)
 
         indexer = NumbaList()
         for group in group_codes_values:
