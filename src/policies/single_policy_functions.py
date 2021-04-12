@@ -15,6 +15,7 @@ All other arguments must be documented.
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
+from sid.shared import boolean_choices
 from sid.time import get_date
 
 
@@ -140,9 +141,8 @@ def reduce_recurrent_model(
         multiplier = multiplier[date]
 
     contacts = contacts.to_numpy()
-    resampled_contacts = np.random.choice(
-        [True, False], size=len(states), p=[multiplier, 1 - multiplier]
-    )
+    resampled_contacts = boolean_choices(np.full(len(states), multiplier))
+
     reduced = np.where(contacts, resampled_contacts, contacts)
     return pd.Series(reduced, index=states.index)
 
