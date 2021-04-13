@@ -55,9 +55,13 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
         virus_shares=virus_shares,
     )
 
-    policies = get_october_to_christmas_policies(
-        contact_models=simulation_inputs["contact_models"], **scenario
-    )
+    if scenario is not None:
+        policies = get_october_to_christmas_policies(
+            contact_models=simulation_inputs["contact_models"], **scenario
+        )
+    else:
+        policies = None
+
     simulate = get_simulate_func(
         **simulation_inputs,
         contact_policies=policies,
