@@ -201,7 +201,17 @@ def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=Fals
             }
         }
 
+    def _currently_infected(df):
+        return df["infectious"] | df["symptomatic"] | (df["cd_infectious_true"] >= 0)
+
+    def _knows_currently_infected(df):
+        return df["knows_immune"] & df["currently_infected"]
+
     simulation_inputs["params"] = params
+    simulation_inputs["derived_state_variables"] = {
+        "currently_infected": _currently_infected,
+        "knows_currently_infected": _knows_currently_infected,
+    }
     return virus_shares, simulation_inputs
 
 

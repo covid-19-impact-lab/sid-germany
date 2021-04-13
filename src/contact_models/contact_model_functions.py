@@ -47,8 +47,8 @@ def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
     else:
         attends_meeting = states[group_col_name] != -1
         for params_entry, condition in [
-            ("symptomatic_multiplier", "symptomatic"),
-            ("positive_test_multiplier", IS_POSITIVE_CASE),
+            ("symptomatic_multiplier", states["symptomatic"]),
+            ("positive_test_multiplier", states["knows_currently_infected"]),
         ]:
             attends_meeting = reduce_contacts_on_condition(
                 attends_meeting,
@@ -78,15 +78,16 @@ def go_to_daily_work_meeting(states, params, seed):
     date = get_date(states)
     day = date.day_name()
 
-    attends_work = states.eval(
-        "(occupation == 'working') & (work_daily_group_id != -1)"
+    attends_work = (states["occupation"] == "working") & (
+        states["work_daily_group_id"] != -1
     )
+
     if day in ["Saturday", "Sunday"]:
         attends_work = attends_work & states[f"work_{day.lower()}"]
     else:
         for params_entry, condition in [
-            ("symptomatic_multiplier", "symptomatic"),
-            ("positive_test_multiplier", IS_POSITIVE_CASE),
+            ("symptomatic_multiplier", states["symptomatic"]),
+            ("positive_test_multiplier", states["knows_currently_infected"]),
         ]:
             attends_work = reduce_contacts_on_condition(
                 attends_work,
@@ -102,8 +103,8 @@ def go_to_daily_work_meeting(states, params, seed):
 def meet_daily_other_contacts(states, params, group_col_name, seed):
     attends_meeting = states[group_col_name] != -1
     for params_entry, condition in [
-        ("symptomatic_multiplier", "symptomatic"),
-        ("positive_test_multiplier", IS_POSITIVE_CASE),
+        ("symptomatic_multiplier", states["symptomatic"]),
+        ("positive_test_multiplier", states["knows_currently_infected"]),
     ]:
         attends_meeting = reduce_contacts_on_condition(
             attends_meeting,
@@ -149,8 +150,8 @@ def attends_educational_facility(states, params, id_column, seed):
             attends_facility, states, params
         )
         for params_entry, condition in [
-            ("symptomatic_multiplier", "symptomatic"),
-            ("positive_test_multiplier", IS_POSITIVE_CASE),
+            ("symptomatic_multiplier", states["symptomatic"]),
+            ("positive_test_multiplier", states["knows_currently_infected"]),
         ]:
             attends_facility = reduce_contacts_on_condition(
                 attends_facility,
@@ -183,8 +184,8 @@ def meet_hh_members(states, params, seed):
     else:
         meet_hh = states["hh_model_group_id"] != -1
         for params_entry, condition in [
-            ("symptomatic_multiplier", "symptomatic"),
-            ("positive_test_multiplier", IS_POSITIVE_CASE),
+            ("symptomatic_multiplier", states["symptomatic"]),
+            ("positive_test_multiplier", states["knows_currently_infected"]),
         ]:
             meet_hh = reduce_contacts_on_condition(
                 meet_hh,
@@ -243,8 +244,8 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
             seed=seed,
         )
         for params_entry, condition in [
-            ("symptomatic_multiplier", "symptomatic"),
-            ("positive_test_multiplier", IS_POSITIVE_CASE),
+            ("symptomatic_multiplier", states["symptomatic"]),
+            ("positive_test_multiplier", states["knows_currently_infected"]),
         ]:
             contacts = reduce_contacts_on_condition(
                 contacts,
@@ -352,8 +353,9 @@ def reduce_contacts_on_condition(
         states (pandas.DataFrame): The states of one day passed by sid.
         multiplier (float): The share of people who maintain their contacts
             despite condition.
-        condition (str): Condition which defines the subset of individuals who
-            potentially reduce their contacts.
+        condition (str, numpy.ndarray or pandas.Series): Condition or boolean array
+            or Series which defines the subset of individuals who potentially reduce
+            their contacts.
         seed (int)
 
     """
@@ -362,7 +364,16 @@ def reduce_contacts_on_condition(
         reduced = reduce_recurrent_model(states, contacts, seed, multiplier)
     else:
         reduced = multiplier * contacts
-    is_condition_true = states.eval(condition)
+
+    if isinstance(condition, str):
+        is_condition_true = states.eval(condition)
+    elif isinstance(condition, pd.Series):
+        is_condition_true = condition.to_numpy()
+    elif isinstance(condition, np.ndarray):
+        is_condition_true = condition
+    else:
+        raise ValueError
+
     reduced = reduced.where(is_condition_true, contacts)
     return reduced
 
