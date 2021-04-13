@@ -124,8 +124,6 @@ def build_main_scenarios(base_path):
     if FAST_FLAG == "debug" or (FAST_FLAG == "verify" and "fall" in base_path.name):
         scenarios = {
             "base_scenario": base_scenario,
-            "no_policies": None,
-            "super_strict": {"work_fill_value": 0.1, "educ_multiplier": 0.1},
         }
     else:
         scenarios = {

@@ -63,15 +63,12 @@ def task_simulate_main_prediction(depends_on, produces, scenario, seed):
         virus_shares=virus_shares,
     )
 
-    if scenario is not None:
-        policies = _get_prediction_policies(
-            contact_models=simulation_inputs["contact_models"],
-            scenario=scenario,
-            end_date=end_date,
-            scenario_name=produces.parent.name,
-        )
-    else:
-        policies = None
+    policies = _get_prediction_policies(
+        contact_models=simulation_inputs["contact_models"],
+        scenario=scenario,
+        end_date=end_date,
+        scenario_name=produces.parent.name,
+    )
 
     simulate = get_simulate_func(
         **simulation_inputs,
