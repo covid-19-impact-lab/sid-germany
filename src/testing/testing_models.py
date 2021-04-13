@@ -312,11 +312,7 @@ def _increase_test_demand(demanded, states, n_undemanded_tests, group):
 
     right_age_group = states["age_group_rki"] == group
     untested = ~states["pending_test"] & ~states["knows_immune"]
-    currently_infected = (
-        states["infectious"] | states["symptomatic"] | states["cd_infectious_true"] >= 0
-    )
-
-    condition = right_age_group & untested & currently_infected
+    condition = right_age_group & untested & states["currently_infected"]
     infected_untested = states.index[condition & ~demanded]
 
     if len(infected_untested) >= n_undemanded_tests:

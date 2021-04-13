@@ -72,6 +72,10 @@ def states():
     states["knows_infectious"] = False
     states["knows_immune"] = False
     states["cd_received_test_result_true"] = -100
+    states["knows_currently_infected"] = states.eval(
+        "knows_infectious | (knows_immune & symptomatic) "
+        "| (knows_immune & (cd_received_test_result_true >= -13))"
+    )
     return states
 
 
@@ -505,6 +509,10 @@ def test_meet_daily_other_contacts():
     states["knows_immune"] = False
     states["cd_received_test_result_true"] = -20
     states["daily_meeting_id"] = [-1, 2, 2, 2]
+    states["knows_currently_infected"] = states.eval(
+        "knows_infectious | (knows_immune & symptomatic) "
+        "| (knows_immune & (cd_received_test_result_true >= -13))"
+    )
 
     params = pd.DataFrame()
     params["value"] = [0.0, 0.0]
