@@ -57,6 +57,9 @@ def params():
 def test_scale_demand_up_or_down(states):
     demanded = pd.Series([True, True] + [False, True] * 4, index=states.index)
     states["infectious"] = True
+    states["currently_infected"] = states.eval(
+        "(infectious | symptomatic | (cd_infectious_true >= 0))"
+    )
     remaining = pd.Series([-2, 0, 2], index=["0-4", "5-14", "15-34"])
     expected_vals = [False, False] + [False, True] * 2 + [True] * 4
     expected = pd.Series(data=expected_vals, index=states.index)
@@ -120,6 +123,9 @@ def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states, par
         [0.125, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
     )
     states["infectious"] = states.index.isin([1, 4, 7])
+    states["currently_infected"] = states.eval(
+        "(infectious | symptomatic | (cd_infectious_true >= 0))"
+    )
 
     expected = pd.Series(False, index=states.index)
     # 1 test for each age group
@@ -148,6 +154,10 @@ def test_demand_test_non_zero_remainder(states, params):
     states["infectious"] = (
         [True, True] + [True, True, False, False] + [True, False, True, True]
     )
+    states["currently_infected"] = states.eval(
+        "(infectious | symptomatic | (cd_infectious_true >= 0))"
+    )
+
     # tests to distribute: 2 per individual.
     # 0-4 get one extra. 5-14 are even. 15-34 have two tests removed.
     states["cd_symptoms_true"] = [-1, 2] + [-1, -1, -10, 30] + [-1] * 4
@@ -177,6 +187,10 @@ def test_demand_test_with_teachers(states, params):
     states["infectious"] = (
         [True, True] + [True, True, False, False] + [True, False, True, True]
     )
+    states["currently_infected"] = states.eval(
+        "(infectious | symptomatic | (cd_infectious_true >= 0))"
+    )
+
     # tests to distribute: 2 per individual.
     # 0-4 get one extra. 5-14 are even. 15-34 2 get tests because teacher
     states["cd_symptoms_true"] = [-1, 2] + [-1, -1, -10, 30] + [2, 2, 2, 2]
@@ -230,6 +244,9 @@ def test_demand_test_for_educ_workers(states, params):
     states["educ_worker"] = [False] + [True] * 8 + [False]
     states["state"] = ["Bavaria"] * 6 + ["Hessen"] * 4
     states["infectious"] = [True] + [False] + [True] * 8
+    states["currently_infected"] = states.eval(
+        "(infectious | symptomatic | (cd_infectious_true >= 0))"
+    )
 
     demanded = pd.Series(False, index=states.index)
     demanded.loc[3] = True

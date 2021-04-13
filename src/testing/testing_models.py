@@ -294,9 +294,8 @@ def _decrease_test_demand(demanded, states, n_to_remove, group):
     """
     demanded = demanded.copy(deep=True)
 
-    demanding_test_in_age_group = (
-        states[demanded].query(f"age_group_rki == '{group}'").index
-    )
+    is_candidate = demanded.to_numpy() & (states["age_group_rki"] == group).to_numpy()
+    demanding_test_in_age_group = demanded.index.to_numpy()[is_candidate]
     drawn = np.random.choice(
         a=demanding_test_in_age_group, size=n_to_remove, replace=False
     )
@@ -311,12 +310,10 @@ def _increase_test_demand(demanded, states, n_undemanded_tests, group):
     """
     demanded = demanded.copy(deep=True)
 
-    right_age_group = f"(age_group_rki == '{group}')"
-    currently_infected = "(infectious | symptomatic | (cd_infectious_true >= 0))"
-    untested = "(~pending_test & ~knows_immune)"
-    selection_string = right_age_group + " & " + currently_infected + " & " + untested
-
-    infected_untested = states.index[states.eval(selection_string) & ~demanded]
+    right_age_group = states["age_group_rki"] == group
+    untested = ~states["pending_test"] & ~states["knows_immune"]
+    condition = right_age_group & untested & states["currently_infected"]
+    infected_untested = states.index[condition & ~demanded]
 
     if len(infected_untested) >= n_undemanded_tests:
         drawn = np.random.choice(infected_untested, n_undemanded_tests, replace=False)
