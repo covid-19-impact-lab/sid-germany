@@ -159,6 +159,7 @@ def _build_share_known_cases_params():
             # free parameters
             "2021-02-28": 0.25,
             "2021-04-30": 0.35,
+            "2021-05-15": 0.35,
         },
         name="value",
     ).to_frame()

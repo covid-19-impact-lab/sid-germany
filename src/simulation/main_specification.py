@@ -21,9 +21,9 @@ from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
 
+FALL_PATH = BLD / "simulations" / f"{FAST_FLAG}_main_fall_scenarios"
+PREDICT_PATH = BLD / "simulations" / f"{FAST_FLAG}_main_predictions"
 
-FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
-PREDICT_PATH = BLD / "simulations" / "main_predictions"
 SCENARIO_START = pd.Timestamp("2021-04-06")  # after Easter holidays
 
 
@@ -122,7 +122,9 @@ def build_main_scenarios(base_path):
     )
 
     if FAST_FLAG == "debug" or (FAST_FLAG == "verify" and "fall" in base_path.name):
-        scenarios = {"base_scenario": base_scenario}
+        scenarios = {
+            "base_scenario": base_scenario,
+        }
     else:
         scenarios = {
             "base_scenario": base_scenario,
