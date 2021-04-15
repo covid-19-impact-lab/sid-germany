@@ -15,6 +15,7 @@ All other arguments must be documented.
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
+from sid.shared import boolean_choices
 from sid.time import get_date
 
 
@@ -140,9 +141,8 @@ def reduce_recurrent_model(
         multiplier = multiplier[date]
 
     contacts = contacts.to_numpy()
-    resampled_contacts = np.random.choice(
-        [True, False], size=len(states), p=[multiplier, 1 - multiplier]
-    )
+    resampled_contacts = boolean_choices(np.full(len(states), multiplier))
+
     reduced = np.where(contacts, resampled_contacts, contacts)
     return pd.Series(reduced, index=states.index)
 
@@ -179,10 +179,10 @@ def reduce_work_model(
 
     threshold = 1 - multiplier
     if isinstance(threshold, pd.Series):
-        assert set(states["state"].unique()).issubset(
-            threshold.index
-        ), "work multipliers not supplied for all states."
         threshold = states["state"].map(threshold.get)
+        # this assert could be skipped because we check in
+        # task_check_initial_states that the federal state names overlap.
+        assert threshold.notnull().all()
 
     above_threshold = states["work_contact_priority"] > threshold
     if is_recurrent:
@@ -534,7 +534,7 @@ def _find_educ_workers_with_zero_students(contacts, states, group_id_column):
 
 
 def _find_size_zero_classes(contacts, states, col):
-    students_group_ids = states.loc[~states["educ_worker"], col]
+    students_group_ids = states[col][~states["educ_worker"]]
     students_contacts = contacts[~states["educ_worker"]]
     # the .drop(-1) is needed because we use -1 instead of NaN to identify
     # individuals not participating in a recurrent contact model

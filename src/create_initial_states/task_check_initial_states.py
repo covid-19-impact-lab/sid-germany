@@ -33,6 +33,7 @@ from src.config import POPULATION_GERMANY
         / "population_structure"
         / "age_groups.parquet",
         "vacations": BLD / "data" / "vacations.pkl",
+        "work_multiplier": BLD / "policies" / "work_multiplier.csv",
     }
 )
 @pytask.mark.produces(BLD / "data" / "comparison_of_age_group_distributions.png")
@@ -40,8 +41,13 @@ def task_check_initial_states(depends_on, produces):
     df = pd.read_parquet(depends_on["initial_states"])
     true_age_shares = pd.read_parquet(depends_on["true_age_group_dist"])["weight"]
     vacations = pd.read_pickle(depends_on["vacations"])
+    work_multiplier = pd.read_csv(depends_on["work_multiplier"])
+
     _check_federal_states_overlap_btw_initial_states_and_vacation_data(df, vacations)
     _check_background_characteristics(df)
+    _check_federal_states_overlap_btw_initial_states_and_work_multiplier(
+        df, work_multiplier
+    )
 
     work_daily_dist = pd.read_pickle(depends_on["work_daily_dist"])
     work_weekly_dist = pd.read_pickle(depends_on["work_weekly_dist"])
@@ -84,6 +90,17 @@ def task_check_initial_states(depends_on, produces):
     )
     fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
     plt.close()
+
+
+def _check_federal_states_overlap_btw_initial_states_and_work_multiplier(
+    df, work_multiplier
+):
+    df_states = df["state"].unique()
+    work_states = work_multiplier.columns.drop(["date", "Germany"])
+    assert set(df_states) == set(work_states), (
+        "Federal states don't overlap btw. the initial states and the work "
+        "multiplier data."
+    )
 
 
 def _check_federal_states_overlap_btw_initial_states_and_vacation_data(df, vacations):
