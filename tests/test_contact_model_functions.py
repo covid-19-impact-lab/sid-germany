@@ -198,7 +198,7 @@ def test_non_recurrent_work_contacts_weekend(states, params):
         query="occupation == 'working'",
         seed=494,
     )
-    assert_series_equal(res, pd.Series(data=0, index=a_saturday.index))
+    assert_series_equal(res, pd.Series(data=0, index=a_saturday.index, dtype=float))
 
 
 @pytest.fixture
