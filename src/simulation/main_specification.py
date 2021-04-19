@@ -17,6 +17,7 @@ from src.policies.combine_policies_over_periods import (
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import combine_dictionaries
 from src.simulation.calculate_susceptibility import calculate_susceptibility
+from src.simulation.seasonality import seasonality_model
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -63,6 +64,7 @@ SIMULATION_DEPENDENCIES = {
     "output_of_check_initial_states": BLD
     / "data"
     / "comparison_of_age_group_distributions.png",
+    "seasonality_py": SRC / "simulation" / "seasonality.py",
 }
 
 
@@ -214,6 +216,7 @@ def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=Fals
         "currently_infected": _currently_infected,
         "knows_currently_infected": _knows_currently_infected,
     }
+    simulation_inputs["seasonality_factor_model"] = seasonality_model
     return virus_shares, simulation_inputs
 
 
