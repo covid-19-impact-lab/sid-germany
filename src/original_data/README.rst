@@ -14,3 +14,11 @@ COSMO Hygiene Data
     "Räume regelmäßig lüften", "Gespräche mit engem Kontakt meiden"
     ]
 - check "95% Konfidenzintervalle einblenden"
+
+
+Susceptibility Data
+---------------------
+
+Taken from the Nature article https://go.nature.com/3foGBaf. The data is in the
+appendix, in Extended Data Fig. 4:
+https://www.nature.com/articles/s41591-020-0962-9/figures/8

@@ -42,7 +42,11 @@ def reduce_work_models(contact_models, block_info, multiplier):
     work_models = _get_work_models(contact_models)
     for mod in work_models:
         policy = _get_base_policy(mod, block_info)
-        policy["policy"] = partial(reduce_work_model, multiplier=multiplier)
+        policy["policy"] = partial(
+            reduce_work_model,
+            multiplier=multiplier,
+            is_recurrent=contact_models[mod]["is_recurrent"],
+        )
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
 
@@ -59,6 +63,7 @@ def reopen_work_models(contact_models, block_info, start_multiplier, end_multipl
             end_date=block_info["end_date"],
             start_multiplier=start_multiplier,
             end_multiplier=end_multiplier,
+            is_recurrent=contact_models[mod]["is_recurrent"],
         )
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
@@ -75,7 +80,9 @@ def shut_down_educ_models(contact_models, block_info):
     educ_models = _get_educ_models(contact_models)
     for mod in educ_models:
         policy = _get_base_policy(mod, block_info)
-        policy["policy"] = shut_down_model
+        policy["policy"] = partial(
+            shut_down_model, is_recurrent=contact_models[mod]["is_recurrent"]
+        )
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
 
@@ -179,7 +186,9 @@ def implement_general_schooling_policy(
                 0 <= other_educ_multiplier <= 1
             ), "Only multipliers in [0, 1] allowed."
             if other_educ_multiplier == 0:
-                policy["policy"] = shut_down_model
+                policy["policy"] = partial(
+                    shut_down_model, is_recurrent=contact_models[mod]["is_recurrent"]
+                )
             # currently all educ models are recurrent but don't want to assume it
             elif contact_models[mod]["is_recurrent"]:
                 policy["policy"] = partial(
@@ -202,7 +211,9 @@ def shut_down_other_models(contact_models, block_info):
     other_models = _get_other_models(contact_models)
     for mod in other_models:
         policy = _get_base_policy(mod, block_info)
-        policy["policy"] = shut_down_model
+        policy["policy"] = partial(
+            shut_down_model, is_recurrent=contact_models[mod]["is_recurrent"]
+        )
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
 

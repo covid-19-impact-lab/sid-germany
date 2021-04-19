@@ -54,3 +54,33 @@ def plot_time_series(df, y, title=""):
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     return fig, ax
+
+
+def get_share_known_cases_for_one_day(date, params_slice):
+    """Get a linearly interpolated share known cases for one day.
+
+    Args:
+        date (pandas.Timestamp): Date at which the function is evaluated.
+        params_slice (pandas.Series): Series with DateIndex. The values are
+            function values corresponding to that date.
+
+    Returns:
+        float: The value of the function at that date.
+
+
+    """
+    date = pd.Timestamp(date)
+    s = get_share_known_cases_series(params_slice)
+    value = s.loc[date]
+    return value
+
+
+def get_share_known_cases_series(params_slice):
+    """Get a linearly interpolated share known cases series."""
+    if isinstance(params_slice, pd.DataFrame):
+        params_slice = params_slice["value"]
+    params_slice.index = pd.DatetimeIndex(params_slice.index)
+    start_date = params_slice.index.min()
+    end_date = params_slice.index.max()
+    out = params_slice.reindex(pd.date_range(start_date, end_date)).interpolate()
+    return out

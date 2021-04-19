@@ -72,6 +72,10 @@ def states():
     states["knows_infectious"] = False
     states["knows_immune"] = False
     states["cd_received_test_result_true"] = -100
+    states["knows_currently_infected"] = states.eval(
+        "knows_infectious | (knows_immune & symptomatic) "
+        "| (knows_immune & (cd_received_test_result_true >= -13))"
+    )
     return states
 
 
@@ -116,7 +120,7 @@ def test_go_to_weekly_meeting_wrong_day(a_thursday):
     res = go_to_weekly_meeting(
         a_thursday, contact_params, group_col_name, day_of_week, seed
     )
-    expected = pd.Series(0, index=a_thursday.index)
+    expected = pd.Series(False, index=a_thursday.index)
     assert_series_equal(res, expected, check_names=False)
 
 
@@ -130,8 +134,8 @@ def test_go_to_weekly_meeting_right_day(a_thursday, no_reduction_params):
         day_of_week="Thursday",
         seed=3931,
     )
-    expected = pd.Series(0, index=a_thursday.index)
-    expected[:7] = 1
+    expected = pd.Series(False, index=a_thursday.index)
+    expected[:7] = True
     assert_series_equal(res, expected, check_names=False)
 
 
@@ -150,9 +154,9 @@ def test_go_to_daily_work_meeting_weekday(a_thursday, no_reduction_params):
         len(a_thursday) - 7
     )
     res = go_to_daily_work_meeting(a_thursday, no_reduction_params, 1309)
-    expected = pd.Series(0, index=a_thursday.index)
+    expected = pd.Series(False, index=a_thursday.index)
     # not every one we assigned a group id is a worker
-    expected[:7] = [1, 1, 0, 1, 1, 0, 1]
+    expected[:7] = [True, True, False, True, True, False, True]
     assert_series_equal(res, expected, check_names=False)
 
 
@@ -176,9 +180,9 @@ def test_go_to_daily_work_meeting_weekday_with_reduction(
         False,
     ]
     res = go_to_daily_work_meeting(a_thursday, no_reduction_params, 1309)
-    expected = pd.Series(0, index=a_thursday.index)
+    expected = pd.Series(False, index=a_thursday.index)
     # not every one we assigned a group id is a worker
-    expected[:9] = [1, 1, 0, 1, 0, 0, 1, 0, 1]
+    expected[:9] = [True, True, False, True, False, False, True, False, True]
     assert_series_equal(res, expected, check_names=False)
 
 
@@ -194,7 +198,7 @@ def test_non_recurrent_work_contacts_weekend(states, params):
         query="occupation == 'working'",
         seed=494,
     )
-    assert_series_equal(res, pd.Series(data=0, index=a_saturday.index))
+    assert_series_equal(res, pd.Series(data=0, index=a_saturday.index, dtype=float))
 
 
 @pytest.fixture
@@ -505,6 +509,10 @@ def test_meet_daily_other_contacts():
     states["knows_immune"] = False
     states["cd_received_test_result_true"] = -20
     states["daily_meeting_id"] = [-1, 2, 2, 2]
+    states["knows_currently_infected"] = states.eval(
+        "knows_infectious | (knows_immune & symptomatic) "
+        "| (knows_immune & (cd_received_test_result_true >= -13))"
+    )
 
     params = pd.DataFrame()
     params["value"] = [0.0, 0.0]
@@ -515,5 +523,5 @@ def test_meet_daily_other_contacts():
     res = meet_daily_other_contacts(
         states, params, group_col_name="daily_meeting_id", seed=339
     )
-    expected = pd.Series([0, 1, 1, 0])
+    expected = pd.Series([False, True, True, False])
     assert_series_equal(res, expected)

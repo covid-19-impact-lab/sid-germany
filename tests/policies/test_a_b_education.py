@@ -29,7 +29,7 @@ def fake_states():
 
 @pytest.fixture
 def contacts(fake_states):
-    return pd.Series(1, index=fake_states.index)
+    return pd.Series(True, index=fake_states.index)
 
 
 def test_a_b_school_system_above_age_0(fake_states, contacts):
@@ -43,7 +43,7 @@ def test_a_b_school_system_above_age_0(fake_states, contacts):
         hygiene_multiplier=1.0,
         always_attend_query="state == 'Niedersachsen'",  # no one
     )
-    expected = pd.Series([0, 1] * 4 + [1, 1])
+    expected = pd.Series([False, True] * 4 + [True, True])
     pd.testing.assert_series_equal(calculated, expected)
 
 
@@ -58,7 +58,7 @@ def test_a_b_school_system_above_age_5(fake_states, contacts):
         hygiene_multiplier=1.0,
         always_attend_query="state == 'Niedersachsen'",  # no one
     )
-    expected = pd.Series([1] * 6 + [0] + [1] * 3)
+    expected = pd.Series([True] * 6 + [False] + [True] * 3)
     pd.testing.assert_series_equal(calculated, expected)
 
 
@@ -73,7 +73,9 @@ def test_a_b_school_system_below_age_5(fake_states, contacts):
         hygiene_multiplier=1.0,
         always_attend_query="state == 'Niedersachsen'",  # no one
     )
-    expected = pd.Series([0, 1, 0, 1, 0, 0, 0, 0, 1, 1])
+    expected = pd.Series(
+        [False, True, False, True, False, False, False, False, True, True]
+    )
     pd.testing.assert_series_equal(calculated, expected)
 
 
@@ -85,7 +87,7 @@ def test_apply_educ_policy_others_home_no_hygiene():
     states["school_group_id_0_a_b"] = [0, 1, 1, 1, 0, 1, 0, 1]
     states["date"] = pd.Timestamp("2021-01-04")  # week 1
 
-    contacts = pd.Series([1] * 6 + [0] * 2, index=states.index)
+    contacts = pd.Series([True] * 6 + [False] * 2, index=states.index)
     seed = 333
     res = apply_educ_policy(
         states=states,
@@ -100,7 +102,7 @@ def test_apply_educ_policy_others_home_no_hygiene():
 
     # zero class, closed county, teacher despite wrong week,
     # wrong week, right week, wrong week, right week but not attending, not in school
-    expected = pd.Series([0, 0, 1, 1, 0, 1, 0, 0])
+    expected = pd.Series([False, False, True, True, False, True, False, False])
     pd.testing.assert_series_equal(res, expected)
 
 
@@ -112,7 +114,7 @@ def test_apply_educ_policy_no_contacts():
     states["date"] = pd.Timestamp("2021-01-04")  # week 1
     states["county"] = 33
 
-    contacts = pd.Series(0, index=states.index)
+    contacts = pd.Series(False, index=states.index)
     seed = 333
     res = apply_educ_policy(
         states=states,
@@ -187,7 +189,7 @@ def test_find_size_zero_classes():
     states = pd.DataFrame()
     states["educ_worker"] = [False, False, True, False, False, True, False]
     states[col] = [11, 11, 11, 22, 22, 22, -1]
-    contacts = pd.Series([1, 1, 1, 0, 0, 1, 0])
+    contacts = pd.Series([True, True, True, False, False, True, False])
     res = _find_size_zero_classes(contacts, states, col)
     expected = [22]
     assert res.tolist() == expected
@@ -198,7 +200,7 @@ def test_find_educ_workers_with_zero_students():
     states = pd.DataFrame()
     states["educ_worker"] = [False, False, True, False, False, True, False]
     states[col] = [11, 11, 11, 22, 22, 22, -1]
-    contacts = pd.Series([1, 1, 1, 0, 0, 1, 0])
+    contacts = pd.Series([True, True, True, False, False, True, False])
     res = _find_educ_workers_with_zero_students(contacts, states, col)
     expected = pd.Series([False, False, False, False, False, True, False])
     pd.testing.assert_series_equal(res, expected)
@@ -209,7 +211,7 @@ def test_emergency_care():
     states["educ_worker"] = [True, False, True, False, False]
     states["always_attend"] = [False, False, True, True, False]
     states["school_group_id_0"] = [1, 1, 2, 2, -1]
-    contacts = pd.Series([1, 1, 1, 1, 0], index=states.index)
+    contacts = pd.Series([True, True, True, True, False], index=states.index)
     res = apply_educ_policy(
         contacts=contacts,
         states=states,
@@ -222,5 +224,5 @@ def test_emergency_care():
     )
     # educ_worker without class, child not in emergency care, educ_worker with class,
     # attends, outside educ system
-    expected = pd.Series([0, 0, 1, 1, 0])
+    expected = pd.Series([False, False, True, True, False])
     pd.testing.assert_series_equal(res, expected)

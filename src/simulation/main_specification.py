@@ -16,14 +16,16 @@ from src.policies.combine_policies_over_periods import (
 )
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import combine_dictionaries
+from src.simulation.calculate_susceptibility import calculate_susceptibility
+from src.simulation.seasonality import seasonality_model
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
 
+FALL_PATH = BLD / "simulations" / f"{FAST_FLAG}_main_fall_scenarios"
+PREDICT_PATH = BLD / "simulations" / f"{FAST_FLAG}_main_predictions"
 
-FALL_PATH = BLD / "simulations" / "main_fall_scenarios"
-PREDICT_PATH = BLD / "simulations" / "main_predictions"
-SCENARIO_START = pd.Timestamp("2021-04-01")
+SCENARIO_START = pd.Timestamp("2021-04-06")  # after Easter holidays
 
 
 SIMULATION_DEPENDENCIES = {
@@ -32,10 +34,6 @@ SIMULATION_DEPENDENCIES = {
     / "data"
     / "vaccinations"
     / "vaccination_shares_quadratic.pkl",
-    "share_known_cases": BLD
-    / "data"
-    / "processed_time_series"
-    / "share_known_cases.pkl",
     "params": BLD / "params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
@@ -66,6 +64,7 @@ SIMULATION_DEPENDENCIES = {
     "output_of_check_initial_states": BLD
     / "data"
     / "comparison_of_age_group_distributions.png",
+    "seasonality_py": SRC / "simulation" / "seasonality.py",
 }
 
 
@@ -92,11 +91,11 @@ def build_main_scenarios(base_path):
         n_seeds = 20
     elif FAST_FLAG == "verify":
         # with the verify fast flag only base scenario is run for the fall
-        # -> 10 * 2 + 3 * 3 = 29
+        # -> 21 * 2 + 3 * 6 = 60
         if "base" in base_path.name:
-            n_seeds = 10
+            n_seeds = 21
         else:
-            n_seeds = 3
+            n_seeds = 6
     else:
         raise ValueError(
             f"Unknown FAST_FLAG: {FAST_FLAG}. Must be one of 'debug', 'verify', 'full'."
@@ -125,7 +124,9 @@ def build_main_scenarios(base_path):
     )
 
     if FAST_FLAG == "debug" or (FAST_FLAG == "verify" and "fall" in base_path.name):
-        scenarios = {"base_scenario": base_scenario}
+        scenarios = {
+            "base_scenario": base_scenario,
+        }
     else:
         scenarios = {
             "base_scenario": base_scenario,
@@ -156,7 +157,6 @@ def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=Fals
         "positivity_rate_overall": pd.read_pickle(
             depends_on["positivity_rate_overall"]
         ),
-        "share_known_cases": pd.read_pickle(depends_on["share_known_cases"]),
     }
 
     if extend_ars_dfs:
@@ -170,6 +170,7 @@ def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=Fals
     )
     simulation_inputs["initial_states"] = pd.read_parquet(depends_on["initial_states"])
     simulation_inputs["contact_models"] = get_all_contact_models()
+    simulation_inputs["susceptibility_factor_model"] = calculate_susceptibility
 
     # Virus Variant Specification --------------------------------------------
 
@@ -193,14 +194,29 @@ def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=Fals
 
     if init_start > pd.Timestamp("2021-01-01"):
         vaccination_shares = pd.read_pickle(depends_on["vaccination_shares"])
-        simulation_inputs["vaccination_model"] = partial(
-            find_people_to_vaccinate,
-            vaccination_shares=vaccination_shares,
-            no_vaccination_share=SHARE_REFUSE_VACCINATION,
-            init_start=init_start,
-        )
+        simulation_inputs["vaccination_models"] = {
+            "standard": {
+                "model": partial(
+                    find_people_to_vaccinate,
+                    vaccination_shares=vaccination_shares,
+                    no_vaccination_share=SHARE_REFUSE_VACCINATION,
+                    init_start=init_start,
+                )
+            }
+        }
+
+    def _currently_infected(df):
+        return df["infectious"] | df["symptomatic"] | (df["cd_infectious_true"] >= 0)
+
+    def _knows_currently_infected(df):
+        return df["knows_immune"] & df["currently_infected"]
 
     simulation_inputs["params"] = params
+    simulation_inputs["derived_state_variables"] = {
+        "currently_infected": _currently_infected,
+        "knows_currently_infected": _knows_currently_infected,
+    }
+    simulation_inputs["seasonality_factor_model"] = seasonality_model
     return virus_shares, simulation_inputs
 
 
@@ -227,14 +243,12 @@ def _extend_df_into_future(df, end_date):
 def _get_testing_models(
     init_start,
     end_date,
-    share_known_cases,
     positivity_rate_overall,
     test_shares_by_age_group,
     positivity_rate_by_age_group,
 ):
     demand_test_func = partial(
         demand_test,
-        share_known_cases=share_known_cases,
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
