@@ -255,7 +255,7 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
                 seed=seed,
                 is_recurrent=False,
             )
-
+    contacts = contacts.astype(float)
     return contacts
 
 
