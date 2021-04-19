@@ -25,7 +25,7 @@ def task_plot_seasonality(produces):
         data=[0.2],
     )
     dates = pd.date_range("2020-01-01", "2021-06-01")
-    seasonality_series = seasonality_model(params, dates)
+    seasonality_series = seasonality_model(params, dates, 4949)
     fig, ax = plt.subplots(figsize=(6, 4))
     sns.lineplot(x=seasonality_series.index, y=seasonality_series, ax=ax)
     fig.tight_layout()
