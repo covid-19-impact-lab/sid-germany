@@ -91,9 +91,9 @@ def build_main_scenarios(base_path):
         # with the verify fast flag only base scenario is run for the fall
         # -> 10 * 2 + 3 * 3 = 29
         if "base" in base_path.name:
-            n_seeds = 10
+            n_seeds = 15
         else:
-            n_seeds = 3
+            n_seeds = 10
     else:
         raise ValueError(
             f"Unknown FAST_FLAG: {FAST_FLAG}. Must be one of 'debug', 'verify', 'full'."
