@@ -46,8 +46,8 @@ def task_prepare_vaccination_data(depends_on, produces):
     vaccination_shares[vaccination_shares.cumsum() <= 0.01] = 0
 
     # family physicians started vaccinating on April 6th (Tue after Easter)
-    # we assume that the number of vaccinations is constant at the weekday / weekend mean
-    # when extrapolating into the future.
+    # we assume that the number of vaccinations is constant at the weekday / weekend
+    # mean when extrapolating into the future.
     start_physicians = pd.Timestamp("2021-04-06")
     after_start = vaccination_shares.loc[start_physicians:]
     work_days = after_start.index.dayofweek < 5
