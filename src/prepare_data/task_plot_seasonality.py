@@ -1,9 +1,10 @@
-import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
-from src.simulation.seasonality import seasonality_model
+import pandas as pd
 import pytask
+import seaborn as sns
+
 from src.config import BLD
+from src.simulation.seasonality import seasonality_model
 
 
 plt.rcParams.update(
