@@ -80,6 +80,9 @@ def task_create_full_params(depends_on, produces):
         ("test_demand", "symptoms", "share_symptomatic_requesting_test"), "value"
     ] = 0.5
 
+    # seasonality parameter
+    params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2
+
     params = _convert_index_to_int_where_possible(params)
     params.to_pickle(produces)
 
