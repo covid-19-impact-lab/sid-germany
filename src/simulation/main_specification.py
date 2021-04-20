@@ -33,7 +33,7 @@ SIMULATION_DEPENDENCIES = {
     "vaccination_shares": BLD
     / "data"
     / "vaccinations"
-    / "vaccination_shares_quadratic.pkl",
+    / "vaccination_shares_extended.pkl",
     "params": BLD / "params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
