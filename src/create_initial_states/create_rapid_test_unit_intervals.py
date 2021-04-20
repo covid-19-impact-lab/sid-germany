@@ -27,10 +27,13 @@ def create_unit_interval_for_group(states, interval_name, query, seed):
     np.random.seed(seed)
 
     locs = states.index if query == "all" else states.query(query).index
-    shuffled_locs = np.random.shuffle(locs)
 
-    states.loc[shuffled_locs, interval_name] = (
-        np.arange(len(locs)) / len(locs)
-    ).astype(np.float32)
+    # shuffle is inplace and can only be used on numpy objects
+    locs = np.array(locs)
+    np.random.shuffle(locs)
+
+    states.loc[locs, interval_name] = (np.arange(len(locs)) / len(locs)).astype(
+        np.float32
+    )
 
     return states

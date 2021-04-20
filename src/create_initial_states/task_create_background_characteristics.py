@@ -322,6 +322,7 @@ def _only_keep_relevant_columns(df):
         "educ_contact_priority",
         "vaccination_group",
         "vaccination_rank",
+        "rapid_test_interval_all",
     ]
 
     educ_contact_group_ids = [
@@ -353,5 +354,17 @@ def _only_keep_relevant_columns(df):
         "work_type",
     ]
 
-    assert set(keep + to_drop) == set(df.columns)
+    unexpected_columns = [x for x in df.columns if x not in keep + to_drop]
+    assert (
+        len(unexpected_columns) == 0
+    ), "There are unexpected columns in the initial states:\n" + "\n\t".join(
+        unexpected_columns
+    )
+    missing_columns = [x for x in keep + to_drop if x not in df.columns]
+    assert (
+        len(missing_columns) == 0
+    ), "The following columns are missing from the initial states:\n" + "\n\t".join(
+        missing_columns
+    )
+
     return df[keep]
