@@ -19,7 +19,7 @@ DEPENDENCIES = {
     ("", "plotting_py"): SRC / "simulation" / "plotting.py",
 }
 for name, seed_list in NESTED_PARAMETRIZATION.items():
-    for path, _, seed in seed_list:
+    for path, _, _, _, seed in seed_list:
         DEPENDENCIES[(name, seed)] = path
 
 INCIDENCE_PATHS = {

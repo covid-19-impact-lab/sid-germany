@@ -138,10 +138,28 @@ def build_main_scenarios(base_path):
     nested_parametrization = {}
     for name, scenario in scenarios.items():
         nested_parametrization[name] = []
+
+        # rapid tests for leisure, school and most work settings
+        # were very rare still in fall so we abstract from them completely.
+        if "fall" in base_path.name:
+            rapid_test_models = None
+            rapid_test_reaction_models = None
+        else:
+            rapid_test_models = None
+            rapid_test_reaction_models = None
+
         for i in range(n_seeds):
             seed = 300_000 + 700_001 * i
             produces = base_path / f"{name}_{seed}" / "time_series"
-            nested_parametrization[name].append((produces, scenario, seed))
+            nested_parametrization[name].append(
+                (
+                    produces,
+                    scenario,
+                    rapid_test_models,
+                    rapid_test_reaction_models,
+                    seed,
+                )
+            )
 
     return nested_parametrization
 

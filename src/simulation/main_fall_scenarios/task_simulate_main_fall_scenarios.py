@@ -28,8 +28,13 @@ if FAST_FLAG == "debug":
 
 
 @pytask.mark.depends_on(SIMULATION_DEPENDENCIES)
-@pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
-def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
+@pytask.mark.parametrize(
+    "produces, scenario, rapid_test_models, rapid_test_reaction_models, seed",
+    PARAMETRIZATION,
+)
+def task_simulate_main_fall_scenario(
+    depends_on, produces, scenario, rapid_test_models, rapid_test_reaction_models, seed
+):
     # determine dates
     start_date = pd.Timestamp("2020-10-15")
 
@@ -61,6 +66,8 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
 
     simulate = get_simulate_func(
         **simulation_inputs,
+        rapid_test_models=rapid_test_models,
+        rapid_test_reaction_models=rapid_test_reaction_models,
         contact_policies=policies,
         duration={"start": start_date, "end": end_date},
         initial_conditions=initial_conditions,
