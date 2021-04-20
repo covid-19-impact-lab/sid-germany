@@ -33,7 +33,7 @@ BLD = SRC.parent / "bld"
 
 POPULATION_GERMANY = 83_000_000
 
-N_HOUSEHOLDS = 750_000
+N_HOUSEHOLDS = 1_000_000
 
 SHARE_REFUSE_VACCINATION = 0.15
 """Share of individuals refusing to be vaccinated.
