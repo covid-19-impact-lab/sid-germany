@@ -27,6 +27,7 @@ if FAST_FLAG == "debug":
     )
 
 
+@pytask.mark.skip  ###
 @pytask.mark.depends_on(SIMULATION_DEPENDENCIES)
 @pytask.mark.parametrize(
     "produces, scenario, rapid_test_models, rapid_test_reaction_models, seed",

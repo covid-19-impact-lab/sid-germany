@@ -113,8 +113,18 @@ def demand_test(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
+        rapid_tests_tuple = (
+            "test_demand",
+            "rapid_tests",
+            "share_w_positive_rapid_test_requesting_test",
+        )
+        share_w_positive_rapid_test_requesting_test = params.loc[
+            rapid_tests_tuple, "value"
+        ]
+
     share_known_cases = get_share_known_cases_for_one_day(date, params_slice)
 
+    # get budget of positive tests to distribute
     n_pos_tests_for_each_group = _calculate_positive_tests_to_distribute_per_age_group(
         n_newly_infected=n_newly_infected,
         share_known_cases=share_known_cases,
@@ -122,29 +132,31 @@ def demand_test(
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
     )
-    developed_symptoms_yesterday = states["cd_symptoms_true"] == -1
 
-    untested = ~states["pending_test"] & ~states["knows_immune"]
-    symptomatic_without_test = developed_symptoms_yesterday & untested
-    if share_symptomatic_requesting_test == 1.0:
-        unconstrained_demanded = symptomatic_without_test
-    else:
-        # this ignores the designated number of tests per age group.
-        # Adjusting the number of tests to the designated number is done in
-        # `_scale_demand_up_or_down` below.
-        n_to_demand = int(
-            share_symptomatic_requesting_test * symptomatic_without_test.sum()
-        )
-        pool = states[symptomatic_without_test].index
-        drawn = np.random.choice(size=n_to_demand, a=pool, replace=False)
-        unconstrained_demanded = pd.Series(False, index=states.index)
-        unconstrained_demanded[drawn] = True
+    unconstrained_demanded = pd.Series(False, index=states.index)
 
+    # demand for verification tests
+    received_pos_rapid_test = states[states["cd_received_rapid_test"] == 0].index
+    n_demanding_verification = int(
+        share_w_positive_rapid_test_requesting_test * len(received_pos_rapid_test)
+    )
+    demanding_verification_test = np.random.choice(
+        a=received_pos_rapid_test,
+        size=n_demanding_verification,
+        replace=False,
+    )
+    true_positives_getting_verification = states[
+        "currently_infected"
+    ] & states.index.isin(demanding_verification_test)
+    unconstrained_demanded[true_positives_getting_verification] = True
+
+    # add tests for educ workers
     if date > pd.Timestamp("2020-12-31"):
         unconstrained_demanded = _demand_test_for_educ_workers(
             unconstrained_demanded, states, params
         )
 
+    # scale demand
     demands_by_age_group = unconstrained_demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
     demanded = _scale_demand_up_or_down(unconstrained_demanded, states, remaining)

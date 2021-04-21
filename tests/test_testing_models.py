@@ -30,6 +30,7 @@ def states():
     states["educ_worker"] = False
     states["state"] = "Hessen"
     states["cd_received_test_result_true"] = -3
+    states["cd_received_rapid_test"] = -99
     states["index"] = states.index
     return states
 
@@ -50,6 +51,13 @@ def params():
     params.loc[
         ("share_known_cases", "share_known_cases", pd.Timestamp("2022-01-01"))
     ] = -1.0
+    rapid_tests_tuple = (
+        "test_demand",
+        "rapid_tests",
+        "share_w_positive_rapid_test_requesting_test",
+    )
+    params.loc[rapid_tests_tuple] = 0.0
+
     params.index.names = ["category", "subcategory", "name"]
     return params
 

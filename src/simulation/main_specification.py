@@ -18,6 +18,7 @@ from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import combine_dictionaries
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
+from src.testing.rapid_tests import rapid_test_demand
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -145,7 +146,7 @@ def build_main_scenarios(base_path):
             rapid_test_models = None
             rapid_test_reaction_models = None
         else:
-            rapid_test_models = None
+            rapid_test_models = {"standard_rapid_test_demand": rapid_test_demand}
             rapid_test_reaction_models = None
 
         for i in range(n_seeds):
