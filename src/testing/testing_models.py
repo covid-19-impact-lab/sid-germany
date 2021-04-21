@@ -11,21 +11,15 @@ reflect the true positive tests but the negative tests don't.
 Who gets a test as follows is completely determined in the demand_test function:
 
 Firstly, we calculate from the number of infected people in the simulation and the
-share_known_cases how many positive tests are to
-be distributed in the whole population. From this, using the overall positivity rate
-of tests we get to the full budget of tests to be distributed across the population.
+share_known_cases how many positive tests are to be distributed in the whole population.
+From this, using the overall positivity rate of tests we get to the full budget of tests
+to be distributed across the population.
+
 Using the ARS data, we get the share of tests (positive and negative) going to each
 age group. Using the age specific positivity rate - also reported in the ARS data -
 then gets us the number of positive tests to distribute in each age group.
 Using the RKI and ARS data therefore allows us to reflect the German testing strategy
 over age groups, e.g .preferential testing of older individuals.
-
-We assume that symptomatic individuals preferentially demand and receive tests and
-that teachers are tested on a weekly basis while working.
-The remaining tests are distributed uniformly among the infectious in each age group.
-We plan to further enhance the testing demand model by further variables such as contact
-tracing.
-
 
 """
 import warnings
@@ -34,7 +28,6 @@ import numpy as np
 import pandas as pd
 from sid.time import get_date
 
-from src.contact_models.contact_model_functions import get_states_w_vacations
 from src.testing.shared import get_share_known_cases_for_one_day
 
 
@@ -62,12 +55,10 @@ def demand_test(
     Using the RKI and ARS data therefore allows us to reflect the German testing
     strategy over age groups, e.g .preferential testing of older individuals.
 
-    In each age group we first distribute tests among those that recently developed
-    symptoms but have no pending test and do not know their infection state yet.
-    We then test all education workers such as teachers that have not been tested
-    in the last week and are not on vacation.
-    We then distribute the remaining tests among the remaining currently
-    infectious such that we use up the full test budget in each age group.
+    In each age group we first distribute tests among those that received a positive
+    rapid test in the previous period. We then distribute the remaining tests randomly
+    among the remaining currently infectious such that we use up the full test budget
+    in each age group.
 
     Args:
         states (pandas.DataFrame): The states of the individuals.
@@ -92,8 +83,6 @@ def demand_test(
     """
     np.random.seed(seed)
     n_newly_infected = states["newly_infected"].sum()
-    symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
-    share_symptomatic_requesting_test = params.loc[symptom_tuple, "value"]
 
     date = get_date(states)
     if isinstance(test_shares_by_age_group, pd.DataFrame):
@@ -102,11 +91,6 @@ def demand_test(
         positivity_rate_by_age_group = positivity_rate_by_age_group.loc[date]
     if isinstance(positivity_rate_overall, pd.Series):
         positivity_rate_overall = positivity_rate_overall.loc[date]
-    if share_symptomatic_requesting_test > 1.0 or share_symptomatic_requesting_test < 0:
-        raise ValueError(
-            "The share of symptomatic individuals requesting a test must lie in the "
-            f"[0, 1] interval, you specified {share_symptomatic_requesting_test}"
-        )
 
     with warnings.catch_warnings():
         warnings.filterwarnings(
@@ -136,31 +120,27 @@ def demand_test(
     unconstrained_demanded = pd.Series(False, index=states.index)
 
     # demand for verification tests
-    received_pos_rapid_test = states[states["cd_received_rapid_test"] == 0].index
+    received_pos_rapid_test = states[
+        states["cd_received_rapid_test"]
+        == 0 & states["is_tested_positive_by_rapid_test"]
+    ].index
     n_demanding_verification = int(
         share_w_positive_rapid_test_requesting_test * len(received_pos_rapid_test)
     )
-    demanding_verification_test = np.random.choice(
+    demands_verification_test = np.random.choice(
         a=received_pos_rapid_test,
         size=n_demanding_verification,
         replace=False,
     )
     true_positives_getting_verification = states[
         "currently_infected"
-    ] & states.index.isin(demanding_verification_test)
+    ] & states.index.isin(demands_verification_test)
     unconstrained_demanded[true_positives_getting_verification] = True
-
-    # add tests for educ workers
-    if date > pd.Timestamp("2020-12-31"):
-        unconstrained_demanded = _demand_test_for_educ_workers(
-            unconstrained_demanded, states, params
-        )
 
     # scale demand
     demands_by_age_group = unconstrained_demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
     demanded = _scale_demand_up_or_down(unconstrained_demanded, states, remaining)
-
     if (remaining < 0).any():
         info = pd.concat([demands_by_age_group, n_pos_tests_for_each_group], axis=1)
         info.columns = ["demand", "target demand"]
@@ -223,39 +203,6 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     n_pos_tests_for_each_group = n_tests_for_each_group * positivity_rate_by_age_group
     n_pos_tests_for_each_group = n_pos_tests_for_each_group.astype(int)
     return n_pos_tests_for_each_group
-
-
-def _demand_test_for_educ_workers(demanded, states, params):
-    """Every working teacher who has not received a test in the last 7 days is tested.
-
-    At the moment we only distribute positive tests. As a result the
-    `cd_received_test_result_true` countdown does not give us who has been tested and
-    we only want to demand tests for education workers who will get a positive result.
-
-    We implement the tests for education workers as spread out across the week. This
-    is necessary because teachers use antigen tests for which no data is available.
-    Our test data is weekly PCR test data which we spread out to be evenly distributed
-    across the week. So we spread out the testing for teachers also across the week.
-    We use the index to decide who gets tested which day of the week. Since the states
-    are shuffeld this is not a problem.
-
-    We again assume that tests are perfect, i.e. no false positives or negatives.
-
-    """
-    demanded = demanded.copy()
-    date = get_date(states)
-    states_w_vacations = get_states_w_vacations(date, params)
-    on_vacation = states["state"].isin(states_w_vacations)
-    working_teachers = states["educ_worker"] & ~on_vacation
-
-    day_of_week = date.dayofweek
-    slice_start = int(day_of_week / 7 * len(states))
-    slice_end = int(((day_of_week + 1) / 7) * len(states))
-    in_slice = (slice_start <= states["index"]) & (states["index"] < slice_end)
-    to_be_tested = working_teachers & in_slice
-    to_receive_positive_test = to_be_tested & states["infectious"]
-    demanded[to_receive_positive_test] = True
-    return demanded
 
 
 def _scale_demand_up_or_down(demanded, states, remaining):
