@@ -146,7 +146,13 @@ def build_main_scenarios(base_path):
             rapid_test_models = None
             rapid_test_reaction_models = None
         else:
-            rapid_test_models = {"standard_rapid_test_demand": rapid_test_demand}
+            rapid_test_models = {
+                "standard_rapid_test_demand": {
+                    "model": rapid_test_demand,
+                    "start": "2021-01-01",
+                    "end": "2025-01-01",
+                }
+            }
             rapid_test_reaction_models = None
 
         for i in range(n_seeds):
