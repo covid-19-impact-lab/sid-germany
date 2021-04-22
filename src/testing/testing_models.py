@@ -56,9 +56,10 @@ def demand_test(
     strategy over age groups, e.g .preferential testing of older individuals.
 
     In each age group we first distribute tests among those that received a positive
-    rapid test in the previous period. We then distribute the remaining tests randomly
-    among the remaining currently infectious such that we use up the full test budget
-    in each age group.
+    rapid test in the previous period. In addition, symptomatic people request a test
+    with the `share_symptomatic_requesting_test` probability.
+    We then distribute the remaining tests randomly among the remaining currently
+    infectious such that we use up the full test budget in each age group.
 
     Args:
         states (pandas.DataFrame): The states of the individuals.
@@ -91,6 +92,13 @@ def demand_test(
         positivity_rate_by_age_group = positivity_rate_by_age_group.loc[date]
     if isinstance(positivity_rate_overall, pd.Series):
         positivity_rate_overall = positivity_rate_overall.loc[date]
+    symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
+    share_symptomatic = params.loc[symptom_tuple, "value"]
+    if share_symptomatic > 1.0 or share_symptomatic < 0:
+        raise ValueError(
+            "The share of symptomatic individuals requesting a test must lie in the "
+            f"[0, 1] interval, you specified {share_symptomatic}"
+        )
 
     with warnings.catch_warnings():
         warnings.filterwarnings(
@@ -136,6 +144,10 @@ def demand_test(
         "currently_infected"
     ] & states.index.isin(demands_verification_test)
     unconstrained_demanded[true_positives_getting_verification] = True
+
+    # symptomatic demand
+    symptomatic_requests = _request_pcr_test_bc_of_symptoms(states, share_symptomatic)
+    unconstrained_demanded[symptomatic_requests] = True
 
     # scale demand
     demands_by_age_group = unconstrained_demanded.groupby(states["age_group_rki"]).sum()
@@ -203,6 +215,43 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     n_pos_tests_for_each_group = n_tests_for_each_group * positivity_rate_by_age_group
     n_pos_tests_for_each_group = n_pos_tests_for_each_group.astype(int)
     return n_pos_tests_for_each_group
+
+
+def _request_pcr_test_bc_of_symptoms(states, share_symptomatic_requesting_test):
+    """Return who requests a rapid test because of symptoms.
+
+    Args:
+        states (pandas.DataFrame)
+        share_symptomatic_requesting_test (float): Share of individuals that
+            developed symptoms the day before requesting a test.
+
+    Returns:
+        requests_rapid_test (pandas.Series): boolean Series. Index is the same as
+            states. True for individuals requesting a PCR test because of having
+            developed symptoms the day before.
+
+    """
+    developed_symptoms_yesterday = states["cd_symptoms_true"] == -1
+    untested = ~states["pending_test"] & ~states["knows_immune"]
+    symptomatic_without_test = developed_symptoms_yesterday & untested
+    if share_symptomatic_requesting_test == 1.0:
+        requests_rapid_test_locs = states[symptomatic_without_test].index
+    else:
+        # this ignores the designated number of tests per age group.
+        # Adjusting the number of tests to the designated number is done in
+        # `_scale_demand_up_or_down` below.
+        n_to_demand = int(
+            share_symptomatic_requesting_test * symptomatic_without_test.sum()
+        )
+        pool = states[symptomatic_without_test].index
+        requests_rapid_test_locs = np.random.choice(
+            size=n_to_demand, a=pool, replace=False
+        )
+
+    requests_rapid_test = pd.Series(
+        states.index.isin(requests_rapid_test_locs), index=states.index
+    )
+    return requests_rapid_test
 
 
 def _scale_demand_up_or_down(demanded, states, remaining):

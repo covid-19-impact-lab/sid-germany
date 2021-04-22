@@ -1,33 +1,7 @@
-import numpy as np
 import pandas as pd
 import pytest
 
-from src.testing.rapid_tests import _request_rapid_test_bc_of_symptoms
 from src.testing.rapid_tests import _test_schools_and_educ_workers
-
-
-@pytest.fixture
-def symptom_states():
-    states = pd.DataFrame()
-    # 0th and1st didn't get symptoms yesterday
-    # 2nd has a pending test, 3rd knows she's immune
-    # 4th requests a test
-    states["cd_symptoms_true"] = [-5, 3, -1, -1, -1]
-    states["pending_test"] = [False, False, True, False, False]
-    states["knows_immune"] = [False, False, False, True, False]
-    return states
-
-
-def test_request_rapid_test_bc_of_symptoms_no_one(symptom_states):
-    res = _request_rapid_test_bc_of_symptoms(symptom_states, 0.0)
-    expected = np.array([False, False, False, False, False])
-    np.testing.assert_equal(res, expected)
-
-
-def test_request_rapid_test_bc_of_symptoms_everyone(symptom_states):
-    res = _request_rapid_test_bc_of_symptoms(symptom_states, 1.0)
-    expected = np.array([False, False, False, False, True])
-    np.testing.assert_equal(res, expected)
 
 
 @pytest.fixture
