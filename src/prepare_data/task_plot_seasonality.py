@@ -4,8 +4,8 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
+from src.simulation.plotting import style_plot
 from src.simulation.seasonality import seasonality_model
-
 
 plt.rcParams.update(
     {
@@ -27,8 +27,9 @@ def task_plot_seasonality(produces):
     )
     dates = pd.date_range("2020-01-01", "2021-06-01")
     seasonality_series = seasonality_model(params, dates, 4949)
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(10, 4))
     sns.lineplot(x=seasonality_series.index, y=seasonality_series, ax=ax)
+    fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     fig.savefig(
         produces, dpi=200, transparent=False, facecolor="w", bbox_inches="tight"
