@@ -8,7 +8,6 @@ from src.testing.testing_models import _request_pcr_confirmation_of_rapid_test
 from src.testing.testing_models import _request_pcr_test_bc_of_symptoms
 from src.testing.testing_models import _scale_demand_up_or_down
 from src.testing.testing_models import allocate_tests
-from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
 
 DATE = pd.Timestamp("2020-10-10")
@@ -125,27 +124,10 @@ def test_process_tests(states):
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
-@pytest.mark.xfail
-def test_demand_test(states, params):
-    positivity_rate_overall = 0.25
-    test_shares_by_age_group = pd.Series(
-        [0.5, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
-    )
-    positivity_rate_by_age_group = pd.Series(
-        [0.125, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
-    )
-    params.loc["share_known_cases"] = 1.0
-
-    raise AssertionError("`demand_test` is not tested at the moment.")
-
-
-# ----------------------------------------------------------------------------
-
-
 @pytest.fixture
 def symptom_states():
     states = pd.DataFrame()
-    # 0th and1st didn't get symptoms yesterday
+    # 0th and 1st didn't get symptoms yesterday
     # 2nd has a pending test, 3rd knows she's immune
     # 4th requests a test
     states["cd_symptoms_true"] = [-5, 3, -1, -1, -1]
