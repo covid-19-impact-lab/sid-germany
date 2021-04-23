@@ -1,7 +1,14 @@
 sid-germany
 ===========
 
-This repository contains the result of estimations with sid.
+This repository holds the documentation for sid-germany.
+
+.. warning::
+
+    The documentation is in a very early stage. Useful descriptions can be found in the docstrings of modules and functions in the :ref:`api` section.
+
+    We try to add more content in the future. If you are interested in a particular
+    topic, raise an issue so that we can help you.
 
 .. toctree::
    :maxdepth: 1
