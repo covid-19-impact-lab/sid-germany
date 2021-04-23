@@ -77,12 +77,14 @@ def task_create_full_params(depends_on, produces):
     params.loc[("testing", "allocation", "rel_available_tests"), "value"] = 100_000
     params.loc[("testing", "processing", "rel_available_capacity"), "value"] = 100_000
 
-    # Testing parameters governing test and rapid test demand
+    # Testing parameters governing test demand
     params.loc[
         ("test_demand", "symptoms", "share_symptomatic_requesting_test"), "value"
     ] = 0.5
+
+    # Testing parameters governing rapid test demand
     params.loc[
-        ("test_demand", "rapid_tests", "share_w_positive_rapid_test_requesting_test"),
+        ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test"),
         "value",
     ] = 0.7
 

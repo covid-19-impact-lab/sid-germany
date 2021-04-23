@@ -30,10 +30,6 @@ def rapid_test_demand(
     return requests_rapid_test
 
 
-### GENERALIZE THIS
-# contact_cols
-# condition (e.g. educ_worker or school pupil)
-# compliance_rate -> reduce_model
 def _test_schools_and_educ_workers(states, contacts):
     eligible = states["educ_worker"] | (states["occupation"] == "school")
     untested_within_4_days = states["cd_received_rapid_test"] <= -4

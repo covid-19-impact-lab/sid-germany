@@ -107,7 +107,7 @@ def demand_test(
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
         rapid_tests_tuple = (
             "test_demand",
-            "rapid_tests",
+            "shares",
             "share_w_positive_rapid_test_requesting_test",
         )
         share_w_positive_rapid_test_requesting_test = params.loc[
