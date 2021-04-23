@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - nodefaults
+
+dependencies:
+  - python
+
+  - sphinx
+  - nbsphinx
+  - furo

@@ -35,8 +35,11 @@ dependencies:
   - xlrd<=1.2.0
   - virtualenv=20.0.33
 
+  # Documentation
   - sphinx
   - nbsphinx
+  - furo
+
   - pip:
     - DFO-LS
     - Py-BOBYQA
