@@ -282,13 +282,13 @@ def _create_group_id_for_one_strict_assort_by_group(
 
 
 def _get_key_with_longest_value(dict_):
-    """Get the key from dict_ that has the longest value."""
+    """Get the key from ``dict_`` that has the longest value."""
     sorted_keys = sorted(dict_, key=lambda k: len(dict_[k]))
     return sorted_keys[-1]
 
 
 def _get_key_with_shortest_value(dict_):
-    """Get the key from dict_ that has the shortest value"""
+    """Get the key from ``dict_`` that has the shortest value"""
     sorted_keys = sorted(dict_, key=lambda k: len(dict_[k]))
     return sorted_keys[0]
 

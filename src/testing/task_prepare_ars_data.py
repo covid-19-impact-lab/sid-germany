@@ -44,9 +44,10 @@ PRODUCTS = {
 )
 @pytask.mark.produces(PRODUCTS)
 def task_prepare_ars_data(depends_on, produces):
-    """Calculate and save quantaties of interest of the ARS data.
+    """Calculate and save quantities of interest of the ARS data.
 
     We do not export the ARS data at the moment because:
+
     1. it is weekly and not daily frequency data (not relevant for shares and rates)
     2. it would be necessary to upscale the number of tests to account for the fact
        that only a fraction of laboratories report ARS data. The coverage between
@@ -156,7 +157,6 @@ def _convert_from_weekly_to_daily(short):
     Together with `get_date_from_year_and_week` taking the Sunday of
     each week, this yields the week's values for Mon through Sun to be
     the values of reported for that week.
-
 
     Args:
         short (pandas.Series or pandas.DataFrame): index must be a DateTime index
