@@ -38,6 +38,7 @@ def demand_test(
     positivity_rate_overall,
     test_shares_by_age_group,
     positivity_rate_by_age_group,
+    log_path,
 ):
     """Test demand function.
 
@@ -76,6 +77,7 @@ def demand_test(
             share of tests that was positive in each age group. If a Series the
             index are the age groups. If a DataFrame, the index are the dates and
             the columns are the age groups.
+        log_path (pathlib.Path): Path to which the intermediate results will be saved.
 
     Returns:
         demand_probability (numpy.ndarray, pandas.Series): An array or a series
@@ -128,29 +130,32 @@ def demand_test(
     receiving_confirmation = _request_pcr_confirmation_of_rapid_test(
         states, share_requesting_confirmation
     )
-    unconstrained_demanded[receiving_confirmation] = True
-
-    # symptomatic demand
     symptomatic_requests = _request_pcr_test_bc_of_symptoms(states, share_symptomatic)
-    unconstrained_demanded[symptomatic_requests] = True
+
+    unconstrained_demanded = receiving_confirmation | symptomatic_requests
 
     # scale demand
     demands_by_age_group = unconstrained_demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
     demanded = _scale_demand_up_or_down(unconstrained_demanded, states, remaining)
+
     if (remaining < 0).any():
-        info = pd.concat([demands_by_age_group, n_pos_tests_for_each_group], axis=1)
-        info.columns = ["demand", "target demand"]
-        info["difference"] = (info["demand"] - info["target demand"]) / info[
-            "target demand"
-        ]
-        info = info.T.round(2)
-        warnings.warn(
-            f"\nToo much endogenous test demand on {date.date()} ({date.day_name()}). "
-            "This is an indication that the share of symptomatic infections is too "
-            "high or too many symptomatic people demand a test:"
-            f"\n\n{info.to_string()}\n\n"
-        )
+        save_path = log_path / f"{date.date()}.pkl"
+        to_save = {
+            "n_pos_tests_for_each_group": n_pos_tests_for_each_group,
+            "unconstrained_demanded": unconstrained_demanded,
+            "symptomatic_requests": symptomatic_requests,
+            "receiving_confirmation": receiving_confirmation,
+            "scaled": demanded,
+            "supply_inputs": {
+                "n_newly_infected": n_newly_infected,
+                "share_known_cases": share_known_cases,
+                "positivity_rate_overall": positivity_rate_overall,
+                "test_shares_by_age_group": test_shares_by_age_group,
+                "positivity_rate_by_age_group": positivity_rate_by_age_group,
+            },
+        }
+        pd.to_pickle(to_save, save_path)
 
     return demanded
 
