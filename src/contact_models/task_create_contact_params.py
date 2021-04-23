@@ -1,3 +1,4 @@
+import warnings
 from functools import partial
 
 import matplotlib.pyplot as plt
@@ -280,13 +281,18 @@ def _reduce_empirical_distribution_to_max_contacts(
 
     start_crit = criterion_func(params)
 
-    res = minimize(
-        criterion=criterion_func,
-        params=params,
-        constraints=constraints,
-        algorithm="nag_pybobyqa",
-        logging=False,
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            category=RuntimeWarning,
+        )
+        res = minimize(
+            criterion=criterion_func,
+            params=params,
+            constraints=constraints,
+            algorithm="nag_pybobyqa",
+            logging=False,
+        )
     assert res["success"]
     assert res["solution_criterion"] <= start_crit
     assert res["solution_criterion"] < assert_below_this
