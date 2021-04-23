@@ -1,0 +1,24 @@
+include *.yaml
+include *.yml
+include matplotlibrc
+include tox.ini
+recursive-include docs *.bat
+recursive-include docs *.ipynb
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs *.yml
+recursive-include docs Makefile
+recursive-include src *.bib
+recursive-include src *.csv
+recursive-include src *.gz
+recursive-include src *.ipynb
+recursive-include src *.pdf
+recursive-include src *.pkl
+recursive-include src *.py
+recursive-include src *.rst
+recursive-include src *.xls
+recursive-include src *.xlsx
+recursive-include src *.zip
+recursive-include tests *.parquet
+recursive-include tests *.pkl
+recursive-include tests *.py
