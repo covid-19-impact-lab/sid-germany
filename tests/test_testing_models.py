@@ -4,6 +4,7 @@ import pytest
 from src.testing.testing_models import (
     _calculate_positive_tests_to_distribute_per_age_group,
 )
+from src.testing.testing_models import _request_pcr_confirmation_of_rapid_test
 from src.testing.testing_models import _request_pcr_test_bc_of_symptoms
 from src.testing.testing_models import _scale_demand_up_or_down
 from src.testing.testing_models import allocate_tests
@@ -135,7 +136,7 @@ def test_demand_test(states, params):
     )
     params.loc["share_known_cases"] = 1.0
 
-    assert False, "`demand_test` is not tested at the moment."
+    raise AssertionError("`demand_test` is not tested at the moment.")
 
 
 # ----------------------------------------------------------------------------
@@ -159,7 +160,24 @@ def test_request_pcr_test_bc_of_symptoms_no_one(symptom_states):
     pd.testing.assert_series_equal(res, expected)
 
 
-def test_reqst_pcr_test_bc_of_symptoms_everyone(symptom_states):
+def test_request_pcr_test_bc_of_symptoms_everyone(symptom_states):
     res = _request_pcr_test_bc_of_symptoms(symptom_states, 1.0)
     expected = pd.Series([False, False, False, False, True], index=symptom_states.index)
     pd.testing.assert_series_equal(res, expected)
+
+
+def test__request_pcr_confirmation_of_rapid_test():
+    states = pd.DataFrame()
+    # cases:
+    # 0: not tested today
+    # 1: false negative
+    # 2: false positive
+    # 3: true positive
+    # 4: true negative
+    states["cd_received_rapid_test"] = [-2, 0, 0, 0, 0]
+    states["is_tested_positive_by_rapid_test"] = [True, False, True, True, False]
+    states["currently_infected"] = [False, True, False, True, False]
+
+    res = _request_pcr_confirmation_of_rapid_test(states, 1)
+    expected = pd.Series([False, False, False, True, False], index=states.index)
+    pd.testing.assert_series_equal(res, expected, check_names=False)

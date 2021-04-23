@@ -100,19 +100,17 @@ def demand_test(
             f"[0, 1] interval, you specified {share_symptomatic}"
         )
 
+    rapid_tests_tuple = (
+        "test_demand",
+        "shares",
+        "share_w_positive_rapid_test_requesting_test",
+    )
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
-        rapid_tests_tuple = (
-            "test_demand",
-            "shares",
-            "share_w_positive_rapid_test_requesting_test",
-        )
-        share_w_positive_rapid_test_requesting_test = params.loc[
-            rapid_tests_tuple, "value"
-        ]
+        share_requesting_confirmation = params.loc[rapid_tests_tuple, "value"]
 
     share_known_cases = get_share_known_cases_for_one_day(date, params_slice)
 
@@ -127,23 +125,10 @@ def demand_test(
 
     unconstrained_demanded = pd.Series(False, index=states.index)
 
-    # demand for verification tests
-    received_pos_rapid_test = states[
-        states["cd_received_rapid_test"]
-        == 0 & states["is_tested_positive_by_rapid_test"]
-    ].index
-    n_demanding_verification = int(
-        share_w_positive_rapid_test_requesting_test * len(received_pos_rapid_test)
+    receiving_confirmation = _request_pcr_confirmation_of_rapid_test(
+        states, share_requesting_confirmation
     )
-    demands_verification_test = np.random.choice(
-        a=received_pos_rapid_test,
-        size=n_demanding_verification,
-        replace=False,
-    )
-    true_positives_getting_verification = states[
-        "currently_infected"
-    ] & states.index.isin(demands_verification_test)
-    unconstrained_demanded[true_positives_getting_verification] = True
+    unconstrained_demanded[receiving_confirmation] = True
 
     # symptomatic demand
     symptomatic_requests = _request_pcr_test_bc_of_symptoms(states, share_symptomatic)
@@ -215,6 +200,21 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     n_pos_tests_for_each_group = n_tests_for_each_group * positivity_rate_by_age_group
     n_pos_tests_for_each_group = n_pos_tests_for_each_group.astype(int)
     return n_pos_tests_for_each_group
+
+
+def _request_pcr_confirmation_of_rapid_test(states, share_requesting_confirmation):
+    received_rapid_test = states["cd_received_rapid_test"] == 0
+    pos_rapid_test = states["is_tested_positive_by_rapid_test"]
+    pool = states[received_rapid_test & pos_rapid_test].index
+    n_to_draw = int(share_requesting_confirmation * len(pool))
+    demands_verification_locs = np.random.choice(
+        a=pool,
+        size=n_to_draw,
+        replace=False,
+    )
+    demanding_verification = states.index.isin(demands_verification_locs)
+    getting_confirmation = states["currently_infected"] & demanding_verification
+    return getting_confirmation
 
 
 def _request_pcr_test_bc_of_symptoms(states, share_symptomatic_requesting_test):
