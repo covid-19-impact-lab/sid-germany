@@ -86,7 +86,7 @@ def task_create_full_params(depends_on, produces):
     params.loc[
         ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test"),
         "value",
-    ] = 0.7
+    ] = 1.0  ###  this is for verification
 
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2
