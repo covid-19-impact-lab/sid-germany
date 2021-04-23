@@ -5,6 +5,31 @@ from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
 
 
+def get_educ_options_1st_half_april(hygiene_multiplier=0.5):
+    """Get the educ options starting April 1-18.
+
+    Situation:
+       - BW:
+           - sources:
+               - https://bit.ly/32ABEUr (SWR3, 2021-04-02)
+           - 1-19 April:
+               - A/B schooling for graduating classes
+               - tests are voluntary
+        - BY:
+            - source: https://bit.ly/2QmRNu0, https://bit.ly/32FlgBQ (2021-04-22)
+            - incidence <100: A/B for everyone
+            - incidence >100: 4th grade and graduating classes in A/B schooling.
+              emergency care for rest.
+            - 2x tests per week, required
+        - NRW:
+            - source: https://bit.ly/32z9sRM
+            - 1-19 April:
+                - only graduating classes
+                - 2x tests per week, required
+    """
+    pass
+
+
 def get_educ_options_after_easter(hygiene_multiplier=0.5):
     """Get the educ options starting April 1st.
 
@@ -12,16 +37,10 @@ def get_educ_options_after_easter(hygiene_multiplier=0.5):
 
     Situation:
        - BW:
-           - sources:
-               - https://bit.ly/32ABEUr (SWR3, 2021-04-02)
-               - https://bit.ly/3dDaF0K (Kultusministerium, 2021-04-14)
-           - 1-19 April:
-               - A/B schooling for graduating classes
-               - tests are voluntary
-           - 19 April onwards:
-               - 2x tests per week, required
-               - all grades in A/B mode
-               - incidence above 200 => distance learning!
+           - sources: https://bit.ly/3dDaF0K (Kultusministerium, 2021-04-14)
+           - 2x tests per week, required
+           - all grades in A/B mode
+           - incidence above 200 => distance learning!
        - BY:
            - source: https://bit.ly/2QmRNu0, https://bit.ly/32FlgBQ (2021-04-22)
            - incidence <100: A/B for everyone
@@ -30,11 +49,7 @@ def get_educ_options_after_easter(hygiene_multiplier=0.5):
            - 2x tests per week, required
        - NRW:
            - source: https://bit.ly/32z9sRM
-           - 1-19 April:
-               - only graduating classes
-               - 2x tests per week, required
-           - 19 April onwards:
-               - all grades in A/B mode
+           - all grades in A/B mode <- only below 100 ###
 
     """
     ### WHAT'S WITH PRESCHOOLS AND NURSERIES?
