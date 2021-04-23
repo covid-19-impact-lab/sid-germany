@@ -80,7 +80,7 @@ def _prepare_cologne_data(df):
     df = df.set_index("date").astype(int).sort_index()
     # Cologne started screening all PCR positive samples for mutatations at
     # the end of January
-    df = df.loc[pd.Timestamp("2021-02-04") :]  # noqa
+    df = df.loc[pd.Timestamp("2021-02-04") :]
     for col in df:
         assert (df[col].diff().dropna() >= 0).all(), col
         df[col.replace("_cum", "")] = df[col].diff()

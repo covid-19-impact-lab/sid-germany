@@ -1,18 +1,20 @@
 # Configuration file for the Sphinx documentation builder. This file only contains a
 # selection of the most common options. For a full list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
-
 # -- Path setup ------------------------------------------------------------------------
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-
+import datetime as dt
 import os
 import sys
-import datetime as dt
 
-sys.path.insert(0, os.path.abspath('../..'))
+
+sys.path.insert(0, os.path.abspath("../.."))
+
+
+import src  # noqa: E402
+
 
 # -- Project information ---------------------------------------------------------------
 
@@ -20,6 +22,8 @@ project = "sid-germany"
 year = dt.datetime.now().year
 author = "Janos Gabler, Tobias Raabe, and Klara Röhrl"
 copyright = f"2020-{year}, {author}"  # noqa: A001
+version = src.__version__
+release = version
 
 
 # -- General configuration -------------------------------------------------------------

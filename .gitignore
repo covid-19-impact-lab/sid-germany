@@ -1,6 +1,7 @@
 __pycache__/
 .ipynb_checkpoints/
 *.egg-info/
+src/_version.py
 
 bld/
 dask-worker-space/

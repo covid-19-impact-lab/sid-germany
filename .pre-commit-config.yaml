@@ -1,17 +1,39 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.3.0
+    rev: v3.4.0
     hooks:
+    -   id: check-added-large-files
+        args: ['--maxkb=25']
+    -   id: check-case-conflict
     -   id: check-merge-conflict
+    -   id: check-vcs-permalinks
+    -   id: check-yaml
     -   id: debug-statements
     -   id: end-of-file-fixer
+    -   id: fix-byte-order-marker
+    -   id: forbid-new-submodules
+    -   id: mixed-line-ending
+    -   id: no-commit-to-branch
+        args: [--branch, main]
+    -   id: trailing-whitespace
+-   repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.8.0  # Use the ref you want to point at
+    hooks:
+    -   id: python-check-blanket-noqa
+    -   id: python-check-mock-methods
+    -   id: python-no-log-warn
+    -   id: python-use-type-annotations
+    -   id: rst-backticks
+    -   id: rst-directive-colons
+    -   id: rst-inline-touching-normal
+    -   id: text-unicode-replacement-char
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.7.3
+    rev: v2.13.0
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.3.6
+    rev: v2.4.0
     hooks:
     -   id: reorder-python-imports
         types: [python]
@@ -21,30 +43,39 @@ repos:
     -   id: black
         types: [python]
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 0.3.6
+  rev: 0.7.0
   hooks:
     -   id: nbqa-black
     -   id: nbqa-pyupgrade
     -   id: nbqa-isort
 -   repo: https://github.com/asottile/blacken-docs
-    rev: v1.8.0
+    rev: v1.10.0
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black]
 -   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
+    rev: 3.9.1
     hooks:
     -   id: flake8
         types: [python]
         additional_dependencies: [
-            flake8-alfred, flake8-bugbear, flake8-builtins, flake8-comprehensions,
-            flake8-docstrings, flake8-eradicate, flake8-print, flake8-todo,
-            flake8-unused-arguments, pep8-naming, pydocstyle, Pygments,
+            flake8-alfred,
+            flake8-bugbear,
+            flake8-builtins,
+            flake8-comprehensions,
+            flake8-docstrings,
+            flake8-eradicate,
+            flake8-print,
+            flake8-todo,
+            flake8-unused-arguments,
+            pep8-naming,
+            pydocstyle,
+            Pygments,
         ]
 -   repo: https://github.com/PyCQA/doc8
     rev: 0.9.0a1
     hooks:
-        -   id: doc8
+    -   id: doc8
 -   repo: meta
     hooks:
     -   id: check-hooks-apply
