@@ -1,3 +1,6 @@
+import warnings
+
+
 def calculate_susceptibility(states, params, seed):  # noqa: U100
     """Calculate the susceptibility factor for each individual.
 
@@ -20,7 +23,12 @@ def calculate_susceptibility(states, params, seed):  # noqa: U100
             in the params.
 
     """
-    factors = params.loc[("susceptibility", "susceptibility"), "value"]
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        factors = params.loc[("susceptibility", "susceptibility"), "value"]
+
     susceptibility = states["age_group"].replace(factors)
     susceptibility.name = "susceptibility"
     return susceptibility
