@@ -85,7 +85,7 @@ intersphinx_mapping = {
 # Configuration for autoapi.
 autoapi_type = "python"
 autoapi_dirs = ["../../src"]
-autoapi_keep_files = True
+autoapi_keep_files = False
 autoapi_add_toctree_entry = False
 
 # Remove prefixed $ for bash, >>> for Python prompts, and In [1]: for IPython prompts.
