@@ -5,6 +5,12 @@ channels:
 dependencies:
   - python
 
-  - sphinx
-  - nbsphinx
+  # Sphinx dependencies.
   - furo
+  - ipython
+  - nbsphinx
+  - sphinx
+  - sphinx-autoapi
+  - sphinx-autodoc-typehints
+  - sphinx-copybutton
+  - sphinx-panels

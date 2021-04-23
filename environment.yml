@@ -36,10 +36,15 @@ dependencies:
   - line_profiler
   - xlrd<=1.2.0
 
-  # Documentation
-  - sphinx
-  - nbsphinx
+  # Sphinx dependencies.
   - furo
+  - ipython
+  - nbsphinx
+  - sphinx
+  - sphinx-autoapi
+  - sphinx-autodoc-typehints
+  - sphinx-copybutton
+  - sphinx-panels
 
   - pip:
     - DFO-LS

@@ -5,7 +5,7 @@ src/_version.py
 
 bld/
 dask-worker-space/
-_build/
+build/
 src/exploration/estimation/
 .tox/
 .vscode/

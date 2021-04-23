@@ -1,0 +1,28 @@
+/* Remove execution count for notebook cells. */
+.nbinput .prompt,
+.nboutput .prompt {
+    display: none;
+}
+
+/* Getting started index page */
+img.card-img-top {
+    height: 52px;
+}
+
+a#index-link {
+    color: #333;
+    text-decoration: none;
+}
+
+pre {
+  padding-left: 20px
+}
+
+li pre {
+  padding-left: 20px
+}
+
+
+.table-wrapper {
+  padding-right: 0;
+}

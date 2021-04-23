@@ -1,3 +1,6 @@
+prune tests
+prune docs
+
 include *.yaml
 include *.yml
 include matplotlibrc
