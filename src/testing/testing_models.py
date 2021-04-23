@@ -143,10 +143,14 @@ def demand_test(
         save_path = log_path / f"{date.date()}.pkl"
         to_save = {
             "n_pos_tests_for_each_group": n_pos_tests_for_each_group,
-            "unconstrained_demanded": unconstrained_demanded,
-            "symptomatic_requests": symptomatic_requests,
-            "receiving_confirmation": receiving_confirmation,
-            "scaled": demanded,
+            "demands_by_age_group": demands_by_age_group,
+            "symptomatic_requests": symptomatic_requests.groupby(
+                states["age_group_rki"]
+            ).sum(),
+            "receiving_confirmation": receiving_confirmation.groupby(
+                states["age_group_rki"]
+            ).sum(),
+            "scaled": demanded.groupby(states["age_group_rki"]).sum(),
             "supply_inputs": {
                 "n_newly_infected": n_newly_infected,
                 "share_known_cases": share_known_cases,
