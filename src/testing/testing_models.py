@@ -124,6 +124,8 @@ def demand_test(
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
     )
+    n_newly_infected_by_group = states.groupby("age_group_rki")["newly_infected"].sum()
+    implied_share_known_cases = n_pos_tests_for_each_group / n_newly_infected_by_group
 
     unconstrained_demanded = pd.Series(False, index=states.index)
 
@@ -151,6 +153,7 @@ def demand_test(
                 states["age_group_rki"]
             ).sum(),
             "scaled": demanded.groupby(states["age_group_rki"]).sum(),
+            "implied_share_known_cases": implied_share_known_cases,
             "supply_inputs": {
                 "n_newly_infected": n_newly_infected,
                 "share_known_cases": share_known_cases,
@@ -207,8 +210,10 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     n_tests_overall = n_pos_tests_overall / positivity_rate_overall
     n_tests_for_each_group = n_tests_overall * test_shares_by_age_group
     n_pos_tests_for_each_group = n_tests_for_each_group * positivity_rate_by_age_group
-    n_pos_tests_for_each_group = n_pos_tests_for_each_group.astype(int)
-    return n_pos_tests_for_each_group
+    n_pos_tests_for_each_group_int = n_pos_tests_for_each_group.astype(int)
+    # if (n_pos_tests_for_each_group_int == 0).any():
+    #     breakpoint()
+    return n_pos_tests_for_each_group_int
 
 
 def _request_pcr_confirmation_of_rapid_test(states, share_requesting_confirmation):
