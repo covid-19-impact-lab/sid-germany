@@ -13,16 +13,13 @@ import sys
 sys.path.insert(0, os.path.abspath("../.."))
 
 
-import src  # noqa: E402
-
-
 # -- Project information ---------------------------------------------------------------
 
 project = "sid-germany"
 year = dt.datetime.now().year
 author = "Janos Gabler, Tobias Raabe, and Klara Röhrl"
 copyright = f"2020-{year}, {author}"  # noqa: A001
-version = src.__version__
+version = "3.0.0"
 release = version
 
 
