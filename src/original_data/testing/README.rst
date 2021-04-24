@@ -17,4 +17,4 @@ Probenrückstau
 
 
 ``detected_and_undetected_infections`` is scraped from
-https://covid19.dunkelzifferradar.de/.
+https://covid19.dunkelzifferradar.de/ (last access: 2021-01-16).
