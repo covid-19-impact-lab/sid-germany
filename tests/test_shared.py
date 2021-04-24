@@ -38,9 +38,9 @@ def test_draw_groups(df):
 def test_determine_number_of_groups():
     nobs = 40
     dist = pd.Series({1: 0.5, 2: 0.25, 5: 0.25})
-    expected = pd.Series({1: 20, 2: 5, 5: 2}, dtype="int32")
+    expected = pd.Series({1: 20, 2: 5, 5: 2})
     res = _determine_number_of_groups(nobs=nobs, dist=dist)
-    assert_series_equal(res, expected)
+    assert_series_equal(res, expected, check_dtype=False)
 
 
 def test_create_group_ids():
