@@ -11,7 +11,7 @@ jobs:
 
   pytest:
 
-    name: Run documentation.
+    name: Run pytest.
     runs-on: ubuntu-latest
 
     steps:
