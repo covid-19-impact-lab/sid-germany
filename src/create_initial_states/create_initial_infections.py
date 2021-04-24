@@ -60,7 +60,7 @@ def create_initial_infections(
     assert len(missing_dates) == 0, f"The following dates are missing: {missing_dates}"
 
     empirical_infections = empirical_infections.loc[
-        pd.Timestamp(start) : pd.Timestamp(end)  # noqa
+        pd.Timestamp(start) : pd.Timestamp(end)
     ]
 
     assert (

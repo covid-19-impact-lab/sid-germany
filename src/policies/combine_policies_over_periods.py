@@ -9,21 +9,22 @@ def get_educ_options_mid_march_to_easter(hygiene_multiplier=0.5):
     """Get the educ_options starting March 15th.
 
     Situation:
-        - BY:
-            - source: https://bit.ly/3lOZowy
-            - <50 incidence: normal schooling
-            - 50-100 incidence: A/B schooling
-            - >100 incidence: distance for all except graduation classes
 
-        - BW:
-            - source: https://km-bw.de/Coronavirus (accessed: March 25th)
-            - primaries and 5th, 6th grade open normally since 15/3
-            - graduating classes open since 22/2
-            - rest continues distance learning
+    - BY:
+        - source: https://bit.ly/3lOZowy
+        - <50 incidence: normal schooling
+        - 50-100 incidence: A/B schooling
+        - >100 incidence: distance for all except graduation classes
 
-        - NRW:
-            - source: https://bit.ly/3f9O4Kp (WDR)
-            - A/B schooling since March 15th
+    - BW:
+        - source: https://km-bw.de/Coronavirus (accessed: March 25th)
+        - primaries and 5th, 6th grade open normally since 15/3
+        - graduating classes open since 22/2
+        - rest continues distance learning
+
+    - NRW:
+        - source: https://bit.ly/3f9O4Kp (WDR)
+        - A/B schooling since March 15th
 
     -> We simplify this to A/B schooling for everyone plus emergency care
        and graduating classes
@@ -105,20 +106,23 @@ def _graduating_classes_in_a_b_plus_generous_emergency_care(
     level were in emergency care
 
     sources:
-        - https://bit.ly/3uGL1Pb
-        - https://bit.ly/2PErr5T
-        - Berlin: <40% (https://bit.ly/304R5ml)
-        - Niedersachsen: 38% (https://bit.ly/2PtPdSb)
+
+    - https://bit.ly/3uGL1Pb
+    - https://bit.ly/2PErr5T
+    - Berlin: <40% (https://bit.ly/304R5ml)
+    - Niedersachsen: 38% (https://bit.ly/2PtPdSb)
 
     In addition, many states opened graduating classes. We open them at the federal
     level in A / B schooling on Jan 16th. This abstracts from state variety:
-        - Bavaria: started on 1 Feb (https://bit.ly/3e4p1YE)
-        - Baden-Württemberg started on 18 Jan (https://bit.ly/2Ofq9O7)
-        - Berlin started on  11 Jan (https://bit.ly/385iCZk)
+
+    - Bavaria: started on 1 Feb (https://bit.ly/3e4p1YE)
+    - Baden-Württemberg started on 18 Jan (https://bit.ly/2Ofq9O7)
+    - Berlin started on  11 Jan (https://bit.ly/385iCZk)
 
     sources:
-        - https://taz.de/Schulen-in-Coronazeiten/!5753515/
-        - https://tinyurl.com/2jfm4tp8
+
+    - https://taz.de/Schulen-in-Coronazeiten/!5753515/
+    - https://tinyurl.com/2jfm4tp8
 
     Args:
         young_children_multiplier (float): hygiene multiplier for children in
@@ -338,14 +342,19 @@ def get_october_to_christmas_policies(
             (e.g. educ_school_1) as keys. The educ_multiplier is not used on top
             of the supplied hygiene multiplier for the contact models covered by the
             educ_options.
+
             For example:
-            {
-                "school": {
-                    "hygiene_multiplier": 0.8,
-                    "always_attend_query": "educ_contact_priority > 0.9",
-                    "a_b_query": "(age <= 10) | (age >= 16)",
-                    "non_a_b_attend": False,
-            }
+
+            .. code-block:: python
+
+                {
+                    "school": {
+                        "hygiene_multiplier": 0.8,
+                        "always_attend_query": "educ_contact_priority > 0.9",
+                        "a_b_query": "(age <= 10) | (age >= 16)",
+                        "non_a_b_attend": False,
+                    }
+                }
 
         educ_multiplier (float): The multiplier for the education contact models
             that are not covered by the a_b_educ_options. This educ_multiplier is

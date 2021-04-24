@@ -5,7 +5,7 @@ from sid import get_simulate_func
 
 from src.config import BLD
 from src.config import FAST_FLAG
-from src.create_initial_states.create_initial_conditions import (  # noqa
+from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
 from src.policies.combine_policies_over_periods import get_enacted_policies_of_2021

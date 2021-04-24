@@ -34,7 +34,7 @@ def scipy_criterion_function(x, true_x, data, noise_level):
     return criterion_function(x, seed, true_x, data, noise_level)["value"]
 
 
-def estimagic_criterion_function(params, true_x, data, noise_level):  # noqa
+def estimagic_criterion_function(params, true_x, data, noise_level):  # noqa: U100
     seed = np.random.choice(10000)
     out = criterion_function(
         params["value"].to_numpy(), seed, true_x, data, noise_level
@@ -118,12 +118,12 @@ if __name__ == "__main__":
 
     fig.savefig(Path(__file__).resolve().parent / "convergence_plot.png")
 
-    print("Noise Free Test:           ")  # noqa
-    print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa
-    print("True Solution:        ", true_x.round(2))  # noqa
-    print("Nelder Mead Solution: ", scipy_res.x.round(2))  # noqa
-    print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa
-    print("Nelder Mead n_evals:  ", scipy_res.nfev, "\n")  # noqa
+    print("Noise Free Test:           ")  # noqa: T001
+    print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa: T001
+    print("True Solution:        ", true_x.round(2))  # noqa: T001
+    print("Nelder Mead Solution: ", scipy_res.x.round(2))  # noqa: T001
+    print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa: T001
+    print("Nelder Mead n_evals:  ", scipy_res.nfev, "\n")  # noqa: T001
 
     # ==================================================================================
     # Very noisy test
@@ -154,10 +154,10 @@ if __name__ == "__main__":
 
     fig.savefig(Path(__file__).resolve().parent / "very_noisy_convergence_plot.png")
 
-    print("Very Noisy Test:           ")  # noqa
-    print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa
-    print("True Solution:        ", true_x.round(2))  # noqa
-    print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa
+    print("Very Noisy Test:           ")  # noqa: T001
+    print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa: T001
+    print("True Solution:        ", true_x.round(2))  # noqa: T001
+    print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa: T001
 
     # ==================================================================================
     # Noisy test
@@ -191,10 +191,10 @@ if __name__ == "__main__":
 
     fig.savefig(Path(__file__).resolve().parent / "noisy_convergence_plot.png")
 
-    print("Noisy Test:           ")  # noqa
-    print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa
-    print("True Solution:        ", true_x.round(2))  # noqa
-    print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa
+    print("Noisy Test:           ")  # noqa: T001
+    print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa: T001
+    print("True Solution:        ", true_x.round(2))  # noqa: T001
+    print("Manfred n_evals:      ", res["n_criterion_evaluations"])  # noqa: T001
 
     # ==================================================================================
     # Simple test with estimagic interface
@@ -230,10 +230,12 @@ if __name__ == "__main__":
         logging=False,
     )
 
-    print("Estimagic Test:       ")  # noqa
-    print("Manfred Solution:     ", estimagic_res["solution_x"].round(2))  # noqa
-    print("True Solution:        ", true_x.round(2))  # noqa
-    print("Manfred n_evals:      ", estimagic_res["n_criterion_evaluations"])  # noqa
+    print("Estimagic Test:       ")  # noqa: T001
+    print("Manfred Solution:     ", estimagic_res["solution_x"].round(2))  # noqa: T001
+    print("True Solution:        ", true_x.round(2))  # noqa: T001
+    print(  # noqa: T001
+        "Manfred n_evals:      ", estimagic_res["n_criterion_evaluations"]
+    )
 
     # ==================================================================================
     # Noisy test with estimagic interface
@@ -271,7 +273,9 @@ if __name__ == "__main__":
         logging=False,
     )
 
-    print("Estimagic Test:       ")  # noqa
-    print("Manfred Solution:     ", estimagic_res["solution_x"].round(2))  # noqa
-    print("True Solution:        ", true_x.round(2))  # noqa
-    print("Manfred n_evals:      ", estimagic_res["n_criterion_evaluations"])  # noqa
+    print("Estimagic Test:       ")  # noqa: T001
+    print("Manfred Solution:     ", estimagic_res["solution_x"].round(2))  # noqa: T001
+    print("True Solution:        ", true_x.round(2))  # noqa: T001
+    print(  # noqa: T001
+        "Manfred n_evals:      ", estimagic_res["n_criterion_evaluations"]
+    )

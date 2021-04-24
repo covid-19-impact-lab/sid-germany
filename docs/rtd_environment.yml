@@ -1,0 +1,16 @@
+channels:
+  - conda-forge
+  - nodefaults
+
+dependencies:
+  - python
+
+  # Sphinx dependencies.
+  - furo
+  - ipython
+  - nbsphinx
+  - sphinx
+  - sphinx-autoapi
+  - sphinx-autodoc-typehints
+  - sphinx-copybutton
+  - sphinx-panels
