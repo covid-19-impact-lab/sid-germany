@@ -1,6 +1,7 @@
 prune tests
 prune docs
 
+include LICENSE
 include *.yaml
 include *.yml
 include matplotlibrc
