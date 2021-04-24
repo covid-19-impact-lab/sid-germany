@@ -7,6 +7,8 @@ on:
     branches:
     - '*'
 
+jobs:
+
   pytest:
 
     name: Run documentation.
