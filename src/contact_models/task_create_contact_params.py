@@ -251,7 +251,7 @@ def _reduce_empirical_distribution_to_max_contacts(
     nobs = empirical_distribution.sum()
 
     truncated = empirical_distribution.copy(deep=True)
-    n_above_contacts = truncated[max_contacts + 1 :].sum()  # noqa
+    n_above_contacts = truncated[max_contacts + 1 :].sum()
     truncated[max_contacts] += n_above_contacts
     truncated = truncated[: max_contacts + 1]
 

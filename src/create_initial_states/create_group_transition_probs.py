@@ -14,9 +14,9 @@ def create_group_transition_probs(states, assort_by, params, model_name):
     """Create a transition matrix for groups.
 
     Args:
-        states (pandas.DataFrame): see :ref:`states`
+        states (pandas.DataFrame): The states.
         assort_by (list): List of variables that influence matching probabilities.
-        params (pandas.DataFrame): See :ref:`params`
+        params (pandas.DataFrame): The parameters.
         model_name (str): name of the contact model.
 
     Returns
@@ -48,8 +48,8 @@ def _get_transition_matrix_from_params(params, states, variable, model_name):
     """Extract transition matrix for one assort_by variable from params.
 
     Args:
-        params (pd.DataFrame): see :ref:`params`
-        states (pd.DataFrame): see :ref:`states`
+        params (pd.DataFrame): The parameters.
+        states (pd.DataFrame): The states.
         variable (str): Name of the assort by variable
         model_name (str): Name of the contact model in which variable is used.
 

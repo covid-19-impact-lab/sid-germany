@@ -48,6 +48,7 @@ def _is_download_necessary(path, response):
 
     1. If the file is missing, download it.
     2. The following two checks depend on each other.
+
        1. Some files have an entry in the header which specifies when the file was
           modified last. If the file has been modified, download it.
        2. If the header has no entry for the last modified date, we compare file sizes.

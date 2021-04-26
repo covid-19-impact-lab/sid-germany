@@ -4,13 +4,13 @@ Currently we distinguish the domains "work", "educ" and "other". "households" ar
 included in any domain because they are currently not subject to policies.
 
 The functions here should not be called directly but will be used in the module
-"full_policy_blocks.py".
+``full_policy_blocks.py``.
 
 All public functions here take the following arguments (and possibly some more)
 
-contact_models (dict): A sid compatible dictionary with contact models.
-block_info (dict): A dictionary containing start_date, end_date and prefix of a
-    block of policies.
+- contact_models (:obj:`dict`): A sid compatible dictionary with contact models.
+- block_info (:obj:`dict`): A dictionary containing start_date, end_date and prefix of a
+  block of policies.
 
 The functions here expect that the domain names are part of contact model names.
 
@@ -146,24 +146,25 @@ def implement_general_schooling_policy(
         educ_options (dict): Nested dictionary with the education types ("school",
             "preschool" or "nursery") that have A/B schooling and/or emergency care as
             keys. Values are dictionaries giving the always_attend_query, a_b_query,
-            non_a_b_attend, hygiene_multiplier and a_b_rhythm.
-            Note to use the types (e.g. school) and not the contact models
-            (e.g. educ_school_1) as keys. The other_educ_multiplier is not used on top
-            of the supplied hygiene multiplier for the contact models covered by the
-            educ_options.
-            For example:
-            {
-                "school": {
-                    "hygiene_multiplier": 0.8,
-                    "always_attend_query": "educ_contact_priority > 0.9",
-                    "a_b_query": "(age <= 10) | (age >= 16)",
-                    "non_a_b_attend": False,
-            }
+            non_a_b_attend, hygiene_multiplier and a_b_rhythm. Note to use the types
+            (e.g. school) and not the contact models (e.g. educ_school_1) as keys. The
+            other_educ_multiplier is not used on top of the supplied hygiene multiplier
+            for the contact models covered by the educ_options. For example:
+
+            .. code-block:: python
+
+                {
+                    "school": {
+                        "hygiene_multiplier": 0.8,
+                        "always_attend_query": "educ_contact_priority > 0.9",
+                        "a_b_query": "(age <= 10) | (age >= 16)",
+                        "non_a_b_attend": False,
+                    }
+                }
 
         other_educ_multiplier (float): multiplier for the contact models that have
             neither A/B schooling nor emergency care, i.e. which do not have an entry
             in educ_options.
-
 
     """
     policies = {}

@@ -197,7 +197,7 @@ def _create_group_indexer(
     Note: This function is from sid commit 206886a14eeb3257deb71db91aba4e7fb2385fc2.
 
     Args:
-        states (pandas.DataFrame): See :ref:`states`
+        states (pandas.DataFrame): The states.
         assort_by (List[str]): List of variables that influence matching probabilities.
 
     Returns:

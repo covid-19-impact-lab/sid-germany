@@ -15,7 +15,7 @@ from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
-from src.create_initial_states.create_initial_conditions import (  # noqa
+from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
 from src.manfred.minimize_manfred_estimagic import minimize_manfred_estimagic

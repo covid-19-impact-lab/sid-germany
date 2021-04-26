@@ -1,22 +1,14 @@
 """Create the vaccination groups and the vaccination rank.
 
-Sources:
-
-- https://bit.ly/3rekfdL (RKI Stiko Empfehlung)
-- https://bit.ly/3tNF01G
-- https://www.tagesschau.de/inland/impfungen-lehrer-101.html
-- shares of each group: https://bit.ly/3cb5uUQ
-
-
 Vaccination Groups
-===================
-
+==================
 
 1 = Highest Priority
-----------------------
+--------------------
 
 - overall 8.6 Mio individuals = ~10% of the population
 - 1% live in nursing homes (https://bit.ly/3vFsByz) and not covered in our data
+
 => target of 9%
 
 - over 80 year olds -> 4% of our synthetic population
@@ -35,7 +27,7 @@ Vaccination Groups
 
 
 2 = Very High Priority (2nd and 3rd group acc. to STIKO)
----------------------------------------------------------
+--------------------------------------------------------
 
 - approx. 14% of the population acc. to RKI without educators.
     => 15% abstracting 1% nursing home population.
@@ -55,9 +47,10 @@ They are about 1% of our synthetic population.
 
 
 3 = High Priority (4th+5th category acc. to STIKO)
----------------------------------------------------
+--------------------------------------------------
 
 - 6.9 mio in 4th group + 9 mio in 5th group (~19%)
+
   = ~18% of population without the already vaccinated teachers
   => ~19% abstracting 1% nursing home population.
 
@@ -69,6 +62,7 @@ They are about 1% of our synthetic population.
 
 Preconditions in this group include diabetes, hypertension, cancer, asthma, auto-immune
 disease
+
 => We expect a higher share among older individuals.
 
 
@@ -77,6 +71,15 @@ disease
 
 Approximately 45 mio people ~ 56% of the population.
 => 57% abstracting 1% nursing home population
+
+
+References
+----------
+
+- https://bit.ly/3rekfdL (RKI Stiko Empfehlung)
+- https://bit.ly/3tNF01G
+- https://www.tagesschau.de/inland/impfungen-lehrer-101.html
+- shares of each group: https://bit.ly/3cb5uUQ
 
 """
 import numpy as np

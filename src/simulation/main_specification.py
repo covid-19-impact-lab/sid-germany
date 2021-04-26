@@ -80,10 +80,11 @@ def build_main_scenarios(base_path):
         nested_parametrization (dict): Keys are the names of the scenarios.
             Values are lists of tuples. For each seed there is one tuple.
             Each tuple consists of:
-                1. the path where sid will save the time series data.
-                2. the scenario specification consisting of the educ and
-                   other multiplier and work_fill_value.
-                3. the seed to be used by sid.
+
+            1. the path where sid will save the time series data.
+            2. the scenario specification consisting of the educ and
+               other multiplier and work_fill_value.
+            3. the seed to be used by sid.
 
     """
     if FAST_FLAG == "debug":
