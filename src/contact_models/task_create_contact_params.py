@@ -237,7 +237,7 @@ def _reduce_empirical_distribution_to_max_contacts(
     Args:
         empirical_distribution (pandas.Series): value counts of the
             number of reported contacts.
-        max_contacts (int): maximal allowed numbers of reported contacts
+        max_contacts (int): maximum allowed numbers of reported contacts
 
     Returns:
         closest_distribution (pandas.Series): approximated value counts
