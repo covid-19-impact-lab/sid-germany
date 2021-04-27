@@ -87,7 +87,7 @@ def test_calculate_positive_tests_to_distribute_per_age_group():
         positivity_rate_by_age_group,
     )
     expected = pd.Series([1, 4, 5], index=["0-4", "5-14", "15-34"])
-    pd.testing.assert_series_equal(res, expected, check_names=False)
+    pd.testing.assert_series_equal(res, expected, check_names=False, check_dtype=False)
 
 
 def test_demand_test_zero_remainder(states, params):
