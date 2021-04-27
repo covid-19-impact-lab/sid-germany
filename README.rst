@@ -43,7 +43,7 @@ To create the environment for running the code, we rely on `conda
     $ conda activate sid-germany
 
 to create and activate the environment. The workflow of the project is managed by
-`sid-germany <https://github.com/covid-19-impact-lab/pytask>`_. Built the project with
+`pytask <https://github.com/pytask-dev/pytask>`_. Build the project with
 
 .. code-block:: console
 
