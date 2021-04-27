@@ -123,10 +123,33 @@ def test_reduce_work_model(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        multiplier=0.5,
+        attend_multiplier=0.5,
+        hygiene_multiplier=1.0,
         is_recurrent=False,
     )
-    expected = pd.Series([1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index)
+    expected = pd.Series(
+        [1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index, dtype=float
+    )
+    assert_series_equal(calculated, expected)
+
+
+def test_reduce_work_model_with_hygiene_multiplier(fake_states):
+    fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
+    contacts = pd.Series(2, index=fake_states.index)
+    contacts[2] = 0
+    contacts[3] = 5
+
+    calculated = reduce_work_model(
+        states=fake_states,
+        contacts=contacts,
+        seed=123,
+        attend_multiplier=0.5,
+        hygiene_multiplier=0.5,
+        is_recurrent=False,
+    )
+    expected = pd.Series(
+        [1, 1, 0, 2.5, 0, 0, 0, 0, 0, 0], index=fake_states.index, dtype=float
+    )
     assert_series_equal(calculated, expected)
 
 
@@ -139,7 +162,8 @@ def test_reduce_work_model_multiplier_series(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        multiplier=pd.Series([0.5], index=[pd.Timestamp("2020-04-23")]),
+        attend_multiplier=pd.Series([0.5], index=[pd.Timestamp("2020-04-23")]),
+        hygiene_multiplier=1.0,
         is_recurrent=True,
     )
     expected = pd.Series(
@@ -161,7 +185,8 @@ def test_reduce_work_model_multiplier_frame_missing_state(fake_states):
             states=fake_states,
             contacts=contacts,
             seed=123,
-            multiplier=multiplier,
+            attend_multiplier=multiplier,
+            hygiene_multiplier=1.0,
             is_recurrent=False,
         )
 
@@ -178,10 +203,13 @@ def test_reduce_work_model_multiplier_frame(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        multiplier=multiplier,
+        attend_multiplier=multiplier,
+        hygiene_multiplier=1.0,
         is_recurrent=False,
     )
-    expected = pd.Series([1, 1, 0, 1, 1, 1, 0, 1, 0, 0], index=fake_states.index)
+    expected = pd.Series(
+        [1, 1, 0, 1, 1, 1, 0, 1, 0, 0], index=fake_states.index, dtype=float
+    )
     assert_series_equal(calculated, expected)
 
 
@@ -229,7 +257,7 @@ def test_reopen_work_model(fake_states):
         is_recurrent=False,
     )
 
-    expected = pd.Series([0] + [1] * 6 + [0] * 3)
+    expected = pd.Series([0] + [1] * 6 + [0] * 3, dtype=float)
     assert_series_equal(calculated, expected)
 
 

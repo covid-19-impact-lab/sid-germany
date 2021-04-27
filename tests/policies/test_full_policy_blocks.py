@@ -37,7 +37,11 @@ def start_and_end_multipliers():
 
 @pytest.fixture
 def multipliers():
-    return {"work": 0.5, "educ": 0.6, "other": 0.7}
+    return {
+        "work": {"attend_multiplier": 0.5, "hygiene_multiplier": 0.5},
+        "educ": 0.6,
+        "other": 0.7,
+    }
 
 
 @pytest.fixture

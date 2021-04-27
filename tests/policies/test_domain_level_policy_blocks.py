@@ -99,19 +99,34 @@ def test_reduce_work_models(contact_models):
         "end_date": "2020-10-20",
         "prefix": "reduce_work",
     }
-    res = reduce_work_models(contact_models, block_info, 0.5)
+    res = reduce_work_models(
+        contact_models,
+        block_info,
+        attend_multiplier=0.5,
+        hygiene_multiplier=0.8,
+    )
     expected = {
         "reduce_work_work1": {
             "affected_contact_model": "work1",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": partial(reduce_work_model, multiplier=0.5, is_recurrent=False),
+            "policy": partial(
+                reduce_work_model,
+                attend_multiplier=0.5,
+                hygiene_multiplier=0.8,
+                is_recurrent=False,
+            ),
         },
         "reduce_work_work2": {
             "affected_contact_model": "work2",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": partial(reduce_work_model, multiplier=0.5, is_recurrent=True),
+            "policy": partial(
+                reduce_work_model,
+                attend_multiplier=0.5,
+                hygiene_multiplier=0.8,
+                is_recurrent=True,
+            ),
         },
     }
     compare_policy_dicts(res, expected)
