@@ -39,7 +39,7 @@ PRODUCTS = {
 
 @pytask.mark.depends_on(
     {
-        "ars": SRC / "original_data" / "testing" / "ars_data_raw.xlsx",
+        "ars": SRC / "original_data" / "testing" / "ars_data_raw.csv",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
     }
 )
@@ -58,7 +58,7 @@ def task_prepare_ars_data(depends_on, produces):
     rki = pd.read_pickle(depends_on["rki"])
     rki_weekly_cases = _calculate_rki_weekly_cases(rki)
 
-    ars = pd.read_excel(depends_on["ars"])
+    ars = pd.read_csv(depends_on["ars"])
     ars = _clean_ars_data(ars)
 
     test_shares_by_age_group = _calculate_test_shares_by_age_group(ars)
@@ -106,8 +106,6 @@ def _clean_ars_data(ars):
         "age_group",
         "n_tests",
         "pct_of_tests_positive",
-        "n_tests_per_100_000",
-        "n_positive_tests_per_100_000",
         "week",
         "year",
     ]
