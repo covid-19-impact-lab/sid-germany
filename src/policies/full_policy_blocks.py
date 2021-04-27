@@ -128,7 +128,12 @@ def get_lockdown_with_multipliers(
         educ_options=educ_options,
         other_educ_multiplier=multipliers["educ"],
     )
-    work_policies = reduce_work_models(contact_models, block_info, multipliers["work"])
+    work_policies = reduce_work_models(
+        contact_models,
+        block_info,
+        attend_multiplier=multipliers["work"]["attend_multiplier"],
+        hygiene_multiplier=multipliers["work"]["hygiene_multiplier"],
+    )
     if multipliers["other"] == 0.0:
         other_policies = shut_down_other_models(contact_models, block_info)
     elif multipliers["other"] < 1.0:

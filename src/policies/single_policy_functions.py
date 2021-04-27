@@ -151,36 +151,36 @@ def reduce_work_model(
     states,
     contacts,
     seed,
-    attend_work_multiplier,
+    attend_multiplier,
     is_recurrent,
-    work_hygiene_multiplier=1.0,
+    hygiene_multiplier,
     params=None,  # noqa: U100
 ):
     """Reduce contacts for the working population.
 
     Args:
-        attend_work_multiplier (float, pandas.Series, pandas.DataFrame):
+        attend_multiplier (float, pandas.Series, pandas.DataFrame):
             share of workers that have work contacts.
             If it is a Series or DataFrame, the index must be dates.
             If it is a DataFrame the columns must be the values of
             the "state" column in the states.
-        work_hygiene_multiplier (float): Degree to which contacts at work
+        hygiene_multiplier (float): Degree to which contacts at work
             can still lead to infection.
         is_recurrent (bool): True if the contact model is recurernt
 
     """
-    if isinstance(attend_work_multiplier, (pd.Series, pd.DataFrame)):
+    if isinstance(attend_multiplier, (pd.Series, pd.DataFrame)):
         date = get_date(states)
-        attend_work_multiplier = attend_work_multiplier.loc[date]
+        attend_multiplier = attend_multiplier.loc[date]
 
-    msg = f"Work attend_work_multiplier not in [0, 1] on {get_date(states)}"
-    if isinstance(attend_work_multiplier, (float, int)):
-        assert 0 <= attend_work_multiplier <= 1, msg
+    msg = f"Work attend_multiplier not in [0, 1] on {get_date(states)}"
+    if isinstance(attend_multiplier, (float, int)):
+        assert 0 <= attend_multiplier <= 1, msg
     else:
-        assert (attend_work_multiplier >= 0).all(), msg
-        assert (attend_work_multiplier <= 1).all(), msg
+        assert (attend_multiplier >= 0).all(), msg
+        assert (attend_multiplier <= 1).all(), msg
 
-    threshold = 1 - attend_work_multiplier
+    threshold = 1 - attend_multiplier
     if isinstance(threshold, pd.Series):
         threshold = states["state"].map(threshold.get)
         # this assert could be skipped because we check in
@@ -190,13 +190,13 @@ def reduce_work_model(
     above_threshold = states["work_contact_priority"] > threshold
     if is_recurrent:
         reduced_contacts = contacts.where(above_threshold, False)
-        if work_hygiene_multiplier < 1:
+        if hygiene_multiplier < 1:
             reduced_contacts = reduce_recurrent_model(
-                states, contacts, seed, work_hygiene_multiplier, params=params
+                states, contacts, seed, hygiene_multiplier, params=params
             )
     else:
         reduced_contacts = contacts.where(above_threshold, 0)
-        reduced_contacts = work_hygiene_multiplier * reduced_contacts
+        reduced_contacts = hygiene_multiplier * reduced_contacts
     return reduced_contacts
 
 
@@ -240,8 +240,8 @@ def reopen_work_model(
         states=states,
         contacts=contacts,
         seed=seed,
-        attend_work_multiplier=multiplier,
-        work_hygiene_multiplier=1.0,
+        attend_multiplier=multiplier,
+        hygiene_multiplier=1.0,
         is_recurrent=is_recurrent,
     )
 

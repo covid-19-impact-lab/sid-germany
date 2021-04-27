@@ -123,7 +123,8 @@ def test_reduce_work_model(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        attend_work_multiplier=0.5,
+        attend_multiplier=0.5,
+        hygiene_multiplier=1.0,
         is_recurrent=False,
     )
     expected = pd.Series(
@@ -142,8 +143,8 @@ def test_reduce_work_model_with_hygiene_multiplier(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        attend_work_multiplier=0.5,
-        work_hygiene_multiplier=0.5,
+        attend_multiplier=0.5,
+        hygiene_multiplier=0.5,
         is_recurrent=False,
     )
     expected = pd.Series(
@@ -161,7 +162,8 @@ def test_reduce_work_model_multiplier_series(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        attend_work_multiplier=pd.Series([0.5], index=[pd.Timestamp("2020-04-23")]),
+        attend_multiplier=pd.Series([0.5], index=[pd.Timestamp("2020-04-23")]),
+        hygiene_multiplier=1.0,
         is_recurrent=True,
     )
     expected = pd.Series(
@@ -183,7 +185,8 @@ def test_reduce_work_model_multiplier_frame_missing_state(fake_states):
             states=fake_states,
             contacts=contacts,
             seed=123,
-            attend_work_multiplier=multiplier,
+            attend_multiplier=multiplier,
+            hygiene_multiplier=1.0,
             is_recurrent=False,
         )
 
@@ -200,7 +203,8 @@ def test_reduce_work_model_multiplier_frame(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        attend_work_multiplier=multiplier,
+        attend_multiplier=multiplier,
+        hygiene_multiplier=1.0,
         is_recurrent=False,
     )
     expected = pd.Series(
