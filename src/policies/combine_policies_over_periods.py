@@ -258,7 +258,7 @@ def get_enacted_policies_of_2021(
                 "educ": None,
                 "work": {
                     "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": "work_hygiene_multiplier",
+                    "hygiene_multiplier": work_hygiene_multiplier,
                 },
                 "other": other_multiplier_until_mid_march,
             },
@@ -275,7 +275,7 @@ def get_enacted_policies_of_2021(
                 "educ": None,
                 "work": {
                     "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": "work_hygiene_multiplier",
+                    "hygiene_multiplier": work_hygiene_multiplier,
                 },
                 "other": other_multiplier_until_mid_march,
             },
@@ -295,7 +295,7 @@ def get_enacted_policies_of_2021(
                 "educ": 0.5,
                 "work": {
                     "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": "work_hygiene_multiplier",
+                    "hygiene_multiplier": work_hygiene_multiplier,
                 },
                 "other": other_multiplier_until_mid_march,
             },
@@ -312,7 +312,7 @@ def get_enacted_policies_of_2021(
                 "educ": 0.5,
                 "work": {
                     "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": "work_hygiene_multiplier",
+                    "hygiene_multiplier": work_hygiene_multiplier,
                 },
                 "other": other_multiplier_mid_march_until_easter,
             },
