@@ -171,26 +171,8 @@ def reduce_work_model(
         is_recurrent (bool): True if the contact model is recurernt
 
     """
-    if isinstance(attend_multiplier, (pd.Series, pd.DataFrame)):
-        date = get_date(states)
-        attend_multiplier = attend_multiplier.loc[date]
-    if isinstance(hygiene_multiplier, (pd.Series)):
-        date = get_date(states)
-        hygiene_multiplier = hygiene_multiplier.loc[date]
-
-    msg = f"Work attend_multiplier not in [0, 1] on {get_date(states)}"
-    if isinstance(attend_multiplier, (float, int)):
-        assert 0 <= attend_multiplier <= 1, msg
-    else:
-        assert (attend_multiplier >= 0).all(), msg
-        assert (attend_multiplier <= 1).all(), msg
-
-    msg = f"Work hygiene_multiplier not in [0, 1] on {get_date(states)}"
-    if isinstance(hygiene_multiplier, (float, int)):
-        assert 0 <= hygiene_multiplier <= 1, msg
-    else:
-        assert (hygiene_multiplier >= 0).all(), msg
-        assert (hygiene_multiplier <= 1).all(), msg
+    attend_multiplier = _process_multiplier(states, attend_multiplier, "attend")
+    hygiene_multiplier = _process_multiplier(states, hygiene_multiplier, "hygiene")
 
     threshold = 1 - attend_multiplier
     if isinstance(threshold, pd.Series):
@@ -210,6 +192,19 @@ def reduce_work_model(
         reduced_contacts = contacts.where(above_threshold, 0)
         reduced_contacts = hygiene_multiplier * reduced_contacts
     return reduced_contacts
+
+
+def _process_multiplier(states, multiplier, name):
+    if isinstance(multiplier, (pd.Series, pd.DataFrame)):
+        date = get_date(states)
+        multiplier = multiplier.loc[date]
+    msg = f"Work {name} multiplier not in [0, 1] on {get_date(states)}"
+    if isinstance(multiplier, (float, int)):
+        assert 0 <= multiplier <= 1, msg
+    else:
+        assert (multiplier >= 0).all(), msg
+        assert (multiplier <= 1).all(), msg
+    return multiplier
 
 
 def reopen_work_model(
