@@ -94,15 +94,15 @@ def demand_test(
         positivity_rate_by_age_group = positivity_rate_by_age_group.loc[date]
     if isinstance(positivity_rate_overall, pd.Series):
         positivity_rate_overall = positivity_rate_overall.loc[date]
-    symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
-    share_symptomatic = params.loc[symptom_tuple, "value"]
+    symptom_loc = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
+    share_symptomatic = params.loc[symptom_loc, "value"]
     if share_symptomatic > 1.0 or share_symptomatic < 0:
         raise ValueError(
             "The share of symptomatic individuals requesting a test must lie in the "
             f"[0, 1] interval, you specified {share_symptomatic}"
         )
 
-    rapid_tests_tuple = (
+    rapid_tests_loc = (
         "test_demand",
         "shares",
         "share_w_positive_rapid_test_requesting_test",
@@ -112,7 +112,7 @@ def demand_test(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
-        share_requesting_confirmation = params.loc[rapid_tests_tuple, "value"]
+        share_requesting_confirmation = params.loc[rapid_tests_loc, "value"]
 
     share_known_cases = get_share_known_cases_for_one_day(date, params_slice)
 

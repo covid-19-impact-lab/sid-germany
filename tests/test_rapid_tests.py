@@ -25,8 +25,8 @@ def educ_states():
 def contacts(educ_states):
     contacts = pd.DataFrame(index=educ_states.index)
     contacts["households"] = 2
-    contacts["educ_nursery_0"] = [0, 4, 0, 0, 0, 0]
-    contacts["educ_school_0"] = [10, 0, 0, 0, 4, 10]
+    contacts["educ_nursery_0"] = [False, True, False, False, False, False]
+    contacts["educ_school_0"] = [True, False, False, False, True, True]
     return contacts
 
 
