@@ -20,6 +20,7 @@ plt.rcParams.update(
     }
 )
 
+
 sns.set_palette(get_colors("categorical", 12))
 
 
