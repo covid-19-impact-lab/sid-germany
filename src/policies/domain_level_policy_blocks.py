@@ -30,11 +30,15 @@ from src.policies.single_policy_functions import shut_down_model
 # ======================================================================================
 
 
-def reduce_work_models(contact_models, block_info, multiplier):
-    """Reduce contacts of workers by a multiplier.
+def reduce_work_models(
+    contact_models, block_info, attend_multiplier, hygiene_multiplier
+):
+    """Reduce contacts of workers by a attend_multiplier.
 
     Args:
-        multiplier (float or pd.Series): Must be smaller or equal to one. If a
+        attend_multiplier (float or pd.Series): Must be smaller or equal to one. If a
+            Series is supplied the index must be dates.
+        hygiene_multiplier (float or pd.Series): Must be smaller or equal to one. If a
             Series is supplied the index must be dates.
 
     """
@@ -44,7 +48,8 @@ def reduce_work_models(contact_models, block_info, multiplier):
         policy = _get_base_policy(mod, block_info)
         policy["policy"] = partial(
             reduce_work_model,
-            multiplier=multiplier,
+            attend_multiplier=attend_multiplier,
+            hygiene_multiplier=hygiene_multiplier,
             is_recurrent=contact_models[mod]["is_recurrent"],
         )
         policies[f"{block_info['prefix']}_{mod}"] = policy

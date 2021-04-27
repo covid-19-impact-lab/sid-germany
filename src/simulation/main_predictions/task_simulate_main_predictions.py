@@ -113,8 +113,9 @@ def _get_prediction_policies(contact_models, scenario, end_date, scenario_name):
     enacted_policies = get_enacted_policies_of_2021(
         contact_models=contact_models,
         scenario_start=SCENARIO_START,
+        work_hygiene_multiplier=1.0,
     )
-    work_multiplier = _process_work_multiplier(
+    attend_multiplier = _process_attend_multiplier(
         start_date=SCENARIO_START,
         end_date=end_date,
         # 0.68 was the level between 10th of Jan and carnival
@@ -128,7 +129,10 @@ def _get_prediction_policies(contact_models, scenario, end_date, scenario_name):
             "prefix": scenario_name,
         },
         multipliers={
-            "work": work_multiplier,
+            "work": {
+                "attend_multiplier": attend_multiplier,
+                "hygiene_multiplier": scenario.get("work_hygiene_multiplier", 1.0),
+            },
             "other": scenario.get("other_multiplier", 0.45),
             "educ": scenario["educ_multiplier"],
         },
@@ -138,24 +142,24 @@ def _get_prediction_policies(contact_models, scenario, end_date, scenario_name):
     return policies
 
 
-def _process_work_multiplier(
+def _process_attend_multiplier(
     start_date,
     end_date,
-    work_multiplier=None,
+    attend_multiplier=None,
     work_fill_value=0.68,  # level between 10th of Jan and carnival
 ):
     dates = pd.date_range(start_date, end_date)
     assert (
-        work_fill_value is None or work_multiplier is None
-    ), "work_fill_value may only be supplied if work_multiplier is None or vice versa"
+        work_fill_value is None or attend_multiplier is None
+    ), "work_fill_value may only be supplied if attend_multiplier is None or vice versa"
 
-    if isinstance(work_multiplier, float):
-        return pd.Series(data=work_multiplier, index=dates)
-    elif isinstance(work_multiplier, pd.Series):
+    if isinstance(attend_multiplier, float):
+        return pd.Series(data=attend_multiplier, index=dates)
+    elif isinstance(attend_multiplier, pd.Series):
         assert (
-            work_multiplier.index == dates
+            attend_multiplier.index == dates
         ).all(), f"Index is not consecutive from {start_date} to {end_date}"
-    elif work_multiplier is None:
+    elif attend_multiplier is None:
         default_path = BLD / "policies" / "work_multiplier.csv"
         default = pd.read_csv(default_path, parse_dates=["date"], index_col="date")
         expanded = default.reindex(index=dates)
