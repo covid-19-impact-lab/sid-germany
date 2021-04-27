@@ -38,6 +38,8 @@ def reduce_work_models(
     Args:
         attend_multiplier (float or pd.Series): Must be smaller or equal to one. If a
             Series is supplied the index must be dates.
+        hygiene_multiplier (float or pd.Series): Must be smaller or equal to one. If a
+            Series is supplied the index must be dates.
 
     """
     policies = {}

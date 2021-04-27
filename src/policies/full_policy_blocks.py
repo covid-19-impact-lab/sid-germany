@@ -99,7 +99,9 @@ def get_lockdown_with_multipliers(
     Args:
         multipliers (dict): Contains keys "educ", "work" and "other".
             The "educ" entry is only applied to the education models
-            that are not in A/B mode.
+            that are not in A/B mode. "work" is a dictionary with the keys
+            "hygiene_multiplier" and "attend_multiplier". Both can be floats
+            or Series.
         educ_options (dict): Nested dictionary with the education types ("school",
             "preschool" or "nursery") that have A/B schooling and/or emergency care as
             keys. Values are dictionaries giving the always_attend_query, a_b_query,

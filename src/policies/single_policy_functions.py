@@ -164,14 +164,19 @@ def reduce_work_model(
             If it is a Series or DataFrame, the index must be dates.
             If it is a DataFrame the columns must be the values of
             the "state" column in the states.
-        hygiene_multiplier (float): Degree to which contacts at work
-            can still lead to infection.
+        hygiene_multiplier (float, or pandas.Series): Degree to
+            which contacts at work can still lead to infection.
+            Must be smaller or equal to one. If a Series is supplied
+            the index must be dates.
         is_recurrent (bool): True if the contact model is recurernt
 
     """
     if isinstance(attend_multiplier, (pd.Series, pd.DataFrame)):
         date = get_date(states)
         attend_multiplier = attend_multiplier.loc[date]
+    if isinstance(hygiene_multiplier, (pd.Series)):
+        date = get_date(states)
+        hygiene_multiplier = hygiene_multiplier.loc[date]
 
     msg = f"Work attend_multiplier not in [0, 1] on {get_date(states)}"
     if isinstance(attend_multiplier, (float, int)):
@@ -179,6 +184,13 @@ def reduce_work_model(
     else:
         assert (attend_multiplier >= 0).all(), msg
         assert (attend_multiplier <= 1).all(), msg
+
+    msg = f"Work hygiene_multiplier not in [0, 1] on {get_date(states)}"
+    if isinstance(hygiene_multiplier, (float, int)):
+        assert 0 <= hygiene_multiplier <= 1, msg
+    else:
+        assert (hygiene_multiplier >= 0).all(), msg
+        assert (hygiene_multiplier <= 1).all(), msg
 
     threshold = 1 - attend_multiplier
     if isinstance(threshold, pd.Series):
