@@ -151,33 +151,30 @@ def reduce_work_model(
     states,
     contacts,
     seed,
-    multiplier,
+    attend_multiplier,
     is_recurrent,
+    hygiene_multiplier,
     params=None,  # noqa: U100
 ):
     """Reduce contacts for the working population.
 
     Args:
-        multiplier (float, pandas.Series, pandas.DataFrame):
+        attend_multiplier (float, pandas.Series, pandas.DataFrame):
             share of workers that have work contacts.
             If it is a Series or DataFrame, the index must be dates.
             If it is a DataFrame the columns must be the values of
             the "state" column in the states.
+        hygiene_multiplier (float, or pandas.Series): Degree to
+            which contacts at work can still lead to infection.
+            Must be smaller or equal to one. If a Series is supplied
+            the index must be dates.
         is_recurrent (bool): True if the contact model is recurernt
 
     """
-    if isinstance(multiplier, (pd.Series, pd.DataFrame)):
-        date = get_date(states)
-        multiplier = multiplier.loc[date]
+    attend_multiplier = _process_multiplier(states, attend_multiplier, "attend")
+    hygiene_multiplier = _process_multiplier(states, hygiene_multiplier, "hygiene")
 
-    msg = f"Work multiplier not in [0, 1] on {get_date(states)}"
-    if isinstance(multiplier, (float, int)):
-        assert 0 <= multiplier <= 1, msg
-    else:
-        assert (multiplier >= 0).all(), msg
-        assert (multiplier <= 1).all(), msg
-
-    threshold = 1 - multiplier
+    threshold = 1 - attend_multiplier
     if isinstance(threshold, pd.Series):
         threshold = states["state"].map(threshold.get)
         # this assert could be skipped because we check in
@@ -187,9 +184,27 @@ def reduce_work_model(
     above_threshold = states["work_contact_priority"] > threshold
     if is_recurrent:
         reduced_contacts = contacts.where(above_threshold, False)
+        if hygiene_multiplier < 1:
+            reduced_contacts = reduce_recurrent_model(
+                states, contacts, seed, hygiene_multiplier, params=params
+            )
     else:
         reduced_contacts = contacts.where(above_threshold, 0)
+        reduced_contacts = hygiene_multiplier * reduced_contacts
     return reduced_contacts
+
+
+def _process_multiplier(states, multiplier, name):
+    if isinstance(multiplier, (pd.Series, pd.DataFrame)):
+        date = get_date(states)
+        multiplier = multiplier.loc[date]
+    msg = f"Work {name} multiplier not in [0, 1] on {get_date(states)}"
+    if isinstance(multiplier, (float, int)):
+        assert 0 <= multiplier <= 1, msg
+    else:
+        assert (multiplier >= 0).all(), msg
+        assert (multiplier <= 1).all(), msg
+    return multiplier
 
 
 def reopen_work_model(
@@ -232,7 +247,8 @@ def reopen_work_model(
         states=states,
         contacts=contacts,
         seed=seed,
-        multiplier=multiplier,
+        attend_multiplier=multiplier,
+        hygiene_multiplier=1.0,
         is_recurrent=is_recurrent,
     )
 
