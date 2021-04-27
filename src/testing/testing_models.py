@@ -211,8 +211,6 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     n_tests_for_each_group = n_tests_overall * test_shares_by_age_group
     n_pos_tests_for_each_group = n_tests_for_each_group * positivity_rate_by_age_group
     n_pos_tests_for_each_group_int = n_pos_tests_for_each_group.astype(int)
-    # if (n_pos_tests_for_each_group_int == 0).any():
-    #     breakpoint()
     return n_pos_tests_for_each_group_int
 
 

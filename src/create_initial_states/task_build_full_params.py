@@ -84,7 +84,7 @@ def task_create_full_params(depends_on, produces):
     # Testing parameters governing rapid test demand
     params.loc[
         ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test"),
-    ] = 0.7  ###  set to 1.0 for comparison to before
+    ] = 0.7
 
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2

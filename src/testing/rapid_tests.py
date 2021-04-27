@@ -31,9 +31,7 @@ def rapid_test_demand(
 
 
 def _test_schools_and_educ_workers(states, contacts):
-    eligible = states["educ_worker"] | (
-        states["occupation"] == "school"
-    )  ### remove second part for verification to before
+    eligible = states["educ_worker"] | (states["occupation"] == "school")
     untested_within_4_days = states["cd_received_rapid_test"] <= -4
     educ_contact_cols = [col for col in contacts if col.startswith("educ_")]
     has_educ_contacts = (contacts[educ_contact_cols] > 1).any(axis=1)

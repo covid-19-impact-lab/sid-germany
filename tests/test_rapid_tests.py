@@ -32,8 +32,7 @@ def contacts(educ_states):
 
 def test_test_schools_and_educ_workers(educ_states, contacts):
     res = _test_schools_and_educ_workers(states=educ_states, contacts=contacts)
-    ### set last one to True, once we also test pupils and not just educ_workers
     expected = pd.Series(
-        [False, True, False, False, False, False], index=educ_states.index
+        [False, True, False, False, False, True], index=educ_states.index
     )
     pd.testing.assert_series_equal(res, expected, check_names=False)
