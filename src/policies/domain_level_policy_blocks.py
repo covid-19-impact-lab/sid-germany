@@ -20,9 +20,7 @@ from functools import partial
 from src.policies.single_policy_functions import apply_educ_policy
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
-from src.policies.single_policy_functions import reopen_educ_model_germany
 from src.policies.single_policy_functions import reopen_other_model
-from src.policies.single_policy_functions import reopen_work_model
 from src.policies.single_policy_functions import shut_down_model
 
 # ======================================================================================
@@ -50,24 +48,6 @@ def reduce_work_models(
             reduce_work_model,
             attend_multiplier=attend_multiplier,
             hygiene_multiplier=hygiene_multiplier,
-            is_recurrent=contact_models[mod]["is_recurrent"],
-        )
-        policies[f"{block_info['prefix']}_{mod}"] = policy
-    return policies
-
-
-def reopen_work_models(contact_models, block_info, start_multiplier, end_multiplier):
-    """Reduce contacts of workers with a gradually changing multiplier."""
-    policies = {}
-    work_models = _get_work_models(contact_models)
-    for mod in work_models:
-        policy = _get_base_policy(mod, block_info)
-        policy["policy"] = partial(
-            reopen_work_model,
-            start_date=block_info["start_date"],
-            end_date=block_info["end_date"],
-            start_multiplier=start_multiplier,
-            end_multiplier=end_multiplier,
             is_recurrent=contact_models[mod]["is_recurrent"],
         )
         policies[f"{block_info['prefix']}_{mod}"] = policy
@@ -104,37 +84,6 @@ def reduce_educ_models(contact_models, block_info, multiplier):
         else:
             policy["policy"] = multiplier
 
-        policies[f"{block_info['prefix']}_{mod}"] = policy
-    return policies
-
-
-def reopen_educ_models(
-    contact_models,
-    block_info,
-    start_multiplier,
-    end_multiplier,
-    switching_date,
-    reopening_dates,
-):
-    """Reopen an educ model at state specific dates
-
-    - Keep the model closed until local reopening date
-    - Work with strongly reduced contacts until summer vacation
-    - Work with slightly reduced contact after summer vacation
-
-    """
-    policies = {}
-    educ_models = _get_educ_models(contact_models)
-    for mod in educ_models:
-        policy = _get_base_policy(mod, block_info)
-        policy["policy"] = partial(
-            reopen_educ_model_germany,
-            start_multiplier=start_multiplier,
-            end_multiplier=end_multiplier,
-            switching_date=switching_date,
-            reopening_dates=reopening_dates,
-            is_recurrent=contact_models[mod]["is_recurrent"],
-        )
         policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
 
