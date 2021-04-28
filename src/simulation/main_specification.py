@@ -52,6 +52,7 @@ SIMULATION_DEPENDENCIES = {
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     "policies_py": SRC / "policies" / "combine_policies_over_periods.py",
     "testing_py": SRC / "testing" / "testing_models.py",
+    "rapid_tests_py": SRC / "testing" / "rapid_tests.py",
     "specs_py": SRC / "simulation" / "main_specification.py",
     "initial_conditions_py": SRC
     / "create_initial_states"
