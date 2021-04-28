@@ -19,7 +19,7 @@ def get_date_from_year_and_week(row):
     return pd.Timestamp(date)
 
 
-def convert_weekly_to_daily(df, divide_by_7_cols, method="backfill"):
+def convert_weekly_to_daily(df, divide_by_7_cols):
     """Convert from a weekly to a daily index.
 
     Each week is filled with the observation of the end of the week.
@@ -40,10 +40,7 @@ def convert_weekly_to_daily(df, divide_by_7_cols, method="backfill"):
     dates = pd.date_range(df["date"].min() - pd.Timedelta(days=6), df["date"].max())
     df = df.set_index("date")
     df = df.reindex(dates)
-    if method in ["backfill", "bfill", "pad", "ffill"]:
-        df = df.fillna(method=method)
-    else:
-        df = df.interpolate(method=method)
+    df = df.fillna(method="backfill")
     df = df.reset_index()
     df = df.rename(columns={"index": "date"})
     df[divide_by_7_cols] = df[divide_by_7_cols] / 7

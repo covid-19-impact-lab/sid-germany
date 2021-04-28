@@ -10,7 +10,7 @@ from src.testing.shared import plot_time_series
 
 
 OUT_PATH = BLD / "data" / "testing"
-PRODUCTS = {"data": OUT_PATH / "test_numbers.csv"}
+PRODUCTS = {}
 OUT_COLS = [
     "n_tests",
     "n_positive_tests",
@@ -20,6 +20,7 @@ OUT_COLS = [
     "n_positive_tests_per_100_000",
 ]
 for col in OUT_COLS:
+    PRODUCTS[col] = OUT_PATH / f"{col}.csv"
     PRODUCTS[f"{col}_png"] = OUT_PATH / f"{col}.png"
 
 
@@ -28,9 +29,9 @@ for col in OUT_COLS:
 def task_create_test_statistics(depends_on, produces):
     df = pd.read_excel(depends_on, sheet_name="1_Testzahlerfassung")
     df = _prepare_data(df)
-    df.to_csv(produces["data"])
     for col in OUT_COLS:
         title = col.replace("_", " ").replace("n ", "Number of ")
+        df.set_index("date")[col].to_csv(produces[col])
         fig, ax = plot_time_series(df=df, y=col, title=title)
         fig.savefig(produces[f"{col}_png"])
         plt.close()
