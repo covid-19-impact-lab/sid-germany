@@ -36,7 +36,7 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
     df = pd.read_excel(depends_on, sheet_name="Klinische_Aspekte", header=1)
 
     df = _clean_data(df)
-    df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[], method="linear")
+    df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[])
     df.to_csv(produces["data"])
 
     fig, ax = _plot_df_column(df, "mean_age")
