@@ -89,36 +89,31 @@ def task_create_full_params(depends_on, produces):
         ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test"),
     ] = 0.85
 
-    # assume start of rapid tests in firms in Jan 01
-    params.loc[("rapid_test_demand", "share_workers", "2020-01-01"), "value"] = 0.0
-    params.loc[("rapid_test_demand", "share_workers", "2021-01-01"), "value"] = 0.0
+    # Only 60% of workers receiving a test offer accept it regularly
+    # source: https://bit.ly/3t1z0lf (COSMO, 2021-04-21)
+    params.loc[("rapid_test_demand", "work", "share_accepting_offer")] = 0.6
 
-    # COSMO: Only 60% of workers (https://bit.ly/3t1z0lf) take up test offers regularly
+    # assume start of rapid tests in firms in Jan 01
+    offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*offer_loc, "2021-01-01"), "value"] = 0.0
 
     # 2021-03-20: 20% of workers get weekly test
     # source: https://bit.ly/3eu0meK, https://bit.ly/3gANaan
-    params.loc[("rapid_test_demand", "share_workers", "2021-03-20"), "value"] = (
-        0.2 * 0.6
-    )
+    params.loc[(*offer_loc, "2021-03-20"), "value"] = 0.2
     # 2021-04-05: 60% of workers get weekly test
     # source: https://bit.ly/2RWCDMz
-    params.loc[("rapid_test_demand", "share_workers", "2021-04-05"), "value"] = (
-        0.6 * 0.6
-    )
+    params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6
     # 2021-04-15: 70% of workers are expected to get weekly tests
     # source: https://bit.ly/32BqKhd
     # COSMO (https://bit.ly/3t1z0lf, 2021-04-20) report <2/3 of people having
     # work contacts receiving a test offer
-    params.loc[("rapid_test_demand", "share_workers", "2021-04-15"), "value"] = (
-        0.66 * 0.6
-    )
+    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
     # 2021-04-19: employers are required by law to offer weekly tests
     # source: https://bit.ly/3tJNUh1, https://bit.ly/2QfNctJ
     # receive test offers at work.
-    # There is no data available on compliance
-    params.loc[("rapid_test_demand", "share_workers", "2021-04-15"), "value"] = (
-        0.7 * 0.6
-    )
+    # There is no data available on compliance yet
+    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
 
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2
