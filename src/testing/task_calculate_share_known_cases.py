@@ -7,7 +7,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import SRC
-from src.testing.shared import get_share_known_cases_series
+from src.testing.shared import get_piecewise_linear_interpolation
 
 
 @pytask.mark.depends_on(
@@ -59,7 +59,7 @@ def task_calculate_and_plot_share_known_cases(depends_on, produces):
             "ignore", message="indexing past lexsort depth may impact performance."
         )
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
-    share_known_from_params = get_share_known_cases_series(params_slice)
+    share_known_from_params = get_piecewise_linear_interpolation(params_slice)
 
     fig, ax = plt.subplots(figsize=(8, 3))
     sns.lineplot(x=share_known.index, y=share_known, ax=ax, label="Dunkelzifferradar")
