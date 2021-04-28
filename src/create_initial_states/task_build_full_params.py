@@ -114,6 +114,7 @@ def task_create_full_params(depends_on, produces):
     # receive test offers at work.
     # There is no data available on compliance yet
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
+    params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
 
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2
