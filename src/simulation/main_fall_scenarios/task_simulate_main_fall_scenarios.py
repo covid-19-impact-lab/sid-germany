@@ -18,8 +18,7 @@ from src.simulation.main_specification import SIMULATION_DEPENDENCIES
 NESTED_PARAMETRIZATION = build_main_scenarios(FALL_PATH)
 PARAMETRIZATION = []
 for scenario_spec_list in NESTED_PARAMETRIZATION.values():
-    for spec in scenario_spec_list:
-        PARAMETRIZATION.append(spec)
+    PARAMETRIZATION += scenario_spec_list
 """Each specification consists of a produces path, the scenario dictioary and a seed"""
 
 if FAST_FLAG == "debug":
