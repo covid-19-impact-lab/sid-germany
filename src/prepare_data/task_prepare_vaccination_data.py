@@ -89,7 +89,7 @@ def _clean_vaccination_data(df):
     # check date conversion was correct
     assert df["date"].min() == pd.Timestamp(year=2020, month=12, day=27)
     df = df.set_index("date")
-    df["received_first_dose"] = df["Einmal geimpft"].cumsum()
+    df["received_first_dose"] = df["Begonnene Impfserie"].cumsum()
     df["share_with_first_dose"] = df["received_first_dose"] / POPULATION_GERMANY
     return df
 
