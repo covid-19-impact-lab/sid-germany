@@ -38,6 +38,11 @@ PARAMETRIZED_DOWNLOADS = [
         "https://impfdashboard.de/static/data/germany_deliveries_timeseries_v2.tsv",
         BLD / "data" / "raw_time_series" / "vaccination_deliveries.tsv",
     ),
+    (
+        "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/"
+        "Klinische_Aspekte.xlsx?__blob=publicationFile",
+        BLD / "data" / "raw_time_series" / "test_distribution.xlsx",
+    ),
 ]
 
 
