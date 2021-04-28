@@ -25,17 +25,19 @@ OUT_PATH = BLD / "data" / "testing"
 @pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "test_distribution.xlsx")
 @pytask.mark.produces(
     {
-        "data": OUT_PATH / "test_characteristics_daily.csv",
+        "data": OUT_PATH / "characteristics_of_the_tested.csv",
         "mean_age": OUT_PATH / "mean_age_of_tested.png",
         "share_with_symptom_status": OUT_PATH
         / "share_of_tested_with_symptom_status.png",
         "symptom_shares": OUT_PATH / "share_of_symptomatic_among_tests.png",
     }
 )
-def task_create_test_characteristics(depends_on, produces):
+def task_prepare_characteristics_of_the_tested(depends_on, produces):
     df = pd.read_excel(depends_on, sheet_name="Klinische_Aspekte", header=1)
 
     df = _clean_data(df)
+    df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[], method="linear")
+    df.to_csv(produces["data"])
 
     fig, ax = _plot_df_column(df, "mean_age")
     fig.tight_layout()
@@ -51,9 +53,6 @@ def task_create_test_characteristics(depends_on, produces):
     fig, ax = _plot_df_column(df, symptom_shares, "Symptomatic Shares")
     fig.tight_layout()
     fig.savefig(produces["symptom_shares"])
-
-    df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[])
-    df.to_csv(produces["data"])
 
 
 def _clean_data(df):
@@ -99,7 +98,7 @@ def _plot_df_column(df, cols, title=None):
     fig, ax = plt.subplots()
     for col in cols:
         label = col.replace("_", " ").title()
-        sns.lineplot(x=df.index, y=df[col], ax=ax, label=label)
+        sns.lineplot(x=df["date"], y=df[col], ax=ax, label=label)
     if title is not None:
         ax.set_title(title)
     elif len(cols) == 1:
