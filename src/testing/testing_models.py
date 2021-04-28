@@ -11,21 +11,15 @@ reflect the true positive tests but the negative tests don't.
 Who gets a test as follows is completely determined in the demand_test function:
 
 Firstly, we calculate from the number of infected people in the simulation and the
-share_known_cases how many positive tests are to
-be distributed in the whole population. From this, using the overall positivity rate
-of tests we get to the full budget of tests to be distributed across the population.
+share_known_cases how many positive tests are to be distributed in the whole population.
+From this, using the overall positivity rate of tests we get to the full budget of tests
+to be distributed across the population.
+
 Using the ARS data, we get the share of tests (positive and negative) going to each
 age group. Using the age specific positivity rate - also reported in the ARS data -
 then gets us the number of positive tests to distribute in each age group.
 Using the RKI and ARS data therefore allows us to reflect the German testing strategy
 over age groups, e.g .preferential testing of older individuals.
-
-We assume that symptomatic individuals preferentially demand and receive tests and
-that teachers are tested on a weekly basis while working.
-The remaining tests are distributed uniformly among the infectious in each age group.
-We plan to further enhance the testing demand model by further variables such as contact
-tracing.
-
 
 """
 import warnings
@@ -34,7 +28,6 @@ import numpy as np
 import pandas as pd
 from sid.time import get_date
 
-from src.contact_models.contact_model_functions import get_states_w_vacations
 from src.testing.shared import get_share_known_cases_for_one_day
 
 
@@ -45,6 +38,7 @@ def demand_test(
     positivity_rate_overall,
     test_shares_by_age_group,
     positivity_rate_by_age_group,
+    log_path,
 ):
     """Test demand function.
 
@@ -62,11 +56,10 @@ def demand_test(
     Using the RKI and ARS data therefore allows us to reflect the German testing
     strategy over age groups, e.g .preferential testing of older individuals.
 
-    In each age group we first distribute tests among those that recently developed
-    symptoms but have no pending test and do not know their infection state yet.
-    We then test all education workers such as teachers that have not been tested
-    in the last week and are not on vacation.
-    We then distribute the remaining tests among the remaining currently
+    In each age group we first distribute tests among those that received a positive
+    rapid test in the previous period. In addition, symptomatic people request a test
+    with the `share_symptomatic_requesting_test` probability.
+    We then distribute the remaining tests randomly among the remaining currently
     infectious such that we use up the full test budget in each age group.
 
     Args:
@@ -84,6 +77,7 @@ def demand_test(
             share of tests that was positive in each age group. If a Series the
             index are the age groups. If a DataFrame, the index are the dates and
             the columns are the age groups.
+        log_path (pathlib.Path): Path to which the intermediate results will be saved.
 
     Returns:
         demand_probability (numpy.ndarray, pandas.Series): An array or a series
@@ -92,8 +86,6 @@ def demand_test(
     """
     np.random.seed(seed)
     n_newly_infected = states["newly_infected"].sum()
-    symptom_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
-    share_symptomatic_requesting_test = params.loc[symptom_tuple, "value"]
 
     date = get_date(states)
     if isinstance(test_shares_by_age_group, pd.DataFrame):
@@ -102,19 +94,29 @@ def demand_test(
         positivity_rate_by_age_group = positivity_rate_by_age_group.loc[date]
     if isinstance(positivity_rate_overall, pd.Series):
         positivity_rate_overall = positivity_rate_overall.loc[date]
-    if share_symptomatic_requesting_test > 1.0 or share_symptomatic_requesting_test < 0:
+    symptom_loc = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
+    share_symptomatic = params.loc[symptom_loc, "value"]
+    if share_symptomatic > 1.0 or share_symptomatic < 0:
         raise ValueError(
             "The share of symptomatic individuals requesting a test must lie in the "
-            f"[0, 1] interval, you specified {share_symptomatic_requesting_test}"
+            f"[0, 1] interval, you specified {share_symptomatic}"
         )
 
+    rapid_tests_loc = (
+        "test_demand",
+        "shares",
+        "share_w_positive_rapid_test_requesting_test",
+    )
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
+        share_requesting_confirmation = params.loc[rapid_tests_loc, "value"]
+
     share_known_cases = get_share_known_cases_for_one_day(date, params_slice)
 
+    # get budget of positive tests to distribute
     n_pos_tests_for_each_group = _calculate_positive_tests_to_distribute_per_age_group(
         n_newly_infected=n_newly_infected,
         share_known_cases=share_known_cases,
@@ -122,46 +124,45 @@ def demand_test(
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
     )
-    developed_symptoms_yesterday = states["cd_symptoms_true"] == -1
+    n_newly_infected_by_group = states.groupby("age_group_rki")["newly_infected"].sum()
+    implied_share_known_cases = n_pos_tests_for_each_group / n_newly_infected_by_group
 
-    untested = ~states["pending_test"] & ~states["knows_immune"]
-    symptomatic_without_test = developed_symptoms_yesterday & untested
-    if share_symptomatic_requesting_test == 1.0:
-        unconstrained_demanded = symptomatic_without_test
-    else:
-        # this ignores the designated number of tests per age group.
-        # Adjusting the number of tests to the designated number is done in
-        # `_scale_demand_up_or_down` below.
-        n_to_demand = int(
-            share_symptomatic_requesting_test * symptomatic_without_test.sum()
-        )
-        pool = states[symptomatic_without_test].index
-        drawn = np.random.choice(size=n_to_demand, a=pool, replace=False)
-        unconstrained_demanded = pd.Series(False, index=states.index)
-        unconstrained_demanded[drawn] = True
+    unconstrained_demanded = pd.Series(False, index=states.index)
 
-    if date > pd.Timestamp("2020-12-31"):
-        unconstrained_demanded = _demand_test_for_educ_workers(
-            unconstrained_demanded, states, params
-        )
+    receiving_confirmation = _request_pcr_confirmation_of_rapid_test(
+        states, share_requesting_confirmation
+    )
+    symptomatic_requests = _request_pcr_test_bc_of_symptoms(states, share_symptomatic)
 
+    unconstrained_demanded = receiving_confirmation | symptomatic_requests
+
+    # scale demand
     demands_by_age_group = unconstrained_demanded.groupby(states["age_group_rki"]).sum()
     remaining = n_pos_tests_for_each_group - demands_by_age_group
     demanded = _scale_demand_up_or_down(unconstrained_demanded, states, remaining)
 
     if (remaining < 0).any():
-        info = pd.concat([demands_by_age_group, n_pos_tests_for_each_group], axis=1)
-        info.columns = ["demand", "target demand"]
-        info["difference"] = (info["demand"] - info["target demand"]) / info[
-            "target demand"
-        ]
-        info = info.T.round(2)
-        warnings.warn(
-            f"\nToo much endogenous test demand on {date.date()} ({date.day_name()}). "
-            "This is an indication that the share of symptomatic infections is too "
-            "high or too many symptomatic people demand a test:"
-            f"\n\n{info.to_string()}\n\n"
-        )
+        save_path = log_path / f"{date.date()}.pkl"
+        to_save = {
+            "n_pos_tests_for_each_group": n_pos_tests_for_each_group,
+            "demands_by_age_group": demands_by_age_group,
+            "symptomatic_requests": symptomatic_requests.groupby(
+                states["age_group_rki"]
+            ).sum(),
+            "receiving_confirmation": receiving_confirmation.groupby(
+                states["age_group_rki"]
+            ).sum(),
+            "scaled": demanded.groupby(states["age_group_rki"]).sum(),
+            "implied_share_known_cases": implied_share_known_cases,
+            "supply_inputs": {
+                "n_newly_infected": n_newly_infected,
+                "share_known_cases": share_known_cases,
+                "positivity_rate_overall": positivity_rate_overall,
+                "test_shares_by_age_group": test_shares_by_age_group,
+                "positivity_rate_by_age_group": positivity_rate_by_age_group,
+            },
+        }
+        pd.to_pickle(to_save, save_path)
 
     return demanded
 
@@ -209,41 +210,60 @@ def _calculate_positive_tests_to_distribute_per_age_group(
     n_tests_overall = n_pos_tests_overall / positivity_rate_overall
     n_tests_for_each_group = n_tests_overall * test_shares_by_age_group
     n_pos_tests_for_each_group = n_tests_for_each_group * positivity_rate_by_age_group
-    n_pos_tests_for_each_group = n_pos_tests_for_each_group.astype(int)
-    return n_pos_tests_for_each_group
+    n_pos_tests_for_each_group_int = n_pos_tests_for_each_group.astype(int)
+    return n_pos_tests_for_each_group_int
 
 
-def _demand_test_for_educ_workers(demanded, states, params):
-    """Every working teacher who has not received a test in the last 7 days is tested.
+def _request_pcr_confirmation_of_rapid_test(states, share_requesting_confirmation):
+    received_rapid_test = states["cd_received_rapid_test"] == 0
+    pos_rapid_test = states["is_tested_positive_by_rapid_test"]
+    pool = states[received_rapid_test & pos_rapid_test].index
+    n_to_draw = int(share_requesting_confirmation * len(pool))
+    demands_verification_locs = np.random.choice(
+        a=pool,
+        size=n_to_draw,
+        replace=False,
+    )
+    demanding_verification = states.index.isin(demands_verification_locs)
+    getting_confirmation = states["currently_infected"] & demanding_verification
+    return getting_confirmation
 
-    At the moment we only distribute positive tests. As a result the
-    `cd_received_test_result_true` countdown does not give us who has been tested and
-    we only want to demand tests for education workers who will get a positive result.
 
-    We implement the tests for education workers as spread out across the week. This
-    is necessary because teachers use antigen tests for which no data is available.
-    Our test data is weekly PCR test data which we spread out to be evenly distributed
-    across the week. So we spread out the testing for teachers also across the week.
-    We use the index to decide who gets tested which day of the week. Since the states
-    are shuffeld this is not a problem.
+def _request_pcr_test_bc_of_symptoms(states, share_symptomatic_requesting_test):
+    """Return who requests a rapid test because of symptoms.
 
-    We again assume that tests are perfect, i.e. no false positives or negatives.
+    Args:
+        states (pandas.DataFrame)
+        share_symptomatic_requesting_test (float): Share of individuals that
+            developed symptoms the day before requesting a test.
+
+    Returns:
+        requests_rapid_test (pandas.Series): boolean Series. Index is the same as
+            states. True for individuals requesting a PCR test because of having
+            developed symptoms the day before.
 
     """
-    demanded = demanded.copy()
-    date = get_date(states)
-    states_w_vacations = get_states_w_vacations(date, params)
-    on_vacation = states["state"].isin(states_w_vacations)
-    working_teachers = states["educ_worker"] & ~on_vacation
+    developed_symptoms_yesterday = states["cd_symptoms_true"] == -1
+    untested = ~states["pending_test"] & ~states["knows_immune"]
+    symptomatic_without_test = developed_symptoms_yesterday & untested
+    if share_symptomatic_requesting_test == 1.0:
+        requests_rapid_test_locs = states[symptomatic_without_test].index
+    else:
+        # this ignores the designated number of tests per age group.
+        # Adjusting the number of tests to the designated number is done in
+        # `_scale_demand_up_or_down` below.
+        n_to_demand = int(
+            share_symptomatic_requesting_test * symptomatic_without_test.sum()
+        )
+        pool = states[symptomatic_without_test].index
+        requests_rapid_test_locs = np.random.choice(
+            size=n_to_demand, a=pool, replace=False
+        )
 
-    day_of_week = date.dayofweek
-    slice_start = int(day_of_week / 7 * len(states))
-    slice_end = int(((day_of_week + 1) / 7) * len(states))
-    in_slice = (slice_start <= states["index"]) & (states["index"] < slice_end)
-    to_be_tested = working_teachers & in_slice
-    to_receive_positive_test = to_be_tested & states["infectious"]
-    demanded[to_receive_positive_test] = True
-    return demanded
+    requests_rapid_test = pd.Series(
+        states.index.isin(requests_rapid_test_locs), index=states.index
+    )
+    return requests_rapid_test
 
 
 def _scale_demand_up_or_down(demanded, states, remaining):

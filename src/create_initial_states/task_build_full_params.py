@@ -71,12 +71,20 @@ def task_create_full_params(depends_on, produces):
         susceptibility,
     ]
     params = pd.concat(param_slices, axis=0)
+
     # number of available tests is implemented in the test demand model.
     # therefore, we set the "sid" limit, which is time invariant to one test
     # per individual
     params.loc[("testing", "allocation", "rel_available_tests")] = 100_000
     params.loc[("testing", "processing", "rel_available_capacity")] = 100_000
+
+    # Testing parameters governing test demand
     params.loc[("test_demand", "symptoms", "share_symptomatic_requesting_test")] = 0.5
+
+    # Testing parameters governing rapid test demand
+    params.loc[
+        ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test"),
+    ] = 0.7
 
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2

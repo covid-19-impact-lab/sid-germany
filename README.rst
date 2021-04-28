@@ -1,6 +1,24 @@
 sid-germany
 ===========
 
+.. image:: https://img.shields.io/github/license/covid-19-impact-lab/sid-germany
+   :alt: GitHub
+
+.. image:: https://readthedocs.org/projects/sid-germany/badge/?version=latest
+    :target: https://sid-germany.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
+.. image:: https://img.shields.io/github/workflow/status/covid-19-impact-lab/sid-germany/Continuous%20Integration%20Workflow/main
+   :target: https://github.com/covid-19-impact-lab/sid-germany/actions?query=branch%3Amain
+
+.. image:: https://results.pre-commit.ci/badge/github/covid-19-impact-lab/sid-germany/main.svg
+    :target: https://results.pre-commit.ci/latest/github/covid-19-impact-lab/sid-germany/main
+    :alt: pre-commit.ci status
+
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+
+
 This project contains the research code which applies `sid
 <https://github.com/covid-19-impact-lab/sid>`_ to Germany and accompanies several
 publications. See below for a list.
@@ -25,7 +43,7 @@ To create the environment for running the code, we rely on `conda
     $ conda activate sid-germany
 
 to create and activate the environment. The workflow of the project is managed by
-`pytask <https://github.com/pytask-dev/pytask>`_. Built the project with
+`pytask <https://github.com/pytask-dev/pytask>`_. Build the project with
 
 .. code-block:: console
 

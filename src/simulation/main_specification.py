@@ -18,6 +18,7 @@ from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import combine_dictionaries
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
+from src.testing.rapid_tests import rapid_test_demand
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -139,15 +140,41 @@ def build_main_scenarios(base_path):
     nested_parametrization = {}
     for name, scenario in scenarios.items():
         nested_parametrization[name] = []
+
+        # rapid tests for leisure, school and most work settings
+        # were very rare still in fall so we abstract from them completely.
+        if "fall" in base_path.name:
+            rapid_test_models = None
+            rapid_test_reaction_models = None
+        else:
+            rapid_test_models = {
+                "standard_rapid_test_demand": {
+                    "model": rapid_test_demand,
+                    "start": "2021-01-01",
+                    "end": "2025-01-01",
+                }
+            }
+            rapid_test_reaction_models = None
+
         for i in range(n_seeds):
             seed = 300_000 + 700_001 * i
             produces = base_path / f"{name}_{seed}" / "time_series"
-            nested_parametrization[name].append((produces, scenario, seed))
+            nested_parametrization[name].append(
+                (
+                    produces,
+                    scenario,
+                    rapid_test_models,
+                    rapid_test_reaction_models,
+                    seed,
+                )
+            )
 
     return nested_parametrization
 
 
-def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=False):
+def load_simulation_inputs(
+    depends_on, init_start, end_date, test_demand_log_path, extend_ars_dfs=False
+):
     test_inputs = {
         "test_shares_by_age_group": pd.read_pickle(
             depends_on["test_shares_by_age_group"]
@@ -167,6 +194,7 @@ def load_simulation_inputs(depends_on, init_start, end_date, extend_ars_dfs=Fals
     simulation_inputs = _get_testing_models(
         init_start=init_start,
         end_date=end_date,
+        test_demand_log_path=test_demand_log_path,
         **test_inputs,
     )
     simulation_inputs["initial_states"] = pd.read_parquet(depends_on["initial_states"])
@@ -247,12 +275,14 @@ def _get_testing_models(
     positivity_rate_overall,
     test_shares_by_age_group,
     positivity_rate_by_age_group,
+    test_demand_log_path,
 ):
     demand_test_func = partial(
         demand_test,
         positivity_rate_overall=positivity_rate_overall,
         test_shares_by_age_group=test_shares_by_age_group,
         positivity_rate_by_age_group=positivity_rate_by_age_group,
+        log_path=test_demand_log_path,
     )
     one_day = pd.Timedelta(1, unit="D")
     testing_models = {

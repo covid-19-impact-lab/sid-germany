@@ -20,6 +20,7 @@ plt.rcParams.update(
     }
 )
 
+
 sns.set_palette(get_colors("categorical", 12))
 
 
@@ -73,7 +74,9 @@ def task_prepare_ars_data(depends_on, produces):
     positivity_rates.index.name = "date"
     positivity_rates.to_pickle(produces["positivity_rate_by_age_group"])
 
-    fig, ax = _plot_frame(positivity_rates)
+    fig, ax = _plot_frame(
+        positivity_rates.loc[pd.Timestamp("2021-01-10") :]  # noqa: E203
+    )
     ax.set_title("Anteil der Tests in jeder Altersgruppe, die positiv sind")
     fig.savefig(produces["positivity_rate_by_age_group_png"])
     plt.close()
