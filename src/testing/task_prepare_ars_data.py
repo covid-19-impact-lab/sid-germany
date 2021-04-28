@@ -24,7 +24,7 @@ plt.rcParams.update(
 sns.set_palette(get_colors("categorical", 12))
 
 
-OUT_PATH = BLD / "data" / "testing"
+OUT_PATH = BLD / "data" / "testing" / "ars"
 
 PRODUCTS = {
     "test_shares_by_age_group": OUT_PATH / "test_shares_by_age_group.pkl",

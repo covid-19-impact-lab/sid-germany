@@ -41,12 +41,14 @@ SIMULATION_DEPENDENCIES = {
     "test_shares_by_age_group": BLD
     / "data"
     / "testing"
+    / "ars"
     / "test_shares_by_age_group.pkl",
     "positivity_rate_by_age_group": BLD
     / "data"
     / "testing"
+    / "ars"
     / "positivity_rate_by_age_group.pkl",
-    "positivity_rate_overall": BLD / "data" / "testing" / "positivity_rate_overall.pkl",
+    "positivity_rate_overall": BLD / "data" / "testing" / "test_numbers.csv",
     "virus_shares": BLD / "data" / "virus_strains" / "final_strain_shares.pkl",
     # py files
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
@@ -182,9 +184,11 @@ def load_simulation_inputs(
         "positivity_rate_by_age_group": pd.read_pickle(
             depends_on["positivity_rate_by_age_group"]
         ),
-        "positivity_rate_overall": pd.read_pickle(
-            depends_on["positivity_rate_overall"]
-        ),
+        "positivity_rate_overall": pd.read_csv(
+            depends_on["positivity_rate_overall"],
+            parse_dates=["date"],
+            index_col="date",
+        )["share_tests_positive"],
     }
 
     if extend_ars_dfs:
