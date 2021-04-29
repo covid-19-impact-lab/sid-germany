@@ -52,6 +52,7 @@ SIMULATION_DEPENDENCIES = {
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
     "policies_py": SRC / "policies" / "combine_policies_over_periods.py",
     "testing_py": SRC / "testing" / "testing_models.py",
+    "rapid_tests_py": SRC / "testing" / "rapid_tests.py",
     "specs_py": SRC / "simulation" / "main_specification.py",
     "initial_conditions_py": SRC
     / "create_initial_states"
@@ -74,7 +75,7 @@ def build_main_scenarios(base_path):
 
     Args:
         base_path (pathlib.Path): Path where each simulation run will get
-            a separate folder.
+            a separate folder. (spring or fall)
 
     Returns:
         nested_parametrization (dict): Keys are the names of the scenarios.
@@ -87,22 +88,6 @@ def build_main_scenarios(base_path):
             3. the seed to be used by sid.
 
     """
-    if FAST_FLAG == "debug":
-        n_seeds = 1
-    elif FAST_FLAG == "full":
-        n_seeds = 20
-    elif FAST_FLAG == "verify":
-        # with the verify fast flag only base scenario is run for the fall
-        # -> 21 * 2 + 3 * 6 = 60
-        if "base" in base_path.name:
-            n_seeds = 18
-        else:
-            n_seeds = 5
-    else:
-        raise ValueError(
-            f"Unknown FAST_FLAG: {FAST_FLAG}. Must be one of 'debug', 'verify', 'full'."
-        )
-
     if "predictions" in base_path.name:
         base_scenario = combine_dictionaries(
             [{"educ_multiplier": 0.5}, get_educ_options_mid_march_to_easter()]
@@ -155,6 +140,21 @@ def build_main_scenarios(base_path):
                 }
             }
             rapid_test_reaction_models = None
+
+        if FAST_FLAG == "debug":
+            n_seeds = 1
+        elif FAST_FLAG == "full":
+            n_seeds = 20
+        elif FAST_FLAG == "verify":
+            if "base" in name:
+                n_seeds = 18
+            else:
+                n_seeds = 5
+        else:
+            raise ValueError(
+                f"Unknown FAST_FLAG: {FAST_FLAG}. Must be one of "
+                "'debug', 'verify', 'full'."
+            )
 
         for i in range(n_seeds):
             seed = 300_000 + 700_001 * i

@@ -131,6 +131,10 @@ def _build_initial_states(
         df["vaccination_group"], share_refuser=SHARE_REFUSE_VACCINATION, seed=909
     )
 
+    # This is uncorrelated with the work contact priority.
+    # This allows us to easily match the empirical compliance rate.
+    df["rapid_test_compliance"] = np.random.uniform(low=0, high=1, size=len(df))
+
     df.index.name = "index"
     df = _only_keep_relevant_columns(df)
     df = df.sample(frac=1).reset_index(drop=True)
@@ -318,6 +322,7 @@ def _only_keep_relevant_columns(df):
         "educ_contact_priority",
         "vaccination_group",
         "vaccination_rank",
+        "rapid_test_compliance",
     ]
 
     educ_contact_group_ids = [

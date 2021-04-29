@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 from sid.time import get_date
 
-from src.testing.shared import get_share_known_cases_for_one_day
+from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
 
 
 def demand_test(
@@ -114,7 +114,9 @@ def demand_test(
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
         share_requesting_confirmation = params.loc[rapid_tests_loc, "value"]
 
-    share_known_cases = get_share_known_cases_for_one_day(date, params_slice)
+    share_known_cases = get_piecewise_linear_interpolation_for_one_day(
+        date, params_slice
+    )
 
     # get budget of positive tests to distribute
     n_pos_tests_for_each_group = _calculate_positive_tests_to_distribute_per_age_group(

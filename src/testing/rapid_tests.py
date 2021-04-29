@@ -1,6 +1,10 @@
 """Functions for rapid tests."""
+import warnings
+
 import pandas as pd
 from sid.time import get_date
+
+from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
 
 
 def rapid_test_demand(
@@ -18,19 +22,40 @@ def rapid_test_demand(
     """
     date = get_date(states)
 
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        params_slice = params.loc[
+            ("rapid_test_demand", "share_workers_receiving_offer")
+        ]
+    share_of_workers_with_offer = get_piecewise_linear_interpolation_for_one_day(
+        date, params_slice
+    )
+    accept_share_loc = ("rapid_test_demand", "work", "share_accepting_offer")
+    share_workers_accepting_offer = params.loc[accept_share_loc]["value"]
+    work_compliance_multiplier = (
+        share_of_workers_with_offer * share_workers_accepting_offer
+    )
+    work_demand = _calculate_work_rapid_test_demand(
+        states=states,
+        contacts=contacts,
+        compliance_multiplier=work_compliance_multiplier,
+    )
+
     # Abstracting from a lot of heterogeneity, we assume that
     # educ workers and school students get tests twice weekly after Easter
     if date > pd.Timestamp("2021-04-01"):
-        educ_test_requests = _test_schools_and_educ_workers(states, contacts)
+        educ_demand = _calculate_educ_rapid_test_demand(states, contacts)
     else:
-        educ_test_requests = pd.Series(False, index=states.index)
+        educ_demand = pd.Series(False, index=states.index)
 
-    requests_rapid_test = educ_test_requests
+    rapid_test_demand = work_demand | educ_demand
 
-    return requests_rapid_test
+    return rapid_test_demand
 
 
-def _test_schools_and_educ_workers(states, contacts):
+def _calculate_educ_rapid_test_demand(states, contacts):
     """Return which individuals get a rapid test in an education setting.
 
     As of April 22, rapid tests in nurseries and preschools were not the
@@ -52,4 +77,34 @@ def _test_schools_and_educ_workers(states, contacts):
     eligible = states["educ_worker"] | (states["occupation"] == "school")
     too_long_since_last_test = states["cd_received_rapid_test"] <= -3
     to_test = eligible & too_long_since_last_test & has_educ_contacts
+    return to_test
+
+
+def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
+    date = get_date(states)
+    work_cols = [col for col in contacts if col.startswith("work_")]
+    has_work_contacts = (contacts[work_cols] > 0).any(axis=1)
+
+    # starting 2021-04-26 every worker must be offered two tests per week
+    # source: https://bit.ly/2Qw4Md6
+    # To have a gradual transition we gradually increase the test frequency
+    if date < pd.Timestamp("2021-04-07"):  # before Easter
+        allowed_days_btw_tests = 7
+    elif date < pd.Timestamp("2021-04-13"):
+        allowed_days_btw_tests = 6
+    elif date < pd.Timestamp("2021-04-20"):
+        allowed_days_btw_tests = 5
+    elif date < pd.Timestamp("2021-04-27"):
+        allowed_days_btw_tests = 4
+    else:  # date > pd.Timestamp("2021-04-26")
+        allowed_days_btw_tests = 3
+
+    too_long_since_last_test = (
+        states["cd_received_rapid_test"] <= -allowed_days_btw_tests
+    )
+
+    should_get_test = has_work_contacts & too_long_since_last_test
+    complier = states["rapid_test_compliance"] >= (1 - compliance_multiplier)
+    receives_offer_and_accepts = should_get_test & complier
+    to_test = should_get_test & receives_offer_and_accepts
     return to_test
