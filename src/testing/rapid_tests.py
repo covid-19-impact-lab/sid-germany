@@ -89,11 +89,21 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
 
     # starting 2021-04-26 every worker must be offered two tests per week
     # source: https://bit.ly/2Qw4Md6
-    if date > pd.Timestamp("2021-04-26"):
-        too_long_since_last_test = states["cd_received_rapid_test"] <= -3
-    else:
-        # Assume that workers are only tested weekly.
-        too_long_since_last_test = states["cd_received_rapid_test"] <= -7
+    # To have a gradual transition we gradually increase the test frequency
+    if date < pd.Timestamp("2021-04-07"):  # before Easter
+        allowed_days_btw_tests = 7
+    elif date < pd.Timestamp("2021-04-13"):
+        allowed_days_btw_tests = 6
+    elif date < pd.Timestamp("2021-04-20"):
+        allowed_days_btw_tests = 5
+    elif date < pd.Timestamp("2021-04-27"):
+        allowed_days_btw_tests = 4
+    else:  # date > pd.Timestamp("2021-04-26")
+        allowed_days_btw_tests = 3
+
+    too_long_since_last_test = (
+        states["cd_received_rapid_test"] <= -allowed_days_btw_tests
+    )
 
     should_get_test = has_work_contacts & too_long_since_last_test
     truth_probabilities = np.full(len(states), compliance_multiplier)
