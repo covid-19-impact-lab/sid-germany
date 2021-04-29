@@ -7,6 +7,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import SRC
+from src.simulation.plotting import style_plot
 from src.testing.shared import get_piecewise_linear_interpolation
 
 
@@ -70,7 +71,7 @@ def task_calculate_and_plot_share_known_cases(depends_on, produces):
         label="Interpolated",
     )
     ax.set_title("Share of known cases")
-    sns.despine()
+    fig, ax = style_plot(fig, ax)
     fig.tight_layout()
 
     ax.axvline(pd.Timestamp("2020-12-24"))
