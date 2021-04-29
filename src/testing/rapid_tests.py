@@ -36,28 +36,28 @@ def rapid_test_demand(
     )
     accept_share_loc = ("rapid_test_demand", "work", "share_accepting_offer")
     share_workers_accepting_offer = params.loc[accept_share_loc]["value"]
-    share_workers_to_be_tested = (
+    work_compliance_multiplier = (
         share_of_workers_with_offer * share_workers_accepting_offer
     )
-    workers_getting_tested = _give_rapid_tests_to_some_workers(
+    work_demand = _calculate_work_rapid_test_demand(
         states=states,
         contacts=contacts,
-        share_workers_to_be_tested=share_workers_to_be_tested,
+        compliance_multiplier=work_compliance_multiplier,
     )
 
     # Abstracting from a lot of heterogeneity, we assume that
     # educ workers and school students get tests twice weekly after Easter
     if date > pd.Timestamp("2021-04-01"):
-        educ_test_requests = _test_schools_and_educ_workers(states, contacts)
+        educ_demand = _calculate_educ_rapid_test_demand(states, contacts)
     else:
-        educ_test_requests = pd.Series(False, index=states.index)
+        educ_demand = pd.Series(False, index=states.index)
 
-    requests_rapid_test = workers_getting_tested | educ_test_requests
+    rapid_test_demand = work_demand | educ_demand
 
-    return requests_rapid_test
+    return rapid_test_demand
 
 
-def _test_schools_and_educ_workers(states, contacts):
+def _calculate_educ_rapid_test_demand(states, contacts):
     """Return which individuals get a rapid test in an education setting.
 
     As of April 22, rapid tests in nurseries and preschools were not the
@@ -82,7 +82,7 @@ def _test_schools_and_educ_workers(states, contacts):
     return to_test
 
 
-def _give_rapid_tests_to_some_workers(states, contacts, share_workers_to_be_tested):
+def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     date = get_date(states)
     work_cols = [col for col in contacts if col.startswith("work_")]
     has_work_contacts = (contacts[work_cols] > 0).any(axis=1)
@@ -96,7 +96,7 @@ def _give_rapid_tests_to_some_workers(states, contacts, share_workers_to_be_test
         too_long_since_last_test = states["cd_received_rapid_test"] <= -7
 
     should_get_test = has_work_contacts & too_long_since_last_test
-    truth_probabilities = np.full(len(states), share_workers_to_be_tested)
+    truth_probabilities = np.full(len(states), compliance_multiplier)
     receives_offer_and_accepts = pd.Series(
         boolean_choices(truth_probabilities), index=states.index
     )

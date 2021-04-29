@@ -98,9 +98,11 @@ def task_create_full_params(depends_on, produces):
     params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
     params.loc[(*offer_loc, "2021-01-01"), "value"] = 0.0
 
-    # 2021-03-20: 20% of workers get weekly test
-    # source: https://bit.ly/3eu0meK, https://bit.ly/3gANaan
-    params.loc[(*offer_loc, "2021-03-20"), "value"] = 0.2
+    # 2021-03-17 - 2021-03-19: 20% of employers offer weekly test
+    # source: https://bit.ly/3eu0meK
+    # second half of March: 23% of workers report test offer
+    # source: https://bit.ly/3gANaan
+    params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.2
     # 2021-04-05: 60% of workers get weekly test
     # source: https://bit.ly/2RWCDMz
     params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6

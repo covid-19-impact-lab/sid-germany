@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.testing.rapid_tests import _give_rapid_tests_to_some_workers
-from src.testing.rapid_tests import _test_schools_and_educ_workers
+from src.testing.rapid_tests import _calculate_educ_rapid_test_demand
+from src.testing.rapid_tests import _calculate_work_rapid_test_demand
 
 
 @pytest.fixture
@@ -32,8 +32,8 @@ def contacts(educ_states):
     return contacts
 
 
-def test_test_schools_and_educ_workers(educ_states, contacts):
-    res = _test_schools_and_educ_workers(states=educ_states, contacts=contacts)
+def test_calculate_educ_rapid_test_demand(educ_states, contacts):
+    res = _calculate_educ_rapid_test_demand(states=educ_states, contacts=contacts)
     expected = pd.Series(
         [False, True, False, False, False, True], index=educ_states.index
     )
@@ -74,33 +74,41 @@ def work_contacts():
     return contacts
 
 
-def test_give_rapid_tests_to_some_workers_early(work_states, work_contacts):
+def test_calculate_work_rapid_test_demand_early(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-04-01")
     expected = pd.Series([False, False, True, True, False])
-    res = _give_rapid_tests_to_some_workers(work_states, work_contacts, 1.0)
+    res = _calculate_work_rapid_test_demand(
+        work_states, work_contacts, compliance_multiplier=1.0
+    )
     pd.testing.assert_series_equal(res, expected)
 
 
-def test_give_rapid_tests_to_some_workers_late(work_states, work_contacts):
+def test_calculate_work_rapid_test_demand_late(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-05-05")
     expected = pd.Series([False, False, True, True, True])
-    res = _give_rapid_tests_to_some_workers(work_states, work_contacts, 1.0)
+    res = _calculate_work_rapid_test_demand(
+        work_states, work_contacts, compliance_multiplier=1.0
+    )
     pd.testing.assert_series_equal(res, expected)
 
 
-def test_give_rapid_tests_to_some_workers_no_compliance(work_states, work_contacts):
+def test_calculate_work_rapid_test_demand_no_compliance(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-05-05")
     expected = pd.Series([False, False, False, False, False])
-    res = _give_rapid_tests_to_some_workers(work_states, work_contacts, 0.0)
+    res = _calculate_work_rapid_test_demand(
+        work_states, work_contacts, compliance_multiplier=0.0
+    )
     pd.testing.assert_series_equal(res, expected)
 
 
-def test_give_rapid_tests_to_some_workers_imperfect_compliance(
+def test_calculate_work_rapid_test_demand_imperfect_compliance(
     work_states, work_contacts
 ):
     work_states["date"] = pd.Timestamp("2021-05-05")
     # the result depends on this seed!
     np.random.seed(999)
     expected = pd.Series([False, False, True, False, True])
-    res = _give_rapid_tests_to_some_workers(work_states, work_contacts, 0.5)
+    res = _calculate_work_rapid_test_demand(
+        work_states, work_contacts, compliance_multiplier=0.5
+    )
     pd.testing.assert_series_equal(res, expected)
