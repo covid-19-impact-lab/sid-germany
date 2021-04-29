@@ -1,9 +1,7 @@
 """Functions for rapid tests."""
 import warnings
 
-import numpy as np
 import pandas as pd
-from sid.shared import boolean_choices
 from sid.time import get_date
 
 from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
@@ -106,9 +104,7 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     )
 
     should_get_test = has_work_contacts & too_long_since_last_test
-    truth_probabilities = np.full(len(states), compliance_multiplier)
-    receives_offer_and_accepts = pd.Series(
-        boolean_choices(truth_probabilities), index=states.index
-    )
+    complier = states["rapid_test_compliance"] >= (1 - compliance_multiplier)
+    receives_offer_and_accepts = should_get_test & complier
     to_test = should_get_test & receives_offer_and_accepts
     return to_test

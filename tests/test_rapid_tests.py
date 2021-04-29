@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -48,7 +47,9 @@ def work_states():
     # 3: yes, because non recurrent contact
     # 4: yes, because recurrent contact
     # 5: no before the 26th of April, yes after.
-    states["cd_received_rapid_test"] = [-1, -10, -10, -10, -5]
+    # 6: yes if compliance_multiplier >= 0.3
+    states["cd_received_rapid_test"] = [-1, -10, -10, -10, -5, -10]
+    states["rapid_test_compliance"] = [0.8, 0.8, 0.8, 0.8, 0.8, 0.3]
     return states
 
 
@@ -61,6 +62,7 @@ def work_contacts():
         2,  # 3: yes, because non recurrent contact
         0,  # 4: yes, because recurrent contact
         3,  # 5: no before the 26th of April, yes after.
+        6,  # 6: yes if compliance multiplier >= 0.7
     ]
     contacts["work_recurrent"] = [
         True,  # 1: no, because recently tested
@@ -68,33 +70,35 @@ def work_contacts():
         False,  # 3: yes, because non recurrent contact
         True,  # 4: yes, because recurrent contact
         True,  # 5: no before the 26th of April, yes after.
+        False,  # 6: yes if compliance_multiplier >= 0.7
     ]
     # these must not count
     contacts["other_contacts"] = True
+    contacts["other_contacts_2"] = 20
     return contacts
 
 
 def test_calculate_work_rapid_test_demand_early(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-04-01")
-    expected = pd.Series([False, False, True, True, False])
+    expected = pd.Series([False, False, True, True, False, True])
     res = _calculate_work_rapid_test_demand(
-        work_states, work_contacts, compliance_multiplier=1.0
+        work_states, work_contacts, compliance_multiplier=1.0  # perfect compliance
     )
     pd.testing.assert_series_equal(res, expected)
 
 
 def test_calculate_work_rapid_test_demand_late(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-05-05")
-    expected = pd.Series([False, False, True, True, True])
+    expected = pd.Series([False, False, True, True, True, False])
     res = _calculate_work_rapid_test_demand(
-        work_states, work_contacts, compliance_multiplier=1.0
+        work_states, work_contacts, compliance_multiplier=0.3
     )
     pd.testing.assert_series_equal(res, expected)
 
 
 def test_calculate_work_rapid_test_demand_no_compliance(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-05-05")
-    expected = pd.Series([False, False, False, False, False])
+    expected = pd.Series([False, False, False, False, False, False])
     res = _calculate_work_rapid_test_demand(
         work_states, work_contacts, compliance_multiplier=0.0
     )
@@ -105,9 +109,7 @@ def test_calculate_work_rapid_test_demand_imperfect_compliance(
     work_states, work_contacts
 ):
     work_states["date"] = pd.Timestamp("2021-05-05")
-    # the result depends on this seed!
-    np.random.seed(999)
-    expected = pd.Series([False, False, True, False, True])
+    expected = pd.Series([False, False, True, True, True, False])
     res = _calculate_work_rapid_test_demand(
         work_states, work_contacts, compliance_multiplier=0.5
     )
