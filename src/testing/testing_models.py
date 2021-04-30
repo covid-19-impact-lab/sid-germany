@@ -24,8 +24,8 @@ def demand_test(
             the entry ("test_demand", "symptoms", "share_symptomatic_requesting_test").
         seed (int): Seed for reproducibility.
         share_of_tests_for_symptomatics_series (pandas.Series): Series with date index
-            that indicates the share of positive tests that were allocated to
-            symptomatic people.
+            that indicates the share of positive tests that discovered a symptomatic
+            case.
 
     Returns:
         demand_probability (numpy.ndarray, pandas.Series): An array or a series
@@ -35,7 +35,6 @@ def demand_test(
     np.random.seed(seed)
     date = get_date(states)
 
-    # extract parameters
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
@@ -70,6 +69,25 @@ def demand_test(
 def _calculate_test_demand_from_share_known_cases(
     states, share_known_cases, share_of_tests_for_symptomatics
 ):
+    """Calculate test demand governed by share known cases.
+
+    The share_known_cases together with the number of newly infected individuals
+    determines how many positive tests are needed.
+
+    The share_of_tests_for_symptomatics determines how many of those are requested
+    by symptomatic individuals. The remainder is requested by non-symptomatic infected
+    individuals.
+
+    Args:
+        states (pandas.DataFrame): See :ref:`states`
+        share_known_cases (float): The share of cases that is detected via PCR tests.
+        share_of_tests_for_symptomatics (float): The share of positive tests
+            that discovered a symptomatic case.
+
+    Returns:
+        pd.Series: Boolean Series that is True for people who demand a test.
+
+    """
     n_newly_infected = states["newly_infected"].sum()
     n_pos_tests = n_newly_infected * share_known_cases
     untested = ~states["knows_immune"] & ~states["pending_test"]
@@ -91,6 +109,10 @@ def _calculate_test_demand_from_share_known_cases(
         states["currently_infected"] & ~states["symptomatic"] & untested
     )
     remaining_pool = states.index[is_remaining_candidate]
+    if len(remaining_pool) < n_tests_remaining:
+        n_tests_remaining = len(remaining_pool)
+        warnings.warn("Implied share_known_cases is larger than one.")
+
     remaining_sampled = np.random.choice(
         remaining_pool, size=n_tests_remaining, replace=False
     )
@@ -104,18 +126,34 @@ def _calculate_test_demand_from_share_known_cases(
 
 
 def _calculate_test_demand_from_rapid_tests(states, share_requesting_confirmation):
+    """Calculate test demand for the confirmation of rapid tests.
+
+    People demand a pcr confirmation of a rapid test on the first day after receiving it
+    or not at all.
+
+    Args:
+        states (pandas.DataFrame): See :ref:`states`
+        share_requesting_confirmation (float): The share of people that requests a PCR
+            test after a positive rapid test.
+
+    Returns:
+        pd.Series: Boolean Series that is True for people who demand a test.
+
+    """
     received_rapid_test = states["cd_received_rapid_test"] == 0
     pos_rapid_test = states["is_tested_positive_by_rapid_test"]
     pool = states[received_rapid_test & pos_rapid_test].index
     n_to_draw = int(share_requesting_confirmation * len(pool))
-    demands_verification_locs = np.random.choice(
+    sampled = np.random.choice(
         a=pool,
         size=n_to_draw,
         replace=False,
     )
-    demanding_verification = states.index.isin(demands_verification_locs)
-    getting_confirmation = states["currently_infected"] & demanding_verification
-    return getting_confirmation
+
+    demands_test = pd.Series(False, index=states.index)
+    demands_test[sampled] = True
+    demands_positive_test = states["currently_infected"] & demands_test
+    return demands_positive_test
 
 
 def allocate_tests(n_allocated_tests, demands_test, states, params, seed):  # noqa: U100
