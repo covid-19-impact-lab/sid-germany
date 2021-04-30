@@ -118,6 +118,8 @@ def task_create_full_params(depends_on, produces):
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
     params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
 
+    params = _add_educ_rapid_test_fade_in_params(params)
+
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2
 
@@ -176,6 +178,67 @@ def _build_reaction_params(contact_models):
             else:
                 df.loc[(cm, name, name)] = multiplier
     return df
+
+
+def _add_educ_rapid_test_fade_in_params(params):
+    """Add the shares how many people with educ contacts get a rapid test.
+
+    Sources:
+        17-24 of March 2021 (Mon, 2021-03-22):
+            - NRW had 80% tests for students before Easter (https://bit.ly/3u7z8Rx)
+            - BY: test offers to educ_workers (https://bit.ly/3tbVX5u)
+            - BW: only tests for educ workers (https://bit.ly/2S7251M)
+
+            - federal level:
+                "In Kitas und Schulen sollen die Testmöglichkeiten "mit der
+                steigenden Verfügbarkeit von Schnell- und Selbsttests"
+                ausgebaut werden" (https://bit.ly/3nuCSKi)
+            - Some KiTa workers are being tested (https://bit.ly/3nyGyus)
+            - Self tests for students in Berlin (https://bit.ly/2ScGu8m)
+            - Schleswig-Holstein: test offer (https://bit.ly/3eVfkuv)
+            - mandatory tests in Saxony (https://bit.ly/3eEQGhn)
+            - no tests yet for students in Hessia, but already ordered
+              (https://bit.ly/3gMGJB4)
+            - Niedersachsen had one test week before Easter (https://bit.ly/3gOOC96)
+
+            => assume 90% of teachers and 30% of students do rapid tests
+
+        After Easter (2021-04-07):
+            - NRW: tests are mandatory for all
+            - Bavaria: tests are mandatory for all (https://bit.ly/3nz5fXS,
+              https://bit.ly/2QHilX3)
+            - BW: voluntary tests for students (https://bit.ly/3vuetaD)
+            - Brandenburg starts with tests (https://bit.ly/3xAihZB)
+            - Schleswig-Holstein: mandatory tests (https://bit.ly/3eVfkuv)
+
+            => assume 95% of teachers and 75% of students get tested
+
+        - BW: tests mandatory starting 2021-04-19 (https://bit.ly/3vuetaD)
+
+            => assume 95% of teachers and 95% of students get tested
+
+    """
+    params = params.copy(deep=True)
+
+    loc = ("rapid_test_demand", "educ_worker_shares")
+    params.loc[(*loc, "2020-01-01")] = 0.0
+    params.loc[(*loc, "2021-01-01")] = 0.0
+    # this is arbitrary to have a more convex shape
+    params.loc[(*loc, "2021-03-01")] = 0.3
+    params.loc[(*loc, "2021-03-22")] = 0.9
+    params.loc[(*loc, "2021-04-07")] = 0.95
+    params.loc[(*loc, "2021-04-19")] = 0.95
+    params.loc[(*loc, "2021-06-01")] = 0.95
+
+    loc = ("rapid_test_demand", "student_shares")
+    params.loc[(*loc, "2020-01-01")] = 0.0
+    params.loc[(*loc, "2021-01-01")] = 0.0
+    params.loc[(*loc, "2021-03-22")] = 0.3
+    params.loc[(*loc, "2021-04-07")] = 0.75
+    params.loc[(*loc, "2021-04-19")] = 0.95
+    params.loc[(*loc, "2021-06-01")] = 1.0
+
+    return params
 
 
 def _convert_index_to_int_where_possible(params):
