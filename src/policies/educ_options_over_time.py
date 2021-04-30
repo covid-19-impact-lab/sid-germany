@@ -1,6 +1,48 @@
 """Educ Options for different phases of 2021."""
 
 
+def get_educ_options_2nd_half_april(optimistic, hygiene_multiplier=0.5):
+    """Get the educ options April 19-30.
+
+    Starting April 26th the Bundesnotbremse is in place. That means when counties
+    have a >165 incidence schools only offer classes to graduating classes and
+    emergency care. (https://bit.ly/3aUd2KC)
+
+    Situation:
+        - BW:
+            - sources: https://bit.ly/3t7AIBJ, https://bit.ly/3aR4yUM
+            - A/B for everyone below 200 (165 after Bundesnotbremse)
+            -
+        - BY:
+            - source: https://bit.ly/2RgmsJm (accessed 2021-04-30)
+            - incidence <100: A/B for everyone
+            - incidence >100: 4th grade and graduating classes in A/B schooling.
+              emergency care for rest.
+            - incidences >100 in most counties!
+        - NRW:
+            - sources: https://bit.ly/2QHWChG, https://bit.ly/3gPraZu,
+              https://bit.ly/32Zq1q8, https://bit.ly/3nzNhEx
+            - A/B schooling when incidences <165 b/c of Bundesnotbremse
+            - most counties below 200 and many around 165
+
+    Args:
+        optimistic (bool): If True all children attend in A/B groups. If False
+            we only have graduating classes in A/B groups and a generous
+            emergency care as in the 1st half of April and 2nd half of January.
+
+    """
+    if optimistic:
+        out = get_educ_options_mid_march_to_easter(
+            hygiene_multiplier=hygiene_multiplier
+        )
+    else:
+        out = graduating_classes_in_a_b_plus_generous_emergency_care(
+            young_children_multiplier=0.8,
+            school_hygiene_multiplier=hygiene_multiplier,
+        )
+    return out
+
+
 def get_educ_options_1st_half_april(
     young_children_multiplier=0.8, school_hygiene_multiplier=0.5
 ):

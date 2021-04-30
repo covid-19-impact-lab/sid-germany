@@ -1,9 +1,8 @@
 import pandas as pd
 
 from src.config import BLD
-from src.policies.educ_options_over_time import (
-    get_educ_options_1st_half_april,
-)
+from src.policies.educ_options_over_time import get_educ_options_1st_half_april
+from src.policies.educ_options_over_time import get_educ_options_2nd_half_april
 from src.policies.educ_options_over_time import get_educ_options_feb_22_to_march_15
 from src.policies.educ_options_over_time import get_educ_options_mid_march_to_easter
 from src.policies.educ_options_over_time import (
@@ -21,6 +20,8 @@ def get_enacted_policies_of_2021(
     other_multiplier_until_mid_march=0.45,
     other_multiplier_mid_march_until_easter=0.4,
     easter_holiday_other_multiplier=0.25,
+    after_easter_other_multiplier=0.4,
+    a_b_schooling_for_all_2nd_half_of_april=True,
 ):
     """Get enacted policies of 2021.
 
@@ -30,15 +31,19 @@ def get_enacted_policies_of_2021(
         contact_models (dict)
         scenario_start (str): date until which the policies should run.
             Should be of format yyyy-mm-dd.
+        work_hygiene_multiplier (float): work hygiene multiplier used throughout the
+            entire period.
         other_multiplier_until_mid_march (float): other multiplier until mid of March
         other_multiplier_mid_march_until_easter (float): other multiplier used from
             mid of March until after the Easter holidays.
         easter_holiday_other_multiplier (float): other multiplier used during the easter
             holidays.
-        easter_holiday_attend_work_multiplier (float): attend work multiplier used
-            during the easter holidays.
-        work_hygiene_multiplier (float): work hygiene multiplier used throughout the
-            entire period.
+        after_easter_other_multiplier (float): other multiplier used from Easter
+            onwards.
+        a_b_schooling_for_all_2nd_half_of_april (bool): If True all children
+            attend in A/B groups in the 2nd half of April. If False
+            we only have graduating classes in A/B groups and a generous
+            emergency care as in the 1st half of April and 2nd half of January.
 
     Returns:
         policies (dict)
@@ -149,13 +154,33 @@ def get_enacted_policies_of_2021(
                 "end_date": "2021-04-18",
                 "prefix": "1st_half_april",
             },
-            multiplier={
+            multipliers={
                 "educ": 0.5,
                 "work": {
                     "attend_multiplier": attend_work_multiplier,
                     "hygiene_multiplier": work_hygiene_multiplier,
                 },
+                "other": after_easter_other_multiplier,
                 **get_educ_options_1st_half_april(),
+            },
+        ),
+        get_lockdown_with_multipliers(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-04-19",
+                "end_date": "2021-04-30",
+                "prefix": "2nd_half_april",
+            },
+            multipliers={
+                "educ": 0.5,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
+                "other": after_easter_other_multiplier,
+                **get_educ_options_2nd_half_april(
+                    optimistic=a_b_schooling_for_all_2nd_half_of_april
+                ),
             },
         ),
     ]
