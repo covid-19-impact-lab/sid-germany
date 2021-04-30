@@ -4,13 +4,13 @@ Currently we distinguish the domains "work", "educ" and "other". "households" ar
 included in any domain because they are currently not subject to policies.
 
 The functions here should not be called directly but will be used in the module
-"full_policy_blocks.py".
+``full_policy_blocks.py``.
 
 All public functions here take the following arguments (and possibly some more)
 
-contact_models (dict): A sid compatible dictionary with contact models.
-block_info (dict): A dictionary containing start_date, end_date and prefix of a
-    block of policies.
+- contact_models (:obj:`dict`): A sid compatible dictionary with contact models.
+- block_info (:obj:`dict`): A dictionary containing start_date, end_date and prefix of a
+  block of policies.
 
 The functions here expect that the domain names are part of contact model names.
 
@@ -20,9 +20,7 @@ from functools import partial
 from src.policies.single_policy_functions import apply_educ_policy
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
-from src.policies.single_policy_functions import reopen_educ_model_germany
 from src.policies.single_policy_functions import reopen_other_model
-from src.policies.single_policy_functions import reopen_work_model
 from src.policies.single_policy_functions import shut_down_model
 
 # ======================================================================================
@@ -30,11 +28,15 @@ from src.policies.single_policy_functions import shut_down_model
 # ======================================================================================
 
 
-def reduce_work_models(contact_models, block_info, multiplier):
-    """Reduce contacts of workers by a multiplier.
+def reduce_work_models(
+    contact_models, block_info, attend_multiplier, hygiene_multiplier
+):
+    """Reduce contacts of workers by a attend_multiplier.
 
     Args:
-        multiplier (float or pd.Series): Must be smaller or equal to one. If a
+        attend_multiplier (float or pd.Series): Must be smaller or equal to one. If a
+            Series is supplied the index must be dates.
+        hygiene_multiplier (float or pd.Series): Must be smaller or equal to one. If a
             Series is supplied the index must be dates.
 
     """
@@ -44,25 +46,8 @@ def reduce_work_models(contact_models, block_info, multiplier):
         policy = _get_base_policy(mod, block_info)
         policy["policy"] = partial(
             reduce_work_model,
-            multiplier=multiplier,
-            is_recurrent=contact_models[mod]["is_recurrent"],
-        )
-        policies[f"{block_info['prefix']}_{mod}"] = policy
-    return policies
-
-
-def reopen_work_models(contact_models, block_info, start_multiplier, end_multiplier):
-    """Reduce contacts of workers with a gradually changing multiplier."""
-    policies = {}
-    work_models = _get_work_models(contact_models)
-    for mod in work_models:
-        policy = _get_base_policy(mod, block_info)
-        policy["policy"] = partial(
-            reopen_work_model,
-            start_date=block_info["start_date"],
-            end_date=block_info["end_date"],
-            start_multiplier=start_multiplier,
-            end_multiplier=end_multiplier,
+            attend_multiplier=attend_multiplier,
+            hygiene_multiplier=hygiene_multiplier,
             is_recurrent=contact_models[mod]["is_recurrent"],
         )
         policies[f"{block_info['prefix']}_{mod}"] = policy
@@ -103,37 +88,6 @@ def reduce_educ_models(contact_models, block_info, multiplier):
     return policies
 
 
-def reopen_educ_models(
-    contact_models,
-    block_info,
-    start_multiplier,
-    end_multiplier,
-    switching_date,
-    reopening_dates,
-):
-    """Reopen an educ model at state specific dates
-
-    - Keep the model closed until local reopening date
-    - Work with strongly reduced contacts until summer vacation
-    - Work with slightly reduced contact after summer vacation
-
-    """
-    policies = {}
-    educ_models = _get_educ_models(contact_models)
-    for mod in educ_models:
-        policy = _get_base_policy(mod, block_info)
-        policy["policy"] = partial(
-            reopen_educ_model_germany,
-            start_multiplier=start_multiplier,
-            end_multiplier=end_multiplier,
-            switching_date=switching_date,
-            reopening_dates=reopening_dates,
-            is_recurrent=contact_models[mod]["is_recurrent"],
-        )
-        policies[f"{block_info['prefix']}_{mod}"] = policy
-    return policies
-
-
 def implement_general_schooling_policy(
     contact_models,
     block_info,
@@ -146,24 +100,25 @@ def implement_general_schooling_policy(
         educ_options (dict): Nested dictionary with the education types ("school",
             "preschool" or "nursery") that have A/B schooling and/or emergency care as
             keys. Values are dictionaries giving the always_attend_query, a_b_query,
-            non_a_b_attend, hygiene_multiplier and a_b_rhythm.
-            Note to use the types (e.g. school) and not the contact models
-            (e.g. educ_school_1) as keys. The other_educ_multiplier is not used on top
-            of the supplied hygiene multiplier for the contact models covered by the
-            educ_options.
-            For example:
-            {
-                "school": {
-                    "hygiene_multiplier": 0.8,
-                    "always_attend_query": "educ_contact_priority > 0.9",
-                    "a_b_query": "(age <= 10) | (age >= 16)",
-                    "non_a_b_attend": False,
-            }
+            non_a_b_attend, hygiene_multiplier and a_b_rhythm. Note to use the types
+            (e.g. school) and not the contact models (e.g. educ_school_1) as keys. The
+            other_educ_multiplier is not used on top of the supplied hygiene multiplier
+            for the contact models covered by the educ_options. For example:
+
+            .. code-block:: python
+
+                {
+                    "school": {
+                        "hygiene_multiplier": 0.8,
+                        "always_attend_query": "educ_contact_priority > 0.9",
+                        "a_b_query": "(age <= 10) | (age >= 16)",
+                        "non_a_b_attend": False,
+                    }
+                }
 
         other_educ_multiplier (float): multiplier for the contact models that have
             neither A/B schooling nor emergency care, i.e. which do not have an entry
             in educ_options.
-
 
     """
     policies = {}

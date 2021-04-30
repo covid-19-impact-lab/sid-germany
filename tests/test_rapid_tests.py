@@ -1,0 +1,116 @@
+import pandas as pd
+import pytest
+
+from src.testing.rapid_tests import _calculate_educ_rapid_test_demand
+from src.testing.rapid_tests import _calculate_work_rapid_test_demand
+
+
+@pytest.fixture
+def educ_states():
+    states = pd.DataFrame()
+
+    states["educ_worker"] = [True, True, False, False, False, False]
+    states["occupation"] = [
+        "school_teacher",  # 0: recently tested teacher
+        "nursery_teacher",  # 1: teacher that's due to be tested
+        "retired",  # 2: retired
+        "school",  # 3: student without contacts
+        "nursery",  # 4: not school student
+        "school",  # 5: student to be tested
+    ]
+    states["cd_received_rapid_test"] = [-2, -5, -20, -5, -5, -5]
+    return states
+
+
+@pytest.fixture
+def contacts(educ_states):
+    contacts = pd.DataFrame(index=educ_states.index)
+    contacts["households"] = 2
+    contacts["educ_nursery_0"] = [False, True, False, False, False, False]
+    contacts["educ_school_0"] = [True, False, False, False, True, True]
+    return contacts
+
+
+def test_calculate_educ_rapid_test_demand(educ_states, contacts):
+    res = _calculate_educ_rapid_test_demand(states=educ_states, contacts=contacts)
+    expected = pd.Series(
+        [False, True, False, False, False, True], index=educ_states.index
+    )
+    pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+@pytest.fixture
+def work_states():
+    states = pd.DataFrame()
+    # 1: no, because recently tested
+    # 2: no, because no contacts today
+    # 3: yes, because non recurrent contact
+    # 4: yes, because recurrent contact
+    # 5: no before the 26th of April, yes after.
+    # 6: yes if compliance_multiplier >= 0.3
+    states["cd_received_rapid_test"] = [-1, -10, -10, -10, -5, -10]
+    states["rapid_test_compliance"] = [0.8, 0.8, 0.8, 0.8, 0.8, 0.3]
+    return states
+
+
+@pytest.fixture
+def work_contacts():
+    contacts = pd.DataFrame()
+    contacts["work_non_recurrent"] = [
+        5,  # 1: no, because recently tested
+        0,  # 2: no, because no contacts today
+        2,  # 3: yes, because non recurrent contact
+        0,  # 4: yes, because recurrent contact
+        3,  # 5: no before the 26th of April, yes after.
+        6,  # 6: yes if compliance multiplier >= 0.7
+    ]
+    contacts["work_recurrent"] = [
+        True,  # 1: no, because recently tested
+        False,  # 2: no, because no contacts today
+        False,  # 3: yes, because non recurrent contact
+        True,  # 4: yes, because recurrent contact
+        True,  # 5: no before the 26th of April, yes after.
+        False,  # 6: yes if compliance_multiplier >= 0.7
+    ]
+    # these must not count
+    contacts["other_contacts"] = True
+    contacts["other_contacts_2"] = 20
+    return contacts
+
+
+def test_calculate_work_rapid_test_demand_early(work_states, work_contacts):
+    work_states["date"] = pd.Timestamp("2021-04-01")
+    expected = pd.Series([False, False, True, True, False, True])
+    res = _calculate_work_rapid_test_demand(
+        work_states, work_contacts, compliance_multiplier=1.0  # perfect compliance
+    )
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_calculate_work_rapid_test_demand_late(work_states, work_contacts):
+    work_states["date"] = pd.Timestamp("2021-05-05")
+    expected = pd.Series([False, False, True, True, True, False])
+    res = _calculate_work_rapid_test_demand(
+        work_states, work_contacts, compliance_multiplier=0.3
+    )
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_calculate_work_rapid_test_demand_no_compliance(work_states, work_contacts):
+    work_states["date"] = pd.Timestamp("2021-05-05")
+    expected = pd.Series([False, False, False, False, False, False])
+    res = _calculate_work_rapid_test_demand(
+        work_states, work_contacts, compliance_multiplier=0.0
+    )
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_calculate_work_rapid_test_demand_imperfect_compliance(
+    work_states, work_contacts
+):
+    work_states["date"] = pd.Timestamp("2021-05-05")
+    expected = pd.Series([False, False, True, True, True, False])
+    res = _calculate_work_rapid_test_demand(
+        work_states, work_contacts, compliance_multiplier=0.5
+    )
+    pd.testing.assert_series_equal(res, expected)

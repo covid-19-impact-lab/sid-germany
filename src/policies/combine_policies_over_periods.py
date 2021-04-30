@@ -61,21 +61,22 @@ def get_educ_options_mid_march_to_easter(hygiene_multiplier=0.5):
     """Get the educ_options starting March 15th until April 1st.
 
     Situation:
-        - BY:
-            - source: https://bit.ly/3lOZowy
-            - <50 incidence: normal schooling
-            - 50-100 incidence: A/B schooling
-            - >100 incidence: distance for all except graduation classes
 
-        - BW:
-            - source: https://km-bw.de/Coronavirus (accessed: March 25th)
-            - primaries and 5th, 6th grade open normally since 15/3
-            - graduating classes open since 22/2
-            - rest continues distance learning
+    - BY:
+        - source: https://bit.ly/3lOZowy
+        - <50 incidence: normal schooling
+        - 50-100 incidence: A/B schooling
+        - >100 incidence: distance for all except graduation classes
 
-        - NRW:
-            - source: https://bit.ly/3f9O4Kp (WDR)
-            - A/B schooling since March 15th
+    - BW:
+        - source: https://km-bw.de/Coronavirus (accessed: March 25th)
+        - primaries and 5th, 6th grade open normally since 15/3
+        - graduating classes open since 22/2
+        - rest continues distance learning
+
+    - NRW:
+        - source: https://bit.ly/3f9O4Kp (WDR)
+        - A/B schooling since March 15th
 
     -> We simplify this to A/B schooling for everyone plus emergency care
        and graduating classes
@@ -157,20 +158,23 @@ def _graduating_classes_in_a_b_plus_generous_emergency_care(
     level were in emergency care
 
     sources:
-        - https://bit.ly/3uGL1Pb
-        - https://bit.ly/2PErr5T
-        - Berlin: <40% (https://bit.ly/304R5ml)
-        - Niedersachsen: 38% (https://bit.ly/2PtPdSb)
+
+    - https://bit.ly/3uGL1Pb
+    - https://bit.ly/2PErr5T
+    - Berlin: <40% (https://bit.ly/304R5ml)
+    - Niedersachsen: 38% (https://bit.ly/2PtPdSb)
 
     In addition, many states opened graduating classes. We open them at the federal
     level in A / B schooling on Jan 16th. This abstracts from state variety:
-        - Bavaria: started on 1 Feb (https://bit.ly/3e4p1YE)
-        - Baden-Württemberg started on 18 Jan (https://bit.ly/2Ofq9O7)
-        - Berlin started on  11 Jan (https://bit.ly/385iCZk)
+
+    - Bavaria: started on 1 Feb (https://bit.ly/3e4p1YE)
+    - Baden-Württemberg started on 18 Jan (https://bit.ly/2Ofq9O7)
+    - Berlin started on  11 Jan (https://bit.ly/385iCZk)
 
     sources:
-        - https://taz.de/Schulen-in-Coronazeiten/!5753515/
-        - https://tinyurl.com/2jfm4tp8
+
+    - https://taz.de/Schulen-in-Coronazeiten/!5753515/
+    - https://tinyurl.com/2jfm4tp8
 
     Args:
         young_children_multiplier (float): hygiene multiplier for children in
@@ -259,10 +263,11 @@ def strict_emergency_care(hygiene_multiplier=0.8):
 def get_enacted_policies_of_2021(
     contact_models,
     scenario_start,
+    work_hygiene_multiplier,
     other_multiplier_until_mid_march=0.45,
     other_multiplier_mid_march_until_easter=0.4,
-    easter_holiday_other_multiplier=0.15,
-    easter_holiday_work_multiplier=0.15,
+    easter_holiday_other_multiplier=0.25,
+    easter_holiday_attend_work_multiplier=0.15,
 ):
     """Get enacted policies of 2021.
 
@@ -277,8 +282,10 @@ def get_enacted_policies_of_2021(
             mid of March until after the Easter holidays.
         easter_holiday_other_multiplier (float): other multiplier used during the easter
             holidays.
-        easter_holiday_work_multiplier (float): work multiplier used during the easter
-            holidays.
+        easter_holiday_attend_work_multiplier (float): attend work multiplier used
+            during the easter holidays.
+        work_hygiene_multiplier (float): work hygiene multiplier used throughout the
+            entire period.
 
     Returns:
         policies (dict)
@@ -290,7 +297,7 @@ def get_enacted_policies_of_2021(
         f"scenario starst after {scenario_start} (only until {last_date.date()}."
     )
 
-    work_multiplier = _get_work_multiplier(scenario_start)
+    attend_work_multiplier = _get_attend_work_multiplier(scenario_start)
     to_combine = [
         get_lockdown_with_multipliers(
             contact_models=contact_models,
@@ -301,7 +308,10 @@ def get_enacted_policies_of_2021(
             },
             multipliers={
                 "educ": None,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": other_multiplier_until_mid_march,
             },
             **strict_emergency_care(),
@@ -315,7 +325,10 @@ def get_enacted_policies_of_2021(
             },
             multipliers={
                 "educ": None,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": other_multiplier_until_mid_march,
             },
             **_graduating_classes_in_a_b_plus_generous_emergency_care(),
@@ -332,7 +345,10 @@ def get_enacted_policies_of_2021(
                 # Here, it is 0.5 to capture additional hygiene measures.
                 # This multiplier applies to nurseries and preschools.
                 "educ": 0.5,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": other_multiplier_until_mid_march,
             },
             **_get_educ_options_feb_22_to_march_15(),
@@ -346,7 +362,10 @@ def get_enacted_policies_of_2021(
             },
             multipliers={
                 "educ": 0.5,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": other_multiplier_mid_march_until_easter,
             },
             **get_educ_options_mid_march_to_easter(),
@@ -362,7 +381,10 @@ def get_enacted_policies_of_2021(
             },
             multipliers={
                 "educ": 0.0,
-                "work": easter_holiday_work_multiplier,
+                "work": {
+                    "attend_multiplier": easter_holiday_attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": easter_holiday_other_multiplier,
                 **get_educ_options_mid_march_to_easter(),
             },
@@ -376,7 +398,8 @@ def get_october_to_christmas_policies(
     educ_options=None,
     educ_multiplier=0.8,
     other_multiplier=None,
-    work_multiplier=None,
+    attend_work_multiplier=None,
+    work_hygiene_multiplier=1.0,
     work_fill_value=None,
 ):
     """Policies from October 1st 2020 until Christmas 2020.
@@ -390,14 +413,19 @@ def get_october_to_christmas_policies(
             (e.g. educ_school_1) as keys. The educ_multiplier is not used on top
             of the supplied hygiene multiplier for the contact models covered by the
             educ_options.
+
             For example:
-            {
-                "school": {
-                    "hygiene_multiplier": 0.8,
-                    "always_attend_query": "educ_contact_priority > 0.9",
-                    "a_b_query": "(age <= 10) | (age >= 16)",
-                    "non_a_b_attend": False,
-            }
+
+            .. code-block:: python
+
+                {
+                    "school": {
+                        "hygiene_multiplier": 0.8,
+                        "always_attend_query": "educ_contact_priority > 0.9",
+                        "a_b_query": "(age <= 10) | (age >= 16)",
+                        "non_a_b_attend": False,
+                    }
+                }
 
         educ_multiplier (float): The multiplier for the education contact models
             that are not covered by the a_b_educ_options. This educ_multiplier is
@@ -412,19 +440,19 @@ def get_october_to_christmas_policies(
 
     """
     dates = pd.date_range("2020-10-01", "2020-12-23")
-    if work_multiplier is None:
+    if attend_work_multiplier is None:
         work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
-        work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
-        work_multiplier = work_multiplier.set_index("date")
-        work_multiplier = work_multiplier.loc[dates]
+        attend_work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
+        attend_work_multiplier = attend_work_multiplier.set_index("date")
+        attend_work_multiplier = attend_work_multiplier.loc[dates]
     else:
-        assert work_multiplier.between(
+        assert attend_work_multiplier.between(
             0, 1
         ).all(), "Work multipliers must lie in [0, 1]."
-        assert (work_multiplier.index == dates).all(), ""
+        assert (attend_work_multiplier.index == dates).all(), ""
     if work_fill_value is not None:
         assert 0 <= work_fill_value <= 1, "work fill value must lie in [0, 1]."
-        work_multiplier["2020-11-02":] = work_fill_value
+        attend_work_multiplier["2020-11-02":] = work_fill_value
 
     to_combine = [
         get_lockdown_with_multipliers(
@@ -436,7 +464,10 @@ def get_october_to_christmas_policies(
             },
             multipliers={
                 "educ": 0.8,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": 0.75,
             },
         ),
@@ -449,7 +480,10 @@ def get_october_to_christmas_policies(
             },
             multipliers={
                 "educ": 0.8,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": 1.0,
             },
         ),
@@ -462,7 +496,10 @@ def get_october_to_christmas_policies(
             },
             multipliers={
                 "educ": 0.8,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": 0.65,
             },
         ),
@@ -475,7 +512,10 @@ def get_october_to_christmas_policies(
             },
             multipliers={
                 "educ": educ_multiplier,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": 0.45 if other_multiplier is None else other_multiplier,
             },
             educ_options=educ_options,
@@ -489,7 +529,10 @@ def get_october_to_christmas_policies(
             },
             multipliers={
                 "educ": educ_multiplier,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": 0.55 if other_multiplier is None else other_multiplier,
             },
             educ_options=educ_options,
@@ -504,7 +547,10 @@ def get_october_to_christmas_policies(
             },
             multipliers={
                 "educ": None,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": 0.55 if other_multiplier is None else other_multiplier,
             },
             **strict_emergency_care(),
@@ -519,7 +565,10 @@ def get_october_to_christmas_policies(
             },
             multipliers={
                 "educ": 0.0,
-                "work": work_multiplier,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
                 "other": 0.55 if other_multiplier is None else other_multiplier,
             },
         ),
@@ -527,7 +576,7 @@ def get_october_to_christmas_policies(
     return combine_dictionaries(to_combine)
 
 
-def _get_work_multiplier(scenario_start):
+def _get_attend_work_multiplier(scenario_start):
     work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
     work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
     work_multiplier = work_multiplier.set_index("date")

@@ -8,8 +8,10 @@ channels:
 dependencies:
   - python>=3.7
   - pip
-
+  - setuptools_scm
+  - toml
   - conda-build
+  - conda-lock
 
   - black
   - dask
@@ -29,14 +31,21 @@ dependencies:
   - python-snappy
   - scipy
   - seaborn
-  # - sid-dev =0.0.4
+  - sid-dev =0.0.3
   - snakeviz
   - line_profiler
   - xlrd<=1.2.0
-  - virtualenv=20.0.33
 
-  - sphinx
+  # Sphinx dependencies.
+  - furo
+  - ipython
   - nbsphinx
+  - sphinx
+  - sphinx-autoapi
+  - sphinx-autodoc-typehints
+  - sphinx-copybutton
+  - sphinx-panels
+
   - pip:
     - DFO-LS
     - Py-BOBYQA

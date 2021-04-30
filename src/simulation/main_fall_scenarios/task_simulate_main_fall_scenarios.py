@@ -5,7 +5,7 @@ from sid import get_simulate_func
 
 from src.config import BLD
 from src.config import FAST_FLAG
-from src.create_initial_states.create_initial_conditions import (  # noqa
+from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
 from src.policies.combine_policies_over_periods import get_october_to_christmas_policies
@@ -16,9 +16,9 @@ from src.simulation.main_specification import SIMULATION_DEPENDENCIES
 
 
 NESTED_PARAMETRIZATION = build_main_scenarios(FALL_PATH)
-PARAMETRIZATION = [
-    spec for seed_list in NESTED_PARAMETRIZATION.values() for spec in seed_list
-]
+PARAMETRIZATION = []
+for scenario_spec_list in NESTED_PARAMETRIZATION.values():
+    PARAMETRIZATION += scenario_spec_list
 """Each specification consists of a produces path, the scenario dictioary and a seed"""
 
 if FAST_FLAG == "debug":
@@ -28,8 +28,13 @@ if FAST_FLAG == "debug":
 
 
 @pytask.mark.depends_on(SIMULATION_DEPENDENCIES)
-@pytask.mark.parametrize("produces, scenario, seed", PARAMETRIZATION)
-def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
+@pytask.mark.parametrize(
+    "produces, scenario, rapid_test_models, rapid_test_reaction_models, seed",
+    PARAMETRIZATION,
+)
+def task_simulate_main_fall_scenario(
+    depends_on, produces, scenario, rapid_test_models, rapid_test_reaction_models, seed
+):
     # determine dates
     start_date = pd.Timestamp("2020-10-15")
 
@@ -43,8 +48,18 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 
+    scenario_name = produces.parent.name
+    test_demand_log_path = (
+        produces.parent.parent / "test_demand_logging" / scenario_name
+    )
+    test_demand_log_path.mkdir(parents=True, exist_ok=True)
+
     virus_shares, simulation_inputs = load_simulation_inputs(
-        depends_on, init_start, end_date, extend_ars_dfs=False
+        depends_on,
+        init_start,
+        end_date,
+        test_demand_log_path=test_demand_log_path,
+        extend_ars_dfs=False,
     )
 
     initial_conditions = create_initial_conditions(
@@ -61,6 +76,8 @@ def task_simulate_main_fall_scenario(depends_on, produces, scenario, seed):
 
     simulate = get_simulate_func(
         **simulation_inputs,
+        rapid_test_models=rapid_test_models,
+        rapid_test_reaction_models=rapid_test_reaction_models,
         contact_policies=policies,
         duration={"start": start_date, "end": end_date},
         initial_conditions=initial_conditions,

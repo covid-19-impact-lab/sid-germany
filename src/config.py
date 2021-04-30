@@ -28,8 +28,9 @@ else:
     )
 
 
-SRC = Path(__file__).parent
+SRC = Path(__file__).parent.resolve()
 BLD = SRC.parent / "bld"
+
 
 POPULATION_GERMANY = 83_000_000
 

@@ -38,6 +38,11 @@ PARAMETRIZED_DOWNLOADS = [
         "https://impfdashboard.de/static/data/germany_deliveries_timeseries_v2.tsv",
         BLD / "data" / "raw_time_series" / "vaccination_deliveries.tsv",
     ),
+    (
+        "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/"
+        "Klinische_Aspekte.xlsx?__blob=publicationFile",
+        BLD / "data" / "raw_time_series" / "test_distribution.xlsx",
+    ),
 ]
 
 
@@ -48,6 +53,7 @@ def _is_download_necessary(path, response):
 
     1. If the file is missing, download it.
     2. The following two checks depend on each other.
+
        1. Some files have an entry in the header which specifies when the file was
           modified last. If the file has been modified, download it.
        2. If the header has no entry for the last modified date, we compare file sizes.

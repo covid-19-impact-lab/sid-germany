@@ -46,20 +46,19 @@ def task_prepare_vaccination_data(depends_on, produces):
     vaccination_shares[vaccination_shares.cumsum() <= 0.01] = 0
 
     # family physicians started vaccinating on April 6th (Tue after Easter)
-    # we assume that the number of vaccinations is constant at the weekday / weekend
+    # we assume that the number of vaccinations is constant to the weekday's
     # mean when extrapolating into the future.
     start_physicians = pd.Timestamp("2021-04-06")
     after_start = vaccination_shares.loc[start_physicians:]
-    work_days = after_start.index.dayofweek < 5
 
-    work_day_mean = after_start[work_days].mean()
-    weekend_mean = after_start[~work_days].mean()
+    dayname_to_mean = after_start.groupby(after_start.index.day_name()).mean()
 
     start_date = vaccination_shares.index.max() + pd.Timedelta(days=1)
     end_date = start_date + pd.Timedelta(weeks=6)
     future_dates = pd.date_range(start_date, end_date)
-    work_week = pd.Series(future_dates.dayofweek < 5, index=future_dates)
-    extension = work_week.replace({True: work_day_mean, False: weekend_mean})
+    future_day_names = future_dates.day_name()
+    future_values = future_day_names.to_series().replace(dayname_to_mean)
+    extension = pd.Series(future_values.values, index=future_dates)
 
     labeled = [
         ("raw data", vaccination_shares),
@@ -90,7 +89,7 @@ def _clean_vaccination_data(df):
     # check date conversion was correct
     assert df["date"].min() == pd.Timestamp(year=2020, month=12, day=27)
     df = df.set_index("date")
-    df["received_first_dose"] = df["Einmal geimpft"].cumsum()
+    df["received_first_dose"] = df["Begonnene Impfserie"].cumsum()
     df["share_with_first_dose"] = df["received_first_dose"] / POPULATION_GERMANY
     return df
 

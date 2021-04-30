@@ -7,8 +7,7 @@ from src.policies.policy_tools import update_dictionary
 
 def test_filter_dictionary():
     d = {"a": 0, "b": 1, "c": 2}
-    func = lambda x: x in ["a", "b"]  # noqa
-    res = filter_dictionary(func, d)
+    res = filter_dictionary(lambda x: x in ["a", "b"], d)
     expected = {"a": 0, "b": 1}
     assert res == expected
 

@@ -7,17 +7,13 @@ from src.policies.domain_level_policy_blocks import implement_general_schooling_
 from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_other_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
-from src.policies.domain_level_policy_blocks import reopen_educ_models
 from src.policies.domain_level_policy_blocks import reopen_other_models
-from src.policies.domain_level_policy_blocks import reopen_work_models
 from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.domain_level_policy_blocks import shut_down_other_models
 from src.policies.single_policy_functions import apply_educ_policy
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
-from src.policies.single_policy_functions import reopen_educ_model_germany
 from src.policies.single_policy_functions import reopen_other_model
-from src.policies.single_policy_functions import reopen_work_model
 from src.policies.single_policy_functions import shut_down_model
 
 
@@ -99,19 +95,34 @@ def test_reduce_work_models(contact_models):
         "end_date": "2020-10-20",
         "prefix": "reduce_work",
     }
-    res = reduce_work_models(contact_models, block_info, 0.5)
+    res = reduce_work_models(
+        contact_models,
+        block_info,
+        attend_multiplier=0.5,
+        hygiene_multiplier=0.8,
+    )
     expected = {
         "reduce_work_work1": {
             "affected_contact_model": "work1",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": partial(reduce_work_model, multiplier=0.5, is_recurrent=False),
+            "policy": partial(
+                reduce_work_model,
+                attend_multiplier=0.5,
+                hygiene_multiplier=0.8,
+                is_recurrent=False,
+            ),
         },
         "reduce_work_work2": {
             "affected_contact_model": "work2",
             "start": "2020-10-10",
             "end": "2020-10-20",
-            "policy": partial(reduce_work_model, multiplier=0.5, is_recurrent=True),
+            "policy": partial(
+                reduce_work_model,
+                attend_multiplier=0.5,
+                hygiene_multiplier=0.8,
+                is_recurrent=True,
+            ),
         },
     }
     compare_policy_dicts(res, expected)
@@ -155,73 +166,6 @@ def test_reduce_other_models(contact_models):
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(reduce_recurrent_model, multiplier=0.5),
-        },
-    }
-    compare_policy_dicts(res, expected)
-
-
-def test_reopen_educ_models(contact_models):
-    block_info = {
-        "start_date": "2020-06-06",
-        "end_date": "2020-06-20",
-        "prefix": "reopen",
-    }
-
-    res = reopen_educ_models(
-        contact_models=contact_models,
-        block_info=block_info,
-        start_multiplier=0.2,
-        end_multiplier=0.8,
-        switching_date="2020-06-15",
-        reopening_dates=None,
-    )
-    expected = {
-        "reopen_educ1": {
-            "start": "2020-06-06",
-            "end": "2020-06-20",
-            "affected_contact_model": "educ1",
-            "policy": partial(
-                reopen_educ_model_germany,
-                start_multiplier=0.2,
-                end_multiplier=0.8,
-                switching_date="2020-06-15",
-                reopening_dates=None,
-                is_recurrent=True,
-            ),
-        }
-    }
-    compare_policy_dicts(res, expected)
-
-
-def test_reopen_work_models(contact_models):
-    block_info = {
-        "start_date": "2020-10-10",
-        "end_date": "2020-10-20",
-        "prefix": "reduce",
-    }
-
-    res = reopen_work_models(
-        contact_models, block_info, start_multiplier=0.2, end_multiplier=0.8
-    )
-    work_func = partial(
-        reopen_work_model,
-        start_multiplier=0.2,
-        end_multiplier=0.8,
-        start_date=block_info["start_date"],
-        end_date=block_info["end_date"],
-    )
-    expected = {
-        "reduce_work1": {
-            "affected_contact_model": "work1",
-            "start": "2020-10-10",
-            "end": "2020-10-20",
-            "policy": partial(work_func, is_recurrent=False),
-        },
-        "reduce_work2": {
-            "affected_contact_model": "work2",
-            "start": "2020-10-10",
-            "end": "2020-10-20",
-            "policy": partial(work_func, is_recurrent=True),
         },
     }
     compare_policy_dicts(res, expected)

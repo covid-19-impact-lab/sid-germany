@@ -71,12 +71,52 @@ def task_create_full_params(depends_on, produces):
         susceptibility,
     ]
     params = pd.concat(param_slices, axis=0)
+
     # number of available tests is implemented in the test demand model.
     # therefore, we set the "sid" limit, which is time invariant to one test
     # per individual
     params.loc[("testing", "allocation", "rel_available_tests")] = 100_000
     params.loc[("testing", "processing", "rel_available_capacity")] = 100_000
+
+    # Testing parameters governing test demand
     params.loc[("test_demand", "symptoms", "share_symptomatic_requesting_test")] = 0.5
+
+    # Testing parameters governing rapid test demand
+    # -----------------------------------------------
+
+    # source: https://bit.ly/3gHlcKd (section 3.5, 2021-03-09, accessed 2021-04-28)
+    params.loc[
+        ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test"),
+    ] = 0.85
+
+    # Only 60% of workers receiving a test offer accept it regularly
+    # source: https://bit.ly/3t1z0lf (COSMO, 2021-04-21)
+    params.loc[("rapid_test_demand", "work", "share_accepting_offer")] = 0.6
+
+    # assume start of rapid tests in firms in Jan 01
+    offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*offer_loc, "2021-01-01"), "value"] = 0.0
+
+    # 2021-03-17 - 2021-03-19: 20% of employers offer weekly test
+    # source: https://bit.ly/3eu0meK
+    # second half of March: 23% of workers report test offer
+    # source: https://bit.ly/3gANaan
+    params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.2
+    # 2021-04-05: 60% of workers get weekly test
+    # source: https://bit.ly/2RWCDMz
+    params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6
+    # 2021-04-15: 70% of workers are expected to get weekly tests
+    # source: https://bit.ly/32BqKhd
+    # COSMO (https://bit.ly/3t1z0lf, 2021-04-20) report <2/3 of people having
+    # work contacts receiving a test offer
+    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
+    # 2021-04-19: employers are required by law to offer weekly tests
+    # source: https://bit.ly/3tJNUh1, https://bit.ly/2QfNctJ
+    # receive test offers at work.
+    # There is no data available on compliance yet
+    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
+    params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
 
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2

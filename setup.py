@@ -1,4 +1,4 @@
 from setuptools import setup
 
-
-setup(name="sid-germany", version="0.0.1")
+if __name__ == "__main__":
+    setup()

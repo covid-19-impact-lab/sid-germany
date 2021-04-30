@@ -16,4 +16,5 @@ Probenrückstau
     comparable to our ``"pending_test"`` column in states.
 
 
-`detected_and_undetected_infections` is scraped from https://covid19.dunkelzifferradar.de/.
+``detected_and_undetected_infections`` is scraped from
+https://covid19.dunkelzifferradar.de/ (last access: 2021-01-16).

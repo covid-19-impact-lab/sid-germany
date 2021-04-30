@@ -36,9 +36,10 @@ def minimize_manfred_estimagic(
     based on a search direction that is a byproduct of the direct search.
 
     It is meant for optimization problems that fulfill the following conditions:
+
     - A low number of parameters (10 is already a lot)
-    - Presence of substantial true noise, i.e. the criterion function is stochastic
-        and the noise is large enough to introduce local minima.
+    - Presence of substantial true noise, i.e. the criterion function is stochastic and
+      the noise is large enough to introduce local minima.
     - Bounds on all parameters are known
 
     Despite being able to handle small local minima introduced by noise, MANFRED is a
@@ -46,9 +47,9 @@ def minimize_manfred_estimagic(
     multiple minima you need to run it from several starting points.
 
     MANFRED has the following features:
-    - Highly parallelizable: You can scale MANFRED to up to
-        2 ** n_params * n_evaluations_per_x cores for a non parallelized criterion
-        function.
+
+    - Highly parallelizable: You can scale MANFRED to up to 2 ** n_params *
+      n_evaluations_per_x cores for a non parallelized criterion function.
     - Monotone: Only function values that actually lead to an improvement are used.
 
     Args:

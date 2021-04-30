@@ -3,18 +3,10 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
 
-from src.policies.single_policy_functions import (
-    _identify_individuals_with_risk_contacts,
-)
 from src.policies.single_policy_functions import _interpolate_activity_level
-from src.policies.single_policy_functions import (
-    reduce_contacts_when_condition_among_recurrent_contacts,
-)
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
-from src.policies.single_policy_functions import reopen_educ_model_germany
 from src.policies.single_policy_functions import reopen_other_model
-from src.policies.single_policy_functions import reopen_work_model
 from src.policies.single_policy_functions import shut_down_model
 
 
@@ -47,39 +39,6 @@ def test_shut_down_model_recurrent():
     states = pd.DataFrame(index=["a", "b", "c"])
     calculated = shut_down_model(states, contacts, 123, is_recurrent=True)
     expected = pd.Series(False, index=["a", "b", "c"])
-    assert_series_equal(calculated, expected)
-
-
-def test_reopen_educ_model_germany_multiplier_1(fake_states):
-    # date at which Berlin is open but Bavaria not
-    calculated = reopen_educ_model_germany(
-        states=fake_states,
-        contacts=pd.Series([1] * 10),
-        seed=123,
-        start_multiplier=1,
-        end_multiplier=1,
-        switching_date="2020-08-01",
-        reopening_dates=None,
-        is_recurrent=True,
-    )
-
-    expected = pd.Series([0, 1] * 5)
-    assert_series_equal(calculated, expected)
-
-
-def test_reopen_educ_model_germany_multiplier_0(fake_states):
-    calculated = reopen_educ_model_germany(
-        states=fake_states,
-        contacts=pd.Series([1] * 10),
-        seed=123,
-        start_multiplier=0,
-        end_multiplier=0,
-        switching_date="2020-08-01",
-        reopening_dates=None,
-        is_recurrent=True,
-    )
-
-    expected = pd.Series([0] * 10)
     assert_series_equal(calculated, expected)
 
 
@@ -123,10 +82,33 @@ def test_reduce_work_model(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        multiplier=0.5,
+        attend_multiplier=0.5,
+        hygiene_multiplier=1.0,
         is_recurrent=False,
     )
-    expected = pd.Series([1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index)
+    expected = pd.Series(
+        [1, 1, 0, 1, 0, 0, 0, 0, 0, 0], index=fake_states.index, dtype=float
+    )
+    assert_series_equal(calculated, expected)
+
+
+def test_reduce_work_model_with_hygiene_multiplier(fake_states):
+    fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
+    contacts = pd.Series(2, index=fake_states.index)
+    contacts[2] = 0
+    contacts[3] = 5
+
+    calculated = reduce_work_model(
+        states=fake_states,
+        contacts=contacts,
+        seed=123,
+        attend_multiplier=0.5,
+        hygiene_multiplier=0.5,
+        is_recurrent=False,
+    )
+    expected = pd.Series(
+        [1, 1, 0, 2.5, 0, 0, 0, 0, 0, 0], index=fake_states.index, dtype=float
+    )
     assert_series_equal(calculated, expected)
 
 
@@ -139,7 +121,8 @@ def test_reduce_work_model_multiplier_series(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        multiplier=pd.Series([0.5], index=[pd.Timestamp("2020-04-23")]),
+        attend_multiplier=pd.Series([0.5], index=[pd.Timestamp("2020-04-23")]),
+        hygiene_multiplier=1.0,
         is_recurrent=True,
     )
     expected = pd.Series(
@@ -161,7 +144,8 @@ def test_reduce_work_model_multiplier_frame_missing_state(fake_states):
             states=fake_states,
             contacts=contacts,
             seed=123,
-            multiplier=multiplier,
+            attend_multiplier=multiplier,
+            hygiene_multiplier=1.0,
             is_recurrent=False,
         )
 
@@ -178,10 +162,13 @@ def test_reduce_work_model_multiplier_frame(fake_states):
         states=fake_states,
         contacts=contacts,
         seed=123,
-        multiplier=multiplier,
+        attend_multiplier=multiplier,
+        hygiene_multiplier=1.0,
         is_recurrent=False,
     )
-    expected = pd.Series([1, 1, 0, 1, 1, 1, 0, 1, 0, 0], index=fake_states.index)
+    expected = pd.Series(
+        [1, 1, 0, 1, 1, 1, 0, 1, 0, 0], index=fake_states.index, dtype=float
+    )
     assert_series_equal(calculated, expected)
 
 
@@ -212,61 +199,3 @@ def test_reopen_other_model():
     expected = pd.Series(np.arange(10) * 0.75)
 
     assert_series_equal(calculated, expected)
-
-
-def test_reopen_work_model(fake_states):
-    fake_states["date"] = pd.Timestamp("2020-03-20")
-    fake_states["work_contact_priority"] = np.arange(10)[::-1] / 10
-
-    calculated = reopen_work_model(
-        states=fake_states,
-        contacts=pd.Series([0] + [1] * 9),
-        seed=1234,
-        start_multiplier=0.5,
-        end_multiplier=1,
-        start_date="2020-03-15",
-        end_date="2020-03-25",
-        is_recurrent=False,
-    )
-
-    expected = pd.Series([0] + [1] * 6 + [0] * 3)
-    assert_series_equal(calculated, expected)
-
-
-def test_identify_individuals_with_risk_contacts():
-    states = pd.DataFrame()
-    states["id1"] = [0, 0, 0, 1, 1, 2, 2]
-    states["id2"] = [3, 3, 4, -1, 5, 5, -1]
-    states["symptomatic"] = [True] + [False] * 5 + [True]
-    states["date"] = pd.Timestamp("2020-12-25")
-
-    res = _identify_individuals_with_risk_contacts(
-        states, ["id1", "id2"], "symptomatic"
-    )
-
-    expected = pd.Series([False, True, True, False, False, True, False])
-
-    pd.testing.assert_series_equal(res, expected)
-
-
-def test_reduce_contacts_when_condition_among_recurrent_contacts():
-    states = pd.DataFrame()
-    states["id1"] = [0, 0, 0, 1, 1, 2, 2]
-    states["id2"] = [3, 3, 4, -1, 5, 5, -1]
-    states["symptomatic"] = [True] + [False] * 5 + [True]
-    states["date"] = pd.Timestamp("2020-12-25")
-
-    contacts = 1 + pd.Series(np.arange(7))
-
-    res = reduce_contacts_when_condition_among_recurrent_contacts(
-        contacts=contacts,
-        states=states,
-        seed=333,
-        multiplier=0.1,
-        group_ids=["id1", "id2"],
-        condition="symptomatic",
-        is_recurrent=False,
-    )
-
-    expected = pd.Series([1, 0.2, 0.3, 4, 5, 0.6, 7])
-    pd.testing.assert_series_equal(res, expected)

@@ -56,7 +56,7 @@ def plot_time_series(df, y, title=""):
     return fig, ax
 
 
-def get_share_known_cases_for_one_day(date, params_slice):
+def get_piecewise_linear_interpolation_for_one_day(date, params_slice):
     """Get a linearly interpolated share known cases for one day.
 
     Args:
@@ -70,12 +70,12 @@ def get_share_known_cases_for_one_day(date, params_slice):
 
     """
     date = pd.Timestamp(date)
-    s = get_share_known_cases_series(params_slice)
+    s = get_piecewise_linear_interpolation(params_slice)
     value = s.loc[date]
     return value
 
 
-def get_share_known_cases_series(params_slice):
+def get_piecewise_linear_interpolation(params_slice):
     """Get a linearly interpolated share known cases series."""
     if isinstance(params_slice, pd.DataFrame):
         params_slice = params_slice["value"]

@@ -24,7 +24,7 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
-from src.testing.shared import get_share_known_cases_series
+from src.testing.shared import get_piecewise_linear_interpolation
 
 
 DROPPPED_COLUMNS = [
@@ -85,7 +85,7 @@ def task_prepare_rki_data(depends_on, produces):
             "ignore", message="indexing past lexsort depth may impact performance."
         )
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
-    share_known_cases = get_share_known_cases_series(params_slice)
+    share_known_cases = get_piecewise_linear_interpolation(params_slice)
 
     df["age_group_rki"] = (
         df["age_group"].replace(AGE_GROUPS_TO_INTERVALS).astype("category")

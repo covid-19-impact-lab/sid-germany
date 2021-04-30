@@ -1,6 +1,5 @@
 import pytest
 
-from src.policies.full_policy_blocks import get_german_reopening_phase
 from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 
 
@@ -37,7 +36,11 @@ def start_and_end_multipliers():
 
 @pytest.fixture
 def multipliers():
-    return {"work": 0.5, "educ": 0.6, "other": 0.7}
+    return {
+        "work": {"attend_multiplier": 0.5, "hygiene_multiplier": 0.5},
+        "educ": 0.6,
+        "other": 0.7,
+    }
 
 
 @pytest.fixture
@@ -49,15 +52,6 @@ def expected_keys():
         "prefix_other",
     }
     return keys
-
-
-def test_get_german_reopening_phase_runs(
-    contact_models, block_info, start_and_end_multipliers, expected_keys
-):
-    res = get_german_reopening_phase(
-        contact_models, block_info, *start_and_end_multipliers
-    )
-    assert res.keys() == expected_keys
 
 
 def test_get_lockdown_with_multipliers_runs(

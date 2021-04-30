@@ -4,10 +4,10 @@ import pytest
 from src.testing.testing_models import (
     _calculate_positive_tests_to_distribute_per_age_group,
 )
-from src.testing.testing_models import _demand_test_for_educ_workers
+from src.testing.testing_models import _request_pcr_confirmation_of_rapid_test
+from src.testing.testing_models import _request_pcr_test_bc_of_symptoms
 from src.testing.testing_models import _scale_demand_up_or_down
 from src.testing.testing_models import allocate_tests
-from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
 
 DATE = pd.Timestamp("2020-10-10")
@@ -30,6 +30,7 @@ def states():
     states["educ_worker"] = False
     states["state"] = "Hessen"
     states["cd_received_test_result_true"] = -3
+    states["cd_received_rapid_test"] = -99
     states["index"] = states.index
     return states
 
@@ -50,8 +51,18 @@ def params():
     params.loc[
         ("share_known_cases", "share_known_cases", pd.Timestamp("2022-01-01"))
     ] = -1.0
+    rapid_tests_tuple = (
+        "test_demand",
+        "shares",
+        "share_w_positive_rapid_test_requesting_test",
+    )
+    params.loc[rapid_tests_tuple] = 0.0
+
     params.index.names = ["category", "subcategory", "name"]
     return params
+
+
+# -----------------------------------------------------------------------------
 
 
 def test_scale_demand_up_or_down(states):
@@ -87,133 +98,7 @@ def test_calculate_positive_tests_to_distribute_per_age_group():
         positivity_rate_by_age_group,
     )
     expected = pd.Series([1, 4, 5], index=["0-4", "5-14", "15-34"])
-    pd.testing.assert_series_equal(res, expected, check_names=False)
-
-
-def test_demand_test_zero_remainder(states, params):
-    positivity_rate_overall = 0.25
-    test_shares_by_age_group = pd.Series(
-        [0.5, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
-    )
-    positivity_rate_by_age_group = pd.Series(
-        [0.125, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
-    )
-    params.loc["share_known_cases"] = 1.0
-
-    res = demand_test(
-        states=states,
-        params=params,
-        positivity_rate_overall=positivity_rate_overall,
-        test_shares_by_age_group=test_shares_by_age_group,
-        positivity_rate_by_age_group=positivity_rate_by_age_group,
-        seed=5999,
-    )
-    expected = states["cd_symptoms_true"] == -1
-    pd.testing.assert_series_equal(res, expected, check_names=False)
-
-
-def test_demand_test_zero_remainder_only_half_of_symptomatic_request(states, params):
-    params.loc[("test_demand", "symptoms", "share_symptomatic_requesting_test")] = 0.5
-    params.loc["share_known_cases"] = 1
-    positivity_rate_overall = 0.25
-    test_shares_by_age_group = pd.Series(
-        [0.5, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
-    )
-    positivity_rate_by_age_group = pd.Series(
-        [0.125, 0.25, 0.25], index=["0-4", "5-14", "15-34"]
-    )
-    states["infectious"] = states.index.isin([1, 4, 7])
-    states["currently_infected"] = states.eval(
-        "(infectious | symptomatic | (cd_infectious_true >= 0))"
-    )
-
-    expected = pd.Series(False, index=states.index)
-    # 1 test for each age group
-    # [0, 2, 9] developed symptoms yesterday and are without test
-    # 1 is drawn to demand a test because of symptoms: 2
-    expected.loc[2] = True
-    # after: 1 positive test remaining for 0-4 and 1 remaining for 15-34.
-    # in 0-4 only loc=1 is infectious -> that person gets the test
-    expected.loc[1] = True
-    # in 15-34 only loc=7 is infectious -> that person gets the test
-    expected.loc[7] = True
-
-    res = demand_test(
-        states=states,
-        params=params,
-        positivity_rate_overall=positivity_rate_overall,
-        test_shares_by_age_group=test_shares_by_age_group,
-        positivity_rate_by_age_group=positivity_rate_by_age_group,
-        seed=394,
-    )
-    pd.testing.assert_series_equal(res, expected, check_names=False)
-
-
-def test_demand_test_non_zero_remainder(states, params):
-    states["newly_infected"] = True
-    states["infectious"] = (
-        [True, True] + [True, True, False, False] + [True, False, True, True]
-    )
-    states["currently_infected"] = states.eval(
-        "(infectious | symptomatic | (cd_infectious_true >= 0))"
-    )
-
-    # tests to distribute: 2 per individual.
-    # 0-4 get one extra. 5-14 are even. 15-34 have two tests removed.
-    states["cd_symptoms_true"] = [-1, 2] + [-1, -1, -10, 30] + [-1] * 4
-
-    params.loc["share_known_cases"] = 1
-    positivity_rate_overall = 1 / 3
-    test_shares_by_age_group = pd.Series([1 / 3] * 3, index=["0-4", "5-14", "15-34"])
-    positivity_rate_by_age_group = pd.Series([0.2] * 3, index=["0-4", "5-14", "15-34"])
-    res = demand_test(
-        states=states,
-        params=params,
-        positivity_rate_overall=positivity_rate_overall,
-        test_shares_by_age_group=test_shares_by_age_group,
-        positivity_rate_by_age_group=positivity_rate_by_age_group,
-        seed=333,
-    )
-    # the order of the last four is random and will change if the seed is changed!
-    expected = pd.Series(
-        [True, True] + [True, True, False, False] + [True, False, False, True],
-        index=states.index,
-    )
-    pd.testing.assert_series_equal(res, expected, check_names=False)
-
-
-def test_demand_test_with_teachers(states, params):
-    states["newly_infected"] = True
-    states["infectious"] = (
-        [True, True] + [True, True, False, False] + [True, False, True, True]
-    )
-    states["currently_infected"] = states.eval(
-        "(infectious | symptomatic | (cd_infectious_true >= 0))"
-    )
-
-    # tests to distribute: 2 per individual.
-    # 0-4 get one extra. 5-14 are even. 15-34 2 get tests because teacher
-    states["cd_symptoms_true"] = [-1, 2] + [-1, -1, -10, 30] + [2, 2, 2, 2]
-    states.loc[-2:, "educ_worker"] = True
-    states["date"] = pd.Timestamp("2021-03-07")
-
-    params.loc["share_known_cases"] = 1
-    positivity_rate_overall = 1 / 3
-    test_shares_by_age_group = pd.Series([1 / 3] * 3, index=["0-4", "5-14", "15-34"])
-    positivity_rate_by_age_group = pd.Series([0.2] * 3, index=["0-4", "5-14", "15-34"])
-    res = demand_test(
-        states=states,
-        params=params,
-        positivity_rate_overall=positivity_rate_overall,
-        test_shares_by_age_group=test_shares_by_age_group,
-        positivity_rate_by_age_group=positivity_rate_by_age_group,
-        seed=333,
-    )
-    expected = pd.Series(
-        [True, True] + [True, True, False, False] + [False, False, True, True],
-        index=states.index,
-    )
-    pd.testing.assert_series_equal(res, expected, check_names=False)
+    pd.testing.assert_series_equal(res, expected, check_names=False, check_dtype=False)
 
 
 def test_allocate_tests(states):
@@ -239,43 +124,42 @@ def test_process_tests(states):
     pd.testing.assert_series_equal(res, expected, check_names=False)
 
 
-def test_demand_test_for_educ_workers(states, params):
-    # adjust fixture
-    states["educ_worker"] = [False] + [True] * 8 + [False]
-    states["state"] = ["Bavaria"] * 6 + ["Hessen"] * 4
-    states["infectious"] = [True] + [False] + [True] * 8
-    states["currently_infected"] = states.eval(
-        "(infectious | symptomatic | (cd_infectious_true >= 0))"
-    )
+@pytest.fixture
+def symptom_states():
+    states = pd.DataFrame()
+    # 0th and 1st didn't get symptoms yesterday
+    # 2nd has a pending test, 3rd knows she's immune
+    # 4th requests a test
+    states["cd_symptoms_true"] = [-5, 3, -1, -1, -1]
+    states["pending_test"] = [False, False, True, False, False]
+    states["knows_immune"] = [False, False, False, True, False]
+    return states
 
-    demanded = pd.Series(False, index=states.index)
-    demanded.loc[3] = True
-    demanded.loc[9] = True
 
-    states["date"] = pd.Timestamp("2021-03-09")  # Tuesday
+def test_request_pcr_test_bc_of_symptoms_no_one(symptom_states):
+    res = _request_pcr_test_bc_of_symptoms(symptom_states, 0.0)
+    expected = pd.Series(False, index=symptom_states.index)
+    pd.testing.assert_series_equal(res, expected)
 
-    expected = pd.Series(
-        [
-            # Monday
-            False,  # not teacher
-            # Tuesday
-            False,  # not infectious
-            # Wednesday
-            False,  # wrong day
-            True,  # already demanding test
-            # Thursday
-            False,  # wrong day
-            # Friday
-            False,  # wrong day
-            False,  # vacation state
-            # Saturday
-            False,  # vacation state
-            # Sunday
-            False,  # vacation state
-            True,  # already demanding test
-        ],
-        index=states.index,
-    )
 
-    res = _demand_test_for_educ_workers(demanded, states, params)
+def test_request_pcr_test_bc_of_symptoms_everyone(symptom_states):
+    res = _request_pcr_test_bc_of_symptoms(symptom_states, 1.0)
+    expected = pd.Series([False, False, False, False, True], index=symptom_states.index)
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test__request_pcr_confirmation_of_rapid_test():
+    states = pd.DataFrame()
+    # cases:
+    # 0: not tested today
+    # 1: false negative
+    # 2: false positive
+    # 3: true positive
+    # 4: true negative
+    states["cd_received_rapid_test"] = [-2, 0, 0, 0, 0]
+    states["is_tested_positive_by_rapid_test"] = [True, False, True, True, False]
+    states["currently_infected"] = [False, True, False, True, False]
+
+    res = _request_pcr_confirmation_of_rapid_test(states, 1)
+    expected = pd.Series([False, False, False, True, False], index=states.index)
     pd.testing.assert_series_equal(res, expected, check_names=False)
