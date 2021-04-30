@@ -38,15 +38,10 @@ SIMULATION_DEPENDENCIES = {
     "params": BLD / "params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
-    "test_shares_by_age_group": BLD
+    "characteristics_of_the_tested": BLD
     / "data"
     / "testing"
-    / "test_shares_by_age_group.pkl",
-    "positivity_rate_by_age_group": BLD
-    / "data"
-    / "testing"
-    / "positivity_rate_by_age_group.pkl",
-    "positivity_rate_overall": BLD / "data" / "testing" / "positivity_rate_overall.pkl",
+    / "characteristics_of_the_tested.csv",
     "virus_shares": BLD / "data" / "virus_strains" / "final_strain_shares.pkl",
     # py files
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
@@ -172,30 +167,21 @@ def build_main_scenarios(base_path):
     return nested_parametrization
 
 
-def load_simulation_inputs(
-    depends_on, init_start, end_date, test_demand_log_path, extend_ars_dfs=False
-):
-    test_inputs = {
-        "test_shares_by_age_group": pd.read_pickle(
-            depends_on["test_shares_by_age_group"]
-        ),
-        "positivity_rate_by_age_group": pd.read_pickle(
-            depends_on["positivity_rate_by_age_group"]
-        ),
-        "positivity_rate_overall": pd.read_pickle(
-            depends_on["positivity_rate_overall"]
-        ),
-    }
+def load_simulation_inputs(depends_on, init_start, end_date):
+    characteristics_of_the_tested = pd.read_csv(
+        depends_on["characteristics_of_the_tested"],
+        index_col="date",
+        parse_dates=["date"],
+    )
 
-    if extend_ars_dfs:
-        for name, df in test_inputs.items():
-            test_inputs[name] = _extend_df_into_future(df, end_date=end_date)
+    share_of_tests_for_symptomatics_series = characteristics_of_the_tested[
+        "share_symptomatic_lower_bound_extrapolated"
+    ]
 
     simulation_inputs = _get_testing_models(
         init_start=init_start,
         end_date=end_date,
-        test_demand_log_path=test_demand_log_path,
-        **test_inputs,
+        share_of_tests_for_symptomatics_series=share_of_tests_for_symptomatics_series,
     )
     simulation_inputs["initial_states"] = pd.read_parquet(depends_on["initial_states"])
     simulation_inputs["contact_models"] = get_all_contact_models()
@@ -272,17 +258,11 @@ def _extend_df_into_future(df, end_date):
 def _get_testing_models(
     init_start,
     end_date,
-    positivity_rate_overall,
-    test_shares_by_age_group,
-    positivity_rate_by_age_group,
-    test_demand_log_path,
+    share_of_tests_for_symptomatics_series,
 ):
     demand_test_func = partial(
         demand_test,
-        positivity_rate_overall=positivity_rate_overall,
-        test_shares_by_age_group=test_shares_by_age_group,
-        positivity_rate_by_age_group=positivity_rate_by_age_group,
-        log_path=test_demand_log_path,
+        share_of_tests_for_symptomatics_series=share_of_tests_for_symptomatics_series,
     )
     one_day = pd.Timedelta(1, unit="D")
     testing_models = {
