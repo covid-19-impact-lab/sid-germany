@@ -1,60 +1,33 @@
-def get_educ_options_1st_half_may(hygiene_multiplier=0.5):
-    """Get the educ options starting April 2nd - May 15th.
-
-    - NRW:
-        - source: https://bit.ly/3nzNhEx (Schulministerium, 2021-04-26)
-        - incidence <165 (mean > 165 on April 30th):
-
-    ToDo: Preschools and Nurseries
-
-    """
-    pass
+"""Educ Options for different phases of 2021."""
 
 
-def get_educ_options_2nd_half_april(hygiene_multiplier=0.5):
-    """Get the educ options April 19-25."""
-
-
-def get_educ_options_1st_half_april(hygiene_multiplier=0.5):
+def get_educ_options_1st_half_april(
+    young_children_multiplier=0.8, school_hygiene_multiplier=0.5
+):
     """Get the educ options starting April 6-18.
 
     Situation:
        - BW:
-           - source: https://bit.ly/32ABEUr (SWR3, 2021-04-02)
-           - A/B schooling for graduating classes
+           - source: https://bit.ly/32ABEUr, https://bit.ly/3u6Dcld
+           - A/B schooling for graduating classes + 4th grade
         - BY:
             - source: https://bit.ly/2QmRNu0, https://bit.ly/32FlgBQ (2021-04-22)
             - incidence <100: A/B for everyone
             - incidence >100: 4th grade and graduating classes in A/B schooling.
               emergency care for rest.
+            - mean incidence >130 and increasing over the whole time
         - NRW:
-            - source: https://bit.ly/32z9sRM
-            - only graduating classes
-            - 2x tests per week, required
-    """
-    ### WHAT'S WITH PRESCHOOLS AND NURSERIES?
+            ⁻ sources: https://bit.ly/3nxGZWb
+            - only graduating classes, not in  A/B mode
 
-    pass
-
-
-def get_educ_options_after_easter(hygiene_multiplier=0.5):
-    """Get the educ options starting April 1st.
-
-    Situation:
-       - BW:
-           - source: https://bit.ly/3dDaF0K (Kultusministerium, 2021-04-14)
-           - all grades in A/B mode
-           - incidence above 200 => distance learning!
-       - BY:
-           - source: https://bit.ly/2QmRNu0, https://bit.ly/32FlgBQ (2021-04-22)
-           - incidence <100 (rarely): A/B for everyone
-           - incidence >100 (mostly): 4th grade and graduating classes in A/B schooling.
-             emergency care for rest.
-       - NRW:
-           - source: https://bit.ly/3nzNhEx (Schulministerium, 2021-04-26)
-           - incidence <165 (mean > 165 on April 30th):
+    => We summarize this as a return to graduating classes in A/B plus
+    generous emergceny care (~ 2nd half of January).
 
     """
+    return graduating_classes_in_a_b_plus_generous_emergency_care(
+        young_children_multiplier=young_children_multiplier,
+        school_hygiene_multiplier=school_hygiene_multiplier,
+    )
 
 
 def get_educ_options_mid_march_to_easter(hygiene_multiplier=0.5):

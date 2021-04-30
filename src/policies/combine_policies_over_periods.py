@@ -1,15 +1,17 @@
 import pandas as pd
 
 from src.config import BLD
+from src.policies.educ_options_over_time import (
+    get_educ_options_1st_half_april,
+)
+from src.policies.educ_options_over_time import get_educ_options_feb_22_to_march_15
+from src.policies.educ_options_over_time import get_educ_options_mid_march_to_easter
+from src.policies.educ_options_over_time import (
+    graduating_classes_in_a_b_plus_generous_emergency_care,
+)
+from src.policies.educ_options_over_time import strict_emergency_care
 from src.policies.full_policy_blocks import get_lockdown_with_multipliers
 from src.policies.policy_tools import combine_dictionaries
-from src.policies.educ_options_over_time import (
-    strict_emergency_care,
-    graduating_classes_in_a_b_plus_generous_emergency_care,
-    get_educ_options_after_easter,
-    get_educ_options_feb_22_to_march_15,
-    get_educ_options_mid_march_to_easter,
-)
 
 
 def get_enacted_policies_of_2021(
@@ -19,7 +21,6 @@ def get_enacted_policies_of_2021(
     other_multiplier_until_mid_march=0.45,
     other_multiplier_mid_march_until_easter=0.4,
     easter_holiday_other_multiplier=0.25,
-    easter_holiday_attend_work_multiplier=0.15,
 ):
     """Get enacted policies of 2021.
 
@@ -126,19 +127,35 @@ def get_enacted_policies_of_2021(
             contact_models=contact_models,
             block_info={
                 # both dates are inclusive.
-                # 2nd April is Good Friday. 4th is Easter Monday
+                # 2nd April is Good Friday. 5th is Easter Monday
                 "start_date": "2021-04-02",
-                "end_date": "2021-04-04",
+                "end_date": "2021-04-05",
                 "prefix": "easter_holidays",
             },
             multipliers={
                 "educ": 0.0,
                 "work": {
-                    "attend_multiplier": easter_holiday_attend_work_multiplier,
+                    "attend_multiplier": attend_work_multiplier,
                     "hygiene_multiplier": work_hygiene_multiplier,
                 },
                 "other": easter_holiday_other_multiplier,
                 **get_educ_options_mid_march_to_easter(),
+            },
+        ),
+        get_lockdown_with_multipliers(
+            contact_models=contact_models,
+            block_info={
+                "start_date": "2021-04-06",
+                "end_date": "2021-04-18",
+                "prefix": "1st_half_april",
+            },
+            multiplier={
+                "educ": 0.5,
+                "work": {
+                    "attend_multiplier": attend_work_multiplier,
+                    "hygiene_multiplier": work_hygiene_multiplier,
+                },
+                **get_educ_options_1st_half_april(),
             },
         ),
     ]
