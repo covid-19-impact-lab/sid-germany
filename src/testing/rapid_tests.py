@@ -22,6 +22,7 @@ def rapid_test_demand(
     """
     date = get_date(states)
 
+    # get params subsets
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
@@ -29,6 +30,10 @@ def rapid_test_demand(
         params_slice = params.loc[
             ("rapid_test_demand", "share_workers_receiving_offer")
         ]
+        educ_workers_params = params.loc[("rapid_test_demand", "educ_worker_shares")]
+        students_params = params.loc[("rapid_test_demand", "student_shares")]
+
+    # get work demand inputs
     share_of_workers_with_offer = get_piecewise_linear_interpolation_for_one_day(
         date, params_slice
     )
@@ -37,47 +42,93 @@ def rapid_test_demand(
     work_compliance_multiplier = (
         share_of_workers_with_offer * share_workers_accepting_offer
     )
+
+    # get educ demand inputs
+    educ_worker_multiplier = get_piecewise_linear_interpolation_for_one_day(
+        date, educ_workers_params
+    )
+    student_multiplier = get_piecewise_linear_interpolation_for_one_day(
+        date, students_params
+    )
+
     work_demand = _calculate_work_rapid_test_demand(
         states=states,
         contacts=contacts,
         compliance_multiplier=work_compliance_multiplier,
     )
 
-    # Abstracting from a lot of heterogeneity, we assume that
-    # educ workers and school students get tests twice weekly after Easter
-    if date > pd.Timestamp("2021-04-01"):
-        educ_demand = _calculate_educ_rapid_test_demand(states, contacts)
-    else:
-        educ_demand = pd.Series(False, index=states.index)
+    educ_demand = _calculate_educ_rapid_test_demand(
+        states=states,
+        contacts=contacts,
+        educ_worker_multiplier=educ_worker_multiplier,
+        student_multiplier=student_multiplier,
+    )
 
     rapid_test_demand = work_demand | educ_demand
 
     return rapid_test_demand
 
 
-def _calculate_educ_rapid_test_demand(states, contacts):
+def _calculate_educ_rapid_test_demand(
+    states, contacts, educ_worker_multiplier, student_multiplier
+):
     """Return which individuals get a rapid test in an education setting.
 
-    As of April 22, rapid tests in nurseries and preschools were not the
-    norm and not mandatory.
-
-    - BY: no mention of preschools and nurseries by the Kultusministerium
-        (source: https://bit.ly/3aGpspo, rules starting on 2021-04-12).
-        Rapid tests are available for children but voluntary
-        (source: https://bit.ly/3xs7Lnc, 2021-03-03)
-    - BW: no mandatory tests in preschool and nurseries. Some cities starting
-        to offer tests (Stuttgart, source: https://bit.ly/3npzLDk, 2021-04-07)
-    - NRW: no mention of mandatory or voluntary tests for preschools and nurseries
-        as of 2021-04-22 (source: https://bit.ly/3nrEpAX)
+    Args:
+        states (pandas.DataFrame): states DataFrame
+        contacts (pandas.DataFrame): DataFrame with the same index as states.
+            columns are the contact model names. All education contact models start
+            with `educ_`. All education columns are recurrent, i.e. are boolean.
+        educ_worker_multiplier (float): share of educ workers that have not been
+            tested long enough and have education contacts that receive and
+            accept a test.
+        student_multiplier (float): share of school students that have not been
+            tested long enough and have education contacts that receive and
+            accept a test.
 
     """
+    eligible = _get_eligible_educ_participants(states, contacts)
+    educ_worker_demand = _get_educ_worker_demand(
+        eligible, states, educ_worker_multiplier
+    )
+    student_demand = _get_student_demand(eligible, states, student_multiplier)
+    educ_rapid_test_demand = educ_worker_demand | student_demand
+    return educ_rapid_test_demand
+
+
+def _get_eligible_educ_participants(states, contacts):
+    date = get_date(states)
     educ_contact_cols = [col for col in contacts if col.startswith("educ_")]
     # educ_contact_cols are all boolean because all educ models are recurrent
     has_educ_contacts = (contacts[educ_contact_cols]).any(axis=1)
-    eligible = states["educ_worker"] | (states["occupation"] == "school")
-    too_long_since_last_test = states["cd_received_rapid_test"] <= -3
-    to_test = eligible & too_long_since_last_test & has_educ_contacts
-    return to_test
+
+    # Assume weekly tests before Easter and twice weekly tests after Easter
+    # We should get a fade-in through different ends of Easter vaccation
+    if date < pd.Timestamp("2021-04-06"):
+        too_long_since_last_test = states["cd_received_rapid_test"] <= -7
+    else:
+        too_long_since_last_test = states["cd_received_rapid_test"] <= -3
+
+    eligible = has_educ_contacts & too_long_since_last_test
+    return eligible
+
+
+def _get_educ_worker_demand(eligible, states, educ_worker_multiplier):
+    eligible_educ_workers = eligible & states["educ_worker"]
+    educ_worker_cutoff = 1 - educ_worker_multiplier
+    educ_worker_demand = eligible_educ_workers & (
+        states["rapid_test_compliance"] > educ_worker_cutoff
+    )
+    return educ_worker_demand
+
+
+def _get_student_demand(eligible, states, student_multiplier):
+    eligible_students = eligible & (states["occupation"] == "school")
+    student_cutoff = 1 - student_multiplier
+    student_demand = eligible_students & (
+        states["rapid_test_compliance"] > student_cutoff
+    )
+    return student_demand
 
 
 def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
@@ -106,5 +157,5 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     should_get_test = has_work_contacts & too_long_since_last_test
     complier = states["rapid_test_compliance"] >= (1 - compliance_multiplier)
     receives_offer_and_accepts = should_get_test & complier
-    to_test = should_get_test & receives_offer_and_accepts
-    return to_test
+    work_rapid_test_demand = should_get_test & receives_offer_and_accepts
+    return work_rapid_test_demand

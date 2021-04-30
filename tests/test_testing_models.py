@@ -1,14 +1,11 @@
 import pandas as pd
 import pytest
 
-from src.testing.testing_models import (
-    _calculate_positive_tests_to_distribute_per_age_group,
-)
-from src.testing.testing_models import _request_pcr_confirmation_of_rapid_test
-from src.testing.testing_models import _request_pcr_test_bc_of_symptoms
-from src.testing.testing_models import _scale_demand_up_or_down
+from src.testing.testing_models import _calculate_test_demand_from_rapid_tests
+from src.testing.testing_models import _calculate_test_demand_from_share_known_cases
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import process_tests
+
 
 DATE = pd.Timestamp("2020-10-10")
 
@@ -33,72 +30,6 @@ def states():
     states["cd_received_rapid_test"] = -99
     states["index"] = states.index
     return states
-
-
-@pytest.fixture(scope="function")
-def params():
-    share_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
-    params = pd.DataFrame(
-        1.0,
-        columns=["value"],
-        index=pd.MultiIndex.from_tuples([share_tuple]),
-    )
-    params.loc[("FürImmerferien", "Hessen", "start")] = 1601503200  # 2020-10-01
-    params.loc[("FürImmerferien", "Hessen", "end")] = 1635631200  # 2021-10-31
-    params.loc[
-        ("share_known_cases", "share_known_cases", pd.Timestamp("2020-01-01"))
-    ] = -1.0
-    params.loc[
-        ("share_known_cases", "share_known_cases", pd.Timestamp("2022-01-01"))
-    ] = -1.0
-    rapid_tests_tuple = (
-        "test_demand",
-        "shares",
-        "share_w_positive_rapid_test_requesting_test",
-    )
-    params.loc[rapid_tests_tuple] = 0.0
-
-    params.index.names = ["category", "subcategory", "name"]
-    return params
-
-
-# -----------------------------------------------------------------------------
-
-
-def test_scale_demand_up_or_down(states):
-    demanded = pd.Series([True, True] + [False, True] * 4, index=states.index)
-    states["infectious"] = True
-    states["currently_infected"] = states.eval(
-        "(infectious | symptomatic | (cd_infectious_true >= 0))"
-    )
-    remaining = pd.Series([-2, 0, 2], index=["0-4", "5-14", "15-34"])
-    expected_vals = [False, False] + [False, True] * 2 + [True] * 4
-    expected = pd.Series(data=expected_vals, index=states.index)
-    res = _scale_demand_up_or_down(
-        demanded=demanded, states=states, remaining=remaining
-    )
-    pd.testing.assert_series_equal(res, expected, check_names=False)
-
-
-def test_calculate_positive_tests_to_distribute_per_age_group():
-    n_newly_infected = 20
-    share_known_cases = 0.5
-    positivity_rate_overall = 0.2
-    test_shares_by_age_group = pd.Series(
-        [0.4, 0.4, 0.2], index=["0-4", "5-14", "15-34"]
-    )
-    positivity_rate_by_age_group = pd.Series(
-        [0.05, 0.2, 0.5], index=["0-4", "5-14", "15-34"]
-    )
-    res = _calculate_positive_tests_to_distribute_per_age_group(
-        n_newly_infected,
-        share_known_cases,
-        positivity_rate_overall,
-        test_shares_by_age_group,
-        positivity_rate_by_age_group,
-    )
-    expected = pd.Series([1, 4, 5], index=["0-4", "5-14", "15-34"])
-    pd.testing.assert_series_equal(res, expected, check_names=False, check_dtype=False)
 
 
 def test_allocate_tests(states):
@@ -136,19 +67,7 @@ def symptom_states():
     return states
 
 
-def test_request_pcr_test_bc_of_symptoms_no_one(symptom_states):
-    res = _request_pcr_test_bc_of_symptoms(symptom_states, 0.0)
-    expected = pd.Series(False, index=symptom_states.index)
-    pd.testing.assert_series_equal(res, expected)
-
-
-def test_request_pcr_test_bc_of_symptoms_everyone(symptom_states):
-    res = _request_pcr_test_bc_of_symptoms(symptom_states, 1.0)
-    expected = pd.Series([False, False, False, False, True], index=symptom_states.index)
-    pd.testing.assert_series_equal(res, expected)
-
-
-def test__request_pcr_confirmation_of_rapid_test():
+def test_calculate_test_demand_from_rapid_tests():
     states = pd.DataFrame()
     # cases:
     # 0: not tested today
@@ -160,6 +79,29 @@ def test__request_pcr_confirmation_of_rapid_test():
     states["is_tested_positive_by_rapid_test"] = [True, False, True, True, False]
     states["currently_infected"] = [False, True, False, True, False]
 
-    res = _request_pcr_confirmation_of_rapid_test(states, 1)
+    res = _calculate_test_demand_from_rapid_tests(states, 1)
     expected = pd.Series([False, False, False, True, False], index=states.index)
     pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+def test_calculate_test_demand_from_share_known_cases():
+    states = pd.DataFrame()
+
+    states["newly_infected"] = [True, True, True] + [False] * 7
+    states["symptomatic"] = [True, True] + [False] * 8
+    states["pending_test"] = [False, True] + [True] * 7 + [False]
+    states["currently_infected"] = [True, True, True] + [False] * 5 + [True] * 2
+    states["knows_immune"] = False
+
+    share_known_cases = 2 / 3
+    share_of_tests_for_symptomatics = 0.5
+
+    expected = pd.Series([True] + [False] * 8 + [True])
+
+    calculated = _calculate_test_demand_from_share_known_cases(
+        states=states,
+        share_known_cases=share_known_cases,
+        share_of_tests_for_symptomatics=share_of_tests_for_symptomatics,
+    )
+
+    pd.testing.assert_series_equal(calculated, expected)

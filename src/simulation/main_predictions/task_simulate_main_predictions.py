@@ -56,18 +56,10 @@ def task_simulate_main_prediction(
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 
-    scenario_name = produces.parent.name
-    test_demand_log_path = (
-        produces.parent.parent / "test_demand_logging" / scenario_name
-    )
-    test_demand_log_path.mkdir(parents=True, exist_ok=True)
-
     virus_shares, simulation_inputs = load_simulation_inputs(
         depends_on,
         init_start,
         end_date,
-        test_demand_log_path=test_demand_log_path,
-        extend_ars_dfs=True,
     )
 
     initial_conditions = create_initial_conditions(

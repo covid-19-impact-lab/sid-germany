@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 import seaborn as sns
+from estimagic.visualization.colors import get_colors
 
 from src.config import BLD
 from src.simulation.plotting import style_plot
@@ -37,7 +38,6 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
 
     df = _clean_data(df)
     df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[])
-    df.to_csv(produces["data"])
 
     fig, ax = _plot_df_column(df, "mean_age")
     fig.tight_layout()
@@ -50,9 +50,25 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
         "share_symptomatic_among_known",
         "share_symptomatic_upper_bound",
     ]
-    fig, ax = _plot_df_column(df, symptom_shares, "Symptomatic Shares")
+
+    df = df.set_index("date")
+    to_concat = [df]
+    for share in symptom_shares:
+        extrapolated = _extrapolate_series_after_february(df[share])
+        to_concat.append(extrapolated)
+    df = pd.concat(to_concat, axis=1)
+
+    colors = get_colors("categorical", len(symptom_shares))
+    fig, ax = plt.subplots()
+
+    for share, color in zip(symptom_shares, colors):
+        extrapolated = f"{share}_extrapolated"
+        sns.lineplot(x=df.index, y=df[share], ax=ax, color=color, label=share)
+        sns.lineplot(x=df.index, y=df[extrapolated], ax=ax, color=color)
     fig.tight_layout()
     fig.savefig(produces["symptom_shares"])
+    df = df.reset_index().rename(columns={"index": "date"})
+    df.to_csv(produces["data"])
 
 
 def _clean_data(df):
@@ -90,6 +106,22 @@ def _clean_data(df):
         df["share_symptomatic_lower_bound"] + df["share_without_symptom_status"]
     )
     return df
+
+
+def _extrapolate_series_after_february(sr, end_date="2021-08-30"):
+    end_date = pd.Timestamp(end_date)
+    last_empirical_date = min(pd.Timestamp("2021-02-28"), sr.index.max())
+    empirical_part = sr[:last_empirical_date]
+    extension_index = pd.date_range(
+        last_empirical_date + pd.Timedelta(days=1), end_date
+    )
+    extension_value = sr[
+        last_empirical_date - pd.Timedelta(days=30) : last_empirical_date
+    ].mean()
+    extension = pd.Series(extension_value, index=extension_index)
+    out = pd.concat([empirical_part, extension])
+    out.name = f"{sr.name}_extrapolated"
+    return out
 
 
 def _plot_df_column(df, cols, title=None):

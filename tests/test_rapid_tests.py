@@ -3,6 +3,9 @@ import pytest
 
 from src.testing.rapid_tests import _calculate_educ_rapid_test_demand
 from src.testing.rapid_tests import _calculate_work_rapid_test_demand
+from src.testing.rapid_tests import (
+    _get_eligible_educ_participants,
+)
 
 
 @pytest.fixture
@@ -18,7 +21,9 @@ def educ_states():
         "nursery",  # 4: not school student
         "school",  # 5: student to be tested
     ]
-    states["cd_received_rapid_test"] = [-2, -5, -20, -5, -5, -5]
+    states["cd_received_rapid_test"] = [-2, -5, -20, -5, -20, -5]
+    states["rapid_test_compliance"] = 1.0
+    states["date"] = pd.Timestamp("2021-05-05")
     return states
 
 
@@ -26,17 +31,38 @@ def educ_states():
 def contacts(educ_states):
     contacts = pd.DataFrame(index=educ_states.index)
     contacts["households"] = 2
-    contacts["educ_nursery_0"] = [False, True, False, False, False, False]
+    contacts["educ_nursery_0"] = [False, True, False, False, True, False]
     contacts["educ_school_0"] = [True, False, False, False, True, True]
     return contacts
 
 
 def test_calculate_educ_rapid_test_demand(educ_states, contacts):
-    res = _calculate_educ_rapid_test_demand(states=educ_states, contacts=contacts)
+    res = _calculate_educ_rapid_test_demand(
+        states=educ_states,
+        contacts=contacts,
+        educ_worker_multiplier=1,
+        student_multiplier=1,
+    )
     expected = pd.Series(
         [False, True, False, False, False, True], index=educ_states.index
     )
     pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+def test_get_eligible_educ_participants_early(educ_states, contacts):
+    educ_states["date"] = pd.Timestamp("2021-01-01")
+    res = _get_eligible_educ_participants(educ_states, contacts)
+    expected = pd.Series(
+        [
+            False,  # recently tested
+            False,  # recently enough for early, should be True after Easter
+            False,  # no contacts (wrong occupation)
+            False,  # no contacts (student)
+            True,  # nursery kid that has contacts and has not been recently tested
+            False,  # student recently for early, should be True after Easter
+        ],
+    )
+    pd.testing.assert_series_equal(res, expected)
 
 
 @pytest.fixture
