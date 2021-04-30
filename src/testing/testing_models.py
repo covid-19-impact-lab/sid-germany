@@ -67,7 +67,9 @@ def demand_test(
     return demanded
 
 
-def _calculate_test_demand_from_share_known_cases(states, share_known_cases, share_of_tests_for_symptomatics):
+def _calculate_test_demand_from_share_known_cases(
+    states, share_known_cases, share_of_tests_for_symptomatics
+):
     n_newly_infected = states["newly_infected"].sum()
     n_pos_tests = n_newly_infected * share_known_cases
     untested = ~states["knows_immune"] & ~states["pending_test"]
@@ -81,11 +83,17 @@ def _calculate_test_demand_from_share_known_cases(states, share_known_cases, sha
     n_tests_remaining = int(n_pos_tests - n_tests_symptomatic)
 
     symptomatic_pool = states.index[symptomatic_untested]
-    symptomatic_sampled = np.random.choice(symptomatic_pool, size=n_tests_symptomatic, replace=False)
+    symptomatic_sampled = np.random.choice(
+        symptomatic_pool, size=n_tests_symptomatic, replace=False
+    )
 
-    is_remaining_candidate = states["currently_infected"] & ~states["symptomatic"] & untested
+    is_remaining_candidate = (
+        states["currently_infected"] & ~states["symptomatic"] & untested
+    )
     remaining_pool = states.index[is_remaining_candidate]
-    remaining_sampled = np.random.choice(remaining_pool, size=n_tests_remaining, replace=False)
+    remaining_sampled = np.random.choice(
+        remaining_pool, size=n_tests_remaining, replace=False
+    )
 
     demand = pd.Series(False, index=states.index)
 

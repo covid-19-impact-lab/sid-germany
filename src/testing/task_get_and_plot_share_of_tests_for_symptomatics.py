@@ -51,14 +51,12 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
         "share_symptomatic_upper_bound",
     ]
 
-
     df = df.set_index("date")
     to_concat = [df]
     for share in symptom_shares:
         extrapolated = _extrapolate_series_after_february(df[share])
         to_concat.append(extrapolated)
     df = pd.concat(to_concat, axis=1)
-
 
     colors = get_colors("categorical", len(symptom_shares))
     fig, ax = plt.subplots()
@@ -114,8 +112,12 @@ def _extrapolate_series_after_february(sr, end_date="2021-08-30"):
     end_date = pd.Timestamp(end_date)
     last_empirical_date = min(pd.Timestamp("2021-02-28"), sr.index.max())
     empirical_part = sr[:last_empirical_date]
-    extension_index = pd.date_range(last_empirical_date + pd.Timedelta(days=1), end_date)
-    extension_value = sr[last_empirical_date - pd.Timedelta(days=30): last_empirical_date].mean()
+    extension_index = pd.date_range(
+        last_empirical_date + pd.Timedelta(days=1), end_date
+    )
+    extension_value = sr[
+        last_empirical_date - pd.Timedelta(days=30) : last_empirical_date
+    ].mean()
     extension = pd.Series(extension_value, index=extension_index)
     out = pd.concat([empirical_part, extension])
     out.name = f"{sr.name}_extrapolated"

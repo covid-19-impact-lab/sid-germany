@@ -38,7 +38,10 @@ SIMULATION_DEPENDENCIES = {
     "params": BLD / "params.pkl",
     "rki_data": BLD / "data" / "processed_time_series" / "rki.pkl",
     "synthetic_data_path": BLD / "data" / "initial_states.parquet",
-    "characteristics_of_the_tested": BLD / "data" / "testing" / "characteristics_of_the_tested.csv",
+    "characteristics_of_the_tested": BLD
+    / "data"
+    / "testing"
+    / "characteristics_of_the_tested.csv",
     "virus_shares": BLD / "data" / "virus_strains" / "final_strain_shares.pkl",
     # py files
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
@@ -171,7 +174,9 @@ def load_simulation_inputs(depends_on, init_start, end_date):
         parse_dates=["date"],
     )
 
-    share_of_tests_for_symptomatics_series = characteristics_of_the_tested["share_symptomatic_lower_bound_extrapolated"]
+    share_of_tests_for_symptomatics_series = characteristics_of_the_tested[
+        "share_symptomatic_lower_bound_extrapolated"
+    ]
 
     simulation_inputs = _get_testing_models(
         init_start=init_start,
