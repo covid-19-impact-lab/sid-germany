@@ -2,8 +2,10 @@ import pandas as pd
 import pytest
 
 from src.testing.testing_models import _calculate_test_demand_from_rapid_tests
+from src.testing.testing_models import _calculate_test_demand_from_share_known_cases
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import process_tests
+
 
 DATE = pd.Timestamp("2020-10-10")
 
@@ -28,36 +30,6 @@ def states():
     states["cd_received_rapid_test"] = -99
     states["index"] = states.index
     return states
-
-
-@pytest.fixture(scope="function")
-def params():
-    share_tuple = ("test_demand", "symptoms", "share_symptomatic_requesting_test")
-    params = pd.DataFrame(
-        1.0,
-        columns=["value"],
-        index=pd.MultiIndex.from_tuples([share_tuple]),
-    )
-    params.loc[("FürImmerferien", "Hessen", "start")] = 1601503200  # 2020-10-01
-    params.loc[("FürImmerferien", "Hessen", "end")] = 1635631200  # 2021-10-31
-    params.loc[
-        ("share_known_cases", "share_known_cases", pd.Timestamp("2020-01-01"))
-    ] = -1.0
-    params.loc[
-        ("share_known_cases", "share_known_cases", pd.Timestamp("2022-01-01"))
-    ] = -1.0
-    rapid_tests_tuple = (
-        "test_demand",
-        "shares",
-        "share_w_positive_rapid_test_requesting_test",
-    )
-    params.loc[rapid_tests_tuple] = 0.0
-
-    params.index.names = ["category", "subcategory", "name"]
-    return params
-
-
-# -----------------------------------------------------------------------------
 
 
 def test_allocate_tests(states):
@@ -110,3 +82,26 @@ def test_calculate_test_demand_from_rapid_tests():
     res = _calculate_test_demand_from_rapid_tests(states, 1)
     expected = pd.Series([False, False, False, True, False], index=states.index)
     pd.testing.assert_series_equal(res, expected, check_names=False)
+
+
+def test_calculate_test_demand_from_share_known_cases():
+    states = pd.DataFrame()
+
+    states["newly_infected"] = [True, True, True] + [False] * 7
+    states["symptomatic"] = [True, True] + [False] * 8
+    states["pending_test"] = [False, True] + [True] * 7 + [False]
+    states["currently_infected"] = [True, True, True] + [False] * 5 + [True] * 2
+    states["knows_immune"] = False
+
+    share_known_cases = 2 / 3
+    share_of_tests_for_symptomatics = 0.5
+
+    expected = pd.Series([True] + [False] * 8 + [True])
+
+    calculated = _calculate_test_demand_from_share_known_cases(
+        states=states,
+        share_known_cases=share_known_cases,
+        share_of_tests_for_symptomatics=share_of_tests_for_symptomatics,
+    )
+
+    pd.testing.assert_series_equal(calculated, expected)
