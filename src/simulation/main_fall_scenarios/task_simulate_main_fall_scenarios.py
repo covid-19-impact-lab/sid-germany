@@ -19,7 +19,7 @@ NESTED_PARAMETRIZATION = build_main_scenarios(FALL_PATH)
 PARAMETRIZATION = []
 for scenario_spec_list in NESTED_PARAMETRIZATION.values():
     PARAMETRIZATION += scenario_spec_list
-"""Each specification consists of a produces path, the scenario dictioary and a seed"""
+"""Each specification consists of a produces path, the scenario dictionary and a seed"""
 
 if FAST_FLAG == "debug":
     SIMULATION_DEPENDENCIES["initial_states"] = (
