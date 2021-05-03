@@ -19,6 +19,7 @@ from src.policies.policy_tools import combine_dictionaries
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
 from src.testing.rapid_tests import rapid_test_demand
+from src.testing.rapid_tests import rapid_test_reactions
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -134,7 +135,14 @@ def build_main_scenarios(base_path):
                     "end": "2025-01-01",
                 }
             }
-            rapid_test_reaction_models = None
+
+            rapid_test_reaction_models = {
+                "rapid_test_reactions": {
+                    "model": rapid_test_reactions,
+                    "start": "2021-01-01",
+                    "end": "2025-01-01",
+                }
+            }
 
         if FAST_FLAG == "debug":
             n_seeds = 1
