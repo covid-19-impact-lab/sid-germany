@@ -38,7 +38,7 @@ if FAST_FLAG == "debug":
 def task_simulate_main_prediction(
     depends_on, produces, scenario, rapid_test_models, rapid_test_reaction_models, seed
 ):
-    start_date = pd.Timestamp("2021-03-01")
+    start_date = pd.Timestamp("2021-03-15")
 
     if FAST_FLAG in ["debug", "verify"]:
         duration = pd.Timedelta(weeks=8)
