@@ -88,7 +88,7 @@ def build_main_scenarios(base_path):
             [{"educ_multiplier": 0.5}, get_educ_options_mid_march_to_easter()]
         )
     elif "fall" in base_path.name:
-        base_scenario = {"educ_multiplier": 0.8}
+        base_scenario = {}
     else:
         raise ValueError(
             f"Unknown situation: {base_path.name}. "
