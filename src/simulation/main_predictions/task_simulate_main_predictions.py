@@ -45,9 +45,7 @@ def task_simulate_main_prediction(
     else:
         start_date = early_start_date
 
-    if FAST_FLAG == "debug":
-        duration = pd.Timedelta(weeks=4)
-    elif FAST_FLAG == "verify":
+    if FAST_FLAG in ["debug", "verify"]:
         duration = pd.Timedelta(weeks=8)
     elif FAST_FLAG == "full":
         duration = pd.Timedelta(weeks=12)
