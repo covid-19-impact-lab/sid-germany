@@ -1,11 +1,11 @@
+import numpy as np
 import pandas as pd
 import pytest
 
 from src.testing.rapid_tests import _calculate_educ_rapid_test_demand
 from src.testing.rapid_tests import _calculate_work_rapid_test_demand
-from src.testing.rapid_tests import (
-    _get_eligible_educ_participants,
-)
+from src.testing.rapid_tests import _get_eligible_educ_participants
+from src.testing.rapid_tests import rapid_test_reactions
 
 
 @pytest.fixture
@@ -140,3 +140,38 @@ def test_calculate_work_rapid_test_demand_imperfect_compliance(
         work_states, work_contacts, compliance_multiplier=0.5
     )
     pd.testing.assert_series_equal(res, expected)
+
+
+def test_rapid_test_reactions():
+    states = pd.DataFrame()
+    states["quaranteene_compliance"] = [0.0, 0.2, 0.4, 0.6, 0.8]
+
+    contacts = pd.DataFrame()
+    contacts["households"] = [True, True, True, True, True]
+    contacts["other_recurrent"] = [False, True, False, True, False]
+    contacts["other_non_recurrent"] = [5, 2, 2, 2, 2]
+
+    expected = pd.DataFrame()
+    expected["households"] = [True, True, True, True, 0]
+    expected["other_recurrent"] = [False, False, False, False, False]
+    expected["other_non_recurrent"] = [5, 0, 0, 0, 0]
+
+    res = rapid_test_reactions(states, contacts, None, None)
+
+    pd.testing.assert_frame_equal(res, expected, check_dtype=False)
+
+
+def test_rapid_test_reactions_lln():
+    states = pd.DataFrame()
+    states["quaranteene_compliance"] = np.random.uniform(0, 1, size=10000)
+
+    contacts = pd.DataFrame()
+    contacts["households"] = [True] * 10000
+    contacts["other"] = True
+
+    res = rapid_test_reactions(states, contacts, None, None)
+
+    share_meet_hh = res["households"].mean()
+    share_meet_other = res["other"].mean()
+    assert 0.65 < share_meet_hh < 0.75
+    assert 0.10 < share_meet_other < 0.20

@@ -159,3 +159,35 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     receives_offer_and_accepts = should_get_test & complier
     work_rapid_test_demand = should_get_test & receives_offer_and_accepts
     return work_rapid_test_demand
+
+
+def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
+    """Make people react to a positive rapid test.
+
+    source: The COSMO Study of 2021-03-09
+    url: https://bit.ly/3gHlcKd (3.5 Verhalten nach positivem Selbsttest)
+
+    - 85% isolate ("isoliere mich und beschränke meine Kontakte bis zur Klärung")
+        => We use this multiplier of 0.15 here. We assume households are only
+        reduced by 30%, i.e. have a multiplier of 0.7.
+
+    - 85% seek PCR test.
+        => This is used in task_build_full_params.
+
+    - 80% inform contacts of last two weeks.
+        => This is not supported yet as we do not have contact tracing yet.
+
+    This step happens before post_process_contacts.
+
+    """
+    contacts = contacts.copy(deep=True)
+
+    for col in contacts:
+        multiplier = 0.7 if col == "households" else 0.15
+
+        refuser = states["quaranteene_compliance"] <= multiplier
+        # no need to worry about dtypes because post_process_contacts happens
+        # after this function is called.
+        contacts[col] = contacts[col].where(cond=refuser, other=0)
+
+    return contacts
