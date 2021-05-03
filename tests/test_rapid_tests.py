@@ -144,7 +144,7 @@ def test_calculate_work_rapid_test_demand_imperfect_compliance(
 
 def test_rapid_test_reactions():
     states = pd.DataFrame()
-    states["quaranteene_compliance"] = [0.0, 0.2, 0.4, 0.6, 0.8]
+    states["quarantine_compliance"] = [0.0, 0.2, 0.4, 0.6, 0.8]
 
     contacts = pd.DataFrame()
     contacts["households"] = [True, True, True, True, True]
@@ -163,7 +163,7 @@ def test_rapid_test_reactions():
 
 def test_rapid_test_reactions_lln():
     states = pd.DataFrame()
-    states["quaranteene_compliance"] = np.random.uniform(0, 1, size=10000)
+    states["quarantine_compliance"] = np.random.uniform(0, 1, size=10000)
 
     contacts = pd.DataFrame()
     contacts["households"] = [True] * 10000

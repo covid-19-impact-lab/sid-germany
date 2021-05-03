@@ -185,7 +185,7 @@ def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
     for col in contacts:
         multiplier = 0.7 if col == "households" else 0.15
 
-        refuser = states["quaranteene_compliance"] <= multiplier
+        refuser = states["quarantine_compliance"] <= multiplier
         # no need to worry about dtypes because post_process_contacts happens
         # after this function is called.
         contacts[col] = contacts[col].where(cond=refuser, other=0)
