@@ -53,6 +53,8 @@ def task_simulate_main_prediction(
         duration = pd.Timedelta(weeks=12)
 
     end_date = start_date + duration
+    assert end_date > SCENARIO_START, "The scenario start must lie before the end date."
+
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - pd.Timedelta(1, unit="D")
 
@@ -104,13 +106,16 @@ def task_simulate_main_prediction(
 def _get_prediction_policies(contact_models, scenario, end_date, scenario_name):
     enacted_policies = get_enacted_policies_of_2021(
         contact_models=contact_models,
-        scenario_start=SCENARIO_START,
+        # policies start and end dates are both inclusive.
+        # So the enacted policies must stop on the day before the scenario start.
+        scenario_start=SCENARIO_START - pd.Timedelta(days=1),
         work_hygiene_multiplier=1.0,
     )
-    attend_multiplier = _process_attend_multiplier(
+    attend_multiplier = _get_future_attend_multiplier(
         start_date=SCENARIO_START,
         end_date=end_date,
         # 0.68 was the level between 10th of Jan and carnival
+        # 0.76 was the mean level from 07-28 of April
         work_fill_value=scenario.get("work_fill_value", 0.68),
     )
     scenario_policies = get_lockdown_with_multipliers(
@@ -134,7 +139,7 @@ def _get_prediction_policies(contact_models, scenario, end_date, scenario_name):
     return policies
 
 
-def _process_attend_multiplier(
+def _get_future_attend_multiplier(
     start_date,
     end_date,
     attend_multiplier=None,

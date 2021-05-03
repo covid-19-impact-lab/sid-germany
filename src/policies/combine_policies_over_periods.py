@@ -49,11 +49,15 @@ def get_enacted_policies_of_2021(
         policies (dict)
 
     """
-    last_date = pd.Timestamp("2021-04-06")
-    assert pd.Timestamp(scenario_start) <= last_date, (
+    scenario_start = pd.Timestamp(scenario_start)
+    last_date = pd.Timestamp("2021-04-30")
+    assert scenario_start <= last_date, (
         "You must update the `get_enacted_policies_of_2021` function to support "
-        f"scenario starst after {scenario_start} (only until {last_date.date()}."
+        f"scenario starts after {scenario_start} (only until {last_date.date()}."
     )
+    assert scenario_start >= pd.Timestamp(
+        "2021-04-05"
+    ), f"The scenario start must lie after 2021-04-04. Yours is {scenario_start}."
 
     attend_work_multiplier = _get_attend_work_multiplier(scenario_start)
     to_combine = [
@@ -147,43 +151,53 @@ def get_enacted_policies_of_2021(
                 **get_educ_options_mid_march_to_easter(),
             },
         ),
-        get_lockdown_with_multipliers(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2021-04-06",
-                "end_date": "2021-04-18",
-                "prefix": "1st_half_april",
-            },
-            multipliers={
-                "educ": 0.5,
-                "work": {
-                    "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": work_hygiene_multiplier,
-                },
-                "other": after_easter_other_multiplier,
-                **get_educ_options_1st_half_april(),
-            },
-        ),
-        get_lockdown_with_multipliers(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2021-04-19",
-                "end_date": "2021-04-30",
-                "prefix": "2nd_half_april",
-            },
-            multipliers={
-                "educ": 0.5,
-                "work": {
-                    "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": work_hygiene_multiplier,
-                },
-                "other": after_easter_other_multiplier,
-                **get_educ_options_2nd_half_april(
-                    optimistic=a_b_schooling_for_all_2nd_half_of_april
-                ),
-            },
-        ),
     ]
+
+    if scenario_start > pd.Timestamp("2021-04-06"):
+        end_timestamp = min(scenario_start, pd.Timestamp("2021-04-18"))
+        end_date = str(end_timestamp.date())
+        to_combine.append(
+            get_lockdown_with_multipliers(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2021-04-06",
+                    "end_date": end_date,
+                    "prefix": "1st_half_april",
+                },
+                multipliers={
+                    "educ": 0.5,
+                    "work": {
+                        "attend_multiplier": attend_work_multiplier,
+                        "hygiene_multiplier": work_hygiene_multiplier,
+                    },
+                    "other": after_easter_other_multiplier,
+                    **get_educ_options_1st_half_april(),
+                },
+            )
+        )
+
+    if scenario_start > pd.Timestamp("2021-04-18"):
+        to_combine.append(
+            get_lockdown_with_multipliers(
+                contact_models=contact_models,
+                block_info={
+                    "start_date": "2021-04-19",
+                    "end_date": str(scenario_start.date()),
+                    "prefix": "2nd_half_april",
+                },
+                multipliers={
+                    "educ": 0.5,
+                    "work": {
+                        "attend_multiplier": attend_work_multiplier,
+                        "hygiene_multiplier": work_hygiene_multiplier,
+                    },
+                    "other": after_easter_other_multiplier,
+                    **get_educ_options_2nd_half_april(
+                        optimistic=a_b_schooling_for_all_2nd_half_of_april
+                    ),
+                },
+            )
+        )
     return combine_dictionaries(to_combine)
 
 
@@ -374,7 +388,7 @@ def _get_attend_work_multiplier(scenario_start):
     work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
     work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
     work_multiplier = work_multiplier.set_index("date")
-    dates = pd.date_range(pd.Timestamp("2021-01-02"), pd.Timestamp(scenario_start))
+    dates = pd.date_range(pd.Timestamp("2021-01-02"), scenario_start)
     if set(dates).issubset(work_multiplier.index):
         work_multiplier = work_multiplier.loc[dates]
     else:
