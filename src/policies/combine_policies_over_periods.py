@@ -49,7 +49,7 @@ def get_enacted_policies_of_2021(
         policies (dict)
 
     """
-    last_date = pd.Timestamp("2021-04-06")
+    last_date = pd.Timestamp("2021-04-30")
     assert pd.Timestamp(scenario_start) <= last_date, (
         "You must update the `get_enacted_policies_of_2021` function to support "
         f"scenario starst after {scenario_start} (only until {last_date.date()}."
@@ -193,7 +193,6 @@ def get_october_to_christmas_policies(
     educ_multiplier=0.8,
     other_multiplier=None,
     attend_work_multiplier=None,
-    work_hygiene_multiplier=1.0,
     work_fill_value=None,
 ):
     """Policies from October 1st 2020 until Christmas 2020.
@@ -233,7 +232,7 @@ def get_october_to_christmas_policies(
             be set to this value after November, 1st.
 
     """
-    dates = pd.date_range("2020-10-01", "2020-12-23")
+    dates = pd.date_range("2020-09-01", "2020-12-23")
     if attend_work_multiplier is None:
         work_multiplier_path = BLD / "policies" / "work_multiplier.csv"
         attend_work_multiplier = pd.read_csv(work_multiplier_path, parse_dates=["date"])
@@ -248,35 +247,38 @@ def get_october_to_christmas_policies(
         assert 0 <= work_fill_value <= 1, "work fill value must lie in [0, 1]."
         attend_work_multiplier["2020-11-02":] = work_fill_value
 
+    work_hygiene_multiplier = 0.7
+    educ_hygiene_multiplier = 0.7
+
     to_combine = [
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
-                "start_date": "2020-10-01",
-                "end_date": "2020-10-09",
+                "start_date": "2020-09-01",
+                "end_date": "2020-10-06",
                 "prefix": "pre_fall_vacation",
             },
             multipliers={
-                "educ": 0.8,
+                "educ": 1.0,
                 "work": {
                     "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": work_hygiene_multiplier,
+                    "hygiene_multiplier": 1.0,
                 },
-                "other": 0.75,
+                "other": 0.6,
             },
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
-                "start_date": "2020-10-10",
-                "end_date": "2020-10-23",
+                "start_date": "2020-10-07",
+                "end_date": "2020-10-25",
                 "prefix": "fall_vacation",
             },
             multipliers={
-                "educ": 0.8,
+                "educ": 1.0,
                 "work": {
                     "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": work_hygiene_multiplier,
+                    "hygiene_multiplier": 1.0,
                 },
                 "other": 1.0,
             },
@@ -284,50 +286,33 @@ def get_october_to_christmas_policies(
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
-                "start_date": "2020-10-24",
+                "start_date": "2020-10-26",
                 "end_date": "2020-11-01",
                 "prefix": "post_fall_vacation",
             },
             multipliers={
-                "educ": 0.8,
+                "educ": 1.0,
                 "work": {
                     "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": work_hygiene_multiplier,
+                    "hygiene_multiplier": 0.9,
                 },
-                "other": 0.65,
+                "other": 0.6,
             },
         ),
         get_lockdown_with_multipliers(
             contact_models=contact_models,
             block_info={
                 "start_date": "2020-11-02",
-                "end_date": "2020-11-22",
+                "end_date": "2020-12-15",
                 "prefix": "lockdown_light",
             },
             multipliers={
-                "educ": educ_multiplier,
+                "educ": educ_hygiene_multiplier,
                 "work": {
                     "attend_multiplier": attend_work_multiplier,
                     "hygiene_multiplier": work_hygiene_multiplier,
                 },
-                "other": 0.45 if other_multiplier is None else other_multiplier,
-            },
-            educ_options=educ_options,
-        ),
-        get_lockdown_with_multipliers(
-            contact_models=contact_models,
-            block_info={
-                "start_date": "2020-11-23",
-                "end_date": "2020-12-15",
-                "prefix": "lockdown_light_with_fatigue",
-            },
-            multipliers={
-                "educ": educ_multiplier,
-                "work": {
-                    "attend_multiplier": attend_work_multiplier,
-                    "hygiene_multiplier": work_hygiene_multiplier,
-                },
-                "other": 0.55 if other_multiplier is None else other_multiplier,
+                "other": 0.5,
             },
             educ_options=educ_options,
         ),
@@ -345,7 +330,7 @@ def get_october_to_christmas_policies(
                     "attend_multiplier": attend_work_multiplier,
                     "hygiene_multiplier": work_hygiene_multiplier,
                 },
-                "other": 0.55 if other_multiplier is None else other_multiplier,
+                "other": 0.5,
             },
             **strict_emergency_care(),
         ),
@@ -363,7 +348,7 @@ def get_october_to_christmas_policies(
                     "attend_multiplier": attend_work_multiplier,
                     "hygiene_multiplier": work_hygiene_multiplier,
                 },
-                "other": 0.55 if other_multiplier is None else other_multiplier,
+                "other": 0.5,
             },
         ),
     ]
