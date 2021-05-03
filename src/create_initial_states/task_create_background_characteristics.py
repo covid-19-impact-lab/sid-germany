@@ -135,6 +135,8 @@ def _build_initial_states(
     # This allows us to easily match the empirical compliance rate.
     df["rapid_test_compliance"] = np.random.uniform(low=0, high=1, size=len(df))
 
+    df["quaranteene_compliance"] = np.random.uniform(low=0, high=1, size=len(df))
+
     df.index.name = "index"
     df = _only_keep_relevant_columns(df)
     df = df.sample(frac=1).reset_index(drop=True)
