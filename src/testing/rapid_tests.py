@@ -40,7 +40,7 @@ def rapid_test_demand(
         educ_workers_params = params.loc[("rapid_test_demand", "educ_worker_shares")]
         students_params = params.loc[("rapid_test_demand", "student_shares")]
         hh_member_demand_share = params.loc[
-            ("rapid_test_demand", "hh_member_demand", "share")
+            ("rapid_test_demand", "hh_member_demand", "share"), "value"
         ]
 
     # get work demand inputs
