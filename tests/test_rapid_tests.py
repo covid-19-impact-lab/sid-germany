@@ -4,6 +4,7 @@ import pytest
 
 from src.testing.rapid_tests import _calculate_educ_rapid_test_demand
 from src.testing.rapid_tests import _calculate_work_rapid_test_demand
+from src.testing.rapid_tests import _determine_if_hh_had_event
 from src.testing.rapid_tests import _get_eligible_educ_participants
 from src.testing.rapid_tests import rapid_test_reactions
 
@@ -164,6 +165,7 @@ def test_rapid_test_reactions():
 
 
 def test_rapid_test_reactions_lln():
+    np.random.seed(38484)
     states = pd.DataFrame()
     states["quarantine_compliance"] = np.random.uniform(0, 1, size=10000)
     states["cd_received_rapid_test"] = [0] * 9900 + [-3] * 90 + [-99] * 10
@@ -183,3 +185,65 @@ def test_rapid_test_reactions_lln():
     assert 0.695 < share_meet_hh < 0.705
     assert 0.145 < share_meet_other < 0.155
     assert (res.loc[9980:] == contacts.loc[9980:]).all().all()
+
+
+def test_determine_if_hh_had_event():
+    # these are family members without events
+    base_df = pd.DataFrame()
+    base_df["cd_received_rapid_test"] = [-5, 5, 0]
+    base_df["is_tested_positive_by_rapid_test"] = [True, False, False]
+    base_df["cd_symptoms_true"] = [3, -3, -44]
+    base_df["new_known_case"] = False
+
+    no_event_hh = base_df.copy(deep=True)
+    no_event_hh["hh_id"] = 1
+    res = _determine_if_hh_had_event(no_event_hh)
+    expected = pd.Series(False, index=no_event_hh.index)
+    pd.testing.assert_series_equal(res, expected)
+
+    pos_rapid_test_hh = base_df.copy(deep=True)
+    pos_rapid_test_hh["hh_id"] = 2
+    # positive rapid test
+    pos_rapid_test_hh.loc[3] = {
+        "cd_received_rapid_test": -1,
+        "is_tested_positive_by_rapid_test": True,
+        "cd_symptoms_true": 2,
+        "new_known_case": False,
+        "hh_id": 2,
+    }
+    res = _determine_if_hh_had_event(pos_rapid_test_hh)
+    expected2 = pd.Series(True, index=pos_rapid_test_hh.index)
+    pd.testing.assert_series_equal(res, expected2)
+
+    hh_with_symptom = base_df.copy(deep=True)
+    hh_with_symptom["hh_id"] = 3
+    hh_with_symptom.loc[3] = {
+        "cd_received_rapid_test": -33,
+        "is_tested_positive_by_rapid_test": False,
+        "cd_symptoms_true": -1,
+        "new_known_case": False,
+        "hh_id": 3,
+    }
+    res = _determine_if_hh_had_event(hh_with_symptom)
+    expected3 = pd.Series(True, index=hh_with_symptom.index)
+    pd.testing.assert_series_equal(res, expected3)
+
+    hh_with_new_known_case = base_df.copy(deep=True)
+    hh_with_new_known_case["hh_id"] = 3
+    hh_with_new_known_case.loc[3] = {
+        "cd_received_rapid_test": -33,
+        "is_tested_positive_by_rapid_test": False,
+        "cd_symptoms_true": -5,
+        "new_known_case": True,
+        "hh_id": 3,
+    }
+    res = _determine_if_hh_had_event(hh_with_new_known_case)
+    expected4 = pd.Series(True, index=hh_with_new_known_case.index)
+    pd.testing.assert_series_equal(res, expected4)
+
+    full = pd.concat(
+        [no_event_hh, pos_rapid_test_hh, hh_with_symptom, hh_with_new_known_case]
+    )
+    res = _determine_if_hh_had_event(full)
+    expected = pd.concat([expected, expected2, expected3, expected4])
+    pd.testing.assert_series_equal(res, expected)

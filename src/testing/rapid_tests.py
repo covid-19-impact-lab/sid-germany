@@ -1,6 +1,7 @@
 """Functions for rapid tests."""
 import warnings
 
+import numpy as np
 import pandas as pd
 from pandas.api.types import is_bool_dtype
 from sid.time import get_date
@@ -19,6 +20,11 @@ def rapid_test_demand(
 
     Starting after Easter, all education workers and pupils attending school receive a
     test if they participate in school and haven't received a rapid test within 4 days.
+
+    Workers also get tested and more so as time increases.
+
+    Lastly, household members of individuals with symptoms, a positive PCR test
+    or a positive rapid test demand a rapid test with 85% probability.
 
     """
     date = get_date(states)
@@ -160,6 +166,32 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     receives_offer_and_accepts = should_get_test & complier
     work_rapid_test_demand = should_get_test & receives_offer_and_accepts
     return work_rapid_test_demand
+
+
+def _determine_if_hh_had_event(states):
+    """Determine who had a potential rapid test triggering event in their household.
+
+    Returns:
+        had_event_in_hh (pandas.Series): Series with the same index as states.
+            True for individuals where a household member got symptoms yesterday,
+            who received a positive rapid test yesterday or who have a new known
+            case in their household.
+
+    """
+    new_symptomatic_in_hh = (
+        (states["cd_symptoms_true"] == -1).groupby(states["hh_id"]).transform(np.any)
+    )
+    new_case_in_hh = states["new_known_case"].groupby(states["hh_id"]).transform(np.any)
+
+    received_rapid_test = states["cd_received_rapid_test"] == -1
+    pos_rapid_test = states["is_tested_positive_by_rapid_test"]
+    received_pos_rapid_test = received_rapid_test & pos_rapid_test
+    new_pos_rapid_test_in_hh = received_pos_rapid_test.groupby(
+        states["hh_id"]
+    ).transform(np.any)
+
+    had_event_in_hh = new_symptomatic_in_hh | new_case_in_hh | new_pos_rapid_test_in_hh
+    return had_event_in_hh
 
 
 def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
