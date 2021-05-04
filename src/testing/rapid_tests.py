@@ -39,6 +39,9 @@ def rapid_test_demand(
         ]
         educ_workers_params = params.loc[("rapid_test_demand", "educ_worker_shares")]
         students_params = params.loc[("rapid_test_demand", "student_shares")]
+        hh_member_demand_share = params.loc[
+            ("rapid_test_demand", "hh_member_demand", "share")
+        ]
 
     # get work demand inputs
     share_of_workers_with_offer = get_piecewise_linear_interpolation_for_one_day(
@@ -71,7 +74,11 @@ def rapid_test_demand(
         student_multiplier=student_multiplier,
     )
 
-    rapid_test_demand = work_demand | educ_demand
+    hh_demand = _calculate_hh_member_rapid_test_demand(
+        states=states, hh_member_demand_share=hh_member_demand_share
+    )
+
+    rapid_test_demand = work_demand | educ_demand | hh_demand
 
     return rapid_test_demand
 
@@ -166,6 +173,23 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     receives_offer_and_accepts = should_get_test & complier
     work_rapid_test_demand = should_get_test & receives_offer_and_accepts
     return work_rapid_test_demand
+
+
+def _calculate_hh_member_rapid_test_demand(states, hh_member_demand_share):
+    """Calculate demand by household members of positive tested and fresh symptomatics.
+
+    Args:
+        states (pandas.DataFrame): sid states DataFrame
+        hh_member_demand_share (float): share of household members that request
+            a rapid test in response to an event in their household. Individuals
+            with a quarantine compliance above 1 - hh_member_demand_share request
+            a rapid test.
+
+    """
+    had_event_in_hh = _determine_if_hh_had_event(states)
+    would_request_test = states["quarantine_compliance"] >= (1 - hh_member_demand_share)
+    hh_demand = had_event_in_hh & would_request_test
+    return hh_demand
 
 
 def _determine_if_hh_had_event(states):
