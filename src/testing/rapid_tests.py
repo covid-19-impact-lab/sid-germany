@@ -182,7 +182,11 @@ def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
     """
     contacts = contacts.copy(deep=True)
 
-    received_rapid_test = states["cd_received_rapid_test"] == 0
+    # we assume that if you haven't received PCR confirmation within 7 days
+    # you go back to having contacts.
+    received_rapid_test = states["cd_received_rapid_test"].between(
+        -7, 0, inclusive=True
+    )
     pos_rapid_test = states["is_tested_positive_by_rapid_test"]
     quarantine_pool = received_rapid_test & pos_rapid_test
 

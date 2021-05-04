@@ -166,7 +166,7 @@ def test_rapid_test_reactions():
 def test_rapid_test_reactions_lln():
     states = pd.DataFrame()
     states["quarantine_compliance"] = np.random.uniform(0, 1, size=10000)
-    states["cd_received_rapid_test"] = [0] * 9990 + [-3] * 10
+    states["cd_received_rapid_test"] = [0] * 9900 + [-3] * 90 + [-99] * 10
     states["is_tested_positive_by_rapid_test"] = (
         [True] * 9980 + [False] * 10 + [True] * 10
     )
