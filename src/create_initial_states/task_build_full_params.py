@@ -165,6 +165,8 @@ def _build_reaction_params(contact_models):
     df = pd.DataFrame(columns=["category", "subcategory", "name", "value"])
     df = df.set_index(["category", "subcategory", "name"])
     multipliers = [
+        # source: The COSMO Study of 2021-03-09: 85% of individuals would isolate
+        # after a positive rapid test.
         ("symptomatic_multiplier", 0.15, 0.7),
         ("positive_test_multiplier", 0.05, 0.5),
     ]
@@ -252,15 +254,17 @@ def _build_share_known_cases_params():
             "2020-01-01": 0.07,
             "2020-03-01": 0.07,
             "2020-03-17": 0.2,
-            "2020-06-15": 0.2,
-            "2020-07-10": 0.46,
-            "2020-09-01": 0.67,
-            "2020-09-25": 0.6,
-            "2020-12-23": 0.22,
+            "2020-06-10": 0.2,
+            "2020-07-05": 0.46,
+            "2020-08-15": 0.56,
+            "2020-09-01": 0.56,
+            "2020-11-05": 0.36,
+            "2020-12-24": 0.31,
+            "2020-12-25": 0.2,
             # free parameters
-            "2021-02-28": 0.25,
-            "2021-04-30": 0.35,
-            "2021-05-15": 0.35,
+            "2021-01-01": 0.2,
+            "2021-01-30": 0.31,
+            "2021-06-15": 0.31,
         },
         name="value",
     ).to_frame()

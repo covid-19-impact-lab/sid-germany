@@ -19,6 +19,7 @@ from src.policies.policy_tools import combine_dictionaries
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
 from src.testing.rapid_tests import rapid_test_demand
+from src.testing.rapid_tests import rapid_test_reactions
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -26,7 +27,7 @@ from src.testing.testing_models import process_tests
 FALL_PATH = BLD / "simulations" / f"{FAST_FLAG}_main_fall_scenarios"
 PREDICT_PATH = BLD / "simulations" / f"{FAST_FLAG}_main_predictions"
 
-SCENARIO_START = pd.Timestamp("2021-04-06")  # after Easter holidays
+SCENARIO_START = pd.Timestamp("2021-04-30")
 
 
 SIMULATION_DEPENDENCIES = {
@@ -88,7 +89,7 @@ def build_main_scenarios(base_path):
             [{"educ_multiplier": 0.5}, get_educ_options_mid_march_to_easter()]
         )
     elif "fall" in base_path.name:
-        base_scenario = {"educ_multiplier": 0.8}
+        base_scenario = {}
     else:
         raise ValueError(
             f"Unknown situation: {base_path.name}. "
@@ -134,7 +135,14 @@ def build_main_scenarios(base_path):
                     "end": "2025-01-01",
                 }
             }
-            rapid_test_reaction_models = None
+
+            rapid_test_reaction_models = {
+                "rapid_test_reactions": {
+                    "model": rapid_test_reactions,
+                    "start": "2021-01-01",
+                    "end": "2025-01-01",
+                }
+            }
 
         if FAST_FLAG == "debug":
             n_seeds = 1
@@ -175,8 +183,11 @@ def load_simulation_inputs(depends_on, init_start, end_date):
     )
 
     share_of_tests_for_symptomatics_series = characteristics_of_the_tested[
-        "share_symptomatic_lower_bound_extrapolated"
-    ]
+        [
+            "share_symptomatic_lower_bound_extrapolated",
+            "share_symptomatic_among_known_extrapolated",
+        ]
+    ].mean(axis=1)
 
     simulation_inputs = _get_testing_models(
         init_start=init_start,

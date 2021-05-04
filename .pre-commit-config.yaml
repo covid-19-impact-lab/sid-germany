@@ -16,19 +16,20 @@ repos:
     -   id: no-commit-to-branch
         args: [--branch, main]
     -   id: trailing-whitespace
-# -   repo: https://github.com/pre-commit/pygrep-hooks
-#     rev: v1.8.0
-#     hooks:
-#     -   id: python-check-blanket-noqa
-#     -   id: python-check-mock-methods
-#     -   id: python-no-log-warn
-#     -   id: python-use-type-annotations
-#     -   id: rst-backticks
-#     -   id: rst-directive-colons
-#     -   id: rst-inline-touching-normal
-#     -   id: text-unicode-replacement-char
+-   repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.8.0
+    hooks:
+    -   id: python-check-blanket-noqa
+    -   id: python-check-mock-methods
+    -   id: python-no-log-warn
+    -   id: python-use-type-annotations
+    -   id: rst-backticks
+    -   id: rst-directive-colons
+    -   id: rst-inline-touching-normal
+    -   id: text-unicode-replacement-char
+        exclude_types: [jupyter]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.13.0
+    rev: v2.14.0
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]
@@ -42,16 +43,16 @@ repos:
     hooks:
     -   id: setup-cfg-fmt
 -   repo: https://github.com/psf/black
-    rev: 21.4b0
+    rev: 21.4b2
     hooks:
     -   id: black
         types: [python]
-# - repo: https://github.com/nbQA-dev/nbQA
-#   rev: 0.7.0
-#   hooks:
-#     -   id: nbqa-black
-#     -   id: nbqa-pyupgrade
-#     -   id: nbqa-isort
+- repo: https://github.com/nbQA-dev/nbQA
+  rev: 0.8.0
+  hooks:
+    -   id: nbqa-black
+    -   id: nbqa-pyupgrade
+    -   id: nbqa-isort
 -   repo: https://github.com/asottile/blacken-docs
     rev: v1.10.0
     hooks:

@@ -2,6 +2,7 @@
 import warnings
 
 import pandas as pd
+from pandas.api.types import is_bool_dtype
 from sid.time import get_date
 
 from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
@@ -159,3 +160,48 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     receives_offer_and_accepts = should_get_test & complier
     work_rapid_test_demand = should_get_test & receives_offer_and_accepts
     return work_rapid_test_demand
+
+
+def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
+    """Make people react to a positive rapid test.
+
+    source: The COSMO Study of 2021-03-09
+    url: https://bit.ly/3gHlcKd (3.5 Verhalten nach positivem Selbsttest)
+
+    - 85% isolate ("isoliere mich und beschränke meine Kontakte bis zur Klärung")
+        => We use this multiplier of 0.15 here. We assume households are only
+        reduced by 30%, i.e. have a multiplier of 0.7.
+
+    - 85% seek PCR test.
+        => This is used in task_build_full_params.
+
+    - 80% inform contacts of last two weeks.
+        => This is not supported yet as we do not have contact tracing yet.
+
+    This function is called before `post_process_contacts`.
+
+    """
+    contacts = contacts.copy(deep=True)
+
+    # we assume that if you haven't received PCR confirmation within 7 days
+    # you go back to having contacts.
+    received_rapid_test = states["cd_received_rapid_test"].between(
+        -5, 0, inclusive=True
+    )
+    pos_rapid_test = states["is_tested_positive_by_rapid_test"]
+    quarantine_pool = received_rapid_test & pos_rapid_test
+
+    for col in contacts:
+        multiplier = 0.7 if col == "households" else 0.15
+
+        refuser = states["quarantine_compliance"] <= multiplier
+        not_staying_home = refuser | ~quarantine_pool
+        # no need to worry about dtypes because post_process_contacts happens
+        # after this function is called.
+
+        if is_bool_dtype(contacts[col]):
+            contacts[col] = contacts[col].where(cond=not_staying_home, other=False)
+        else:
+            contacts[col] = contacts[col].where(cond=not_staying_home, other=0)
+
+    return contacts
