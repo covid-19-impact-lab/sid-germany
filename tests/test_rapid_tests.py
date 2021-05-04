@@ -145,6 +145,8 @@ def test_calculate_work_rapid_test_demand_imperfect_compliance(
 def test_rapid_test_reactions():
     states = pd.DataFrame()
     states["quarantine_compliance"] = [0.0, 0.2, 0.4, 0.6, 0.8]
+    states["cd_received_rapid_test"] = 0
+    states["is_tested_positive_by_rapid_test"] = True
 
     contacts = pd.DataFrame()
     contacts["households"] = [True, True, True, True, True]
@@ -164,6 +166,10 @@ def test_rapid_test_reactions():
 def test_rapid_test_reactions_lln():
     states = pd.DataFrame()
     states["quarantine_compliance"] = np.random.uniform(0, 1, size=10000)
+    states["cd_received_rapid_test"] = [0] * 9990 + [-3] * 10
+    states["is_tested_positive_by_rapid_test"] = (
+        [True] * 9980 + [False] * 10 + [True] * 10
+    )
 
     contacts = pd.DataFrame()
     contacts["households"] = [True] * 10000
@@ -171,7 +177,9 @@ def test_rapid_test_reactions_lln():
 
     res = rapid_test_reactions(states, contacts, None, None)
 
-    share_meet_hh = res["households"].mean()
-    share_meet_other = res["other"].mean()
+    quarantine_pool = res.loc[:9979]
+    share_meet_hh = quarantine_pool["households"].mean()
+    share_meet_other = quarantine_pool["other"].mean()
     assert 0.65 < share_meet_hh < 0.75
     assert 0.10 < share_meet_other < 0.20
+    assert (res.loc[9980:] == contacts.loc[9980:]).all().all()

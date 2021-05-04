@@ -177,17 +177,22 @@ def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
     - 80% inform contacts of last two weeks.
         => This is not supported yet as we do not have contact tracing yet.
 
-    This step happens before post_process_contacts.
+    This function is called before `post_process_contacts`.
 
     """
     contacts = contacts.copy(deep=True)
+
+    received_rapid_test = states["cd_received_rapid_test"] == 0
+    pos_rapid_test = states["is_tested_positive_by_rapid_test"]
+    quarantine_pool = received_rapid_test & pos_rapid_test
 
     for col in contacts:
         multiplier = 0.7 if col == "households" else 0.15
 
         refuser = states["quarantine_compliance"] <= multiplier
+        not_staying_home = refuser | ~quarantine_pool
         # no need to worry about dtypes because post_process_contacts happens
         # after this function is called.
-        contacts[col] = contacts[col].where(cond=refuser, other=0)
+        contacts[col] = contacts[col].where(cond=not_staying_home, other=0)
 
     return contacts
