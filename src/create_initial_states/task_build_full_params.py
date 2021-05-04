@@ -117,6 +117,8 @@ def task_create_full_params(depends_on, produces):
 
     params = _add_educ_rapid_test_fade_in_params(params)
 
+    params.loc[("rapid_test_demand", "hh_member_demand", "share"), "value"] = 0.85
+
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2
 
