@@ -76,6 +76,8 @@ def states():
         "knows_infectious | (knows_immune & symptomatic) "
         "| (knows_immune & (cd_received_test_result_true >= -13))"
     )
+    states["quarantine_compliance"] = 1.0
+
     return states
 
 
@@ -143,7 +145,7 @@ def test_go_to_daily_work_meeting_weekend(states, no_reduction_params):
     a_saturday = states[states["date"] == pd.Timestamp("2020-04-04")].copy()
     a_saturday["work_saturday"] = [True, True] + [False] * (len(a_saturday) - 2)
     a_saturday["work_daily_group_id"] = 333
-    res = go_to_daily_work_meeting(a_saturday, no_reduction_params, 555)
+    res = go_to_daily_work_meeting(a_saturday, no_reduction_params, seed=None)
     expected = pd.Series(False, index=a_saturday.index)
     expected[:2] = True
     assert_series_equal(res, expected, check_names=False)
@@ -153,7 +155,7 @@ def test_go_to_daily_work_meeting_weekday(a_thursday, no_reduction_params):
     a_thursday["work_daily_group_id"] = [1, 2, 1, 2, 3, 3, 3] + [-1] * (
         len(a_thursday) - 7
     )
-    res = go_to_daily_work_meeting(a_thursday, no_reduction_params, 1309)
+    res = go_to_daily_work_meeting(a_thursday, no_reduction_params, seed=None)
     expected = pd.Series(False, index=a_thursday.index)
     # not every one we assigned a group id is a worker
     expected.iloc[:7] = [True, True, False, True, True, False, True]
@@ -179,7 +181,7 @@ def test_go_to_daily_work_meeting_weekday_with_reduction(
         False,
         False,
     ]
-    res = go_to_daily_work_meeting(a_thursday, no_reduction_params, 1309)
+    res = go_to_daily_work_meeting(a_thursday, no_reduction_params, seed=None)
     expected = pd.Series(False, index=a_thursday.index)
     # not every one we assigned a group id is a worker
     expected[:9] = [True, True, False, True, False, False, True, False, True]
@@ -471,35 +473,35 @@ def test_reduce_non_recurrent_contacts_on_condition(states):
     nr_of_contacts = pd.Series(data=10, index=states.index)
     states["symptomatic"] = [True, True, True] + [False] * (len(states) - 3)
     multiplier = 0.5
-    expected = pd.Series([5, 5, 5] + [10] * (len(states) - 3))
+    states.loc[:1, "quarantine_compliance"] = 0.3
+    expected = pd.Series([10, 10, 0] + [10] * (len(states) - 3))
     res = reduce_contacts_on_condition(
         contacts=nr_of_contacts,
         states=states,
         multiplier=multiplier,
         condition="symptomatic",
         is_recurrent=False,
-        seed=3483,
     )
     assert_series_equal(res, expected, check_dtype=False)
 
 
-# ------------------------------------------------------------------------------------
-
-
 def test_reduce_recurrent_contacts_on_condition(states):
-    participating = pd.Series(data=1, index=states.index)
+    participating = pd.Series(data=True, index=states.index)
     states["symptomatic"] = [True, True, True] + [False] * (len(states) - 3)
+    states.loc[:0, "quarantine_compliance"] = 0.3
     multiplier = 0.5
     res = reduce_contacts_on_condition(
         contacts=participating,
         states=states,
         multiplier=multiplier,
-        seed=8388,
         condition="symptomatic",
         is_recurrent=True,
     )
-    expected = pd.Series([0, 1, 1] + [1] * (len(states) - 3))
+    expected = pd.Series([True, False, False] + [True] * (len(states) - 3))
     assert_series_equal(res, expected, check_dtype=False)
+
+
+# ------------------------------------------------------------------------------------
 
 
 def test_meet_daily_other_contacts():
@@ -513,6 +515,7 @@ def test_meet_daily_other_contacts():
         "knows_infectious | (knows_immune & symptomatic) "
         "| (knows_immune & (cd_received_test_result_true >= -13))"
     )
+    states["quarantine_compliance"] = 1.0
 
     params = pd.DataFrame()
     params["value"] = [0.0, 0.0]
@@ -521,7 +524,7 @@ def test_meet_daily_other_contacts():
     params = params.set_index(["subcategory", "name"])
 
     res = meet_daily_other_contacts(
-        states, params, group_col_name="daily_meeting_id", seed=339
+        states, params, group_col_name="daily_meeting_id", seed=None
     )
     expected = pd.Series([False, True, True, False])
-    assert_series_equal(res, expected)
+    assert_series_equal(res, expected, check_names=False)
