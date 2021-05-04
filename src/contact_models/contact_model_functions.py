@@ -23,7 +23,9 @@ The individual either ...
 """
 
 
-def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
+def go_to_weekly_meeting(
+    states, params, group_col_name, day_of_week, seed  # noqa: U100
+):  # noqa: U100
     """Return who participates in a weekly meeting.
 
     Args:
@@ -55,12 +57,11 @@ def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
                 params.loc[(params_entry, params_entry), "value"],
                 condition,
                 is_recurrent=True,
-                seed=seed,
             )
     return attends_meeting
 
 
-def go_to_daily_work_meeting(states, params, seed):
+def go_to_daily_work_meeting(states, params, seed):  # noqa: U100
     """Return which people go to work.
 
     Args:
@@ -93,13 +94,12 @@ def go_to_daily_work_meeting(states, params, seed):
                 states,
                 params.loc[(params_entry, params_entry), "value"],
                 condition,
-                seed=seed,
                 is_recurrent=True,
             )
     return attends_work
 
 
-def meet_daily_other_contacts(states, params, group_col_name, seed):
+def meet_daily_other_contacts(states, params, group_col_name, seed):  # noqa: U100
     attends_meeting = states[group_col_name] != -1
     for params_entry, condition in [
         ("symptomatic_multiplier", states["symptomatic"]),
@@ -110,13 +110,12 @@ def meet_daily_other_contacts(states, params, group_col_name, seed):
             states,
             params.loc[(params_entry, params_entry), "value"],
             condition,
-            seed=seed,
             is_recurrent=True,
         )
     return attends_meeting
 
 
-def attends_educational_facility(states, params, id_column, seed):
+def attends_educational_facility(states, params, id_column, seed):  # noqa: U100
     """Indicate which children go to an educational facility.
 
     Children go to an educational facility on weekdays.
@@ -157,13 +156,12 @@ def attends_educational_facility(states, params, id_column, seed):
                 states,
                 params.loc[(model_name, params_entry, params_entry), "value"],
                 condition,
-                seed=seed,
                 is_recurrent=True,
             )
     return attends_facility
 
 
-def meet_hh_members(states, params, seed):
+def meet_hh_members(states, params, seed):  # noqa: U100
     """Meet household members.
 
     As single person households have unique household ids, everyone meets their
@@ -191,7 +189,6 @@ def meet_hh_members(states, params, seed):
                 states,
                 params.loc[(params_entry, params_entry), "value"],
                 condition,
-                seed=seed,
                 is_recurrent=True,
             )
     return meet_hh
@@ -337,9 +334,7 @@ def _fast_choice(arr, cdf):
 # -------------------------------------------------------------------------------------
 
 
-def reduce_contacts_on_condition(
-    contacts, states, multiplier, condition, seed, is_recurrent  # noqa: U100
-):
+def reduce_contacts_on_condition(contacts, states, multiplier, condition, is_recurrent):
     """Reduce contacts for share of population for which condition is fulfilled.
 
     The subset of contacts for which contacts are reduced is specified by the condition
