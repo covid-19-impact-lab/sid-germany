@@ -242,7 +242,9 @@ def load_simulation_inputs(depends_on, init_start, end_date):
         "currently_infected": _currently_infected,
         "knows_currently_infected": _knows_currently_infected,
     }
-    simulation_inputs["seasonality_factor_model"] = seasonality_model
+    simulation_inputs["seasonality_factor_model"] = partial(
+        seasonality_model, contact_models=simulation_inputs["contact_models"]
+    )
     return virus_shares, simulation_inputs
 
 
