@@ -84,7 +84,7 @@ def task_create_full_params(depends_on, produces):
     # source: https://bit.ly/3gHlcKd (section 3.5, 2021-03-09, accessed 2021-04-28)
     params.loc[
         ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test"),
-    ] = 0.85
+    ] = 0.4
 
     # Only 60% of workers receiving a test offer accept it regularly
     # source: https://bit.ly/3t1z0lf (COSMO, 2021-04-21)

@@ -202,19 +202,14 @@ def _determine_if_hh_had_event(states):
             case in their household.
 
     """
-    new_symptomatic_in_hh = (
-        (states["cd_symptoms_true"] == -1).groupby(states["hh_id"]).transform(np.any)
+    rapid_test_event = (states["cd_received_rapid_test"] == -1) & (
+        states["is_tested_positive_by_rapid_test"]
     )
-    new_case_in_hh = states["new_known_case"].groupby(states["hh_id"]).transform(np.any)
+    is_event = (
+        rapid_test_event | states["new_known_case"] | (states["cd_symptoms_true"] == -1)
+    )
+    had_event_in_hh = is_event.groupby(states["hh_id"]).transform(np.any)
 
-    received_rapid_test = states["cd_received_rapid_test"] == -1
-    pos_rapid_test = states["is_tested_positive_by_rapid_test"]
-    received_pos_rapid_test = received_rapid_test & pos_rapid_test
-    new_pos_rapid_test_in_hh = received_pos_rapid_test.groupby(
-        states["hh_id"]
-    ).transform(np.any)
-
-    had_event_in_hh = new_symptomatic_in_hh | new_case_in_hh | new_pos_rapid_test_in_hh
     return had_event_in_hh
 
 
