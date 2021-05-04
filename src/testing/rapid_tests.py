@@ -2,6 +2,7 @@
 import warnings
 
 import pandas as pd
+from pandas.api.types import is_bool_dtype
 from sid.time import get_date
 
 from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
@@ -185,7 +186,7 @@ def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
     # we assume that if you haven't received PCR confirmation within 7 days
     # you go back to having contacts.
     received_rapid_test = states["cd_received_rapid_test"].between(
-        -7, 0, inclusive=True
+        -5, 0, inclusive=True
     )
     pos_rapid_test = states["is_tested_positive_by_rapid_test"]
     quarantine_pool = received_rapid_test & pos_rapid_test
@@ -197,6 +198,10 @@ def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
         not_staying_home = refuser | ~quarantine_pool
         # no need to worry about dtypes because post_process_contacts happens
         # after this function is called.
-        contacts[col] = contacts[col].where(cond=not_staying_home, other=0)
+
+        if is_bool_dtype(contacts[col]):
+            contacts[col] = contacts[col].where(cond=not_staying_home, other=False)
+        else:
+            contacts[col] = contacts[col].where(cond=not_staying_home, other=0)
 
     return contacts

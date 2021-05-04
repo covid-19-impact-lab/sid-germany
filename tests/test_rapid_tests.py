@@ -180,6 +180,6 @@ def test_rapid_test_reactions_lln():
     quarantine_pool = res.loc[:9979]
     share_meet_hh = quarantine_pool["households"].mean()
     share_meet_other = quarantine_pool["other"].mean()
-    assert 0.65 < share_meet_hh < 0.75
-    assert 0.10 < share_meet_other < 0.20
+    assert 0.695 < share_meet_hh < 0.705
+    assert 0.145 < share_meet_other < 0.155
     assert (res.loc[9980:] == contacts.loc[9980:]).all().all()
