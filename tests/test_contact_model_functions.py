@@ -76,6 +76,8 @@ def states():
         "knows_infectious | (knows_immune & symptomatic) "
         "| (knows_immune & (cd_received_test_result_true >= -13))"
     )
+    states["quarantine_compliance"] = 1.0
+
     return states
 
 
@@ -471,7 +473,8 @@ def test_reduce_non_recurrent_contacts_on_condition(states):
     nr_of_contacts = pd.Series(data=10, index=states.index)
     states["symptomatic"] = [True, True, True] + [False] * (len(states) - 3)
     multiplier = 0.5
-    expected = pd.Series([5, 5, 5] + [10] * (len(states) - 3))
+    states.loc[:1, "quarantine_compliance"] = 0.3
+    expected = pd.Series([10, 10, 0] + [10] * (len(states) - 3))
     res = reduce_contacts_on_condition(
         contacts=nr_of_contacts,
         states=states,
@@ -483,12 +486,10 @@ def test_reduce_non_recurrent_contacts_on_condition(states):
     assert_series_equal(res, expected, check_dtype=False)
 
 
-# ------------------------------------------------------------------------------------
-
-
 def test_reduce_recurrent_contacts_on_condition(states):
-    participating = pd.Series(data=1, index=states.index)
+    participating = pd.Series(data=True, index=states.index)
     states["symptomatic"] = [True, True, True] + [False] * (len(states) - 3)
+    states.loc[:0, "quarantine_compliance"] = 0.3
     multiplier = 0.5
     res = reduce_contacts_on_condition(
         contacts=participating,
@@ -498,8 +499,11 @@ def test_reduce_recurrent_contacts_on_condition(states):
         condition="symptomatic",
         is_recurrent=True,
     )
-    expected = pd.Series([0, 1, 1] + [1] * (len(states) - 3))
+    expected = pd.Series([True, False, False] + [True] * (len(states) - 3))
     assert_series_equal(res, expected, check_dtype=False)
+
+
+# ------------------------------------------------------------------------------------
 
 
 def test_meet_daily_other_contacts():
@@ -513,6 +517,7 @@ def test_meet_daily_other_contacts():
         "knows_infectious | (knows_immune & symptomatic) "
         "| (knows_immune & (cd_received_test_result_true >= -13))"
     )
+    states["quarantine_compliance"] = 1.0
 
     params = pd.DataFrame()
     params["value"] = [0.0, 0.0]
@@ -524,4 +529,4 @@ def test_meet_daily_other_contacts():
         states, params, group_col_name="daily_meeting_id", seed=339
     )
     expected = pd.Series([False, True, True, False])
-    assert_series_equal(res, expected)
+    assert_series_equal(res, expected, check_names=False)

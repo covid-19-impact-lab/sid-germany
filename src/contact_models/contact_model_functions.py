@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from sid.time import get_date
 
-from src.policies.single_policy_functions import reduce_recurrent_model
 from src.shared import from_epochs_to_timestamps
 
 
@@ -55,8 +54,8 @@ def go_to_weekly_meeting(states, params, group_col_name, day_of_week, seed):
                 states,
                 params.loc[(params_entry, params_entry), "value"],
                 condition,
-                seed=seed,
                 is_recurrent=True,
+                seed=seed,
             )
     return attends_meeting
 
@@ -252,7 +251,6 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
                 states,
                 params.loc[(params_entry, params_entry), "value"],
                 condition,
-                seed=seed,
                 is_recurrent=False,
             )
     contacts = contacts.astype(float)
@@ -340,7 +338,7 @@ def _fast_choice(arr, cdf):
 
 
 def reduce_contacts_on_condition(
-    contacts, states, multiplier, condition, seed, is_recurrent
+    contacts, states, multiplier, condition, seed, is_recurrent  # noqa: U100
 ):
     """Reduce contacts for share of population for which condition is fulfilled.
 
@@ -359,12 +357,6 @@ def reduce_contacts_on_condition(
         seed (int)
 
     """
-    np.random.seed(seed)
-    if is_recurrent:
-        reduced = reduce_recurrent_model(states, contacts, seed, multiplier)
-    else:
-        reduced = multiplier * contacts
-
     if isinstance(condition, str):
         is_condition_true = states.eval(condition)
     elif isinstance(condition, pd.Series):
@@ -374,7 +366,14 @@ def reduce_contacts_on_condition(
     else:
         raise ValueError
 
-    reduced = reduced.where(is_condition_true, contacts)
+    refuser = states["quarantine_compliance"] <= multiplier
+    no_change = refuser | ~is_condition_true
+
+    if is_recurrent:
+        reduced = contacts.where(cond=no_change, other=False)
+    else:
+        reduced = contacts.where(cond=no_change, other=0)
+
     return reduced
 
 
