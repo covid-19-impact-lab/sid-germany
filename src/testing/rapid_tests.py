@@ -188,7 +188,8 @@ def _calculate_hh_member_rapid_test_demand(states, hh_member_demand_share):
     """
     had_event_in_hh = _determine_if_hh_had_event(states)
     would_request_test = states["quarantine_compliance"] >= (1 - hh_member_demand_share)
-    hh_demand = had_event_in_hh & would_request_test
+    not_tested_within_3_days = states["cd_received_rapid_test"] < -3
+    hh_demand = had_event_in_hh & would_request_test & not_tested_within_3_days
     return hh_demand
 
 
