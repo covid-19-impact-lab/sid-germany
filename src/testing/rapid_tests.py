@@ -61,7 +61,7 @@ def rapid_test_demand(
 
     # get housheold member inputs
     hh_member_demand_share = get_piecewise_linear_interpolation_for_one_day(
-        hh_member_params
+        date, hh_member_params
     )
 
     work_demand = _calculate_work_rapid_test_demand(
