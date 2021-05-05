@@ -19,6 +19,13 @@ def test_filter_dictionary_two():
     assert res == expected
 
 
+def test_filter_dictionary_three():
+    d = {0: "a", 1: "b", 2: "c"}
+    res = filter_dictionary(lambda x: x == "c", d, by="values")
+    expected = {2: "c"}
+    assert res == expected
+
+
 def test_update_dictionary():
     d1 = {"a": 0, "b": 2}
     to_add = {"c": 3}

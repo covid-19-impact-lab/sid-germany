@@ -2,8 +2,8 @@
 import itertools
 
 
-def filter_dictionary(function, dictionary):
-    """Filter a dictionary by conditions on keys
+def filter_dictionary(function, dictionary, by="keys"):
+    """Filter a dictionary by conditions on keys or values.
 
     Args:
         function (callable): Function that takes one argument and returns True or False.
@@ -15,10 +15,21 @@ def filter_dictionary(function, dictionary):
     Examples:
         >>> filter_dictionary(lambda x: "bla" in x, {"bla": 1, "blubb": 2})
         {'bla': 1}
+        >>> filter_dictionary(lambda x: x <= 1, {"bla": 1, "blubb": 2}, by="values")
+        {'bla': 1}
 
     """
-    keys_to_keep = set(filter(function, dictionary))
-    out = {key: val for key, val in dictionary.items() if key in keys_to_keep}
+    if by == "keys":
+        keys_to_keep = set(filter(function, dictionary))
+        out = {key: val for key, val in dictionary.items() if key in keys_to_keep}
+    elif by == "values":
+        out = {}
+        for key, val in dictionary.items():
+            if function(val):
+                out[key] = val
+    else:
+        raise ValueError(f"by must be 'keys' or 'values', not {by}")
+
     return out
 
 
