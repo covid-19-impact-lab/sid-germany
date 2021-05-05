@@ -40,8 +40,8 @@ def shorten_policies(policies, start_date=None, end_date=None):
 
     Args:
         policies (dict): policies dictionary with "start" and "end" as keys.
-        start_date (pd.Timestamp)
-        end_date (pd.Timestamp)
+        start_date (pd.Timestamp or str)
+        end_date (pd.Timestamp or str)
 
     Returns:
         dict: reduced policies only including policies that are active between
@@ -49,8 +49,8 @@ def shorten_policies(policies, start_date=None, end_date=None):
             before start_date and to not end after end_date.
 
     """
-    start_date = pd.Timestamp.min if start_date is None else start_date
-    end_date = pd.Timestamp.max if end_date is None else end_date
+    start_date = pd.Timestamp.min if start_date is None else pd.Timestamp(start_date)
+    end_date = pd.Timestamp.max if end_date is None else pd.Timestamp(end_date)
 
     converted = {}
 
@@ -143,3 +143,77 @@ def combine_dictionaries(dictionaries):
         raise ValueError("'dictionaries' must be a dict or list of dicts.")
 
     return combined
+
+
+def split_policies(
+    policies, start_date, split_date, end_date, suffixes=("first", "second")
+):
+    """Split a policy dictionary and reduce it to start and end dates.
+
+    The split date is included in the second dictionary. To make it possible that
+    split dictionaries can be combined again to obtain a policy dictionary that
+    is equivalent to the original one, we add suffixes to all keys that occur in
+    both resulting dictionaries.
+
+    Args:
+        policies (dict): See :ref:`policies`.
+        start_date (pandas.Timestamp or str): The start date of the first dictionary.
+        split_date(pandas.Timestamp or str): The start date of the second dictionary.
+        end_date (pandas.Timestamp or str): The end date of the second dictionary.
+
+    Returns:
+        tuple: Tuple with two non-overlapping policy dictionaries.
+
+    """
+    raw_first = shorten_policies(
+        policies=policies,
+        start_date=start_date,
+        end_date=pd.Timestamp(split_date) - pd.Timedelta(days=1),
+    )
+    raw_second = shorten_policies(
+        policies=policies, start_date=split_date, end_date=end_date
+    )
+
+    duplicates = set(raw_first).intersection(raw_second)
+
+    first = _rename_duplicates(raw_first, duplicates, suffixes[0])
+    second = _rename_duplicates(raw_second, duplicates, suffixes[1])
+
+    return first, second
+
+
+def _rename_duplicates(policies, duplicates, suffix):
+    new = {}
+    for key, val in policies.items():
+        if key in duplicates:
+            new[f"{key}_{suffix}"] = val
+        else:
+            new[key] = val
+    return new
+
+
+def remove_work_policies(policies):
+    """Return reduced policy dicts where the work policies have been removed."""
+    return filter_dictionary(lambda x: "work" not in x, policies)
+
+
+def remove_educ_policies(policies):
+    """Return reduced policy dicts where the educ policies have been removed."""
+    return filter_dictionary(lambda x: "educ" not in x, policies)
+
+
+def remove_other_policies(policies):
+    """Return reduced policy dicts where the other policies have been removed."""
+    return filter_dictionary(lambda x: "other" not in x, policies)
+
+
+def remove_school_policies(policies):
+    """Return reduced policy dicts where the school policies have been removed."""
+    return filter_dictionary(lambda x: "school" not in x or "preschool" in x, policies)
+
+
+def remove_young_educ_policies(policies):
+    """Return reduced policy dicts where the young educ policies have been removed."""
+    return filter_dictionary(
+        lambda x: "preschool" not in x and "nursery" not in x, policies
+    )
