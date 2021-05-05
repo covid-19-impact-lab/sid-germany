@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.dates import AutoDateLocator
@@ -157,14 +158,18 @@ def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
     return fig, ax
 
 
-def style_plot(fig, ax):
-    ax.set_ylabel("")
-    ax.set_xlabel("Datum")
-    n_days = ax.get_xlim()[1] - ax.get_xlim()[0]
-    date_form = DateFormatter("%d.%m") if n_days < 100 else DateFormatter("%m/%Y")
-    ax.xaxis.set_major_formatter(date_form)
-    loc = AutoDateLocator(minticks=5, maxticks=12)
-    ax.xaxis.set_major_locator(loc)
-    ax.grid(axis="y")
+def style_plot(fig, axes):
+    if not isinstance(axes, np.ndarray):
+        axes = [axes]
+
+    for ax in axes:
+        ax.set_ylabel("")
+        ax.set_xlabel("Datum")
+        n_days = ax.get_xlim()[1] - ax.get_xlim()[0]
+        date_form = DateFormatter("%d.%m") if n_days < 100 else DateFormatter("%m/%Y")
+        ax.xaxis.set_major_formatter(date_form)
+        loc = AutoDateLocator(minticks=5, maxticks=12)
+        ax.xaxis.set_major_locator(loc)
+        ax.grid(axis="y")
     sns.despine()
     return fig, ax

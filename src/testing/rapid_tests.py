@@ -1,6 +1,7 @@
 """Functions for rapid tests."""
 import warnings
 
+import numpy as np
 import pandas as pd
 from pandas.api.types import is_bool_dtype
 from sid.time import get_date
@@ -20,6 +21,11 @@ def rapid_test_demand(
     Starting after Easter, all education workers and pupils attending school receive a
     test if they participate in school and haven't received a rapid test within 4 days.
 
+    Workers also get tested and more so as time increases.
+
+    Lastly, household members of individuals with symptoms, a positive PCR test
+    or a positive rapid test demand a rapid test with 85% probability.
+
     """
     date = get_date(states)
 
@@ -33,6 +39,7 @@ def rapid_test_demand(
         ]
         educ_workers_params = params.loc[("rapid_test_demand", "educ_worker_shares")]
         students_params = params.loc[("rapid_test_demand", "student_shares")]
+        hh_member_params = params.loc[("rapid_test_demand", "hh_member_demand")]
 
     # get work demand inputs
     share_of_workers_with_offer = get_piecewise_linear_interpolation_for_one_day(
@@ -52,6 +59,11 @@ def rapid_test_demand(
         date, students_params
     )
 
+    # get housheold member inputs
+    hh_member_demand_share = get_piecewise_linear_interpolation_for_one_day(
+        date, hh_member_params
+    )
+
     work_demand = _calculate_work_rapid_test_demand(
         states=states,
         contacts=contacts,
@@ -65,7 +77,11 @@ def rapid_test_demand(
         student_multiplier=student_multiplier,
     )
 
-    rapid_test_demand = work_demand | educ_demand
+    hh_demand = _calculate_hh_member_rapid_test_demand(
+        states=states, hh_member_demand_share=hh_member_demand_share
+    )
+
+    rapid_test_demand = work_demand | educ_demand | hh_demand
 
     return rapid_test_demand
 
@@ -160,6 +176,45 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     receives_offer_and_accepts = should_get_test & complier
     work_rapid_test_demand = should_get_test & receives_offer_and_accepts
     return work_rapid_test_demand
+
+
+def _calculate_hh_member_rapid_test_demand(states, hh_member_demand_share):
+    """Calculate demand by household members of positive tested and fresh symptomatics.
+
+    Args:
+        states (pandas.DataFrame): sid states DataFrame
+        hh_member_demand_share (float): share of household members that request
+            a rapid test in response to an event in their household. Individuals
+            with a quarantine compliance above 1 - hh_member_demand_share request
+            a rapid test.
+
+    """
+    had_event_in_hh = _determine_if_hh_had_event(states)
+    would_request_test = states["quarantine_compliance"] >= (1 - hh_member_demand_share)
+    not_tested_within_3_days = states["cd_received_rapid_test"] < -3
+    hh_demand = had_event_in_hh & would_request_test & not_tested_within_3_days
+    return hh_demand
+
+
+def _determine_if_hh_had_event(states):
+    """Determine who had a potential rapid test triggering event in their household.
+
+    Returns:
+        had_event_in_hh (pandas.Series): Series with the same index as states.
+            True for individuals where a household member got symptoms yesterday,
+            who received a positive rapid test yesterday or who have a new known
+            case in their household.
+
+    """
+    rapid_test_event = (states["cd_received_rapid_test"] == -1) & (
+        states["is_tested_positive_by_rapid_test"]
+    )
+    is_event = (
+        rapid_test_event | states["new_known_case"] | (states["cd_symptoms_true"] == -1)
+    )
+    had_event_in_hh = is_event.groupby(states["hh_id"]).transform(np.any)
+
+    return had_event_in_hh
 
 
 def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
