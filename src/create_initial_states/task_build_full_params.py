@@ -119,7 +119,8 @@ def task_create_full_params(depends_on, produces):
     params = _add_hh_rapid_test_fade_in_params(params)
 
     # seasonality parameter
-    params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2
+    params.loc[("seasonality_effect", "seasonality_effect", "weak")] = 0.2
+    params.loc[("seasonality_effect", "seasonality_effect", "strong")] = 0.4
 
     params = _convert_index_to_int_where_possible(params)
     params.to_pickle(produces)
