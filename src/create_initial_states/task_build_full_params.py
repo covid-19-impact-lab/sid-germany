@@ -84,7 +84,7 @@ def task_create_full_params(depends_on, produces):
     # source: https://bit.ly/3gHlcKd (section 3.5, 2021-03-09, accessed 2021-04-28)
     params.loc[
         ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test"),
-    ] = 0.85
+    ] = 0.4
 
     # Only 60% of workers receiving a test offer accept it regularly
     # source: https://bit.ly/3t1z0lf (COSMO, 2021-04-21)
@@ -116,9 +116,11 @@ def task_create_full_params(depends_on, produces):
     params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
 
     params = _add_educ_rapid_test_fade_in_params(params)
+    params = _add_hh_rapid_test_fade_in_params(params)
 
     # seasonality parameter
-    params.loc[("seasonality_effect", "seasonality_effect", "seasonality_effect")] = 0.2
+    params.loc[("seasonality_effect", "seasonality_effect", "weak")] = 0.2
+    params.loc[("seasonality_effect", "seasonality_effect", "strong")] = 0.4
 
     params = _convert_index_to_int_where_possible(params)
     params.to_pickle(produces)
@@ -236,6 +238,35 @@ def _add_educ_rapid_test_fade_in_params(params):
     params.loc[(*loc, "2021-04-07")] = 0.75
     params.loc[(*loc, "2021-04-19")] = 0.95
     params.loc[(*loc, "2021-06-01")] = 1.0
+
+    return params
+
+
+def _add_hh_rapid_test_fade_in_params(params):
+    """Add the share of people demanding a rapid test after a Covid household event.
+
+    Bürgertests started in mid March but demand was very low initially
+    (https://bit.ly/3ehmGcj). Anecdotally, the demand continues to be limited.
+
+    First tests to self-administer became available starting March 6.
+    However, supply was very limited in the beginning (https://bit.ly/3xJCIn8).
+
+    All values are arbitrary.
+
+    We assume that for Easter visits many people demanded tests for the first
+    time and are more likely to test themselves after knowing where to get them.
+
+    """
+    params = params.copy(deep=True)
+    loc = ("rapid_test_demand", "hh_member_demand")
+    params.loc[(*loc, "2020-01-01"), "value"] = 0
+    params.loc[(*loc, "2021-03-10"), "value"] = 0
+    params.loc[(*loc, "2021-03-25"), "value"] = 0.1
+    params.loc[(*loc, "2021-04-05"), "value"] = 0.3
+    params.loc[(*loc, "2021-05-01"), "value"] = 0.4
+    params.loc[(*loc, "2021-05-15"), "value"] = 0.5
+    params.loc[(*loc, "2021-06-01"), "value"] = 0.75
+    params.loc[(*loc, "2021-10-01"), "value"] = 0.75
 
     return params
 

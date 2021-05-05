@@ -5,7 +5,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.simulation.plotting import style_plot
-from src.simulation.seasonality import seasonality_model
+from src.simulation.seasonality import create_seasonality_series
 
 plt.rcParams.update(
     {
@@ -18,15 +18,8 @@ plt.rcParams.update(
 
 @pytask.mark.produces(BLD / "policies" / "seasonality.png")
 def task_plot_seasonality(produces):
-    params = pd.DataFrame(
-        index=pd.MultiIndex.from_tuples(
-            [("seasonality_effect", "seasonality_effect", "seasonality_effect")]
-        ),
-        columns=["value"],
-        data=[0.2],
-    )
     dates = pd.date_range("2020-01-01", "2021-06-01")
-    seasonality_series = seasonality_model(params, dates, 4949)
+    seasonality_series = create_seasonality_series(dates, 0.2)
     fig, ax = plt.subplots(figsize=(10, 4))
     sns.lineplot(x=seasonality_series.index, y=seasonality_series, ax=ax)
     fig, ax = style_plot(fig, ax)
