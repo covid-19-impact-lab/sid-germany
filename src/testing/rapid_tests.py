@@ -39,9 +39,7 @@ def rapid_test_demand(
         ]
         educ_workers_params = params.loc[("rapid_test_demand", "educ_worker_shares")]
         students_params = params.loc[("rapid_test_demand", "student_shares")]
-        hh_member_demand_share = params.loc[
-            ("rapid_test_demand", "hh_member_demand", "share"), "value"
-        ]
+        hh_member_params = params.loc[("rapid_test_demand", "hh_member_demand")]
 
     # get work demand inputs
     share_of_workers_with_offer = get_piecewise_linear_interpolation_for_one_day(
@@ -59,6 +57,11 @@ def rapid_test_demand(
     )
     student_multiplier = get_piecewise_linear_interpolation_for_one_day(
         date, students_params
+    )
+
+    # get housheold member inputs
+    hh_member_demand_share = get_piecewise_linear_interpolation_for_one_day(
+        hh_member_params
     )
 
     work_demand = _calculate_work_rapid_test_demand(
