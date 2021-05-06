@@ -187,7 +187,10 @@ def test_split_policies():
     }
 
     result_first, result_second = split_policies(
-        policies, "2020-02-28", "2020-05-01", "2020-06-01"
+        policies,
+        start_date="2020-02-28",
+        split_date="2020-05-01",
+        end_date="2020-06-01",
     )
 
     expected_first = {

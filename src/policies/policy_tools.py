@@ -146,7 +146,7 @@ def combine_dictionaries(dictionaries):
 
 
 def split_policies(
-    policies, start_date, split_date, end_date, suffixes=("first", "second")
+    policies, split_date, start_date=None, end_date=None, suffixes=("first", "second")
 ):
     """Split a policy dictionary and reduce it to start and end dates.
 
@@ -157,8 +157,8 @@ def split_policies(
 
     Args:
         policies (dict): See :ref:`policies`.
-        start_date (pandas.Timestamp or str): The start date of the first dictionary.
         split_date(pandas.Timestamp or str): The start date of the second dictionary.
+        start_date (pandas.Timestamp or str): The start date of the first dictionary.
         end_date (pandas.Timestamp or str): The end date of the second dictionary.
 
     Returns:
