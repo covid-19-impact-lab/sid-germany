@@ -8,14 +8,7 @@ from src.config import FAST_FLAG
 from src.config import SHARE_REFUSE_VACCINATION
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
-from src.policies.combine_policies_over_periods import (
-    get_educ_options_mid_march_to_easter,
-)
-from src.policies.combine_policies_over_periods import (
-    strict_emergency_care,
-)
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
-from src.policies.policy_tools import combine_dictionaries
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
 from src.testing.rapid_tests import rapid_test_demand
@@ -46,7 +39,6 @@ SIMULATION_DEPENDENCIES = {
     "virus_shares": BLD / "data" / "virus_strains" / "final_strain_shares.pkl",
     # py files
     "contacts_py": SRC / "contact_models" / "get_contact_models.py",
-    "policies_py": SRC / "policies" / "combine_policies_over_periods.py",
     "testing_py": SRC / "testing" / "testing_models.py",
     "rapid_tests_py": SRC / "testing" / "rapid_tests.py",
     "specs_py": SRC / "simulation" / "main_specification.py",
@@ -84,39 +76,11 @@ def build_main_scenarios(base_path):
             3. the seed to be used by sid.
 
     """
-    if "predictions" in base_path.name:
-        base_scenario = combine_dictionaries(
-            [{"educ_multiplier": 0.5}, get_educ_options_mid_march_to_easter()]
-        )
-    elif "fall" in base_path.name:
-        base_scenario = {}
-    else:
-        raise ValueError(
-            f"Unknown situation: {base_path.name}. "
-            "Only fall and predictions supported at the moment."
-        )
+    base_scenario = {}
 
-    # November average work multiplier: 0.83
-    # 1st lockdown (24.3.-08.04.) average work multiplier: 0.56
-    nov_home_office = combine_dictionaries([base_scenario, {"work_fill_value": 0.83}])
-    spring_home_office = combine_dictionaries(
-        [base_scenario, {"work_fill_value": 0.56}]
-    )
-    emergency_child_care = combine_dictionaries(
-        [{"educ_multiplier": None}, strict_emergency_care()]
-    )
-
-    if FAST_FLAG == "debug" or (FAST_FLAG == "verify" and "fall" in base_path.name):
-        scenarios = {
-            "base_scenario": base_scenario,
-        }
-    else:
-        scenarios = {
-            "base_scenario": base_scenario,
-            "november_home_office_level": nov_home_office,
-            "spring_home_office_level": spring_home_office,
-            "emergency_child_care": emergency_child_care,
-        }
+    scenarios = {
+        "base_scenario": base_scenario,
+    }
 
     nested_parametrization = {}
     for name, scenario in scenarios.items():

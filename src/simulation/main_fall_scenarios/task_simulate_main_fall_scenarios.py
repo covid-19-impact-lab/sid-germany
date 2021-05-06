@@ -8,7 +8,8 @@ from src.config import FAST_FLAG
 from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
-from src.policies.combine_policies_over_periods import get_october_to_christmas_policies
+from src.policies.enacted_policies import get_enacted_policies
+from src.policies.policy_tools import shorten_policies
 from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import FALL_PATH
 from src.simulation.main_specification import load_simulation_inputs
@@ -62,9 +63,10 @@ def task_simulate_main_fall_scenario(
         virus_shares=virus_shares,
     )
 
-    policies = get_october_to_christmas_policies(
-        contact_models=simulation_inputs["contact_models"], **scenario
+    full_policies = get_enacted_policies(
+        simulation_inputs["contact_models"], **scenario
     )
+    policies = shorten_policies(full_policies, "2020-09-01", "2020-12-23")
 
     simulate = get_simulate_func(
         **simulation_inputs,
