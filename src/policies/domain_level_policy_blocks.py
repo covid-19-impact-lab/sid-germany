@@ -98,70 +98,37 @@ def reduce_educ_models(contact_models, block_info, educ_type, multiplier):
     return policies
 
 
-def implement_general_schooling_policy(
-    contact_models,
-    block_info,
-    educ_options,
-    other_educ_multiplier,
-):
-    """Split education groups for some children and apply a hygiene multiplier.
+def apply_mixed_educ_policies(contact_models, block_info, educ_type, educ_options):
+    """Apply mixed_educ_policies to a set of contact models.
 
     Args:
-        educ_options (dict): Nested dictionary with the education types ("school",
-            "preschool" or "nursery") that have A/B schooling and/or emergency care as
-            keys. Values are dictionaries giving the always_attend_query, a_b_query,
-            non_a_b_attend, hygiene_multiplier and a_b_rhythm. Note to use the types
-            (e.g. school) and not the contact models (e.g. educ_school_1) as keys. The
-            other_educ_multiplier is not used on top of the supplied hygiene multiplier
-            for the contact models covered by the educ_options. For example:
-
-            .. code-block:: python
-
-                {
-                    "school": {
-                        "hygiene_multiplier": 0.8,
-                        "always_attend_query": "educ_contact_priority > 0.9",
-                        "a_b_query": "(age <= 10) | (age >= 16)",
-                        "non_a_b_attend": False,
-                    }
-                }
-
-        other_educ_multiplier (float): multiplier for the contact models that have
-            neither A/B schooling nor emergency care, i.e. which do not have an entry
-            in educ_options.
+        contact_models (dict): sid contact models
+        block_info (dict): keys are 'start_date', 'end_date' and 'prefix'.
+        educ_type (str): "young_educ" or "school". The function
+            f"_get_{educ_type}_models" must exist in the local namespace.
+        educ_options (dict): keys must contain 'always_attend_query', 'a_b_query',
+            'non_a_b_attend' and 'hygiene_multiplier'. 'a_b_rhythm' is an
+            optional key. See `mixed_educ_policy` for details.
 
     """
     policies = {}
-    educ_models = _get_educ_models(contact_models)
-    for mod in educ_models:
-        policy = _get_base_policy(mod, block_info)
-        educ_type = _determine_educ_type(mod)
-        if educ_type in educ_options:
-            assert contact_models[mod]["is_recurrent"], (
-                "mixed_educ_policy only available for recurrent models, "
-                f"{mod} is non-recurrent."
-            )
+    # use globals because the functions are in the global namespace and not imported
+    get_relevant_models = globals()[f"_get_{educ_type}_models"]
+    relevant_models = get_relevant_models(contact_models)
+    for model in relevant_models:
+        policy = _get_base_policy(model, block_info)
+        if contact_models[model]["is_recurrent"]:
             policy["policy"] = partial(
                 mixed_educ_policy,
-                group_id_column=contact_models[mod]["assort_by"][0],
-                **educ_options[educ_type],
+                group_id_column=contact_models[model]["assort_by"][0],
+                **educ_options,
             )
         else:
-            assert (
-                0 <= other_educ_multiplier <= 1
-            ), "Only multipliers in [0, 1] allowed."
-            if other_educ_multiplier == 0:
-                policy["policy"] = partial(
-                    shut_down_model, is_recurrent=contact_models[mod]["is_recurrent"]
-                )
-            # currently all educ models are recurrent but don't want to assume it
-            elif contact_models[mod]["is_recurrent"]:
-                policy["policy"] = partial(
-                    reduce_recurrent_model, multiplier=other_educ_multiplier
-                )
-            else:
-                policy["policy"] = other_educ_multiplier
-        policies[f"{block_info['prefix']}_{mod}"] = policy
+            raise ValueError(
+                "mixed_educ_policies can only be applied to recurrent models. "
+                f"{model} is not recurrent."
+            )
+        policies[f"{block_info['prefix']}_{model}"] = policy
     return policies
 
 

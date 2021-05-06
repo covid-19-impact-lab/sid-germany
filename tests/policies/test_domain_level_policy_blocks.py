@@ -3,7 +3,7 @@ from functools import partial
 import pytest
 
 from src.policies.domain_level_policy_blocks import _get_base_policy
-from src.policies.domain_level_policy_blocks import implement_general_schooling_policy
+from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
 from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_other_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
@@ -243,20 +243,25 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
         },
         "other": {},
     }
-    res = implement_general_schooling_policy(
+    res1 = apply_mixed_educ_policies(
         contact_models,
         block_info,
+        educ_type="school",
         educ_options={
-            "school": {
-                "a_b_query": "occupation == 'school' & age > 10",
-                "non_a_b_attend": True,
-                "hygiene_multiplier": 0.3,
-            },
-            "nursery": {"hygiene_multiplier": 0.8, "always_attend_query": "bla"},
+            "a_b_query": "occupation == 'school' & age > 10",
+            "non_a_b_attend": True,
+            "hygiene_multiplier": 0.3,
         },
-        other_educ_multiplier=0.5,
     )
-    expected = {
+
+    res2 = apply_mixed_educ_policies(
+        contact_models,
+        block_info,
+        educ_type="young_educ",
+        educ_options={"hygiene_multiplier": 0.8, "always_attend_query": "bla"},
+    )
+
+    expected1 = {
         "test_educ_school_1": {
             "affected_contact_model": "educ_school_1",
             "start": "2020-10-10",
@@ -281,13 +286,19 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
                 hygiene_multiplier=0.3,
             ),
         },
+    }
+    compare_policy_dicts(res1, expected1)
+
+    expected2 = {
         "test_educ_preschool_0": {
             "affected_contact_model": "educ_preschool_0",
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                reduce_recurrent_model,
-                multiplier=0.5,
+                mixed_educ_policy,
+                group_id_column="preschool_id",
+                hygiene_multiplier=0.8,
+                always_attend_query="bla",
             ),
         },
         "test_educ_nursery_0": {
@@ -302,7 +313,7 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             ),
         },
     }
-    compare_policy_dicts(res, expected)
+    compare_policy_dicts(res2, expected2)
 
 
 def test_get_base_policy():

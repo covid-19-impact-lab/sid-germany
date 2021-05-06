@@ -207,8 +207,8 @@ def mixed_educ_policy(
     a_b_query,
     non_a_b_attend,
     hygiene_multiplier,
-    params,  # noqa: U100
     a_b_rhythm="weekly",
+    params=None,  # noqa: U100
 ):
     """Apply a education policy, including potential emergency care and A/B mode.
 
