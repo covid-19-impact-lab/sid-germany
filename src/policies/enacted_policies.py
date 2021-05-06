@@ -88,7 +88,11 @@ def _get_enacted_other_policies(contact_models):
     start_date = VERY_EARLY
     to_combine = []
     for prefix, end_date, multiplier in specs:
-        block_info = {"start_date": start_date, "end_date": end_date, "prefix": prefix}
+        block_info = {
+            "start_date": start_date,
+            "end_date": pd.Timestamp(end_date),
+            "prefix": prefix,
+        }
         to_combine.append(
             reduce_other_models(
                 contact_models=contact_models,
@@ -96,7 +100,7 @@ def _get_enacted_other_policies(contact_models):
                 multiplier=multiplier,
             ),
         )
-        start_date = end_date + pd.Timedelta(days=1)
+        start_date = pd.Timestamp(end_date) + pd.Timedelta(days=1)
     other_policies = combine_dictionaries(to_combine)
     return other_policies
 
@@ -116,51 +120,75 @@ def _get_enacted_young_educ_policies(contact_models):
         source: https://bit.ly/3uGL1Pb
         This could be a vacation effect with more parents returning to work.
 
-    "educ_reopen_spring_2021":
+    "feb_22_to_mid_march":
         We assume nurseries and preschools open normally. This is what happened
         for nurseries in all states with >8 mio inhabitants (BW, BY, NRW) on
         Feb 22nd. (https://bit.ly/3uSp6Ey, https://bit.ly/3h77Cjs,
         https://bit.ly/2O3aS3h)
 
-        After March 15:
-            - NRW: preschools and nurseries are open (https://bit.ly/3nSkUBM)
-            - BW: emergency care after March 17 (https://bit.ly/3useyeP)
-            - BY: emergency care in counties with incidences > 100 starting
-              March 15 (https://bit.ly/2PRtaW0)
+    "mid_march_to_easter":
+        - NRW: preschools and nurseries are open (https://bit.ly/3nSkUBM)
+        - BW: emergency care after March 17 (https://bit.ly/3useyeP)
+        - BY: emergency care in counties with incidences >100 starting
+          March 15 (https://bit.ly/2PRtaW0), the incidence in BY was >100 for
+          most of that time frame.
 
-        After April 24:
-            - Bundesnotbremse -> emergency care when incidence >165
-            - BY (Stand 2021-05-06, https://bit.ly/3xQfJa4): emergency care
-              above incidence of 100
-            - BW (https://bit.ly/3xNNxEF): were open with incidences <200 before
-              (probably since Easter) and now close with incidences >165
-            - NRW: preschools and nurseries open with incidences <165
+        => assume generous emergency care. This is errs on the side of reducing
+           contacts too much.
+
+    "easter_until_april_25":
+        - BY: emergency care in counties with incidences >100 (https://bit.ly/3h234eh)
+          Incidence was >120 (up to 200) over the whole time
+        - BW: open again (https://bit.ly/3h2g83e)
+        - NRW: unchanged open (https://bit.ly/33kqof8)
+
+        => assume generous emergency care. This is errs on the side of reducing
+           contacts too much.
+
+    "after_april_24" (last updated 2021-05-06):
+        - Bundesnotbremse -> emergency care when incidence >165
+        - BY (Stand 2021-05-06, https://bit.ly/3xQfJa4): emergency care
+          above incidence of 100. State-wide incidence was >130 until May 6.
+        - BW (https://bit.ly/3xNNxEF): preschools and nurseries open with
+          incidences <165. State-wide incidence was 180 on May 6.
+        - NRW: preschools and nurseries open with incidences <165. State-wide
+          incidence dropped below 165 on May 2.
+
+        => assume generous emergency care. This is errs on the side of reducing
+           contacts too much.
 
     """
+    strict_emergency_care = (
+        apply_emergency_care_policies,
+        {"attend_multiplier": 0.25, "hygiene_multiplier": HYGIENE_MULTIPLIER},
+    )
+    generous_emergency_care = (
+        apply_emergency_care_policies,
+        {"attend_multiplier": 0.34, "hygiene_multiplier": HYGIENE_MULTIPLIER},
+    )
+
+    # policies start the day after the end date of the last policy
     specs = [
         ("before_november_2020", "2020-11-01", reduce_educ_models, 1.0),
         ("until_christmas_2020", "2020-12-15", reduce_educ_models, HYGIENE_MULTIPLIER),
-        (
-            "christmas-lockdown",
-            "2021-01-10",
-            apply_emergency_care_policies,
-            {"attend_multiplier": 0.25, "hygiene_multiplier": HYGIENE_MULTIPLIER},
-        ),
-        (
-            "jan_and_feb_2021",
-            "2021-02-21",
-            apply_emergency_care_policies,
-            {"attend_multiplier": 0.34, "hygiene_multiplier": HYGIENE_MULTIPLIER},
-        ),
-        ("educ_reopen_spring_2021", VERY_LATE, reduce_educ_models, HYGIENE_MULTIPLIER),
+        ("christmas-lockdown", "2021-01-10", *strict_emergency_care),
+        ("jan_and_feb_2021", "2021-02-21", *generous_emergency_care),
+        ("feb_22_to_mid_march", "2021-03-16", reduce_educ_models, HYGIENE_MULTIPLIER),
+        ("mid_march_to_easter", "2021-04-05", *generous_emergency_care),
+        ("easter_until_april_25", "2021-04-25", *generous_emergency_care),
+        ("after_april_24", VERY_LATE, *generous_emergency_care),
     ]
 
     start_date = VERY_EARLY
     to_combine = []
     for prefix, end_date, func, kwargs in specs:
-        block_info = {"start_date": start_date, "end_date": end_date, "prefix": prefix}
+        block_info = {
+            "start_date": start_date,
+            "end_date": pd.Timestamp(end_date),
+            "prefix": prefix,
+        }
         if isinstance(kwargs, float):
-            kwargs = {"hygiene_multiplier": kwargs}
+            kwargs = {"multiplier": kwargs}
 
         to_combine.append(
             func(
@@ -170,7 +198,7 @@ def _get_enacted_young_educ_policies(contact_models):
                 **kwargs,
             )
         )
-        start_date = end_date + pd.Timedelta(days=1)
+        start_date = pd.Timestamp(end_date) + pd.Timedelta(days=1)
     educ_policies = combine_dictionaries(to_combine)
     return educ_policies
 
@@ -208,7 +236,7 @@ def _get_enacted_school_policies(contact_models):
         - https://taz.de/Schulen-in-Coronazeiten/!5753515/
         - https://tinyurl.com/2jfm4tp8
 
-    - "feb_22_until_mid_march":
+    - "feb_22_to_mid_march":
         Schools open for primary students
             and graduating classes in A/B while maintaining emergency care for children
             with high educ_contact_priority (>0.9 for secondary students <13 and
@@ -220,7 +248,7 @@ def _get_enacted_school_policies(contact_models):
                 NRW: Primary schools and graduating classes start Feb 22nd,
                      A/B or full depending on local incidecne (https://bit.ly/3uSp6Ey)
 
-    - "mid_march_until_easter":
+    - "mid_march_to_easter":
         - BY:
             - source: https://bit.ly/3lOZowy
             - <50 incidence: normal schooling
@@ -238,12 +266,17 @@ def _get_enacted_school_policies(contact_models):
         -> We simplify to A/B schooling for everyone plus emergency care
            and graduating classes.
 
-    - "1st_half_of_april_2021":
-        This covers April 6-18.
+    - "easter_until_may":
+        This covers April 6-30. Starting April 26th the Bundesnotbremse is in place.
+        That means when counties have a >165 incidence schools only offer
+        classes to graduating classes and emergency care. (https://bit.ly/3aUd2KC)
+        Since BY has a lower cutoff and cases only fell below 165 around May 1,
+        we assume generous emergency care for everyone.
 
        - BW:
            - source: https://bit.ly/32ABEUr, https://bit.ly/3u6Dcld
            - A/B schooling for graduating classes + 4th grade
+           - closures >200 incidence
         - BY:
             - source: https://bit.ly/2QmRNu0, https://bit.ly/32FlgBQ (2021-04-22)
             - incidence <100: A/B for everyone
@@ -255,17 +288,15 @@ def _get_enacted_school_policies(contact_models):
             - only graduating classes, not in  A/B mode
 
         => We summarize this as a return to graduating classes in A/B plus
-        generous emergceny care (~ 2nd half of January).
+        generous emergceny care (i.e. same as 2nd half of January).
 
-    - "2nd_half_of_april":
+    - "summer_educ_policies":
         Starting April 26th the Bundesnotbremse is in place. That means when counties
         have a >165 incidence schools only offer classes to graduating classes and
         emergency care. (https://bit.ly/3aUd2KC)
 
-        - BW:
-            - sources: https://bit.ly/3t7AIBJ, https://bit.ly/3aR4yUM
-            - A/B for everyone below 200 (165 after Bundesnotbremse)
-            -
+        - BW: federal guidelines apply (https://bit.ly/3t7AIBJ,
+          https://bit.ly/3aR4yUM)
         - BY:
             - source: https://bit.ly/2RgmsJm (accessed 2021-04-30)
             - incidence <100: A/B for everyone
@@ -276,7 +307,6 @@ def _get_enacted_school_policies(contact_models):
             - sources: https://bit.ly/2QHWChG, https://bit.ly/3gPraZu,
               https://bit.ly/32Zq1q8, https://bit.ly/3nzNhEx
             - A/B schooling when incidences <165 b/c of Bundesnotbremse
-            - most counties below 200 and many around 165
 
         As cases are falling in that time frame (on May 6 ~75% of counties
         were below the 165 threshold, we take the more optimistic scenario that
@@ -284,60 +314,37 @@ def _get_enacted_school_policies(contact_models):
         and graduating classes.
 
     """
-    strict_emergency_educ_options = _get_school_strict_emergency_care_options()
-    generous_emergency_educ_options = (
+    strict_emergency_care = _get_school_strict_emergency_care()
+    generous_emergency_care = (
         _get_school_generous_emergency_care_with_a_b_for_graduating_classes()
     )
-    feb_22_until_mid_march_educ_options = _get_school_educ_options_feb_22_to_march_15()
-    mid_march_unitl_easter_educ_options = _get_school_educ_options_mid_march_to_easter()
+    primary_and_graduating_in_ab = (
+        _get_generous_emergency_care_with_a_b_for_primary_and_graduation_classes()
+    )
+    # A/B for everyone, graduating classes attend in full + emergency care.
+    mid_march_to_easter_policy = _get_policy_mid_march_to_easter()
 
     # combine specs
     specs = [
         ("before_november_2020", "2020-11-01", reduce_educ_models, 1.0),
         ("until_christmas_2020", "2020-12-15", reduce_educ_models, HYGIENE_MULTIPLIER),
-        (
-            "christmas-lockdown",
-            "2021-01-10",
-            apply_mixed_educ_policies,
-            strict_emergency_educ_options,
-        ),
-        (
-            "jan_and_feb_2021",
-            "2021-02-21",
-            apply_mixed_educ_policies,
-            generous_emergency_educ_options,
-        ),
-        (
-            "feb_22_until_mid_march",
-            "2021-03-14",
-            apply_mixed_educ_policies,
-            feb_22_until_mid_march_educ_options,
-        ),
-        (
-            "mid_march_unitl_easter",
-            "2021-04-05",
-            apply_mixed_educ_policies,
-            mid_march_unitl_easter_educ_options,
-        ),
-        (
-            "1st_half_of_april_2021",
-            "2021-04-18",
-            apply_mixed_educ_policies,
-            generous_emergency_educ_options,
-        ),
-        (
-            "summer_educ_policies_2021",  # only checked until May 5
-            VERY_LATE,
-            apply_mixed_educ_policies,
-            mid_march_unitl_easter_educ_options,
-        ),
+        ("christmas-lockdown", "2021-01-10", *strict_emergency_care),
+        ("jan_and_feb_2021", "2021-02-21", *generous_emergency_care),
+        ("feb_22_to_mid_march", "2021-03-14", *primary_and_graduating_in_ab),
+        ("mid_march_to_easter", "2021-04-05", *mid_march_to_easter_policy),
+        ("easter_until_may", "2021-04-30", *generous_emergency_care),
+        ("summer_educ_policies_2021", VERY_LATE, *mid_march_to_easter_policy),
     ]
     start_date = VERY_EARLY
     to_combine = []
     for prefix, end_date, func, kwargs in specs:
-        block_info = {"start_date": start_date, "end_date": end_date, "prefix": prefix}
+        block_info = {
+            "start_date": start_date,
+            "end_date": pd.Timestamp(end_date),
+            "prefix": prefix,
+        }
         if isinstance(kwargs, float):
-            kwargs = {"hygiene_multiplier": kwargs}
+            kwargs = {"multiplier": kwargs}
 
         to_combine.append(
             func(
@@ -347,12 +354,12 @@ def _get_enacted_school_policies(contact_models):
                 **kwargs,
             )
         )
-        start_date = end_date + pd.Timedelta(days=1)
+        start_date = pd.Timestamp(end_date) + pd.Timedelta(days=1)
     school_policies = combine_dictionaries(to_combine)
     return school_policies
 
 
-def _get_school_educ_options_mid_march_to_easter():
+def _get_policy_mid_march_to_easter():
     """Get the educ_options starting March 15th until April 5th.
 
     Situation:
@@ -391,10 +398,10 @@ def _get_school_educ_options_mid_march_to_easter():
         # only very anecdotally the current most common a_b_rhythm.
         "a_b_rhythm": "daily",
     }
-    return educ_options
+    return apply_mixed_educ_policies, {"educ_options": educ_options}
 
 
-def _get_school_educ_options_feb_22_to_march_15():
+def _get_generous_emergency_care_with_a_b_for_primary_and_graduation_classes():
     """Get the school educ_options from February 22nd to March 15th.
 
     Schools open for primary students and graduating classes in A/B while
@@ -427,7 +434,7 @@ def _get_school_educ_options_feb_22_to_march_15():
         # only very anecdotally the current most common a_b_rhythm.
         "a_b_rhythm": "daily",
     }
-    return educ_options
+    return apply_mixed_educ_policies, {"educ_options": educ_options}
 
 
 def _get_school_generous_emergency_care_with_a_b_for_graduating_classes():
@@ -472,10 +479,10 @@ def _get_school_generous_emergency_care_with_a_b_for_graduating_classes():
         # only very anecdotally the current most common a_b_rhythm.
         "a_b_rhythm": "daily",
     }
-    return educ_options
+    return apply_mixed_educ_policies, {"educ_options": educ_options}
 
 
-def _get_school_strict_emergency_care_options():
+def _get_school_strict_emergency_care():
     primary_emergency_query = "(educ_contact_priority > 0.75 & age < 10)"
     secondary_emergency_query = "(educ_contact_priority > 0.95 & age >= 10)"
     always_attend_query = f"{primary_emergency_query} | {secondary_emergency_query}"
@@ -485,4 +492,4 @@ def _get_school_strict_emergency_care_options():
         "non_a_b_attend": False,
         "hygiene_multiplier": HYGIENE_MULTIPLIER,
     }
-    return educ_options
+    return apply_mixed_educ_policies, {"educ_options": educ_options}
