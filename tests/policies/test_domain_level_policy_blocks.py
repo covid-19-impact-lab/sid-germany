@@ -134,7 +134,7 @@ def test_reduce_educ_models(contact_models):
         "end_date": "2020-10-20",
         "prefix": "reduce",
     }
-    res = reduce_educ_models(contact_models, block_info, 0.5)
+    res = reduce_educ_models(contact_models, block_info, "educ", 0.5)
     expected = {
         "reduce_educ1": {
             "affected_contact_model": "educ1",

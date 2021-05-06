@@ -72,19 +72,29 @@ def shut_down_educ_models(contact_models, block_info):
     return policies
 
 
-def reduce_educ_models(contact_models, block_info, multiplier):
-    """Reduce contacts in educ models with multiplier."""
+def reduce_educ_models(contact_models, block_info, educ_type, multiplier):
+    """Apply a simple hygiene multiplier to a subset of the educ models.
+
+    Args:
+        contact_models (dict): sid contact models
+        block_info (dict): keys are 'start_date', 'end_date' and 'prefix'.
+        educ_type (str): "young_educ" or "school". The function
+            f"_get_{educ_type}_models" must exist in the local namespace.
+        multiplier (float): value of the hygiene multiplier.
+
+    """
     policies = {}
-    educ_models = _get_educ_models(contact_models)
-    for mod in educ_models:
-        policy = _get_base_policy(mod, block_info)
-        # currently all educ models are recurrent but don't want to assume it
-        if contact_models[mod]["is_recurrent"]:
+    # use globals because the functions are in the global namespace and not imported
+    get_relevant_models = globals()[f"_get_{educ_type}_models"]
+    relevant_models = get_relevant_models(contact_models)
+    for model in relevant_models:
+        policy = _get_base_policy(model, block_info)
+        if contact_models[model]["is_recurrent"]:
             policy["policy"] = partial(reduce_recurrent_model, multiplier=multiplier)
         else:
             policy["policy"] = multiplier
+        policies[f"{block_info['prefix']}_{model}"] = policy
 
-        policies[f"{block_info['prefix']}_{mod}"] = policy
     return policies
 
 
@@ -221,6 +231,14 @@ def _get_base_policy(affected_model, block_info):
 
 def _get_educ_models(contact_models):
     return [cm for cm in contact_models if "educ" in cm]
+
+
+def _get_young_educ_models(contact_models):
+    return [cm for cm in contact_models if "nursery" in cm or "preschool" in cm]
+
+
+def _get_school_models(contact_models):
+    return [cm for cm in contact_models if "school" in cm and "preschool" not in cm]
 
 
 def _get_work_models(contact_models):
