@@ -55,6 +55,7 @@ SIMULATION_DEPENDENCIES = {
     / "data"
     / "comparison_of_age_group_distributions.png",
     "seasonality_py": SRC / "simulation" / "seasonality.py",
+    "enacted_policies.py": SRC / "policies" / "enacted_policies.py",
 }
 
 

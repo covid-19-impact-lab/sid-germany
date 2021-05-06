@@ -158,25 +158,51 @@ def _get_enacted_young_educ_policies(contact_models):
            contacts too much.
 
     """
-    strict_emergency_care = (
-        apply_emergency_care_policies,
-        {"attend_multiplier": 0.25, "hygiene_multiplier": HYGIENE_MULTIPLIER},
-    )
-    generous_emergency_care = (
-        apply_emergency_care_policies,
-        {"attend_multiplier": 0.34, "hygiene_multiplier": HYGIENE_MULTIPLIER},
-    )
+    strict_emergency_care_kwargs = {
+        "attend_multiplier": 0.25,
+        "hygiene_multiplier": HYGIENE_MULTIPLIER,
+    }
+
+    generous_emergency_care_kwargs = {
+        "attend_multiplier": 0.34,
+        "hygiene_multiplier": HYGIENE_MULTIPLIER,
+    }
 
     # policies start the day after the end date of the last policy
     specs = [
         ("before_november_2020", "2020-11-01", reduce_educ_models, 1.0),
         ("until_christmas_2020", "2020-12-15", reduce_educ_models, HYGIENE_MULTIPLIER),
-        ("christmas-lockdown", "2021-01-10", *strict_emergency_care),
-        ("jan_and_feb_2021", "2021-02-21", *generous_emergency_care),
+        (
+            "christmas-lockdown",
+            "2021-01-10",
+            apply_emergency_care_policies,
+            strict_emergency_care_kwargs,
+        ),
+        (
+            "jan_and_feb_2021",
+            "2021-02-21",
+            apply_emergency_care_policies,
+            generous_emergency_care_kwargs,
+        ),
         ("feb_22_to_mid_march", "2021-03-16", reduce_educ_models, HYGIENE_MULTIPLIER),
-        ("mid_march_to_easter", "2021-04-05", *generous_emergency_care),
-        ("easter_until_april_25", "2021-04-25", *generous_emergency_care),
-        ("after_april_24", VERY_LATE, *generous_emergency_care),
+        (
+            "mid_march_to_easter",
+            "2021-04-05",
+            apply_emergency_care_policies,
+            generous_emergency_care_kwargs,
+        ),
+        (
+            "easter_until_april_25",
+            "2021-04-25",
+            apply_emergency_care_policies,
+            generous_emergency_care_kwargs,
+        ),
+        (
+            "after_april_24",
+            VERY_LATE,
+            apply_emergency_care_policies,
+            generous_emergency_care_kwargs,
+        ),
     ]
 
     start_date = VERY_EARLY
@@ -314,26 +340,56 @@ def _get_enacted_school_policies(contact_models):
         and graduating classes.
 
     """
-    strict_emergency_care = _get_school_strict_emergency_care()
-    generous_emergency_care = (
-        _get_school_generous_emergency_care_with_a_b_for_graduating_classes()
+    strict_emergency_care_kwargs = _get_school_options_for_strict_emergency_care()
+    generous_emergency_care_kwargs = (
+        _get_school_options_for_emergency_care_with_graduating_classes()
     )
-    primary_and_graduating_in_ab = (
-        _get_generous_emergency_care_with_a_b_for_primary_and_graduation_classes()
+    primary_and_graduating_in_ab_kwargs = (
+        _get_school_options_for_a_b_in_primary_and_graduation_classes()
     )
     # A/B for everyone, graduating classes attend in full + emergency care.
-    mid_march_to_easter_policy = _get_policy_mid_march_to_easter()
+    mid_march_to_easter_policy_kwargs = _get_school_options_for_a_b_for_most()
 
     # combine specs
     specs = [
         ("before_november_2020", "2020-11-01", reduce_educ_models, 1.0),
         ("until_christmas_2020", "2020-12-15", reduce_educ_models, HYGIENE_MULTIPLIER),
-        ("christmas-lockdown", "2021-01-10", *strict_emergency_care),
-        ("jan_and_feb_2021", "2021-02-21", *generous_emergency_care),
-        ("feb_22_to_mid_march", "2021-03-14", *primary_and_graduating_in_ab),
-        ("mid_march_to_easter", "2021-04-05", *mid_march_to_easter_policy),
-        ("easter_until_may", "2021-04-30", *generous_emergency_care),
-        ("summer_educ_policies_2021", VERY_LATE, *mid_march_to_easter_policy),
+        (
+            "christmas-lockdown",
+            "2021-01-10",
+            apply_mixed_educ_policies,
+            strict_emergency_care_kwargs,
+        ),
+        (
+            "jan_and_feb_2021",
+            "2021-02-21",
+            apply_mixed_educ_policies,
+            generous_emergency_care_kwargs,
+        ),
+        (
+            "feb_22_to_mid_march",
+            "2021-03-14",
+            apply_mixed_educ_policies,
+            primary_and_graduating_in_ab_kwargs,
+        ),
+        (
+            "mid_march_to_easter",
+            "2021-04-05",
+            apply_mixed_educ_policies,
+            mid_march_to_easter_policy_kwargs,
+        ),
+        (
+            "easter_until_may",
+            "2021-04-30",
+            apply_mixed_educ_policies,
+            generous_emergency_care_kwargs,
+        ),
+        (
+            "summer_educ_policies_2021",
+            VERY_LATE,
+            apply_mixed_educ_policies,
+            mid_march_to_easter_policy_kwargs,
+        ),
     ]
     start_date = VERY_EARLY
     to_combine = []
@@ -359,7 +415,7 @@ def _get_enacted_school_policies(contact_models):
     return school_policies
 
 
-def _get_policy_mid_march_to_easter():
+def _get_school_options_for_a_b_for_most():
     """Get the educ_options starting March 15th until April 5th.
 
     Situation:
@@ -398,10 +454,10 @@ def _get_policy_mid_march_to_easter():
         # only very anecdotally the current most common a_b_rhythm.
         "a_b_rhythm": "daily",
     }
-    return apply_mixed_educ_policies, {"educ_options": educ_options}
+    return educ_options
 
 
-def _get_generous_emergency_care_with_a_b_for_primary_and_graduation_classes():
+def _get_school_options_for_a_b_in_primary_and_graduation_classes():
     """Get the school educ_options from February 22nd to March 15th.
 
     Schools open for primary students and graduating classes in A/B while
@@ -434,10 +490,10 @@ def _get_generous_emergency_care_with_a_b_for_primary_and_graduation_classes():
         # only very anecdotally the current most common a_b_rhythm.
         "a_b_rhythm": "daily",
     }
-    return apply_mixed_educ_policies, {"educ_options": educ_options}
+    return educ_options
 
 
-def _get_school_generous_emergency_care_with_a_b_for_graduating_classes():
+def _get_school_options_for_emergency_care_with_graduating_classes():
     """Get expanded emergency care with graduating classes in A/B schooling.
 
     This is what was in effect in the 2nd half of January.
@@ -479,10 +535,10 @@ def _get_school_generous_emergency_care_with_a_b_for_graduating_classes():
         # only very anecdotally the current most common a_b_rhythm.
         "a_b_rhythm": "daily",
     }
-    return apply_mixed_educ_policies, {"educ_options": educ_options}
+    return educ_options
 
 
-def _get_school_strict_emergency_care():
+def _get_school_options_for_strict_emergency_care():
     primary_emergency_query = "(educ_contact_priority > 0.75 & age < 10)"
     secondary_emergency_query = "(educ_contact_priority > 0.95 & age >= 10)"
     always_attend_query = f"{primary_emergency_query} | {secondary_emergency_query}"
@@ -492,4 +548,4 @@ def _get_school_strict_emergency_care():
         "non_a_b_attend": False,
         "hygiene_multiplier": HYGIENE_MULTIPLIER,
     }
-    return apply_mixed_educ_policies, {"educ_options": educ_options}
+    return educ_options
