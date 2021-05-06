@@ -204,7 +204,7 @@ def test_emergency_care():
         hygiene_multiplier=1.0,
         params=None,
     )
-    # educ_worker without class, child not in emergency care, educ_worker with class,
+    # educ_worker, child not in emergency care, educ_worker with class,
     # attends, outside educ system
     expected = pd.Series([True, False, True, True, False])
     pd.testing.assert_series_equal(res, expected)

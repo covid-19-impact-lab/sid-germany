@@ -132,6 +132,49 @@ def apply_mixed_educ_policies(contact_models, block_info, educ_type, educ_option
     return policies
 
 
+def apply_emergency_care_policies(
+    contact_models, block_info, educ_type, attend_multiplier, hygiene_multiplier
+):
+    """Implement emergency care that is only based on the educ_contact_priority.
+
+    This is a convenience function.
+
+    Args:
+        contact_models (dict): sid contact models
+        block_info (dict): keys are 'start_date', 'end_date' and 'prefix'.
+        educ_type (str): "young_educ" or "school". The function
+            f"_get_{educ_type}_models" must exist in the local namespace.
+
+    """
+    policies = {}
+    # use globals because the functions are in the global namespace and not imported
+    get_relevant_models = globals()[f"_get_{educ_type}_models"]
+    relevant_models = get_relevant_models(contact_models)
+    educ_options = {
+        "always_attend_query": f"educ_contact_priority > {attend_multiplier}",
+        # no one is in A/B mode:
+        "a_b_query": False,
+        # those not in A/B mode and who don't always attend stay home:
+        "non_a_b_attend": False,
+        "hygiene_multiplier": hygiene_multiplier,
+    }
+    for model in relevant_models:
+        policy = _get_base_policy(model, block_info)
+        if contact_models[model]["is_recurrent"]:
+            policy["policy"] = partial(
+                mixed_educ_policy,
+                group_id_column=contact_models[model]["assort_by"][0],
+                **educ_options,
+            )
+        else:
+            raise ValueError(
+                "mixed_educ_policies can only be applied to recurrent models. "
+                f"{model} is not recurrent."
+            )
+        policies[f"{block_info['prefix']}_{model}"] = policy
+    return policies
+
+
 # ======================================================================================
 # other policies
 # ======================================================================================
