@@ -67,6 +67,7 @@ def task_simulate_main_prediction(
         seed=3930,
         reporting_delay=5,
         virus_shares=virus_shares,
+        synthetic_data_path=SIMULATION_DEPENDENCIES["initial_states"],
     )
 
     policies = get_enacted_policies(contact_models=simulation_inputs["contact_models"])

@@ -61,6 +61,7 @@ def task_simulate_main_fall_scenario(
         seed=344490,
         reporting_delay=5,
         virus_shares=virus_shares,
+        synthetic_data_path=SIMULATION_DEPENDENCIES["initial_states"],
     )
 
     full_policies = get_enacted_policies(
