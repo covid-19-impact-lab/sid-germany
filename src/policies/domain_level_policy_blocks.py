@@ -17,7 +17,7 @@ The functions here expect that the domain names are part of contact model names.
 """
 from functools import partial
 
-from src.policies.single_policy_functions import apply_educ_policy
+from src.policies.single_policy_functions import mixed_educ_policy
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_other_model
@@ -128,11 +128,11 @@ def implement_general_schooling_policy(
         educ_type = _determine_educ_type(mod)
         if educ_type in educ_options:
             assert contact_models[mod]["is_recurrent"], (
-                "apply_educ_policy only available for recurrent models, "
+                "mixed_educ_policy only available for recurrent models, "
                 f"{mod} is non-recurrent."
             )
             policy["policy"] = partial(
-                apply_educ_policy,
+                mixed_educ_policy,
                 group_id_column=contact_models[mod]["assort_by"][0],
                 **educ_options[educ_type],
             )
