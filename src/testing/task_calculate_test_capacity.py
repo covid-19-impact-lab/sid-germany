@@ -55,6 +55,7 @@ def _prepare_test_capacity_data(df):
     rename_dict = {
         "Anzahl übermittelnde Labore": "n_laboratories",
         "Reale wöchentliche Testkapazität zum Zeitpunkt der Abfrage": "test_capacity",
+        "Reale wöchentlich Testkapazität zum Zeitpunkt der Abfrage": "test_capacity",
     }
     df = df.rename(columns=rename_dict)
     df = df[["date", "n_laboratories", "test_capacity"]]
