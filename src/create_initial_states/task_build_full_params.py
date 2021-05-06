@@ -118,6 +118,18 @@ def task_create_full_params(depends_on, produces):
     params = _add_educ_rapid_test_fade_in_params(params)
     params = _add_hh_rapid_test_fade_in_params(params)
 
+    # source: The COSMO Study of 2021-03-09
+    # source: https://bit.ly/3gHlcKd, 3.5 Verhalten nach positivem Selbsttest
+    # 85% would isolate ("isoliere mich und beschränke meine Kontakte bis zur Klärung")
+    #     => We use this multiplier of 0.15 here. We assume households are only
+    #     reduced by 30%, i.e. have a multiplier of 0.7.
+    params.loc[
+        ("rapid_test_demand", "reaction", "hh_contacts_multiplier"), "value"
+    ] = 0.7
+    params.loc[
+        ("rapid_test_demand", "reaction", "not_hh_contacts_multiplier"), "value"
+    ] = 0.15
+
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "weak")] = 0.2
     params.loc[("seasonality_effect", "seasonality_effect", "strong")] = 0.4

@@ -218,24 +218,7 @@ def _determine_if_hh_had_event(states):
 
 
 def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
-    """Make people react to a positive rapid test.
-
-    source: The COSMO Study of 2021-03-09
-    url: https://bit.ly/3gHlcKd (3.5 Verhalten nach positivem Selbsttest)
-
-    - 85% isolate ("isoliere mich und beschränke meine Kontakte bis zur Klärung")
-        => We use this multiplier of 0.15 here. We assume households are only
-        reduced by 30%, i.e. have a multiplier of 0.7.
-
-    - 85% seek PCR test.
-        => This is used in task_build_full_params.
-
-    - 80% inform contacts of last two weeks.
-        => This is not supported yet as we do not have contact tracing yet.
-
-    This function is called before `post_process_contacts`.
-
-    """
+    """Make people react to a positive rapid tests"""
     contacts = contacts.copy(deep=True)
 
     # we assume that if you haven't received PCR confirmation within 7 days
@@ -247,8 +230,11 @@ def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
     quarantine_pool = received_rapid_test & pos_rapid_test
 
     for col in contacts:
-        multiplier = 0.7 if col == "households" else 0.15
-
+        loc = ("rapid_test_demand", "reaction")
+        if col == "households":
+            multiplier = params.loc[(*loc, "hh_contacts_multiplier"), "value"]
+        else:
+            multiplier = params.loc[(*loc, "not_hh_contacts_multiplier"), "value"]
         refuser = states["quarantine_compliance"] <= multiplier
         not_staying_home = refuser | ~quarantine_pool
         # no need to worry about dtypes because post_process_contacts happens
