@@ -123,7 +123,7 @@ def _build_initial_states(
     adult_at_home = (df["occupation"].isin(["stays home", "retired"])) & (
         df["age"] >= 18
     )
-    df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(any)
+    df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(np.any)
     df["educ_contact_priority"] = _create_educ_contact_priority(df)
 
     df["vaccination_group"] = create_vaccination_group(states=df, seed=484)
