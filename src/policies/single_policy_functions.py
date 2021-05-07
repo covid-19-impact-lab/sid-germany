@@ -198,7 +198,7 @@ def _interpolate_activity_level(
 # ----------------------------------------------------------------------------
 
 
-def apply_educ_policy(
+def mixed_educ_policy(
     states,
     contacts,
     seed,
@@ -253,20 +253,13 @@ def apply_educ_policy(
     staying_home = ~attends_for_any_reason
     contacts[staying_home] = False
 
-    # since our educ models are all recurrent and educ_workers must always attend
-    # we only apply the hygiene multiplier to the students
-    all_reduced = reduce_recurrent_model(
+    contacts = reduce_recurrent_model(
         states,
         contacts,
         seed=seed,
         multiplier=hygiene_multiplier,
     )
-    contacts = contacts.where(states["educ_worker"], other=all_reduced)
 
-    teachers_with_0_students = _find_educ_workers_with_zero_students(
-        contacts, states, group_id_column
-    )
-    contacts[teachers_with_0_students] = False
     return contacts
 
 
@@ -298,27 +291,3 @@ def _identify_who_attends_because_of_a_b_schooling(
             f"a_b_query must be either bool or str, you supplied a {type(a_b_query)}"
         )
     return attends_because_of_a_b_schooling
-
-
-def _find_educ_workers_with_zero_students(contacts, states, group_id_column):
-    """Return educ_workers whose classes / groups don't have any children in them.
-
-    Returns:
-        has_no_class (pandas.Series): boolean Series with the
-            same index as states. True for educ_workers whose classes / groups
-            don't have any children in them.
-
-    """
-    size_0_classes = _find_size_zero_classes(contacts, states, group_id_column)
-    has_no_class = states["educ_worker"] & states[group_id_column].isin(size_0_classes)
-    return has_no_class
-
-
-def _find_size_zero_classes(contacts, states, col):
-    students_group_ids = states[col][~states["educ_worker"]]
-    students_contacts = contacts[~states["educ_worker"]]
-    # the .drop(-1) is needed because we use -1 instead of NaN to identify
-    # individuals not participating in a recurrent contact model
-    class_sizes = students_contacts.groupby(students_group_ids).sum().drop(-1)
-    size_zero_classes = class_sizes[class_sizes == 0].index
-    return size_zero_classes

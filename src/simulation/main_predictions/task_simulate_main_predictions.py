@@ -8,9 +8,8 @@ from src.config import FAST_FLAG
 from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
-from src.policies.combine_policies_over_periods import get_enacted_policies_of_2021
-from src.policies.full_policy_blocks import get_lockdown_with_multipliers
-from src.policies.policy_tools import combine_dictionaries
+from src.policies.enacted_policies import get_enacted_policies
+from src.policies.policy_tools import shorten_policies
 from src.simulation.main_specification import build_main_scenarios
 from src.simulation.main_specification import load_simulation_inputs
 from src.simulation.main_specification import PREDICT_PATH
@@ -36,7 +35,12 @@ if FAST_FLAG == "debug":
     PARAMETRIZATION,
 )
 def task_simulate_main_prediction(
-    depends_on, produces, scenario, rapid_test_models, rapid_test_reaction_models, seed
+    depends_on,
+    produces,
+    scenario,  # noqa: U100
+    rapid_test_models,
+    rapid_test_reaction_models,
+    seed,
 ):
     start_date = pd.Timestamp("2021-03-15")
 
@@ -63,14 +67,11 @@ def task_simulate_main_prediction(
         seed=3930,
         reporting_delay=5,
         virus_shares=virus_shares,
+        synthetic_data_path=SIMULATION_DEPENDENCIES["initial_states"],
     )
 
-    policies = _get_prediction_policies(
-        contact_models=simulation_inputs["contact_models"],
-        scenario=scenario,
-        end_date=end_date,
-        scenario_name=produces.parent.name,
-    )
+    policies = get_enacted_policies(contact_models=simulation_inputs["contact_models"])
+    policies = shorten_policies(policies, init_start, end_date)
 
     simulate = get_simulate_func(
         **simulation_inputs,
@@ -94,64 +95,3 @@ def task_simulate_main_prediction(
         },
     )
     simulate(simulation_inputs["params"])
-
-
-def _get_prediction_policies(contact_models, scenario, end_date, scenario_name):
-    enacted_policies = get_enacted_policies_of_2021(
-        contact_models=contact_models,
-        # policies start and end dates are both inclusive.
-        # So the enacted policies must stop on the day before the scenario start.
-        scenario_start=SCENARIO_START - pd.Timedelta(days=1),
-        work_hygiene_multiplier=1.0,
-    )
-    attend_multiplier = _get_future_attend_multiplier(
-        start_date=SCENARIO_START,
-        end_date=end_date,
-        # 0.68 was the level between 10th of Jan and carnival
-        # 0.76 was the mean level from 07-28 of April
-        work_fill_value=scenario.get("work_fill_value", 0.68),
-    )
-    scenario_policies = get_lockdown_with_multipliers(
-        contact_models=contact_models,
-        block_info={
-            "start_date": SCENARIO_START,
-            "end_date": end_date,
-            "prefix": scenario_name,
-        },
-        multipliers={
-            "work": {
-                "attend_multiplier": attend_multiplier,
-                "hygiene_multiplier": scenario.get("work_hygiene_multiplier", 1.0),
-            },
-            "other": scenario.get("other_multiplier", 0.45),
-            "educ": scenario["educ_multiplier"],
-        },
-        educ_options=scenario.get("educ_options"),
-    )
-    policies = combine_dictionaries([enacted_policies, scenario_policies])
-    return policies
-
-
-def _get_future_attend_multiplier(
-    start_date,
-    end_date,
-    attend_multiplier=None,
-    work_fill_value=0.68,  # level between 10th of Jan and carnival
-):
-    dates = pd.date_range(start_date, end_date)
-    assert (
-        work_fill_value is None or attend_multiplier is None
-    ), "work_fill_value may only be supplied if attend_multiplier is None or vice versa"
-
-    if isinstance(attend_multiplier, float):
-        return pd.Series(data=attend_multiplier, index=dates)
-    elif isinstance(attend_multiplier, pd.Series):
-        assert (
-            attend_multiplier.index == dates
-        ).all(), f"Index is not consecutive from {start_date} to {end_date}"
-    elif attend_multiplier is None:
-        default_path = BLD / "policies" / "work_multiplier.csv"
-        default = pd.read_csv(default_path, parse_dates=["date"], index_col="date")
-        expanded = default.reindex(index=dates)
-        expanded = expanded.fillna(work_fill_value)
-    return expanded

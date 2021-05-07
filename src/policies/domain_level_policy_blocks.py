@@ -17,7 +17,7 @@ The functions here expect that the domain names are part of contact model names.
 """
 from functools import partial
 
-from src.policies.single_policy_functions import apply_educ_policy
+from src.policies.single_policy_functions import mixed_educ_policy
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_other_model
@@ -59,10 +59,10 @@ def reduce_work_models(
 # ======================================================================================
 
 
-def shut_down_educ_models(contact_models, block_info):
+def shut_down_educ_models(contact_models, block_info, educ_type):
     """Shut down all educ models to zero."""
     policies = {}
-    educ_models = _get_educ_models(contact_models)
+    educ_models = _get_educ_models(contact_models, educ_type)
     for mod in educ_models:
         policy = _get_base_policy(mod, block_info)
         policy["policy"] = partial(
@@ -72,86 +72,100 @@ def shut_down_educ_models(contact_models, block_info):
     return policies
 
 
-def reduce_educ_models(contact_models, block_info, multiplier):
-    """Reduce contacts in educ models with multiplier."""
-    policies = {}
-    educ_models = _get_educ_models(contact_models)
-    for mod in educ_models:
-        policy = _get_base_policy(mod, block_info)
-        # currently all educ models are recurrent but don't want to assume it
-        if contact_models[mod]["is_recurrent"]:
-            policy["policy"] = partial(reduce_recurrent_model, multiplier=multiplier)
-        else:
-            policy["policy"] = multiplier
-
-        policies[f"{block_info['prefix']}_{mod}"] = policy
-    return policies
-
-
-def implement_general_schooling_policy(
-    contact_models,
-    block_info,
-    educ_options,
-    other_educ_multiplier,
-):
-    """Split education groups for some children and apply a hygiene multiplier.
+def reduce_educ_models(contact_models, block_info, educ_type, multiplier):
+    """Apply a simple hygiene multiplier to a subset of the educ models.
 
     Args:
-        educ_options (dict): Nested dictionary with the education types ("school",
-            "preschool" or "nursery") that have A/B schooling and/or emergency care as
-            keys. Values are dictionaries giving the always_attend_query, a_b_query,
-            non_a_b_attend, hygiene_multiplier and a_b_rhythm. Note to use the types
-            (e.g. school) and not the contact models (e.g. educ_school_1) as keys. The
-            other_educ_multiplier is not used on top of the supplied hygiene multiplier
-            for the contact models covered by the educ_options. For example:
-
-            .. code-block:: python
-
-                {
-                    "school": {
-                        "hygiene_multiplier": 0.8,
-                        "always_attend_query": "educ_contact_priority > 0.9",
-                        "a_b_query": "(age <= 10) | (age >= 16)",
-                        "non_a_b_attend": False,
-                    }
-                }
-
-        other_educ_multiplier (float): multiplier for the contact models that have
-            neither A/B schooling nor emergency care, i.e. which do not have an entry
-            in educ_options.
+        contact_models (dict): sid contact models
+        block_info (dict): keys are 'start_date', 'end_date' and 'prefix'.
+        educ_type (str): "young_educ" or "school". The function
+            f"_get_{educ_type}_models" must exist in the local namespace.
+        multiplier (float): value of the hygiene multiplier.
 
     """
     policies = {}
-    educ_models = _get_educ_models(contact_models)
-    for mod in educ_models:
-        policy = _get_base_policy(mod, block_info)
-        educ_type = _determine_educ_type(mod)
-        if educ_type in educ_options:
-            assert contact_models[mod]["is_recurrent"], (
-                "apply_educ_policy only available for recurrent models, "
-                f"{mod} is non-recurrent."
-            )
+    relevant_models = _get_educ_models(contact_models, educ_type)
+    for model in relevant_models:
+        policy = _get_base_policy(model, block_info)
+        if contact_models[model]["is_recurrent"]:
+            policy["policy"] = partial(reduce_recurrent_model, multiplier=multiplier)
+        else:
+            policy["policy"] = multiplier
+        policies[f"{block_info['prefix']}_{model}"] = policy
+
+    return policies
+
+
+def apply_mixed_educ_policies(
+    contact_models,
+    block_info,
+    educ_type,
+    always_attend_query,
+    a_b_query,
+    non_a_b_attend,
+    hygiene_multiplier,
+    a_b_rhythm=None,
+):
+    """Apply mixed_educ_policies to a set of contact models.
+
+    Args:
+        contact_models (dict): sid contact models
+        block_info (dict): keys are 'start_date', 'end_date' and 'prefix'.
+        educ_type (str): "young_educ" or "school". The function
+            f"_get_{educ_type}_models" must exist in the local namespace.
+        educ_options (dict): keys must contain 'always_attend_query', 'a_b_query',
+            'non_a_b_attend' and 'hygiene_multiplier'. 'a_b_rhythm' is an
+            optional key. See `mixed_educ_policy` for details.
+
+    """
+    policies = {}
+    relevant_models = _get_educ_models(contact_models, educ_type)
+    for model in relevant_models:
+        policy = _get_base_policy(model, block_info)
+        if contact_models[model]["is_recurrent"]:
             policy["policy"] = partial(
-                apply_educ_policy,
-                group_id_column=contact_models[mod]["assort_by"][0],
-                **educ_options[educ_type],
+                mixed_educ_policy,
+                group_id_column=contact_models[model]["assort_by"][0],
+                always_attend_query=always_attend_query,
+                a_b_query=a_b_query,
+                non_a_b_attend=non_a_b_attend,
+                hygiene_multiplier=hygiene_multiplier,
+                a_b_rhythm=a_b_rhythm,
             )
         else:
-            assert (
-                0 <= other_educ_multiplier <= 1
-            ), "Only multipliers in [0, 1] allowed."
-            if other_educ_multiplier == 0:
-                policy["policy"] = partial(
-                    shut_down_model, is_recurrent=contact_models[mod]["is_recurrent"]
-                )
-            # currently all educ models are recurrent but don't want to assume it
-            elif contact_models[mod]["is_recurrent"]:
-                policy["policy"] = partial(
-                    reduce_recurrent_model, multiplier=other_educ_multiplier
-                )
-            else:
-                policy["policy"] = other_educ_multiplier
-        policies[f"{block_info['prefix']}_{mod}"] = policy
+            raise ValueError(
+                "mixed_educ_policies can only be applied to recurrent models. "
+                f"{model} is not recurrent."
+            )
+        policies[f"{block_info['prefix']}_{model}"] = policy
+    return policies
+
+
+def apply_emergency_care_policies(
+    contact_models, block_info, educ_type, attend_multiplier, hygiene_multiplier
+):
+    """Implement emergency care that is only based on the educ_contact_priority.
+
+    This is a convenience function.
+
+    Args:
+        contact_models (dict): sid contact models
+        block_info (dict): keys are 'start_date', 'end_date' and 'prefix'.
+        educ_type (str): "young_educ" or "school". The function
+            f"_get_{educ_type}_models" must exist in the local namespace.
+
+    """
+    policies = apply_mixed_educ_policies(
+        contact_models=contact_models,
+        block_info=block_info,
+        educ_type=educ_type,
+        always_attend_query=f"educ_contact_priority > {attend_multiplier}",
+        # no one is in A/B mode:
+        a_b_query=False,
+        # those not in A/B mode and who don't always attend stay home:
+        non_a_b_attend=False,
+        hygiene_multiplier=hygiene_multiplier,
+    )
     return policies
 
 
@@ -219,8 +233,23 @@ def _get_base_policy(affected_model, block_info):
     return policy
 
 
-def _get_educ_models(contact_models):
-    return [cm for cm in contact_models if "educ" in cm]
+def _get_educ_models(contact_models, educ_type):
+    if educ_type == "all":
+        educ_models = [cm for cm in contact_models if "educ" in cm]
+    elif educ_type == "young_educ":
+        educ_models = [
+            cm for cm in contact_models if "nursery" in cm or "preschool" in cm
+        ]
+    elif educ_type == "school":
+        educ_models = [
+            cm for cm in contact_models if "school" in cm and "preschool" not in cm
+        ]
+    else:
+        raise ValueError(
+            f"Unknown educ_type {educ_type}. "
+            "Only 'all', 'young_educ' or 'school' are allowed"
+        )
+    return educ_models
 
 
 def _get_work_models(contact_models):

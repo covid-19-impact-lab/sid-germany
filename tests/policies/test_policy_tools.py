@@ -3,7 +3,13 @@ import pytest
 
 from src.policies.policy_tools import combine_dictionaries
 from src.policies.policy_tools import filter_dictionary
+from src.policies.policy_tools import remove_educ_policies
+from src.policies.policy_tools import remove_other_policies
+from src.policies.policy_tools import remove_school_policies
+from src.policies.policy_tools import remove_work_policies
+from src.policies.policy_tools import remove_young_educ_policies
 from src.policies.policy_tools import shorten_policies
+from src.policies.policy_tools import split_policies
 from src.policies.policy_tools import update_dictionary
 
 
@@ -170,3 +176,106 @@ def test_combine_dictionaries_duplicate():
     d3 = {"a": 2}
     with pytest.raises(ValueError):
         combine_dictionaries([d1, d2, d3])
+
+
+def test_split_policies():
+    policies = {
+        "bla": {
+            "start": "2020-01-01",
+            "end": "2020-12-31",
+        }
+    }
+
+    result_first, result_second = split_policies(
+        policies,
+        start_date="2020-02-28",
+        split_date="2020-05-01",
+        end_date="2020-06-01",
+    )
+
+    expected_first = {
+        "bla_first": {
+            "start": pd.Timestamp("2020-02-28"),
+            "end": pd.Timestamp("2020-04-30"),
+        }
+    }
+
+    expected_second = {
+        "bla_second": {
+            "start": pd.Timestamp("2020-05-01"),
+            "end": pd.Timestamp("2020-06-01"),
+        }
+    }
+
+    assert result_first == expected_first
+    assert result_second == expected_second
+
+
+@pytest.fixture
+def policies2():
+    d = {
+        "always": {},
+        "educ_school_0": {},
+        "educ_preschool_0": {},
+        "educ_nursery_0": {},
+        "work_non_recurrent": {},
+        "other_recurrent_daily": {},
+    }
+    return d
+
+
+def test_remove_work_policies(policies2):
+    res = remove_work_policies(policies2)
+    expected = {
+        "always": {},
+        "educ_school_0": {},
+        "educ_preschool_0": {},
+        "educ_nursery_0": {},
+        "other_recurrent_daily": {},
+    }
+    assert res == expected
+
+
+def test_remove_educ_policies(policies2):
+    res = remove_educ_policies(policies2)
+    expected = {
+        "always": {},
+        "work_non_recurrent": {},
+        "other_recurrent_daily": {},
+    }
+    assert res == expected
+
+
+def test_remove_other_policies(policies2):
+    res = remove_other_policies(policies2)
+    expected = {
+        "always": {},
+        "educ_school_0": {},
+        "educ_preschool_0": {},
+        "educ_nursery_0": {},
+        "work_non_recurrent": {},
+    }
+    assert res == expected
+
+
+def test_remove_school_policies(policies2):
+    res = remove_school_policies(policies2)
+    expected = {
+        "always": {},
+        "educ_preschool_0": {},
+        "educ_nursery_0": {},
+        "work_non_recurrent": {},
+        "other_recurrent_daily": {},
+    }
+    assert res == expected
+
+
+def test_remove_young_educ_policies(policies2):
+    res = remove_young_educ_policies(policies2)
+    expected = {
+        "always": {},
+        "educ_school_0": {},
+        "work_non_recurrent": {},
+        "other_recurrent_daily": {},
+    }
+    assert res == expected
