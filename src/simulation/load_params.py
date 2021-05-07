@@ -3,7 +3,7 @@ import pandas as pd
 from src.config import BLD
 
 
-def get_params_scenario(scenario):
+def load_params(scenario):
     """Return params fitting to the given scenario.
 
     Note that many scenarios must be implemented through `load_simulation_inputs`.
