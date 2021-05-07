@@ -69,8 +69,6 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
         sns.lineplot(x=df.index, y=df[extrapolated], ax=ax, color=color)
     fig.tight_layout()
     fig.savefig(produces["symptom_shares"])
-    df = df.reset_index().rename(columns={"index": "date"})
-    df.to_csv(produces["data"])
 
     share_of_tests_for_symptomatics_series = df[
         [
@@ -81,6 +79,9 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
     share_of_tests_for_symptomatics_series.to_pickle(
         produces["share_of_tests_for_symptomatics_series"]
     )
+
+    df = df.reset_index().rename(columns={"index": "date"})
+    df.to_csv(produces["data"])
 
 
 def _clean_data(df):
