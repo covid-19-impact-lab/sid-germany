@@ -75,36 +75,35 @@ def task_create_full_params(depends_on, produces):
     # number of available tests is implemented in the test demand model.
     # therefore, we set the "sid" limit, which is time invariant to one test
     # per individual
-    params.loc[("testing", "allocation", "rel_available_tests")] = 100_000
-    params.loc[("testing", "processing", "rel_available_capacity")] = 100_000
+    params.loc[("testing", "allocation", "rel_available_tests"), "value"] = 100_000
+    params.loc[("testing", "processing", "rel_available_capacity"), "value"] = 100_000
 
     # virus strain properties
-    params.loc[("virus_strain", "base_strain", "factor")] = 1.0
+    params.loc[("virus_strain", "base_strain", "factor"), "value"] = 1.0
     # source: https://doi.org/10.1101/2020.12.24.20248822
     # "We estimate that this variant has a 43–90%
     # (range of 95% credible intervals 38–130%) higher
     # reproduction number than preexisting variants"
     # currently we take the midpoint of 66%
-    params.loc[("virus_strain", "b117", "factor")] = 1.67
+    params.loc[("virus_strain", "b117", "factor"), "value"] = 1.67
 
     # Share of individuals refusing to be vaccinated.
     # 80% of Germans are somewhat or definitely willing to be vaccinated.
     # 12% are undecided. 8% are opposed to being vaccinated.
     # We assume that 15% will refuse to be vaccinated.
     # source: https://bit.ly/3c9mTgX (publication date: 2021-03-02)
-    params.loc[("vaccinations", "share_refuser", "share_refuser")] = 0.15
+    params.loc[("vaccinations", "share_refuser", "share_refuser"), "value"] = 0.15
 
     # Testing parameters governing rapid test demand
     # -----------------------------------------------
 
     # source: https://bit.ly/3gHlcKd (section 3.5, 2021-03-09, accessed 2021-04-28)
-    params.loc[
-        ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test"),
-    ] = 0.4
+    loc = ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test")
+    params.loc[loc, "value"] = 0.4
 
     # Only 60% of workers receiving a test offer accept it regularly
     # source: https://bit.ly/3t1z0lf (COSMO, 2021-04-21)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer")] = 0.6
+    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 0.6
 
     # assume start of rapid tests in firms in Jan 01
     offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
@@ -147,8 +146,8 @@ def task_create_full_params(depends_on, produces):
     ] = 0.15
 
     # seasonality parameter
-    params.loc[("seasonality_effect", "seasonality_effect", "weak")] = 0.2
-    params.loc[("seasonality_effect", "seasonality_effect", "strong")] = 0.4
+    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.2
+    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.4
 
     params = _convert_index_to_int_where_possible(params)
     params.to_pickle(produces)
