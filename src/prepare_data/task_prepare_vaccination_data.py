@@ -40,6 +40,11 @@ def task_prepare_vaccination_data(depends_on, produces):
     vaccination_shares = df["share_with_first_dose"].diff().dropna()
     vaccination_shares.to_pickle(produces["vaccination_shares_raw"])
 
+    # extend data to 2020.
+    backward_dates = pd.date_range("2020-01-01", vaccination_shares.index.max())
+    vaccination_shares = vaccination_shares.reindex(backward_dates)
+    vaccination_shares = vaccination_shares.fillna(0)
+
     # the first individuals to be vaccinated were nursing homes which are not
     # in our synthetic data so we exclude the first 1% of vaccinations to
     # be going to them.
@@ -95,7 +100,7 @@ def _clean_vaccination_data(df):
 
 
 def _plot_series(sr, title, label=None):
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(15, 5))
     sns.lineplot(x=sr.index, y=sr, label=label)
     ax.set_title(title)
     fig, ax = style_plot(fig, ax)
