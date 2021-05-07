@@ -3,6 +3,7 @@ import pytask
 
 from src.config import BLD
 from src.config import SRC
+from src.prepare_data.task_prepare_rki_data import TRANSLATE_STATES
 
 
 def _prepare_general_data(paths):
@@ -29,6 +30,9 @@ def _prepare_general_data(paths):
 
     df = df.append(df_berlin)
     df["id"] = df["id"].astype(str)
+
+    df["name"] = df["name"].str.lstrip(" ")
+    df["name"] = df["name"].replace(TRANSLATE_STATES)
 
     return df
 
