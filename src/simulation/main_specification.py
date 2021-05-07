@@ -5,14 +5,13 @@ import pandas as pd
 
 from src.config import BLD
 from src.config import FAST_FLAG
-from src.config import SHARE_REFUSE_VACCINATION
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
+from src.testing.rapid_test_reactions import rapid_test_reactions
 from src.testing.rapid_tests import rapid_test_demand
-from src.testing.rapid_tests import rapid_test_reactions
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -185,12 +184,13 @@ def load_simulation_inputs(depends_on, init_start, end_date):
 
     if init_start > pd.Timestamp("2021-01-01"):
         vaccination_shares = pd.read_pickle(depends_on["vaccination_shares"])
+
         simulation_inputs["vaccination_models"] = {
             "standard": {
                 "model": partial(
                     find_people_to_vaccinate,
+                    params=params,
                     vaccination_shares=vaccination_shares,
-                    no_vaccination_share=SHARE_REFUSE_VACCINATION,
                     init_start=init_start,
                 )
             }

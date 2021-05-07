@@ -36,7 +36,7 @@ def find_people_to_vaccinate(
     """
     date = get_date(states)
     no_vaccination_share = params.loc[
-        ("vaccinations", "share_refuser", "share_refuser")
+        ("vaccinations", "share_refuser", "share_refuser"), "value"
     ]
     cutoffs = vaccination_shares.sort_index().cumsum()
     # set all cutoffs before the init_start to 0.
