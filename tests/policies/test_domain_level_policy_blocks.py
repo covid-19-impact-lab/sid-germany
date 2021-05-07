@@ -56,6 +56,7 @@ def test_shut_down_educ_models(contact_models):
             "end_date": "2020-10-31",
             "prefix": "sd_educ",
         },
+        educ_type="all",
     )
 
     expected = {
@@ -134,7 +135,7 @@ def test_reduce_educ_models(contact_models):
         "end_date": "2020-10-20",
         "prefix": "reduce",
     }
-    res = reduce_educ_models(contact_models, block_info, "educ", 0.5)
+    res = reduce_educ_models(contact_models, block_info, "all", 0.5)
     expected = {
         "reduce_educ1": {
             "affected_contact_model": "educ1",
@@ -247,18 +248,20 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
         contact_models,
         block_info,
         educ_type="school",
-        educ_options={
-            "a_b_query": "occupation == 'school' & age > 10",
-            "non_a_b_attend": True,
-            "hygiene_multiplier": 0.3,
-        },
+        a_b_query="occupation == 'school' & age > 10",
+        non_a_b_attend=True,
+        hygiene_multiplier=0.3,
+        always_attend_query="bla",
     )
 
     res2 = apply_mixed_educ_policies(
         contact_models,
         block_info,
         educ_type="young_educ",
-        educ_options={"hygiene_multiplier": 0.8, "always_attend_query": "bla"},
+        a_b_query=False,
+        non_a_b_attend=True,
+        hygiene_multiplier=0.8,
+        always_attend_query="bla",
     )
 
     expected1 = {
@@ -272,6 +275,8 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
                 a_b_query="occupation == 'school' & age > 10",
                 non_a_b_attend=True,
                 hygiene_multiplier=0.3,
+                always_attend_query="bla",
+                a_b_rhythm=None,
             ),
         },
         "test_educ_school_2": {
@@ -284,6 +289,8 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
                 a_b_query="occupation == 'school' & age > 10",
                 non_a_b_attend=True,
                 hygiene_multiplier=0.3,
+                always_attend_query="bla",
+                a_b_rhythm=None,
             ),
         },
     }
@@ -297,8 +304,11 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "policy": partial(
                 mixed_educ_policy,
                 group_id_column="preschool_id",
+                a_b_query=False,
+                non_a_b_attend=True,
                 hygiene_multiplier=0.8,
                 always_attend_query="bla",
+                a_b_rhythm=None,
             ),
         },
         "test_educ_nursery_0": {
@@ -308,8 +318,11 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "policy": partial(
                 mixed_educ_policy,
                 group_id_column="nursery_id",
+                a_b_query=False,
+                non_a_b_attend=True,
                 hygiene_multiplier=0.8,
                 always_attend_query="bla",
+                a_b_rhythm=None,
             ),
         },
     }
