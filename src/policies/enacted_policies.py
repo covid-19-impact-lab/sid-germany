@@ -1,6 +1,8 @@
 import pandas as pd
 
 from src.config import BLD
+from src.config import VERY_EARLY
+from src.config import VERY_LATE
 from src.policies.domain_level_policy_blocks import apply_emergency_care_policies
 from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
 from src.policies.domain_level_policy_blocks import reduce_educ_models
@@ -8,8 +10,6 @@ from src.policies.domain_level_policy_blocks import reduce_other_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
 from src.policies.policy_tools import combine_dictionaries
 
-VERY_EARLY = pd.Timestamp("2020-01-01")
-VERY_LATE = pd.Timestamp("2022-12-31")
 HYGIENE_MULTIPLIER = 0.7
 """Hygiene multiplier for educ and work models. Is in effect from November 2020 on."""
 
@@ -342,10 +342,10 @@ def _get_enacted_school_policies(contact_models):
     """
     strict_emergency_care_kwargs = _get_school_options_for_strict_emergency_care()
     generous_emergency_care_kwargs = (
-        _get_school_options_for_emergency_care_with_graduating_classes()
+        _get_school_options_for_emergency_care_with_graduating_classes_having_a_b_schooling()  # noqa: E501
     )
     primary_and_graduating_in_ab_kwargs = (
-        _get_school_options_for_a_b_in_primary_and_graduation_classes()
+        _get_school_options_for_a_b_schooling_for_primary_and_graduating_classes()
     )
     # A/B for everyone, graduating classes attend in full + emergency care.
     mid_march_to_easter_policy_kwargs = _get_school_options_for_a_b_for_most()
@@ -457,7 +457,7 @@ def _get_school_options_for_a_b_for_most():
     return educ_options
 
 
-def _get_school_options_for_a_b_in_primary_and_graduation_classes():
+def _get_school_options_for_a_b_schooling_for_primary_and_graduating_classes():
     """Get the school educ_options from February 22nd to March 15th.
 
     Schools open for primary students and graduating classes in A/B while
@@ -493,7 +493,7 @@ def _get_school_options_for_a_b_in_primary_and_graduation_classes():
     return educ_options
 
 
-def _get_school_options_for_emergency_care_with_graduating_classes():
+def _get_school_options_for_emergency_care_with_graduating_classes_having_a_b_schooling():  # noqa: E501
     """Get expanded emergency care with graduating classes in A/B schooling.
 
     This is what was in effect in the 2nd half of January.

@@ -78,6 +78,22 @@ def task_create_full_params(depends_on, produces):
     params.loc[("testing", "allocation", "rel_available_tests")] = 100_000
     params.loc[("testing", "processing", "rel_available_capacity")] = 100_000
 
+    # virus strain properties
+    params.loc[("virus_strain", "base_strain", "factor")] = 1.0
+    # source: https://doi.org/10.1101/2020.12.24.20248822
+    # "We estimate that this variant has a 43–90%
+    # (range of 95% credible intervals 38–130%) higher
+    # reproduction number than preexisting variants"
+    # currently we take the midpoint of 66%
+    params.loc[("virus_strain", "b117", "factor")] = 1.67
+
+    # Share of individuals refusing to be vaccinated.
+    # 80% of Germans are somewhat or definitely willing to be vaccinated.
+    # 12% are undecided. 8% are opposed to being vaccinated.
+    # We assume that 15% will refuse to be vaccinated.
+    # source: https://bit.ly/3c9mTgX (publication date: 2021-03-02)
+    params.loc[("vaccinations", "share_refuser", "share_refuser")] = 0.15
+
     # Testing parameters governing rapid test demand
     # -----------------------------------------------
 
