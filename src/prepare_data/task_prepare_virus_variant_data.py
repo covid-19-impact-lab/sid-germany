@@ -14,6 +14,7 @@ STRAIN_FILES = {
     "rki_strains": BLD / "data" / "virus_strains" / "rki_strains.csv",
     "cologne": BLD / "data" / "virus_strains" / "cologne_strains.csv",
     "final_strain_shares": BLD / "data" / "virus_strains" / "final_strain_shares.pkl",
+    "virus_shares_dict": BLD / "data" / "virus_strains" / "virus_shares_dict.pkl",
 }
 
 
@@ -53,6 +54,12 @@ def task_prepare_virus_variant_data(depends_on, produces):
     expected_dates = pd.date_range(strain_data.index.min(), strain_data.index.max())
     assert (strain_data.index == expected_dates).all()
     strain_data.to_pickle(produces["final_strain_shares"])
+
+    virus_shares = {
+        "base_strain": 1 - strain_data["b117"],
+        "b117": strain_data["b117"],
+    }
+    pd.to_pickle(virus_shares, produces["virus_shares_dict"])
 
 
 def _prepare_rki_data(df):

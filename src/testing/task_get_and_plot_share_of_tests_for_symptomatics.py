@@ -27,6 +27,8 @@ OUT_PATH = BLD / "data" / "testing"
 @pytask.mark.produces(
     {
         "data": OUT_PATH / "characteristics_of_the_tested.csv",
+        "share_of_tests_for_symptomatics_series": OUT_PATH
+        / "share_of_tests_for_symptomatics_series.pkl",
         "mean_age": OUT_PATH / "mean_age_of_tested.png",
         "share_with_symptom_status": OUT_PATH
         / "share_of_tested_with_symptom_status.png",
@@ -67,6 +69,17 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
         sns.lineplot(x=df.index, y=df[extrapolated], ax=ax, color=color)
     fig.tight_layout()
     fig.savefig(produces["symptom_shares"])
+
+    share_of_tests_for_symptomatics_series = df[
+        [
+            "share_symptomatic_lower_bound_extrapolated",
+            "share_symptomatic_among_known_extrapolated",
+        ]
+    ].mean(axis=1)
+    share_of_tests_for_symptomatics_series.to_pickle(
+        produces["share_of_tests_for_symptomatics_series"]
+    )
+
     df = df.reset_index().rename(columns={"index": "date"})
     df.to_csv(produces["data"])
 

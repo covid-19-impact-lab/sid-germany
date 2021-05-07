@@ -5,10 +5,9 @@ from sid import get_date
 def find_people_to_vaccinate(
     receives_vaccine,  # noqa: U100
     states,
-    params,  # noqa: U100
+    params,
     seed,  # noqa: U100
     vaccination_shares,
-    no_vaccination_share,
     init_start,
 ):
     """Find people that have to be vaccinated on a given day.
@@ -36,6 +35,9 @@ def find_people_to_vaccinate(
 
     """
     date = get_date(states)
+    no_vaccination_share = params.loc[
+        ("vaccinations", "share_refuser", "share_refuser"), "value"
+    ]
     cutoffs = vaccination_shares.sort_index().cumsum()
     # set all cutoffs before the init_start to 0.
     # that way on the init_start date everyone who should have been vaccinated
