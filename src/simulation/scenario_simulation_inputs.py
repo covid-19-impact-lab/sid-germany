@@ -39,6 +39,36 @@ def baseline(paths, fixed_inputs):
     return baseline_scenario_inputs
 
 
+def open_all_educ_after_easter(paths, fixed_inputs):
+    easter_monday = "2021-04-05"
+    out = open_all_educ_after_easter(
+        paths=paths, fixed_inputs=fixed_inputs, split_date=easter_monday
+    )
+    return out
+
+
+def open_all_educ_after_date(paths, fixed_inputs, split_date):
+    start_date = fixed_inputs["duration"]["start"]
+    end_date = fixed_inputs["duration"]["end"]
+    contact_models = fixed_inputs["contact_models"]
+    enacted_policies = get_enacted_policies(contact_models)
+
+    stays_same, to_change = split_policies(enacted_policies, split_date=split_date)
+    after_split_without_educ_policies = remove_educ_policies(to_change)
+    new_policies = combine_dictionaries([stays_same, after_split_without_educ_policies])
+    new_policies = shorten_policies(new_policies, start_date, end_date)
+
+    out = {
+        "contact_policies": new_policies,
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return out
+
+
 def only_strict_emergency_care_after_april_5(paths, fixed_inputs):
     start_date = fixed_inputs["duration"]["start"]
     end_date = fixed_inputs["duration"]["end"]

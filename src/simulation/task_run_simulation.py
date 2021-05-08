@@ -32,6 +32,11 @@ spring_dates = {
     "end_date": "2021-05-07",
 }
 
+prediction_dates = {
+    "start_date": "2021-04-15",
+    "end_date": "2021-07-01",
+}
+
 NAMED_SCENARIOS = {
     "fall_baseline": {
         "sim_input_scenario": "baseline",
@@ -49,32 +54,64 @@ NAMED_SCENARIOS = {
     "spring_without_vaccines": {
         "sim_input_scenario": "no_vaccinations_after_feb_15",
         "params_scenario": "baseline",
-        "n_seeds": n_baseline_seeds,
+        "n_seeds": n_scenario_seeds,
         **spring_dates,
     },
     "spring_without_rapid_tests_at_schools": {
         "sim_input_scenario": "baseline",
         "params_scenario": "no_rapid_tests_at_schools",
-        "n_seeds": n_baseline_seeds,
+        "n_seeds": n_scenario_seeds,
         **spring_dates,
     },
     "spring_without_rapid_tests_at_work": {
         "sim_input_scenario": "baseline",
         "params_scenario": "no_rapid_tests_at_work",
-        "n_seeds": n_baseline_seeds,
+        "n_seeds": n_scenario_seeds,
         **spring_dates,
     },
     "spring_without_rapid_tests": {
         "sim_input_scenario": "no_rapid_tests",
         "params_scenario": "baseline",
-        "n_seeds": n_baseline_seeds,
+        "n_seeds": n_scenario_seeds,
         **spring_dates,
     },
+    # Rapid Tests vs School Closures
     "spring_emergency_care_after_easter_no_school_rapid_tests": {
         "sim_input_scenario": "only_strict_emergency_care_after_april_5",
         "params_scenario": "no_rapid_tests_at_schools",
         "n_seeds": n_baseline_seeds,
         **spring_dates,
+    },
+    "spring_educ_open_after_easter": {
+        "sim_input_scenario": "open_all_educ_after_easter",
+        "params_scenario": "baseline",
+        "n_seeds": n_baseline_seeds,
+        **spring_dates,
+    },
+    "spring_educ_open_after_easter_educ_tests_every_other_day": {
+        "sim_input_scenario": "open_all_educ_after_easter",
+        "params_scenario": "rapid_tests_at_school_every_other_day_after_april_5",
+        "n_seeds": n_baseline_seeds,
+        **spring_dates,
+    },
+    "spring_educ_open_after_easter_educ_tests_every_day": {
+        "sim_input_scenario": "open_all_educ_after_easter",
+        "params_scenario": "rapid_tests_at_school_every_day_after_april_5",
+        "n_seeds": n_baseline_seeds,
+        **spring_dates,
+    },
+    # Future Scenarios
+    "future_baseline": {
+        "sim_input_scenario": "baseline",
+        "params_scenario": "baseline",
+        "n_seeds": n_baseline_seeds,
+        **prediction_dates,
+    },
+    "future_educ_open": {
+        "sim_input_scenario": "baseline",
+        "params_scenario": "baseline",
+        "n_seeds": n_baseline_seeds,
+        **prediction_dates,
     },
 }
 
