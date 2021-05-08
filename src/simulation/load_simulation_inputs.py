@@ -12,6 +12,7 @@ from src.create_initial_states.create_initial_conditions import (
 from src.policies.enacted_policies import get_enacted_policies
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import shorten_policies
+from src.simulation import policy_scenarios
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
 from src.testing.rapid_test_reactions import rapid_test_reactions
@@ -27,8 +28,8 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
     Does **not** include: params, path, seed.
 
     Args:
-        scenario (str): string specifying the scenario. Supported are:
-            - baseline
+        scenario (str): string specifying the scenario. A function with the
+            same name must exist in src.simulation.policy_scenarios.
 
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
@@ -66,6 +67,7 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
     duration = {"start": start_date, "end": end_date}
 
     policies = get_enacted_policies(contact_models)
+    policies = shorten_policies(policies, start_date, end_date)
 
     # testing models
     share_of_tests_for_symptomatics_series = pd.read_pickle(
@@ -163,18 +165,7 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         "knows_currently_infected": _knows_currently_infected,
     }
 
-    # Adjust Inputs to the Scenario. This will use getattr
-    if scenario == "baseline":
-        pass
-    else:
-        raise ValueError(
-            f"Unknown scenario {scenario}. "
-            "Only 'baseline' is implemented at the moment'"
-        )
-
-    policies = shorten_policies(policies, start_date, end_date)
-
-    out = {
+    sim_inputs = {
         "initial_states": initial_states,
         "contact_models": contact_models,
         "duration": duration,
@@ -193,7 +184,11 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
     }
-    return out
+
+    scenario_func = getattr(policy_scenarios, scenario)
+    updated_inputs = scenario_func(sim_inputs)
+    sim_inputs.update(updated_inputs)
+    return sim_inputs
 
 
 def get_simulation_dependencies(debug):
