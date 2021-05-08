@@ -528,3 +528,17 @@ def test_meet_daily_other_contacts():
     )
     expected = pd.Series([False, True, True, False])
     assert_series_equal(res, expected, check_names=False)
+
+
+def test_vacation_model():
+    states = pd.DataFrame(
+        columns=[
+            "hh_id",
+            "occupation",
+        ],
+        data=[
+            # hh_id, educ_worker
+            []
+        ],
+    )
+    states["educ_worker"] = states["occupation"].isin([])

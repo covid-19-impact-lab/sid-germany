@@ -192,6 +192,41 @@ def meet_hh_members(states, params, seed):  # noqa: U100
     return meet_hh
 
 
+def vacation_model(states, params, seed):  # noqa: U100
+    date = get_date(states)
+
+    educ_cols = ["school", "preschool", "nursery"]
+    gets_school_vacations = states["occupation"].isin(educ_cols) | states["educ_worker"]
+    with_educ_in_hh = gets_school_vacations.groupby(states["hh_id"]).transform(np.any)
+    possible_grandparents = states["age"] >= 63
+    # 58% of individuals have extra contacts during school vacations
+    has_extra_contacts_on_vacation = with_educ_in_hh | possible_grandparents
+
+    state_to_vacation = get_states_w_vacations(date, params)
+
+    fed_state_to_n_contacts = {fed_state: 0 for fed_state in states["state"].unique()}
+    for fed_state, vacation in state_to_vacation.items():
+        tup = ("vacation_model", vacation, "n_contacts")
+        fed_state_to_n_contacts[fed_state] = params.loc[tup, "value"]
+
+    contacts = states["state"].map(fed_state_to_n_contacts.get)
+    contacts = contacts.where(has_extra_contacts_on_vacation, other=0)
+
+    for params_entry, condition in [
+        ("symptomatic_multiplier", states["symptomatic"]),
+        ("positive_test_multiplier", states["knows_currently_infected"]),
+    ]:
+        contacts = reduce_contacts_on_condition(
+            contacts,
+            states,
+            params.loc[("vacation_model", params_entry, params_entry), "value"],
+            condition,
+            is_recurrent=False,
+        )
+    contacts = contacts.astype(int)
+    return contacts
+
+
 def calculate_non_recurrent_contacts_from_empirical_distribution(
     states, params, on_weekends, seed, query=None
 ):
