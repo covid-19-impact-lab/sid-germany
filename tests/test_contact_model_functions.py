@@ -577,4 +577,4 @@ def test_draw_potential_vacation_contacts_not_random():
     seed = 3300
     res = _draw_potential_vacation_contacts(states, params, state_to_vacation, seed)
     expected = pd.Series([1, 1, 0, 0, 0])
-    assert_series_equal(res, expected, check_names=False)
+    assert_series_equal(res, expected, check_names=False, check_dtype=False)
