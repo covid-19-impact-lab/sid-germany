@@ -1,5 +1,3 @@
-from typing import List
-
 import numba as nb
 import numpy as np
 import pandas as pd
@@ -379,30 +377,35 @@ def _pupils_having_vacations_do_not_attend(attends_facility, states, params):
     """Make pupils stay away from school if their state has vacations."""
     attends_facility = attends_facility.copy(deep=True)
     date = get_date(states)
-    states_w_vacations = get_states_w_vacations(date, params)
+    states_w_vacations = get_states_w_vacations(date, params).keys()
     has_vacation = states.state.isin(states_w_vacations)
     attends_facility.loc[attends_facility & has_vacation] = False
 
     return attends_facility
 
 
-def get_states_w_vacations(date: pd.Timestamp, params: pd.DataFrame) -> List[str]:
-    """Get states which currently have vacations for pupils."""
+def get_states_w_vacations(date: pd.Timestamp, params: pd.DataFrame) -> dict:
+    """Get states which currently have vacations for pupils.
+
+    Returns:
+        state_to_vacation_name (dict): keys are the states that have vacations
+            on the current date. Values are the names of the vacation.
+
+    """
     vacations = params.filter(like="ferien", axis=0).copy()
     if vacations.empty:
         raise ValueError("'params' does not contain any information about vacations.")
-    else:
-        # Dates are stored as epochs so that value can be a numeric column.
-        vacations["value"] = from_epochs_to_timestamps(vacations["value"])
-        vacations = vacations.groupby(vacations.index.names)["value"].first().unstack()
-        latest_vacation_date = vacations["end"].max()
-        assert (
-            date <= latest_vacation_date
-        ), f"Vacations are only known until {latest_vacation_date}"
 
-        has_vacations = (vacations["start"] <= date) & (date <= vacations["end"])
-        states = (
-            vacations.loc[has_vacations].index.get_level_values("subcategory").unique()
-        ).tolist()
+    # Dates are stored as epochs so that value can be a numeric column.
+    vacations["value"] = from_epochs_to_timestamps(vacations["value"])
+    vacations = vacations.groupby(vacations.index.names)["value"].first().unstack()
+    latest_vacation_date = vacations["end"].max()
+    assert (
+        date <= latest_vacation_date
+    ), f"Vacations are only known until {latest_vacation_date}"
 
-    return states
+    has_vacations = (vacations["start"] <= date) & (date <= vacations["end"])
+    state_to_vacation = {
+        state: name for name, state in has_vacations[has_vacations].index
+    }
+    return state_to_vacation
