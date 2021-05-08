@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pandas as pd
 
+SCENARIO_START = "2021-04-20"
+
 FAST_FLAG = "debug"
 """One of 'debug', 'verify', 'full'.
 

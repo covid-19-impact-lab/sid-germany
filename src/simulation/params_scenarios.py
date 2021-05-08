@@ -1,8 +1,3 @@
-import warnings
-
-warnings.filterwarnings("ignore", category=RuntimeWarning)
-
-
 def baseline(params):
     return params
 

@@ -12,6 +12,7 @@ from functools import partial
 
 import pandas as pd
 
+from src.config import SCENARIO_START
 from src.config import VERY_LATE
 from src.policies.domain_level_policy_blocks import apply_emergency_care_policies
 from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
@@ -37,6 +38,13 @@ def baseline(paths, fixed_inputs):
         ),
     }
     return baseline_scenario_inputs
+
+
+def open_all_educ_after_scenario_start(paths, fixed_inputs):
+    out = open_all_educ_after_date(
+        paths=paths, fixed_inputs=fixed_inputs, split_date=SCENARIO_START
+    )
+    return out
 
 
 def open_all_educ_after_easter(paths, fixed_inputs):

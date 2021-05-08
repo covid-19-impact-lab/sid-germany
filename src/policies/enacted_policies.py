@@ -329,6 +329,8 @@ def _get_enacted_school_policies(contact_models):
             - incidence >100: 4th grade and graduating classes in A/B schooling.
               emergency care for rest.
             - incidences >100 in most counties!
+            - after May 10, primaries are allowed in A/B schooling in incidences
+              <165 (https://bit.ly/3vQNO8e)
         - NRW:
             - sources: https://bit.ly/2QHWChG, https://bit.ly/3gPraZu,
               https://bit.ly/32Zq1q8, https://bit.ly/3nzNhEx

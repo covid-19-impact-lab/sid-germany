@@ -128,7 +128,7 @@ def task_create_full_params(depends_on, produces):
     # receive test offers at work.
     # There is no data available on compliance yet
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
-    params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
+    params.loc[(*offer_loc, "2025-12-31"), "value"] = 0.7
 
     params = _add_educ_rapid_test_fade_in_params(params)
     params = _add_hh_rapid_test_fade_in_params(params)
@@ -298,7 +298,7 @@ def _add_hh_rapid_test_fade_in_params(params):
     params.loc[(*loc, "2021-05-01"), "value"] = 0.4
     params.loc[(*loc, "2021-05-15"), "value"] = 0.5
     params.loc[(*loc, "2021-06-01"), "value"] = 0.75
-    params.loc[(*loc, "2021-10-01"), "value"] = 0.75
+    params.loc[(*loc, "2025-12-21"), "value"] = 0.75
 
     return params
 
