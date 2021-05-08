@@ -1,6 +1,5 @@
 import itertools as it
 
-from src.config import BLD
 from src.config import POPULATION_GERMANY
 from src.create_initial_states.create_initial_immunity import create_initial_immunity
 from src.create_initial_states.create_initial_infections import (
@@ -16,7 +15,7 @@ def create_initial_conditions(
     virus_shares,
     reporting_delay,
     synthetic_data_path,
-    reported_infections_path=BLD / "data" / "processed_time_series" / "rki.pkl",
+    reported_infections_path,
     population_size=POPULATION_GERMANY,
 ):
     """Create the initial conditions, initial_infections and initial_immunity.
