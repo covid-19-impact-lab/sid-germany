@@ -108,7 +108,7 @@ NAMED_SCENARIOS = {
         **prediction_dates,
     },
     "future_educ_open": {
-        "sim_input_scenario": "baseline",
+        "sim_input_scenario": "open_all_educ_after_scenario_start",
         "params_scenario": "baseline",
         "n_seeds": n_baseline_seeds,
         **prediction_dates,
