@@ -5,7 +5,7 @@ from sid import get_simulate_func
 
 from src.config import BLD
 from src.config import FAST_FLAG
-from src.simulation.get_params_scenario import get_params_scenario
+from src.simulation.load_params import load_params
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
 
@@ -85,7 +85,7 @@ def task_simulate_scenario(
         end_date=end_date,
         debug=FAST_FLAG == "debug",
     )
-    params = get_params_scenario(params_scenario)
+    params = load_params(params_scenario)
     path = produces.parent.parent
 
     simulate = get_simulate_func(

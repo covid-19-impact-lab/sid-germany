@@ -11,6 +11,7 @@ from src.create_initial_states.create_initial_conditions import (
 )
 from src.policies.enacted_policies import get_enacted_policies
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
+from src.policies.policy_tools import shorten_policies
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
 from src.testing.rapid_test_reactions import rapid_test_reactions
@@ -162,7 +163,7 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         "knows_currently_infected": _knows_currently_infected,
     }
 
-    # Adjust Inputs to the Scenario
+    # Adjust Inputs to the Scenario. This will use getattr
     if scenario == "baseline":
         pass
     else:
@@ -170,6 +171,8 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
             f"Unknown scenario {scenario}. "
             "Only 'baseline' is implemented at the moment'"
         )
+
+    policies = shorten_policies(policies, start_date, end_date)
 
     out = {
         "initial_states": initial_states,
