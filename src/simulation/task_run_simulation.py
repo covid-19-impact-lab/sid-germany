@@ -27,6 +27,11 @@ else:
         "Only 'debug', 'verify' or 'full' are allowed."
     )
 
+spring_dates = {
+    "start_date": "2021-02-15",
+    "end_date": "2021-05-07",
+}
+
 NAMED_SCENARIOS = {
     "fall_baseline": {
         "policy_scenario": "baseline",
@@ -38,9 +43,32 @@ NAMED_SCENARIOS = {
     "spring_baseline": {
         "policy_scenario": "baseline",
         "params_scenario": "baseline",
-        "start_date": "2021-02-15",
-        "end_date": "2021-05-07",
         "n_seeds": n_baseline_seeds,
+        **spring_dates,
+    },
+    "spring_without_vaccines": {
+        "policy_scenario": "no_vaccinations_after_feb_15",
+        "params_scenario": "baseline",
+        "n_seeds": n_baseline_seeds,
+        **spring_dates,
+    },
+    "spring_without_rapid_tests_at_schools": {
+        "policy_scenario": "baseline",
+        "params_scenario": "no_rapid_tests_at_schools",
+        "n_seeds": n_baseline_seeds,
+        **spring_dates,
+    },
+    "spring_without_rapid_tests_at_work": {
+        "policy_scenario": "baseline",
+        "params_scenario": "no_rapid_tests_at_work",
+        "n_seeds": n_baseline_seeds,
+        **spring_dates,
+    },
+    "spring_without_rapid_tests": {
+        "policy_scenario": "no_rapid_tests",
+        "params_scenario": "baseline",
+        "n_seeds": n_baseline_seeds,
+        **spring_dates,
     },
 }
 
@@ -50,7 +78,7 @@ for name, specs in NAMED_SCENARIOS.items():
         produces = Path(
             BLD
             / "simulations"
-            / f"{name}_{seed}"
+            / f"{FAST_FLAG}_{name}_{seed}"
             / "last_states"
             / "last_states.parquet"
         )

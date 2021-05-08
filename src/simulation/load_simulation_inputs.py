@@ -12,7 +12,7 @@ from src.create_initial_states.create_initial_conditions import (
 from src.policies.enacted_policies import get_enacted_policies
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import shorten_policies
-from src.simulation import policy_scenarios
+from src.simulation import simulation_input_scenarios
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
 from src.testing.rapid_test_reactions import rapid_test_reactions
@@ -29,7 +29,7 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
 
     Args:
         scenario (str): string specifying the scenario. A function with the
-            same name must exist in src.simulation.policy_scenarios.
+            same name must exist in src.simulation.simulation_input_scenarios.
 
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
@@ -185,7 +185,7 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         "derived_state_variables": derived_state_variables,
     }
 
-    scenario_func = getattr(policy_scenarios, scenario)
+    scenario_func = getattr(simulation_input_scenarios, scenario)
     updated_inputs = scenario_func(sim_inputs)
     sim_inputs.update(updated_inputs)
     return sim_inputs
