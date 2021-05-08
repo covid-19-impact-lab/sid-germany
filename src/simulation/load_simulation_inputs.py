@@ -120,6 +120,7 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         reporting_delay=5,
         virus_shares=virus_shares,
         synthetic_data_path=paths["initial_states"],
+        reported_infections_path=paths["rki"],
     )
 
     if end_date <= pd.Timestamp("2021-01-01"):
@@ -269,6 +270,7 @@ def get_simulation_dependencies(debug):
         "rapid_test_reaction_models": SRC / "testing" / "rapid_test_reactions.py",
         "seasonality_factor_model": SRC / "simulation" / "seasonality.py",
         "params": BLD / "params.pkl",
+        "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
     }
 
     return out
