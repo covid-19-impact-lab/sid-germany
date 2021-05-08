@@ -249,22 +249,27 @@ def _add_educ_rapid_test_fade_in_params(params):
     params = params.copy(deep=True)
 
     loc = ("rapid_test_demand", "educ_worker_shares")
-    params.loc[(*loc, "2020-01-01")] = 0.0
-    params.loc[(*loc, "2021-01-01")] = 0.0
+    params.loc[(*loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*loc, "2021-01-01"), "value"] = 0.0
     # this is arbitrary to have a more convex shape
-    params.loc[(*loc, "2021-03-01")] = 0.3
-    params.loc[(*loc, "2021-03-22")] = 0.9
-    params.loc[(*loc, "2021-04-07")] = 0.95
-    params.loc[(*loc, "2021-04-19")] = 0.95
-    params.loc[(*loc, "2021-06-01")] = 0.95
+    params.loc[(*loc, "2021-03-01"), "value"] = 0.3
+    params.loc[(*loc, "2021-03-22"), "value"] = 0.9
+    params.loc[(*loc, "2021-04-07"), "value"] = 0.95
+    params.loc[(*loc, "2021-04-19"), "value"] = 0.95
+    params.loc[(*loc, "2021-06-01"), "value"] = 0.95
 
     loc = ("rapid_test_demand", "student_shares")
-    params.loc[(*loc, "2020-01-01")] = 0.0
-    params.loc[(*loc, "2021-01-01")] = 0.0
-    params.loc[(*loc, "2021-03-22")] = 0.3
-    params.loc[(*loc, "2021-04-07")] = 0.75
-    params.loc[(*loc, "2021-04-19")] = 0.95
-    params.loc[(*loc, "2021-06-01")] = 1.0
+    params.loc[(*loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*loc, "2021-01-01"), "value"] = 0.0
+    params.loc[(*loc, "2021-03-22"), "value"] = 0.3
+    params.loc[(*loc, "2021-04-07"), "value"] = 0.75
+    params.loc[(*loc, "2021-04-19"), "value"] = 0.95
+    params.loc[(*loc, "2021-06-01"), "value"] = 1.0
+
+    # Assume weekly tests before Easter and twice weekly tests after Easter
+    # We should get a fade-in through different ends of Easter vaccation
+    params.loc[("rapid_test_demand", "educ_frequency", "before_easter"), "value"] = 7
+    params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 3
 
     return params
 

@@ -57,6 +57,11 @@ def rapid_test_demand(
     student_multiplier = get_piecewise_linear_interpolation_for_one_day(
         date, students_params
     )
+    if date < pd.Timestamp("2021-04-06"):
+        freq_tup = ("rapid_test_demand", "educ_frequency", "before_easter")
+    else:
+        freq_tup = ("rapid_test_demand", "educ_frequency", "after_easter")
+    educ_frequency = params.loc[freq_tup, "value"]
 
     # get housheold member inputs
     hh_member_demand_share = get_piecewise_linear_interpolation_for_one_day(
@@ -74,6 +79,7 @@ def rapid_test_demand(
         contacts=contacts,
         educ_worker_multiplier=educ_worker_multiplier,
         student_multiplier=student_multiplier,
+        frequency=educ_frequency,
     )
 
     hh_demand = _calculate_hh_member_rapid_test_demand(
@@ -86,7 +92,7 @@ def rapid_test_demand(
 
 
 def _calculate_educ_rapid_test_demand(
-    states, contacts, educ_worker_multiplier, student_multiplier
+    states, contacts, educ_worker_multiplier, student_multiplier, frequency
 ):
     """Return which individuals get a rapid test in an education setting.
 
@@ -101,9 +107,10 @@ def _calculate_educ_rapid_test_demand(
         student_multiplier (float): share of school students that have not been
             tested long enough and have education contacts that receive and
             accept a test.
+        frequency (int): test every [frequency] days
 
     """
-    eligible = _get_eligible_educ_participants(states, contacts)
+    eligible = _get_eligible_educ_participants(states, contacts, frequency)
     educ_worker_demand = _get_educ_worker_demand(
         eligible, states, educ_worker_multiplier
     )
@@ -112,18 +119,12 @@ def _calculate_educ_rapid_test_demand(
     return educ_rapid_test_demand
 
 
-def _get_eligible_educ_participants(states, contacts):
-    date = get_date(states)
+def _get_eligible_educ_participants(states, contacts, frequency):
     educ_contact_cols = [col for col in contacts if col.startswith("educ_")]
     # educ_contact_cols are all boolean because all educ models are recurrent
     has_educ_contacts = (contacts[educ_contact_cols]).any(axis=1)
 
-    # Assume weekly tests before Easter and twice weekly tests after Easter
-    # We should get a fade-in through different ends of Easter vaccation
-    if date < pd.Timestamp("2021-04-06"):
-        too_long_since_last_test = states["cd_received_rapid_test"] <= -7
-    else:
-        too_long_since_last_test = states["cd_received_rapid_test"] <= -3
+    too_long_since_last_test = states["cd_received_rapid_test"] <= -frequency
 
     eligible = has_educ_contacts & too_long_since_last_test
     return eligible
