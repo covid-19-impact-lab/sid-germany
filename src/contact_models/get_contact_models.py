@@ -157,7 +157,6 @@ def get_other_non_recurrent_contact_model():
     other_non_recurrent_contact_model = {
         "other_non_recurrent": {
             "is_recurrent": False,
-            "loc": "other_non_recurrent",
             "assort_by": ["age_group", "county"],
             "model": cm_funcs.meet_other_non_recurrent_contacts,
         }

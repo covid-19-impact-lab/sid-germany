@@ -202,7 +202,7 @@ def meet_other_non_recurrent_contacts(states, params, seed):
     """
     contacts = calculate_non_recurrent_contacts_from_empirical_distribution(
         states=states,
-        params=params,
+        params=params.loc["other_non_recurrent"],
         seed=seed,
         on_weekends=True,
         query=None,
@@ -225,7 +225,7 @@ def meet_other_non_recurrent_contacts(states, params, seed):
         contacts = reduce_contacts_on_condition(
             contacts,
             states,
-            params.loc[("vacation_model", params_entry, params_entry), "value"],
+            params.loc[("other_non_recurrent", params_entry, params_entry), "value"],
             condition,
             is_recurrent=False,
         )
