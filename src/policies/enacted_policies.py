@@ -340,7 +340,7 @@ def _get_enacted_school_policies(contact_models):
         and graduating classes.
 
     """
-    strict_emergency_care_kwargs = _get_school_options_for_strict_emergency_care()
+    strict_emergency_care_kwargs = get_school_options_for_strict_emergency_care()
     generous_emergency_care_kwargs = (
         _get_school_options_for_emergency_care_with_graduating_classes_having_a_b_schooling()  # noqa: E501
     )
@@ -538,7 +538,7 @@ def _get_school_options_for_emergency_care_with_graduating_classes_having_a_b_sc
     return educ_options
 
 
-def _get_school_options_for_strict_emergency_care():
+def get_school_options_for_strict_emergency_care():
     primary_emergency_query = "(educ_contact_priority > 0.75 & age < 10)"
     secondary_emergency_query = "(educ_contact_priority > 0.95 & age >= 10)"
     always_attend_query = f"{primary_emergency_query} | {secondary_emergency_query}"

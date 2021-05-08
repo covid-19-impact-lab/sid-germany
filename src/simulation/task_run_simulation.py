@@ -34,38 +34,38 @@ spring_dates = {
 
 NAMED_SCENARIOS = {
     "fall_baseline": {
-        "policy_scenario": "baseline",
+        "sim_input_scenario": "baseline",
         "params_scenario": "baseline",
         "start_date": "2020-10-01",
         "end_date": "2020-12-23",
         "n_seeds": n_baseline_seeds,
     },
     "spring_baseline": {
-        "policy_scenario": "baseline",
+        "sim_input_scenario": "baseline",
         "params_scenario": "baseline",
         "n_seeds": n_baseline_seeds,
         **spring_dates,
     },
     "spring_without_vaccines": {
-        "policy_scenario": "no_vaccinations_after_feb_15",
+        "sim_input_scenario": "no_vaccinations_after_feb_15",
         "params_scenario": "baseline",
         "n_seeds": n_baseline_seeds,
         **spring_dates,
     },
     "spring_without_rapid_tests_at_schools": {
-        "policy_scenario": "baseline",
+        "sim_input_scenario": "baseline",
         "params_scenario": "no_rapid_tests_at_schools",
         "n_seeds": n_baseline_seeds,
         **spring_dates,
     },
     "spring_without_rapid_tests_at_work": {
-        "policy_scenario": "baseline",
+        "sim_input_scenario": "baseline",
         "params_scenario": "no_rapid_tests_at_work",
         "n_seeds": n_baseline_seeds,
         **spring_dates,
     },
     "spring_without_rapid_tests": {
-        "policy_scenario": "no_rapid_tests",
+        "sim_input_scenario": "no_rapid_tests",
         "params_scenario": "baseline",
         "n_seeds": n_baseline_seeds,
         **spring_dates,
@@ -84,7 +84,7 @@ for name, specs in NAMED_SCENARIOS.items():
         )
         scaled_seed = 500 + 100_000 * seed
         spec_tuple = (
-            specs["policy_scenario"],
+            specs["sim_input_scenario"],
             specs["params_scenario"],
             specs["start_date"],
             specs["end_date"],
@@ -96,11 +96,11 @@ for name, specs in NAMED_SCENARIOS.items():
 
 @pytask.mark.depends_on(DEPENDENCIES)
 @pytask.mark.parametrize(
-    "policy_scenario, params_scenario, start_date, end_date, produces, seed",
+    "sim_input_scenario, params_scenario, start_date, end_date, produces, seed",
     SCENARIOS,
 )
 def task_simulate_scenario(
-    policy_scenario,
+    sim_input_scenario,
     params_scenario,
     start_date,
     end_date,
@@ -108,7 +108,7 @@ def task_simulate_scenario(
     seed,
 ):
     simulation_kwargs = load_simulation_inputs(
-        scenario=policy_scenario,
+        scenario=sim_input_scenario,
         start_date=start_date,
         end_date=end_date,
         debug=FAST_FLAG == "debug",
