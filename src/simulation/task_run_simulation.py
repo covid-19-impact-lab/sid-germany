@@ -70,6 +70,12 @@ NAMED_SCENARIOS = {
         "n_seeds": n_baseline_seeds,
         **spring_dates,
     },
+    "spring_emergency_care_after_easter_no_school_rapid_tests": {
+        "sim_input_scenario": "only_strict_emergency_care_after_april_5",
+        "params_scenario": "no_rapid_tests_at_schools",
+        "n_seeds": n_baseline_seeds,
+        **spring_dates,
+    },
 }
 
 SCENARIOS = []
