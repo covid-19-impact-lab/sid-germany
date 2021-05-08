@@ -178,22 +178,19 @@ def _add_virus_strain_params(params):
 
 def _add_vacation_model_distribution_params(params):
     params = params.copy(deep=True)
-
-    # if we wanted a distribution we'd have to have one contact model for each
-    # vacation and then have as index
-    # ({name_of_vacation_model}, "n_contacts", n_contacts). The last entry
-    # would be the number of contacts and the value would be the probability
-    # of having such a contact
-    params.loc[("vacation_model", "Winterferien", "n_contacts"), "value"] = 1
-    params.loc[("vacation_model", "Osterferien", "n_contacts"), "value"] = 0
-    params.loc[("vacation_model", "Pfingstferien", "n_contacts"), "value"] = 1
-    params.loc[("vacation_model", "Sommerferien", "n_contacts"), "value"] = 2
-    params.loc[("vacation_model", "Herbstferien", "n_contacts"), "value"] = 3
-    params.loc[("vacation_model", "Weihnachtsferien", "n_contacts"), "value"] = 1
-    params.loc[("vacation_model", "Winterferien2021", "n_contacts"), "value"] = 1
-    params.loc[("vacation_model", "Osterferien2021", "n_contacts"), "value"] = 1
-    params.loc[("vacation_model", "Pfingstferien2021", "n_contacts"), "value"] = 1
-    params.loc[("vacation_model", "Sommerferien2021", "n_contacts"), "value"] = 1
+    loc = ("additional_other_vacation_contact", "probability")
+    # 2020
+    params.loc[(*loc, "Winterferien"), "value"] = 0.2
+    params.loc[(*loc, "Osterferien"), "value"] = 0.2
+    params.loc[(*loc, "Pfingstferien"), "value"] = 0.2
+    params.loc[(*loc, "Sommerferien"), "value"] = 0.2
+    params.loc[(*loc, "Herbstferien"), "value"] = 0.2
+    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.2
+    # 2021
+    params.loc[(*loc, "Winterferien2021"), "value"] = 0.2
+    params.loc[(*loc, "Osterferien2021"), "value"] = 0.2
+    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.2
+    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.2
     return params
 
 
