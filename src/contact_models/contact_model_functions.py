@@ -1,6 +1,7 @@
 import numba as nb
 import numpy as np
 import pandas as pd
+from sid.shared import boolean_choices
 from sid.time import get_date
 
 from src.shared import from_epochs_to_timestamps
@@ -192,25 +193,30 @@ def meet_hh_members(states, params, seed):  # noqa: U100
     return meet_hh
 
 
-def vacation_model(states, params, seed):  # noqa: U100
+def meet_other_non_recurrent_contacts(states, params, seed):
+    """Meet other non recurrent contacts.
+
+    Individuals in households with educ_workers, retired and children have
+    additional contacts during vacations.
+
+    """
+    contacts = calculate_non_recurrent_contacts_from_empirical_distribution(
+        states=states,
+        params=params,
+        seed=seed,
+        on_weekends=True,
+        query=None,
+        reduce_on_condition=False,
+    )
+    affected_by_vacation = _identify_ppl_affected_by_vacation(states)
+
     date = get_date(states)
-
-    educ_cols = ["school", "preschool", "nursery"]
-    gets_school_vacations = states["occupation"].isin(educ_cols) | states["educ_worker"]
-    with_educ_in_hh = gets_school_vacations.groupby(states["hh_id"]).transform(np.any)
-    possible_grandparents = states["age"] >= 63
-    # 58% of individuals have extra contacts during school vacations
-    has_extra_contacts_on_vacation = with_educ_in_hh | possible_grandparents
-
     state_to_vacation = get_states_w_vacations(date, params)
-
-    fed_state_to_n_contacts = {fed_state: 0 for fed_state in states["state"].unique()}
-    for fed_state, vacation in state_to_vacation.items():
-        tup = ("vacation_model", vacation, "n_contacts")
-        fed_state_to_n_contacts[fed_state] = params.loc[tup, "value"]
-
-    contacts = states["state"].map(fed_state_to_n_contacts.get)
-    contacts = contacts.where(has_extra_contacts_on_vacation, other=0)
+    potential_vacation_contacts = _draw_potential_vacation_contacts(
+        states, params, state_to_vacation, seed
+    )
+    vacation_contacts = potential_vacation_contacts.where(affected_by_vacation, 0)
+    contacts = contacts + vacation_contacts
 
     for params_entry, condition in [
         ("symptomatic_multiplier", states["symptomatic"]),
@@ -223,12 +229,35 @@ def vacation_model(states, params, seed):  # noqa: U100
             condition,
             is_recurrent=False,
         )
+
     contacts = contacts.astype(int)
     return contacts
 
 
+def _identify_ppl_affected_by_vacation(states):
+    vacation_cols = ["school", "preschool", "nursery", "retired"]
+    has_school_vacation = (
+        states["occupation"].isin(vacation_cols) | states["educ_worker"]
+    )
+    # ~60% of individuals are in a household where someone has school vacations
+    in_hh_with_vacation = has_school_vacation.groupby(states["hh_id"]).transform(np.any)
+    return in_hh_with_vacation
+
+
+def _draw_potential_vacation_contacts(states, params, state_to_vacation, seed):
+    np.random.seed(seed)
+    fed_state_to_p_contact = {fed_state: 0 for fed_state in states["state"].unique()}
+    for fed_state, vacation in state_to_vacation.items():
+        tup = ("additional_other_vacation_contact", "probability", vacation)
+        fed_state_to_p_contact[fed_state] = params.loc[tup, "value"]
+    p_contact = states["state"].map(fed_state_to_p_contact.get)
+    vacation_contact = pd.Series(boolean_choices(p_contact), index=states.index)
+    vacation_contact = vacation_contact.astype(int)
+    return vacation_contact
+
+
 def calculate_non_recurrent_contacts_from_empirical_distribution(
-    states, params, on_weekends, seed, query=None
+    states, params, on_weekends, seed, query=None, reduce_on_condition=True
 ):
     """Draw how many non recurrent contacts each person will have today.
 
@@ -272,17 +301,19 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
             states=states,
             seed=seed,
         )
-        for params_entry, condition in [
-            ("symptomatic_multiplier", states["symptomatic"]),
-            ("positive_test_multiplier", states["knows_currently_infected"]),
-        ]:
-            contacts = reduce_contacts_on_condition(
-                contacts,
-                states,
-                params.loc[(params_entry, params_entry), "value"],
-                condition,
-                is_recurrent=False,
-            )
+
+        if reduce_on_condition:
+            for params_entry, condition in [
+                ("symptomatic_multiplier", states["symptomatic"]),
+                ("positive_test_multiplier", states["knows_currently_infected"]),
+            ]:
+                contacts = reduce_contacts_on_condition(
+                    contacts,
+                    states,
+                    params.loc[(params_entry, params_entry), "value"],
+                    condition,
+                    is_recurrent=False,
+                )
     contacts = contacts.astype(float)
     return contacts
 

@@ -6,6 +6,10 @@ import pytest
 from pandas.testing import assert_series_equal
 
 from src.contact_models.contact_model_functions import _draw_nr_of_contacts
+from src.contact_models.contact_model_functions import _draw_potential_vacation_contacts
+from src.contact_models.contact_model_functions import (
+    _identify_ppl_affected_by_vacation,
+)
 from src.contact_models.contact_model_functions import (
     calculate_non_recurrent_contacts_from_empirical_distribution,
 )
@@ -530,15 +534,47 @@ def test_meet_daily_other_contacts():
     assert_series_equal(res, expected, check_names=False)
 
 
-def test_vacation_model():
-    states = pd.DataFrame(
-        columns=[
-            "hh_id",
-            "occupation",
-        ],
-        data=[
-            # hh_id, educ_worker
-            []
-        ],
-    )
-    states["educ_worker"] = states["occupation"].isin([])
+def test_identify_ppl_affected_by_vacation():
+    states = pd.DataFrame()
+    # 0: unaffected
+    # 1: with child
+    # 2: with educ worker
+    # 3: with retired
+    states["hh_id"] = [0, 0, 1, 1, 1, 2, 2, 3, 3]
+    states["occupation"] = [
+        # 0
+        "working",
+        "stays_home",
+        # 1
+        "school",
+        "working",
+        "stays_home",
+        # 2
+        "nursery_teacher",
+        "working",
+        # 3
+        "retired",
+        "stays_home",
+    ]
+    states["educ_worker"] = [False] * 5 + [True] + [False] * 3
+
+    res = _identify_ppl_affected_by_vacation(states)
+    expected = pd.Series([False, False] + [True] * 7)
+    assert_series_equal(res, expected, check_names=False)
+
+
+def test_draw_potential_vacation_contacts_not_random():
+    state_to_vacation = {"A": "Easter", "B": "Spring"}  # C has no vacation
+    states = pd.DataFrame()
+    states["state"] = ["A", "A", "B", "B", "C"]
+
+    params = pd.DataFrame()
+    params["value"] = [1.0, 0.0]
+    params["name"] = ["Easter", "Spring"]
+    params["category"] = "additional_other_vacation_contact"
+    params["subcategory"] = "probability"
+    params = params.set_index(["category", "subcategory", "name"])
+    seed = 3300
+    res = _draw_potential_vacation_contacts(states, params, state_to_vacation, seed)
+    expected = pd.Series([1, 1, 0, 0, 0])
+    assert_series_equal(res, expected, check_names=False)
