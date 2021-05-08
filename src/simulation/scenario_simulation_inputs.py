@@ -43,16 +43,16 @@ def only_strict_emergency_care_after_april_5(paths, fixed_inputs):
     start_date = fixed_inputs["duration"]["start"]
     end_date = fixed_inputs["duration"]["end"]
     contact_models = fixed_inputs["contact_models"]
-    policies = get_enacted_policies()
+    enacted_policies = get_enacted_policies(contact_models)
 
     split_date = "2021-04-06"  # the split date belongs to the 2nd dictionary
-    stays_same, to_change = split_policies(policies, split_date=split_date)
+    stays_same, to_change = split_policies(enacted_policies, split_date=split_date)
     keep = remove_educ_policies(to_change)
 
     block_info = {
         "prefix": "emergency_care_after_april_5",
-        "start": split_date,
-        "end": VERY_LATE,
+        "start_date": split_date,
+        "end_date": VERY_LATE,
     }
     new_young_educ_policies = apply_emergency_care_policies(
         contact_models=contact_models,
@@ -97,7 +97,6 @@ def no_rapid_tests(paths, fixed_inputs):
 
 def no_vaccinations_after_feb_15(paths, fixed_inputs):
     start_date = fixed_inputs["duration"]["start"]
-    end_date = fixed_inputs["duration"]["end"]
     init_start = start_date - pd.Timedelta(31, unit="D")
 
     vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
@@ -112,8 +111,10 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
     scenario_inputs = {
         "vaccination_models": vaccination_models,
         "contact_policies": _baseline_policies(fixed_inputs),
-        "rapid_test_models": _baseline_rapid_test_models(end_date),
-        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(end_date),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
     }
     return scenario_inputs
 
