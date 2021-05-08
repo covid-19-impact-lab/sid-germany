@@ -208,14 +208,16 @@ def meet_other_non_recurrent_contacts(states, params, seed):
         query=None,
         reduce_on_condition=False,
     )
-    affected_by_vacation = _identify_ppl_affected_by_vacation(states)
+    affected_in_case_of_vacation = _identify_ppl_affected_by_vacation(states)
 
     date = get_date(states)
     state_to_vacation = get_states_w_vacations(date, params)
     potential_vacation_contacts = _draw_potential_vacation_contacts(
         states, params, state_to_vacation, seed
     )
-    vacation_contacts = potential_vacation_contacts.where(affected_by_vacation, 0)
+    vacation_contacts = potential_vacation_contacts.where(
+        affected_in_case_of_vacation, 0
+    )
     contacts = contacts + vacation_contacts
 
     for params_entry, condition in [
@@ -235,9 +237,9 @@ def meet_other_non_recurrent_contacts(states, params, seed):
 
 
 def _identify_ppl_affected_by_vacation(states):
-    vacation_cols = ["school", "preschool", "nursery", "retired"]
+    affected_categories = ["school", "preschool", "nursery", "retired"]
     has_school_vacation = (
-        states["occupation"].isin(vacation_cols) | states["educ_worker"]
+        states["occupation"].isin(affected_categories) | states["educ_worker"]
     )
     # ~60% of individuals are in a household where someone has school vacations
     in_hh_with_vacation = has_school_vacation.groupby(states["hh_id"]).transform(np.any)
@@ -248,8 +250,8 @@ def _draw_potential_vacation_contacts(states, params, state_to_vacation, seed):
     np.random.seed(seed)
     fed_state_to_p_contact = {fed_state: 0 for fed_state in states["state"].unique()}
     for fed_state, vacation in state_to_vacation.items():
-        tup = ("additional_other_vacation_contact", "probability", vacation)
-        fed_state_to_p_contact[fed_state] = params.loc[tup, "value"]
+        loc = ("additional_other_vacation_contact", "probability", vacation)
+        fed_state_to_p_contact[fed_state] = params.loc[loc, "value"]
     p_contact = states["state"].map(fed_state_to_p_contact.get)
     vacation_contact = pd.Series(boolean_choices(p_contact), index=states.index)
     vacation_contact = vacation_contact.astype(int)
