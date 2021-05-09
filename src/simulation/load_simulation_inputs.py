@@ -1,4 +1,5 @@
 from functools import partial
+from pathlib import Path
 
 import pandas as pd
 
@@ -274,3 +275,38 @@ def get_simulation_dependencies(debug):
     }
 
     return out
+
+
+def named_scenarios_to_parametrization(named_scenarios, fast_flag):
+    """Convert named scenarios to parametrization.
+
+    Each named scenario is duplicated with different seeds to capture the uncertainty in
+    the simulation..
+
+    """
+    scenarios = []
+    for name, specs in named_scenarios.items():
+        for seed in range(specs["n_seeds"]):
+            produces = create_path_to_last_states_of_simulation(fast_flag, name, seed)
+            scaled_seed = 500 + 100_000 * seed
+            spec_tuple = (
+                specs["policy_scenario"],
+                specs["params_scenario"],
+                specs["start_date"],
+                specs["end_date"],
+                produces,
+                scaled_seed,
+            )
+            scenarios.append(spec_tuple)
+
+    return scenarios
+
+
+def create_path_to_last_states_of_simulation(fast_flag, name, seed):
+    return Path(
+        BLD
+        / "simulations"
+        / f"{fast_flag}_{name}_{seed}"
+        / "last_states"
+        / "last_states.parquet"
+    )

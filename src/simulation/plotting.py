@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import sid
 from matplotlib.dates import AutoDateLocator
 from matplotlib.dates import DateFormatter
-from sid.colors import get_colors
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
@@ -96,7 +96,7 @@ def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
         fig, ax
 
     """
-    colors = get_colors("categorical", len(incidences))
+    colors = sid.get_colors("categorical", len(incidences))
     # 3rd entry is not well distinguishable from the first
     if len(colors) >= 3:
         colors[2] = "#2E8B57"  # seagreen
@@ -123,10 +123,10 @@ def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
                 linewidth=0.5,
                 alpha=0.2,
             )
-    if rki is not False:
+    if rki:
         rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
         rki_dates = rki_data.index.get_level_values("date")
-        keep_dates = sorted(x for x in rki_dates if x in dates)
+        keep_dates = rki_dates.intersection(dates).unique().sort_values()
         cropped_rki = rki_data.loc[keep_dates]
         national_data = cropped_rki.groupby("date").sum()
         if rki == "new_known_case":
