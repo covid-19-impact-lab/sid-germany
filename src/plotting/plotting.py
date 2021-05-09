@@ -1,3 +1,5 @@
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -80,16 +82,18 @@ def calculate_virus_strain_shares(results):
     return strain_shares
 
 
-def plot_incidences(incidences, n_single_runs, title, name_to_label, rki=False):
+def plot_incidences(
+    incidences, title, name_to_label, n_single_runs: Optional[int] = None, rki=False
+):
     """Plot incidences.
 
     Args:
-        incidences (dict): keys are names of the scenarios,
-            values are dataframes where each column is the
-            incidence of interest of one run
-        n_single_runs (int): number of individual runs to
-            visualize to show statistical uncertainty.
+        incidences (dict): keys are names of the scenarios, values are dataframes where
+            each column is the incidence of interest of one run
         title (str): plot title.
+        n_single_runs (Optional[int]): Number of individual runs with different seeds
+            visualize to show statistical uncertainty. Passing ``None`` will plot all
+            runs.
         rki (bool): Whether to plot the rki data.
 
     Returns:
