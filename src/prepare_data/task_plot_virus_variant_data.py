@@ -5,8 +5,8 @@ import seaborn as sns
 from sid import get_colors
 
 from src.config import BLD
+from src.plotting.plotting import style_plot
 from src.prepare_data.task_prepare_virus_variant_data import STRAIN_FILES
-from src.simulation.plotting import style_plot
 
 
 @pytask.mark.depends_on(STRAIN_FILES)

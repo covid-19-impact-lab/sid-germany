@@ -2,10 +2,10 @@ import dask.dataframe as dd
 import pytask
 
 from src.config import BLD
+from src.plotting.plotting import weekly_incidences_from_results
 from src.simulation.load_simulation_inputs import (
     create_path_to_last_states_of_simulation,
 )
-from src.simulation.plotting import weekly_incidences_from_results
 from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
 

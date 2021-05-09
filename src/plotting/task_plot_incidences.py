@@ -3,7 +3,7 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
-from src.simulation.plotting import plot_incidences
+from src.plotting.plotting import plot_incidences
 from src.simulation.task_process_simulation_outputs import (
     create_path_for_weekly_outcome_of_scenario,
 )
@@ -13,7 +13,7 @@ from src.simulation.task_run_simulation import NAMED_SCENARIOS
 
 
 def create_path_for_figure_of_weekly_outcome_of_scenario(name, fast_flag, outcome):
-    return BLD / "simulations" / "figures" / f"{fast_flag}_{name}_{outcome}.png"
+    return BLD / "figures" / f"{fast_flag}_{name}_{outcome}.png"
 
 
 def create_parametrization(named_scenarios, fast_flag, outcomes):
