@@ -50,7 +50,7 @@ for name, specs in NAMED_SCENARIOS.items():
         produces = Path(
             BLD
             / "simulations"
-            / f"{name}_{seed}"
+            / f"f{FAST_FLAG}_{name}_{seed}"
             / "last_states"
             / "last_states.parquet"
         )
