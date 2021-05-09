@@ -1,8 +1,7 @@
-from typing import List
-
 import numba as nb
 import numpy as np
 import pandas as pd
+from sid.shared import boolean_choices
 from sid.time import get_date
 
 from src.shared import from_epochs_to_timestamps
@@ -194,8 +193,73 @@ def meet_hh_members(states, params, seed):  # noqa: U100
     return meet_hh
 
 
+def meet_other_non_recurrent_contacts(states, params, seed):
+    """Meet other non recurrent contacts.
+
+    Individuals in households with educ_workers, retired and children have
+    additional contacts during vacations.
+
+    """
+    contacts = calculate_non_recurrent_contacts_from_empirical_distribution(
+        states=states,
+        params=params.loc["other_non_recurrent"],
+        seed=seed,
+        on_weekends=True,
+        query=None,
+        reduce_on_condition=False,
+    )
+    affected_in_case_of_vacation = _identify_ppl_affected_by_vacation(states)
+
+    date = get_date(states)
+    state_to_vacation = get_states_w_vacations(date, params)
+    potential_vacation_contacts = _draw_potential_vacation_contacts(
+        states, params, state_to_vacation, seed
+    )
+    vacation_contacts = potential_vacation_contacts.where(
+        affected_in_case_of_vacation, 0
+    )
+    contacts = contacts + vacation_contacts
+
+    for params_entry, condition in [
+        ("symptomatic_multiplier", states["symptomatic"]),
+        ("positive_test_multiplier", states["knows_currently_infected"]),
+    ]:
+        contacts = reduce_contacts_on_condition(
+            contacts,
+            states,
+            params.loc[("other_non_recurrent", params_entry, params_entry), "value"],
+            condition,
+            is_recurrent=False,
+        )
+
+    contacts = contacts.astype(int)
+    return contacts
+
+
+def _identify_ppl_affected_by_vacation(states):
+    affected_categories = ["school", "preschool", "nursery", "retired"]
+    has_school_vacation = (
+        states["occupation"].isin(affected_categories) | states["educ_worker"]
+    )
+    # ~60% of individuals are in a household where someone has school vacations
+    in_hh_with_vacation = has_school_vacation.groupby(states["hh_id"]).transform(np.any)
+    return in_hh_with_vacation
+
+
+def _draw_potential_vacation_contacts(states, params, state_to_vacation, seed):
+    np.random.seed(seed)
+    fed_state_to_p_contact = {fed_state: 0 for fed_state in states["state"].unique()}
+    for fed_state, vacation in state_to_vacation.items():
+        loc = ("additional_other_vacation_contact", "probability", vacation)
+        fed_state_to_p_contact[fed_state] = params.loc[loc, "value"]
+    p_contact = states["state"].map(fed_state_to_p_contact.get)
+    vacation_contact = pd.Series(boolean_choices(p_contact), index=states.index)
+    vacation_contact = vacation_contact.astype(int)
+    return vacation_contact
+
+
 def calculate_non_recurrent_contacts_from_empirical_distribution(
-    states, params, on_weekends, seed, query=None
+    states, params, on_weekends, seed, query=None, reduce_on_condition=True
 ):
     """Draw how many non recurrent contacts each person will have today.
 
@@ -239,17 +303,19 @@ def calculate_non_recurrent_contacts_from_empirical_distribution(
             states=states,
             seed=seed,
         )
-        for params_entry, condition in [
-            ("symptomatic_multiplier", states["symptomatic"]),
-            ("positive_test_multiplier", states["knows_currently_infected"]),
-        ]:
-            contacts = reduce_contacts_on_condition(
-                contacts,
-                states,
-                params.loc[(params_entry, params_entry), "value"],
-                condition,
-                is_recurrent=False,
-            )
+
+        if reduce_on_condition:
+            for params_entry, condition in [
+                ("symptomatic_multiplier", states["symptomatic"]),
+                ("positive_test_multiplier", states["knows_currently_infected"]),
+            ]:
+                contacts = reduce_contacts_on_condition(
+                    contacts,
+                    states,
+                    params.loc[(params_entry, params_entry), "value"],
+                    condition,
+                    is_recurrent=False,
+                )
     contacts = contacts.astype(float)
     return contacts
 
@@ -379,30 +445,35 @@ def _pupils_having_vacations_do_not_attend(attends_facility, states, params):
     """Make pupils stay away from school if their state has vacations."""
     attends_facility = attends_facility.copy(deep=True)
     date = get_date(states)
-    states_w_vacations = get_states_w_vacations(date, params)
+    states_w_vacations = get_states_w_vacations(date, params).keys()
     has_vacation = states.state.isin(states_w_vacations)
     attends_facility.loc[attends_facility & has_vacation] = False
 
     return attends_facility
 
 
-def get_states_w_vacations(date: pd.Timestamp, params: pd.DataFrame) -> List[str]:
-    """Get states which currently have vacations for pupils."""
+def get_states_w_vacations(date: pd.Timestamp, params: pd.DataFrame) -> dict:
+    """Get states which currently have vacations for pupils.
+
+    Returns:
+        state_to_vacation_name (dict): keys are the states that have vacations
+            on the current date. Values are the names of the vacation.
+
+    """
     vacations = params.filter(like="ferien", axis=0).copy()
     if vacations.empty:
         raise ValueError("'params' does not contain any information about vacations.")
-    else:
-        # Dates are stored as epochs so that value can be a numeric column.
-        vacations["value"] = from_epochs_to_timestamps(vacations["value"])
-        vacations = vacations.groupby(vacations.index.names)["value"].first().unstack()
-        latest_vacation_date = vacations["end"].max()
-        assert (
-            date <= latest_vacation_date
-        ), f"Vacations are only known until {latest_vacation_date}"
 
-        has_vacations = (vacations["start"] <= date) & (date <= vacations["end"])
-        states = (
-            vacations.loc[has_vacations].index.get_level_values("subcategory").unique()
-        ).tolist()
+    # Dates are stored as epochs so that value can be a numeric column.
+    vacations["value"] = from_epochs_to_timestamps(vacations["value"])
+    vacations = vacations.groupby(vacations.index.names)["value"].first().unstack()
+    latest_vacation_date = vacations["end"].max()
+    assert (
+        date <= latest_vacation_date
+    ), f"Vacations are only known until {latest_vacation_date}"
 
-    return states
+    has_vacations = (vacations["start"] <= date) & (date <= vacations["end"])
+    state_to_vacation = {
+        state: name for name, state in has_vacations[has_vacations].index
+    }
+    return state_to_vacation

@@ -7,6 +7,7 @@ from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
 from src.simulation.load_simulation_inputs import named_scenarios_to_parametrization
 
+
 DEPENDENCIES = get_simulation_dependencies(debug=FAST_FLAG == "debug")
 
 
@@ -25,6 +26,7 @@ else:
         "Only 'debug', 'verify' or 'full' are allowed."
     )
 
+
 NAMED_SCENARIOS = {
     "fall_baseline": {
         "policy_scenario": "baseline",
@@ -41,6 +43,7 @@ NAMED_SCENARIOS = {
         "n_seeds": n_baseline_seeds,
     },
 }
+
 
 SCENARIOS = named_scenarios_to_parametrization(NAMED_SCENARIOS, FAST_FLAG)
 
