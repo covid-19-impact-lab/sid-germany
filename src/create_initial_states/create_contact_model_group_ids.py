@@ -356,11 +356,11 @@ def _identify_adult_staying_home_when_schools_close(df):
     df = df.copy(deep=True)
 
     df["is_under_14"] = df["age"] < 14
-    hh_has_young_child = df.groupby("hh_id")["is_under_14"].transform("any")
+    hh_has_young_child = df.groupby("hh_id")["is_under_14"].transform(np.any)
 
     not_working = df["occupation"].isin(["retired", "stays_home"])
     df["non_working_adult"] = not_working & (df["age"] > 18)
-    has_non_working_adult = df.groupby("hh_id")["non_working_adult"].transform("any")
+    has_non_working_adult = df.groupby("hh_id")["non_working_adult"].transform(np.any)
 
     oldest_adult_in_hh = df["age"] == df.groupby("hh_id")["age"].transform("max")
     oldest_in_hh_with_kids = oldest_adult_in_hh & hh_has_young_child

@@ -3,14 +3,14 @@ from functools import partial
 import pytest
 
 from src.policies.domain_level_policy_blocks import _get_base_policy
-from src.policies.domain_level_policy_blocks import implement_general_schooling_policy
+from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
 from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_other_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
 from src.policies.domain_level_policy_blocks import reopen_other_models
 from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.domain_level_policy_blocks import shut_down_other_models
-from src.policies.single_policy_functions import apply_educ_policy
+from src.policies.single_policy_functions import mixed_educ_policy
 from src.policies.single_policy_functions import reduce_recurrent_model
 from src.policies.single_policy_functions import reduce_work_model
 from src.policies.single_policy_functions import reopen_other_model
@@ -56,6 +56,7 @@ def test_shut_down_educ_models(contact_models):
             "end_date": "2020-10-31",
             "prefix": "sd_educ",
         },
+        educ_type="all",
     )
 
     expected = {
@@ -134,7 +135,7 @@ def test_reduce_educ_models(contact_models):
         "end_date": "2020-10-20",
         "prefix": "reduce",
     }
-    res = reduce_educ_models(contact_models, block_info, 0.5)
+    res = reduce_educ_models(contact_models, block_info, "all", 0.5)
     expected = {
         "reduce_educ1": {
             "affected_contact_model": "educ1",
@@ -243,30 +244,39 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
         },
         "other": {},
     }
-    res = implement_general_schooling_policy(
+    res1 = apply_mixed_educ_policies(
         contact_models,
         block_info,
-        educ_options={
-            "school": {
-                "a_b_query": "occupation == 'school' & age > 10",
-                "non_a_b_attend": True,
-                "hygiene_multiplier": 0.3,
-            },
-            "nursery": {"hygiene_multiplier": 0.8, "always_attend_query": "bla"},
-        },
-        other_educ_multiplier=0.5,
+        educ_type="school",
+        a_b_query="occupation == 'school' & age > 10",
+        non_a_b_attend=True,
+        hygiene_multiplier=0.3,
+        always_attend_query="bla",
     )
-    expected = {
+
+    res2 = apply_mixed_educ_policies(
+        contact_models,
+        block_info,
+        educ_type="young_educ",
+        a_b_query=False,
+        non_a_b_attend=True,
+        hygiene_multiplier=0.8,
+        always_attend_query="bla",
+    )
+
+    expected1 = {
         "test_educ_school_1": {
             "affected_contact_model": "educ_school_1",
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                apply_educ_policy,
+                mixed_educ_policy,
                 group_id_column="school_id_1",
                 a_b_query="occupation == 'school' & age > 10",
                 non_a_b_attend=True,
                 hygiene_multiplier=0.3,
+                always_attend_query="bla",
+                a_b_rhythm=None,
             ),
         },
         "test_educ_school_2": {
@@ -274,20 +284,31 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                apply_educ_policy,
+                mixed_educ_policy,
                 group_id_column="school_id_2",
                 a_b_query="occupation == 'school' & age > 10",
                 non_a_b_attend=True,
                 hygiene_multiplier=0.3,
+                always_attend_query="bla",
+                a_b_rhythm=None,
             ),
         },
+    }
+    compare_policy_dicts(res1, expected1)
+
+    expected2 = {
         "test_educ_preschool_0": {
             "affected_contact_model": "educ_preschool_0",
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                reduce_recurrent_model,
-                multiplier=0.5,
+                mixed_educ_policy,
+                group_id_column="preschool_id",
+                a_b_query=False,
+                non_a_b_attend=True,
+                hygiene_multiplier=0.8,
+                always_attend_query="bla",
+                a_b_rhythm=None,
             ),
         },
         "test_educ_nursery_0": {
@@ -295,14 +316,17 @@ def test_implement_a_b_schooling_above_age_with_reduced_other_educ_models():
             "start": "2020-10-10",
             "end": "2020-10-20",
             "policy": partial(
-                apply_educ_policy,
+                mixed_educ_policy,
                 group_id_column="nursery_id",
+                a_b_query=False,
+                non_a_b_attend=True,
                 hygiene_multiplier=0.8,
                 always_attend_query="bla",
+                a_b_rhythm=None,
             ),
         },
     }
-    compare_policy_dicts(res, expected)
+    compare_policy_dicts(res2, expected2)
 
 
 def test_get_base_policy():

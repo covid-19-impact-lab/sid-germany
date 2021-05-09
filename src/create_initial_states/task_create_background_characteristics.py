@@ -5,7 +5,6 @@ import pytask
 
 from src.config import BLD
 from src.config import N_HOUSEHOLDS
-from src.config import SHARE_REFUSE_VACCINATION
 from src.config import SRC
 from src.create_initial_states.create_contact_model_group_ids import (
     add_contact_model_group_ids,
@@ -50,6 +49,7 @@ from src.shared import create_age_groups_rki
         / "contact_models"
         / "empirical_distributions"
         / "other_recurrent_weekly.pkl",
+        "params": BLD / "params.pkl",
     }
 )
 @pytask.mark.produces(
@@ -65,6 +65,10 @@ def task_create_initial_states_microcensus(depends_on, produces):
     work_weekly_dist = pd.read_pickle(depends_on["work_weekly_dist"])
     other_daily_dist = pd.read_pickle(depends_on["other_daily_dist"])
     other_weekly_dist = pd.read_pickle(depends_on["other_weekly_dist"])
+    params = pd.read_pickle(depends_on["params"])
+    no_vaccination_share = params.loc[
+        ("vaccinations", "share_refuser", "share_refuser"), "value"
+    ]
 
     for n_hhs, path in produces.items():
         df = _build_initial_states(
@@ -76,6 +80,7 @@ def task_create_initial_states_microcensus(depends_on, produces):
             other_weekly_dist=other_weekly_dist,
             n_households=n_hhs,
             seed=4874,
+            no_vaccination_share=no_vaccination_share,
         )
         df.to_parquet(path)
 
@@ -89,6 +94,7 @@ def _build_initial_states(
     other_weekly_dist,
     n_households,
     seed,
+    no_vaccination_share,
 ):
     mc = _prepare_microcensus(mc)
 
@@ -123,12 +129,12 @@ def _build_initial_states(
     adult_at_home = (df["occupation"].isin(["stays home", "retired"])) & (
         df["age"] >= 18
     )
-    df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(any)
+    df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(np.any)
     df["educ_contact_priority"] = _create_educ_contact_priority(df)
 
     df["vaccination_group"] = create_vaccination_group(states=df, seed=484)
     df["vaccination_rank"] = create_vaccination_rank(
-        df["vaccination_group"], share_refuser=SHARE_REFUSE_VACCINATION, seed=909
+        df["vaccination_group"], share_refuser=no_vaccination_share, seed=909
     )
 
     # This is uncorrelated with the work contact priority.

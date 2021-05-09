@@ -1,9 +1,23 @@
 import pandas as pd
+import pytest
 
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 
 
-def test_find_people_to_vaccinate_no_refusers():
+@pytest.fixture
+def params():
+    index = pd.MultiIndex.from_tuples(
+        [("vaccinations", "share_refuser", "share_refuser")]
+    )
+    params = pd.DataFrame(
+        data=1.0,
+        index=index,
+        columns=["value"],
+    )
+    return params
+
+
+def test_find_people_to_vaccinate_no_refusers(params):
     states = pd.DataFrame()
     states["vaccination_rank"] = [0.35, 0.45, 0.25, 0.15, 0.85, 0.55]
     states["date"] = pd.Timestamp("2021-02-03")
@@ -23,20 +37,21 @@ def test_find_people_to_vaccinate_no_refusers():
     res = find_people_to_vaccinate(
         receives_vaccine=None,
         states=states,
-        params=None,
+        params=params,
         seed=33,
         vaccination_shares=vaccination_shares,
-        no_vaccination_share=1.0,
         init_start=pd.Timestamp("2021-01-15"),
     )
 
     pd.testing.assert_series_equal(expected, res, check_names=False)
 
 
-def test_find_people_to_vaccinate_with_refusers():
+def test_find_people_to_vaccinate_with_refusers(params):
     states = pd.DataFrame()
     states["vaccination_rank"] = [0.35, 0.45, 0.25, 0.15, 0.85, 0.55]
     states["date"] = pd.Timestamp("2021-02-03")
+
+    params["value"] = [0.5]
 
     vaccination_shares = pd.Series(
         [0.1, 0.2, 0.5],  # 0.3 to 0.8 should get vaccinated
@@ -53,17 +68,16 @@ def test_find_people_to_vaccinate_with_refusers():
     res = find_people_to_vaccinate(
         receives_vaccine=None,
         states=states,
-        params=None,
+        params=params,
         seed=33,
         vaccination_shares=vaccination_shares,
-        no_vaccination_share=0.5,
         init_start=pd.Timestamp("2021-01-15"),
     )
 
     pd.testing.assert_series_equal(expected, res, check_names=False)
 
 
-def test_find_people_to_vaccinate_start_date():
+def test_find_people_to_vaccinate_start_date(params):
     states = pd.DataFrame()
     states["vaccination_rank"] = [0.35, 0.45, 0.25, 0.15, 0.85, 0.55]
     states["date"] = pd.Timestamp("2021-02-03")
@@ -82,10 +96,9 @@ def test_find_people_to_vaccinate_start_date():
     res = find_people_to_vaccinate(
         receives_vaccine=None,
         states=states,
-        params=None,
+        params=params,
         seed=33,
         vaccination_shares=vaccination_shares,
-        no_vaccination_share=1.0,
         init_start=pd.Timestamp("2021-02-03"),
     )
 

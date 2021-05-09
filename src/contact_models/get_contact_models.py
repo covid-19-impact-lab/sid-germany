@@ -157,13 +157,8 @@ def get_other_non_recurrent_contact_model():
     other_non_recurrent_contact_model = {
         "other_non_recurrent": {
             "is_recurrent": False,
-            "loc": "other_non_recurrent",
             "assort_by": ["age_group", "county"],
-            "model": partial(
-                cm_funcs.calculate_non_recurrent_contacts_from_empirical_distribution,
-                on_weekends=True,
-                query=None,
-            ),
+            "model": cm_funcs.meet_other_non_recurrent_contacts,
         }
     }
     return other_non_recurrent_contact_model
