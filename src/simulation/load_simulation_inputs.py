@@ -102,13 +102,14 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
 
     saved_columns = {
         "initial_states": ["age_group_rki"],
-        "disease_states": ["newly_infected", "infectious", "ever_infected"],
+        "disease_states": ["newly_infected", "newly_deceased", "ever_infected"],
         "time": ["date"],
         "other": [
             "new_known_case",
             "virus_strain",
             "n_has_infected",
-            "pending_test",
+            "channel_infected_by_contact",
+            "state",
         ],
     }
 

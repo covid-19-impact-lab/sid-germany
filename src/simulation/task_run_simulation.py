@@ -31,7 +31,7 @@ NAMED_SCENARIOS = {
     "fall_baseline": {
         "policy_scenario": "baseline",
         "params_scenario": "baseline",
-        "start_date": "2020-10-01",
+        "start_date": "2020-10-15",
         "end_date": "2020-12-23",
         "n_seeds": n_baseline_seeds,
     },
