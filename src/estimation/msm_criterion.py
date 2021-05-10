@@ -6,6 +6,7 @@ import pandas as pd
 from sid import get_msm_func
 from sid import get_simulate_func
 from sid.msm import get_diag_weighting_matrix
+from sid.plotting import prepare_data_for_infection_rates_by_contact_models
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
@@ -78,12 +79,17 @@ def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
         state_weights=state_sizes / state_sizes.sum(),
     )
 
+    additional_outputs = {
+        "infection_channels": prepare_data_for_infection_rates_by_contact_models,
+    }
+
     msm_func = get_msm_func(
         simulate=functools.partial(_simulate_wrapper, simulate=simulate),
         calc_moments=calc_moments,
         empirical_moments=empirical_moments,
         replace_nans=lambda x: x * 1,
         weighting_matrix=weight_mat,
+        additional_outputs=additional_outputs,
     )
 
     res = msm_func(params)

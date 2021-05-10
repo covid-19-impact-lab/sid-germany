@@ -4,6 +4,7 @@ import matplotlib.ticker as ticker
 import pandas as pd
 import seaborn as sns
 from estimagic.visualization.colors import get_colors
+from sid.plotting import plot_infection_rates_by_contact_models
 
 
 plt.rcParams.update(
@@ -16,6 +17,15 @@ plt.rcParams.update(
 
 
 def plot_estimation_moment(results, name):
+    """Visualize an estimation moment over several runs.
+
+    It is assumed that the entries in results only differ by their random seed.
+
+    Args:
+        results (list): List of msm criterion outputs
+        name (str): Name of the estimation moment.
+
+    """
     moment_name, group_name = _split_name(name)
 
     if group_name is not None:
@@ -147,3 +157,70 @@ def _split_name(name):
 
 def _sort_age_groups(age_groups):
     return sorted(age_groups, key=lambda x: int(x.split("-")[0]))
+
+
+def plot_infection_channels(results, aggregate=False):
+    """Plot average infection channels over several runs.
+
+    It is assumed that the entries in results only differ by their random seed.
+
+    Args:
+        results (list): List of msm criterion outputs
+        aggregate (bool): Whether contact models are aggregated over the domains
+            work, households, school, young_educ and other.
+
+    """
+    to_concat = []
+    for i, res in enumerate(results):
+        df = res["infection_channels"].copy()
+        df["run"] = i
+        to_concat.append(df)
+
+    raw_channels = pd.concat(to_concat)
+
+    channels = (
+        raw_channels.groupby(
+            [pd.Grouper(key="date", freq="D"), "channel_infected_by_contact"]
+        )["share"]
+        .mean()
+        .dropna(how="any")
+        .reset_index()
+    )
+
+    if aggregate:
+        channels = _aggregate_models_over_domain(channels)
+
+    plot = plot_infection_rates_by_contact_models(channels)
+    return plot
+
+
+def _aggregate_models_over_domain(df):
+    df = df.copy(deep=True)
+    categories = df["channel_infected_by_contact"].unique()
+    replace_dict = {}
+    for cat in categories:
+        if "work" in cat:
+            replace_dict[cat] = "work"
+        elif "other" in cat:
+            replace_dict[cat] = "other"
+        elif "_school" in cat:
+            replace_dict[cat] = "school"
+        elif "educ" in cat:
+            replace_dict[cat] = "young_educ"
+        elif "households" in cat:
+            replace_dict[cat] = "households"
+        else:
+            raise ValueError(f"Invalid category: {cat}")
+
+    df["channel_infected_by_contact"] = df["channel_infected_by_contact"].replace(
+        replace_dict
+    )
+    df = (
+        df.groupby([pd.Grouper(key="date", freq="D"), "channel_infected_by_contact"])[
+            "share"
+        ]
+        .sum()
+        .reset_index()
+    )
+
+    return df
