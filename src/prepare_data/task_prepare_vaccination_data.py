@@ -59,7 +59,7 @@ def task_prepare_vaccination_data(depends_on, produces):
     dayname_to_mean = after_start.groupby(after_start.index.day_name()).mean()
 
     start_date = vaccination_shares.index.max() + pd.Timedelta(days=1)
-    end_date = start_date + pd.Timedelta(weeks=6)
+    end_date = start_date + pd.Timedelta(weeks=12)
     future_dates = pd.date_range(start_date, end_date)
     future_day_names = future_dates.day_name()
     future_values = future_day_names.to_series().replace(dayname_to_mean)

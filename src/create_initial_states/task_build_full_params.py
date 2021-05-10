@@ -228,6 +228,7 @@ def _add_work_rapid_test_params(params):
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
     params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
+    params.loc[(*offer_loc, "2025-12-13"), "value"] = 0.7
     return params
 
 
