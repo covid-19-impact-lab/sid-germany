@@ -75,9 +75,6 @@ def run_2d_gridsearch(
     grid_x = np.linspace(*gridspec1)
     grid_y = np.linspace(*gridspec2)
 
-    indexer = np.full(mask.shape, -1, dtype=int)
-    indexer[mask] = np.arange(mask.sum())
-
     reverse_indexer = np.zeros((mask.sum(), 2), dtype=int)
     counter = 0
     for i, j in itertools.product(range(len(grid_x)), range(len(grid_y))):
