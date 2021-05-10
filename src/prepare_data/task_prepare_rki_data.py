@@ -61,6 +61,18 @@ AGE_GROUPS_TO_INTERVALS = {
     "unbekannt": np.nan,
 }
 
+# Translate those states that have an English name to English
+# Needed to align with initial states
+TRANSLATE_STATES = {
+    "Nordrhein-Westfalen": "North Rhine-Westphalia",
+    "Rheinland-Pfalz": "Rhineland-Palatinate",
+    "Niedersachsen": "Lower Saxony",
+    "Sachsen": "Saxony",
+    "Bayern": "Bavaria",
+    "Sachsen-Anhalt": "Saxony-Anhalt",
+    "Thüringen": "Thuringia",
+}
+
 
 @pytask.mark.depends_on(
     {
@@ -97,6 +109,13 @@ def task_prepare_rki_data(depends_on, produces):
     df["newly_infected"] = df["n_cases"] * df["type_case"].isin([0, 1])
     df["newly_deceased"] = df["n_deaths"] * df["type_death"].isin([0, 1])
 
+    county_to_state = (
+        df[["county", "state"]]
+        .drop_duplicates("county")
+        .set_index("county")["state"]
+        .to_dict()
+    )
+
     gb = df.groupby(["date", "county", "age_group_rki"])
     summed = gb[["newly_infected", "newly_deceased"]].sum()
     summed = summed.fillna(0)
@@ -105,6 +124,9 @@ def task_prepare_rki_data(depends_on, produces):
     # 2020-02-08 started missing on 2021-02-24.
     cropped = summed.loc[pd.Timestamp("2020-02-09") : one_week_ago]  # noqa: E203
     cropped = cropped.sort_index()
+    cropped["state"] = cropped.index.get_level_values("county")
+    cropped["state"] = cropped["state"].replace(county_to_state)
+    cropped["state"] = cropped["state"].replace(TRANSLATE_STATES)
 
     undetected_multiplier = 1 / share_known_cases
     cropped["date"] = cropped.index.get_level_values("date")
