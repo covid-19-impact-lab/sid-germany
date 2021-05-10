@@ -1,3 +1,4 @@
+import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 
@@ -9,7 +10,7 @@ def smoothed_outcome_per_hundred_thousand_sim(
     window=14,
     min_periods=1,
     take_logs=True,
-    center=True,
+    center=False,
 ):
     df = df.reset_index()
     window, min_periods, groupby = _process_inputs(window, min_periods, groupby)
@@ -19,7 +20,7 @@ def smoothed_outcome_per_hundred_thousand_sim(
         .fillna(0)
     )
 
-    if not isinstance(df, pd.DataFrame):
+    if isinstance(df, dd.core.DataFrame):
         per_individual = per_individual.compute()
 
     out = _smooth_and_scale_daily_outcome_per_individual(
@@ -96,9 +97,11 @@ def _process_inputs(window, min_periods, groupby):
     if min_periods < 1:
         raise ValueError("min_periods must be >= 1")
 
-    if not isinstance(groupby, (type(None), str)):
-        raise ValueError("groupby must be a string.")
-
-    groupby = [groupby] if groupby is not None else []
+    if groupby is None:
+        groupby = []
+    elif isinstance(groupby, str):
+        groupby = [groupby]
+    else:
+        raise ValueError("groupby must be None or a string.")
 
     return window, min_periods, groupby

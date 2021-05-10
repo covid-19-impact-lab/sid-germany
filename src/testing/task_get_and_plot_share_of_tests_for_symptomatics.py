@@ -5,7 +5,7 @@ import seaborn as sns
 from estimagic.visualization.colors import get_colors
 
 from src.config import BLD
-from src.simulation.plotting import style_plot
+from src.plotting.plotting import style_plot
 from src.testing.shared import convert_weekly_to_daily
 from src.testing.shared import (
     get_date_from_year_and_week,

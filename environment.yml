@@ -18,6 +18,7 @@ dependencies:
   - estimagic>=0.1.2
   - fastparquet<0.5
   - jupyterlab
+  - holoviews
   - nodejs
   - numba
   - numpy

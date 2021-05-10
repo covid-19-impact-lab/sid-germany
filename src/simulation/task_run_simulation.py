@@ -1,13 +1,12 @@
-from pathlib import Path
-
 import pytask
 from sid import get_simulate_func
 
-from src.config import BLD
 from src.config import FAST_FLAG
 from src.simulation.load_params import load_params
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
+from src.simulation.load_simulation_inputs import named_scenarios_to_parametrization
+
 
 DEPENDENCIES = get_simulation_dependencies(debug=FAST_FLAG == "debug")
 
@@ -27,6 +26,7 @@ else:
         "Only 'debug', 'verify' or 'full' are allowed."
     )
 
+
 NAMED_SCENARIOS = {
     "fall_baseline": {
         "policy_scenario": "baseline",
@@ -44,26 +44,8 @@ NAMED_SCENARIOS = {
     },
 }
 
-SCENARIOS = []
-for name, specs in NAMED_SCENARIOS.items():
-    for seed in range(specs["n_seeds"]):
-        produces = Path(
-            BLD
-            / "simulations"
-            / f"f{FAST_FLAG}_{name}_{seed}"
-            / "last_states"
-            / "last_states.parquet"
-        )
-        scaled_seed = 500 + 100_000 * seed
-        spec_tuple = (
-            specs["policy_scenario"],
-            specs["params_scenario"],
-            specs["start_date"],
-            specs["end_date"],
-            produces,
-            scaled_seed,
-        )
-        SCENARIOS.append(spec_tuple)
+
+SCENARIOS = named_scenarios_to_parametrization(NAMED_SCENARIOS, FAST_FLAG)
 
 
 @pytask.mark.depends_on(DEPENDENCIES)
