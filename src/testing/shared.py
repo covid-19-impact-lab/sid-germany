@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from src.simulation.plotting import style_plot
+from src.plotting.plotting import style_plot
 
 
 def get_date_from_year_and_week(row):

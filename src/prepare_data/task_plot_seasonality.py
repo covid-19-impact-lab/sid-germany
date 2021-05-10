@@ -4,7 +4,7 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
-from src.simulation.plotting import style_plot
+from src.plotting.plotting import style_plot
 from src.simulation.seasonality import create_seasonality_series
 
 plt.rcParams.update(

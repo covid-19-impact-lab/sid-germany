@@ -1,4 +1,5 @@
 from functools import partial
+from pathlib import Path
 
 import pandas as pd
 
@@ -120,6 +121,7 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         reporting_delay=5,
         virus_shares=virus_shares,
         synthetic_data_path=paths["initial_states"],
+        reported_infections_path=paths["rki"],
     )
 
     if end_date <= pd.Timestamp("2021-01-01"):
@@ -269,6 +271,42 @@ def get_simulation_dependencies(debug):
         "rapid_test_reaction_models": SRC / "testing" / "rapid_test_reactions.py",
         "seasonality_factor_model": SRC / "simulation" / "seasonality.py",
         "params": BLD / "params.pkl",
+        "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
     }
 
     return out
+
+
+def named_scenarios_to_parametrization(named_scenarios, fast_flag):
+    """Convert named scenarios to parametrization.
+
+    Each named scenario is duplicated with different seeds to capture the uncertainty in
+    the simulation..
+
+    """
+    scenarios = []
+    for name, specs in named_scenarios.items():
+        for seed in range(specs["n_seeds"]):
+            produces = create_path_to_last_states_of_simulation(fast_flag, name, seed)
+            scaled_seed = 500 + 100_000 * seed
+            spec_tuple = (
+                specs["policy_scenario"],
+                specs["params_scenario"],
+                specs["start_date"],
+                specs["end_date"],
+                produces,
+                scaled_seed,
+            )
+            scenarios.append(spec_tuple)
+
+    return scenarios
+
+
+def create_path_to_last_states_of_simulation(fast_flag, name, seed):
+    return Path(
+        BLD
+        / "simulations"
+        / f"{fast_flag}_{name}_{seed}"
+        / "last_states"
+        / "last_states.parquet"
+    )
