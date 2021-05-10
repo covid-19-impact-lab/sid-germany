@@ -1,5 +1,6 @@
 prune tests
 prune docs
+prune **/.ipynb_checkpoints
 
 include LICENSE
 include *.yaml

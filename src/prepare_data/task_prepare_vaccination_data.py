@@ -6,7 +6,7 @@ from sid.colors import get_colors
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
-from src.simulation.plotting import style_plot
+from src.plotting.plotting import style_plot
 
 
 plt.rcParams.update(

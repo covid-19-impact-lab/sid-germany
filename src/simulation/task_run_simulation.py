@@ -1,13 +1,12 @@
-from pathlib import Path
-
 import pytask
 from sid import get_simulate_func
 
-from src.config import BLD
 from src.config import FAST_FLAG
 from src.simulation.load_params import load_params
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
+from src.simulation.load_simulation_inputs import named_scenarios_to_parametrization
+
 
 DEPENDENCIES = get_simulation_dependencies(debug=FAST_FLAG == "debug")
 
@@ -45,7 +44,7 @@ NAMED_SCENARIOS = {
     "fall_baseline": {
         "sim_input_scenario": "baseline",
         "params_scenario": "baseline",
-        "start_date": "2020-10-01",
+        "start_date": "2020-10-15",
         "end_date": "2020-12-23",
         "n_seeds": n_baseline_seeds,
     },
@@ -120,26 +119,7 @@ NAMED_SCENARIOS = {
     },
 }
 
-SCENARIOS = []
-for name, specs in NAMED_SCENARIOS.items():
-    for seed in range(specs["n_seeds"]):
-        produces = Path(
-            BLD
-            / "simulations"
-            / f"{FAST_FLAG}_{name}_{seed}"
-            / "last_states"
-            / "last_states.parquet"
-        )
-        scaled_seed = 500 + 100_000 * seed
-        spec_tuple = (
-            specs["sim_input_scenario"],
-            specs["params_scenario"],
-            specs["start_date"],
-            specs["end_date"],
-            produces,
-            scaled_seed,
-        )
-        SCENARIOS.append(spec_tuple)
+SCENARIOS = named_scenarios_to_parametrization(NAMED_SCENARIOS, FAST_FLAG)
 
 
 @pytask.mark.depends_on(DEPENDENCIES)

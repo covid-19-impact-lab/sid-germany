@@ -7,7 +7,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
-from src.simulation.plotting import style_plot
+from src.plotting.plotting import style_plot
 from src.testing.shared import get_piecewise_linear_interpolation
 
 
