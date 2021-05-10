@@ -25,11 +25,14 @@ def create_parametrization(named_scenarios, fast_flag, outcomes):
                 seed: create_path_to_last_states_of_simulation(fast_flag, name, seed)
                 for seed in range(specs["n_seeds"])
             }
-            produces = create_path_for_weekly_outcome_of_scenario(
-                name, fast_flag, outcome
-            )
 
-            parametrization.append((dependencies, outcome, produces))
+            # this handles the case of 0 seeds
+            if dependencies:
+                produces = create_path_for_weekly_outcome_of_scenario(
+                    name, fast_flag, outcome
+                )
+
+                parametrization.append((dependencies, outcome, produces))
 
     return "depends_on, outcome, produces", parametrization
 
