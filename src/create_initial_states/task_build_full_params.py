@@ -209,7 +209,7 @@ def _add_work_rapid_test_params(params):
 
     2021-04-15: 70% of workers expected to get weekly tests (https://bit.ly/32BqKhd)
     COSMO (https://bit.ly/3t1z0lf, 2021-04-20) report <2/3 of people having
-    work contacts receiving a test offer.
+    work contacts receiving a test offer. We summarize this as 2/3 getting a test.
 
     2021-04-19: employers are required by law to offer two weekly tests
     (https://bit.ly/3tJNUh1, https://bit.ly/2QfNctJ)
@@ -226,7 +226,6 @@ def _add_work_rapid_test_params(params):
     params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.2
     params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
-    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
     params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
     params.loc[(*offer_loc, "2025-12-13"), "value"] = 0.7
     return params

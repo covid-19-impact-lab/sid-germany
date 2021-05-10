@@ -24,7 +24,9 @@ def task_plot_share_of_workers_receiving_test_offer(depends_on, produces):
             ("rapid_test_demand", "share_workers_receiving_offer")
         ]
     share_workers_receiving_offer = get_piecewise_linear_interpolation(params_slice)
-    share_workers_receiving_offer = share_workers_receiving_offer.loc["2020-12-15":]
+    share_workers_receiving_offer = share_workers_receiving_offer.loc[
+        "2020-12-15":"2021-07-01"
+    ]
 
     fig, ax = plt.subplots(figsize=(8, 3))
     sns.lineplot(

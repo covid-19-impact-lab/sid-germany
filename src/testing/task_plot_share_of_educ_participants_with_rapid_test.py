@@ -24,10 +24,10 @@ def task_plot_share_of_educ_participants_with_rapid_test(depends_on, produces):
         students_params = params.loc[("rapid_test_demand", "student_shares")]
 
     share_educ_workers = get_piecewise_linear_interpolation(educ_workers_params)
-    share_educ_workers = share_educ_workers.loc["2021-01-01":]
+    share_educ_workers = share_educ_workers.loc["2021-01-01":"2021-07-01"]
 
     share_students = get_piecewise_linear_interpolation(students_params)
-    share_students = share_students.loc["2021-01-01":]
+    share_students = share_students.loc["2021-01-01":"2021-07-01"]
 
     fig, ax = plt.subplots(figsize=(8, 3))
     sns.lineplot(
