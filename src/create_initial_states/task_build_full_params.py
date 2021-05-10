@@ -78,14 +78,8 @@ def task_create_full_params(depends_on, produces):
     params.loc[("testing", "allocation", "rel_available_tests"), "value"] = 100_000
     params.loc[("testing", "processing", "rel_available_capacity"), "value"] = 100_000
 
-    # virus strain properties
-    params.loc[("virus_strain", "base_strain", "factor"), "value"] = 1.0
-    # source: https://doi.org/10.1101/2020.12.24.20248822
-    # "We estimate that this variant has a 43–90%
-    # (range of 95% credible intervals 38–130%) higher
-    # reproduction number than preexisting variants"
-    # currently we take the midpoint of 66%
-    params.loc[("virus_strain", "b117", "factor"), "value"] = 1.67
+    params = _add_virus_strain_params(params)
+    params = _add_vacation_model_distribution_params(params)
 
     # Share of individuals refusing to be vaccinated.
     # 80% of Germans are somewhat or definitely willing to be vaccinated.
@@ -94,56 +88,14 @@ def task_create_full_params(depends_on, produces):
     # source: https://bit.ly/3c9mTgX (publication date: 2021-03-02)
     params.loc[("vaccinations", "share_refuser", "share_refuser"), "value"] = 0.15
 
-    # Testing parameters governing rapid test demand
-    # -----------------------------------------------
-
     # source: https://bit.ly/3gHlcKd (section 3.5, 2021-03-09, accessed 2021-04-28)
     loc = ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test")
     params.loc[loc, "value"] = 0.4
 
-    # Only 60% of workers receiving a test offer accept it regularly
-    # source: https://bit.ly/3t1z0lf (COSMO, 2021-04-21)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 0.6
-
-    # assume start of rapid tests in firms in Jan 01
-    offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
-    params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
-    params.loc[(*offer_loc, "2021-01-01"), "value"] = 0.0
-
-    # 2021-03-17 - 2021-03-19: 20% of employers offer weekly test
-    # source: https://bit.ly/3eu0meK
-    # second half of March: 23% of workers report test offer
-    # source: https://bit.ly/3gANaan
-    params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.2
-    # 2021-04-05: 60% of workers get weekly test
-    # source: https://bit.ly/2RWCDMz
-    params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6
-    # 2021-04-15: 70% of workers are expected to get weekly tests
-    # source: https://bit.ly/32BqKhd
-    # COSMO (https://bit.ly/3t1z0lf, 2021-04-20) report <2/3 of people having
-    # work contacts receiving a test offer
-    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
-    # 2021-04-19: employers are required by law to offer weekly tests
-    # source: https://bit.ly/3tJNUh1, https://bit.ly/2QfNctJ
-    # receive test offers at work.
-    # There is no data available on compliance yet
-    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
-    params.loc[(*offer_loc, "2025-12-31"), "value"] = 0.7
-
+    params = _add_work_rapid_test_params(params)
     params = _add_educ_rapid_test_fade_in_params(params)
     params = _add_hh_rapid_test_fade_in_params(params)
-
-    # source: The COSMO Study of 2021-03-09
-    # source: https://bit.ly/3gHlcKd, 3.5 Verhalten nach positivem Selbsttest
-    # 85% would isolate ("isoliere mich und beschränke meine Kontakte bis zur Klärung")
-    #     => We use this multiplier of 0.15 here. We assume households are only
-    #     reduced by 30%, i.e. have a multiplier of 0.7.
-    params.loc[
-        ("rapid_test_demand", "reaction", "hh_contacts_multiplier"), "value"
-    ] = 0.7
-    params.loc[
-        ("rapid_test_demand", "reaction", "not_hh_contacts_multiplier"), "value"
-    ] = 0.15
+    params = _add_rapid_test_reaction_params(params)
 
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.2
@@ -208,6 +160,77 @@ def _build_reaction_params(contact_models):
     return df
 
 
+def _add_virus_strain_params(params):
+    """Add parameters governing the infectiousness of the virus strains.
+
+    source: https://doi.org/10.1101/2020.12.24.20248822
+    "We estimate that this variant has a 43–90% (range of 95% credible
+    intervals 38–130%) higher reproduction number than preexisting variants"
+
+    We take the midpoint of 67%.
+
+    """
+    params = params.copy(deep=True)
+    params.loc[("virus_strain", "base_strain", "factor"), "value"] = 1.0
+    params.loc[("virus_strain", "b117", "factor"), "value"] = 1.67
+    return params
+
+
+def _add_vacation_model_distribution_params(params):
+    params = params.copy(deep=True)
+    loc = ("additional_other_vacation_contact", "probability")
+    # 2020
+    params.loc[(*loc, "Winterferien"), "value"] = 0.2
+    params.loc[(*loc, "Osterferien"), "value"] = 0.2
+    params.loc[(*loc, "Pfingstferien"), "value"] = 0.2
+    params.loc[(*loc, "Sommerferien"), "value"] = 0.2
+    params.loc[(*loc, "Herbstferien"), "value"] = 0.2
+    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.2
+    # 2021
+    params.loc[(*loc, "Winterferien2021"), "value"] = 0.2
+    params.loc[(*loc, "Osterferien2021"), "value"] = 0.2
+    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.2
+    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.2
+    return params
+
+
+def _add_work_rapid_test_params(params):
+    """Add parameters governing the rapid test demand at work.
+
+    Only 60% of workers receiving a test offer accept it regularly
+    (https://bit.ly/3t1z0lf (COSMO, 2021-04-21))
+
+    We assume rapid tests in firms on Jan 01 2021.
+
+    2021-03-17-19: 20% of employers offer weekly test (https://bit.ly/3eu0meK)
+    second half of March: 23% of workers report test offer (https://bit.ly/3gANaan)
+
+    2021-04-05: 60% of workers get weekly test (https://bit.ly/2RWCDMz)
+
+    2021-04-15: 70% of workers expected to get weekly tests (https://bit.ly/32BqKhd)
+    COSMO (https://bit.ly/3t1z0lf, 2021-04-20) report <2/3 of people having
+    work contacts receiving a test offer.
+
+    2021-04-19: employers are required by law to offer two weekly tests
+    (https://bit.ly/3tJNUh1, https://bit.ly/2QfNctJ)
+    There is no data available on compliance or take-up yet.
+
+    """
+    params = params.copy(deep=True)
+
+    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 0.6
+
+    offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*offer_loc, "2021-01-01"), "value"] = 0.0
+    params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.2
+    params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6
+    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
+    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
+    params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
+    return params
+
+
 def _add_educ_rapid_test_fade_in_params(params):
     """Add the shares how many people with educ contacts get a rapid test.
 
@@ -257,6 +280,7 @@ def _add_educ_rapid_test_fade_in_params(params):
     params.loc[(*loc, "2021-04-07"), "value"] = 0.95
     params.loc[(*loc, "2021-04-19"), "value"] = 0.95
     params.loc[(*loc, "2021-06-01"), "value"] = 0.95
+    params.loc[(*loc, "2025-12-31"), "value"] = 0.95
 
     loc = ("rapid_test_demand", "student_shares")
     params.loc[(*loc, "2020-01-01"), "value"] = 0.0
@@ -265,6 +289,7 @@ def _add_educ_rapid_test_fade_in_params(params):
     params.loc[(*loc, "2021-04-07"), "value"] = 0.75
     params.loc[(*loc, "2021-04-19"), "value"] = 0.95
     params.loc[(*loc, "2021-06-01"), "value"] = 1.0
+    params.loc[(*loc, "2025-12-31"), "value"] = 1.0
 
     # Assume weekly tests before Easter and twice weekly tests after Easter
     # We should get a fade-in through different ends of Easter vaccation
@@ -298,8 +323,30 @@ def _add_hh_rapid_test_fade_in_params(params):
     params.loc[(*loc, "2021-05-01"), "value"] = 0.4
     params.loc[(*loc, "2021-05-15"), "value"] = 0.5
     params.loc[(*loc, "2021-06-01"), "value"] = 0.75
-    params.loc[(*loc, "2025-12-21"), "value"] = 0.75
+    params.loc[(*loc, "2025-12-31"), "value"] = 0.75
 
+    return params
+
+
+def _add_rapid_test_reaction_params(params):
+    """Add rapid test reaction params.
+
+    source: The COSMO Study of 2021-03-09 (https://bit.ly/3gHlcKd)
+    In section 3.5 "Verhalten nach positivem Selbsttest"
+    85% claim they would isolate ("isoliere mich und beschränke meine Kontakte
+    bis zur Klärung")
+        => We use this multiplier of 0.15 here.
+
+    We assume households are only reduced by 30%, i.e. have a multiplier of 0.7.
+
+    """
+    params = params.copy(deep=True)
+    params.loc[
+        ("rapid_test_demand", "reaction", "hh_contacts_multiplier"), "value"
+    ] = 0.7
+    params.loc[
+        ("rapid_test_demand", "reaction", "not_hh_contacts_multiplier"), "value"
+    ] = 0.15
     return params
 
 
@@ -327,7 +374,7 @@ def _build_share_known_cases_params():
             # free parameters
             "2021-01-01": 0.2,
             "2021-01-30": 0.31,
-            "2021-06-15": 0.31,
+            "2021-07-15": 0.31,
         },
         name="value",
     ).to_frame()

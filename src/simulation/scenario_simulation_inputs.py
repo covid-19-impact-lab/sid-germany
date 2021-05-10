@@ -49,7 +49,7 @@ def open_all_educ_after_scenario_start(paths, fixed_inputs):
 
 def open_all_educ_after_easter(paths, fixed_inputs):
     easter_monday = "2021-04-05"
-    out = open_all_educ_after_easter(
+    out = open_all_educ_after_date(
         paths=paths, fixed_inputs=fixed_inputs, split_date=easter_monday
     )
     return out
