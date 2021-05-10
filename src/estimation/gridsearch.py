@@ -63,7 +63,6 @@ def run_2d_gridsearch(
     n_cores,
     mask=None,
     names=("x_1", "x_2"),
-    plot_type="heatmap",
 ):
     """Run a grid search over two parameters."""
     # naming: _x refers to loc1, _y to loc2 and z to function values
@@ -75,19 +74,20 @@ def run_2d_gridsearch(
     grid_x = np.linspace(*gridspec1)
     grid_y = np.linspace(*gridspec2)
 
-    reverse_indexer = np.zeros((mask.sum(), 2), dtype=int)
+    dense_grid = np.zeros((mask.sum(), 2))
     counter = 0
-    for i, j in itertools.product(range(len(grid_x)), range(len(grid_y))):
-        if mask[i, j]:
-            reverse_indexer[counter] = [i, j]
-            counter += 1
+    for i, x in enumerate(grid_x):
+        for j, y in enumerate(grid_y):
+            if mask[i, j]:
+                dense_grid[counter] = x, y
+                counter += 1
 
     arguments = []
-    for i, j in reverse_indexer:
+    for x, y in dense_grid:
         for seed in seeds:
             p = params.copy(deep=True)
-            p.loc[loc1, "value"] = grid_x[i]
-            p.loc[loc2, "value"] = grid_y[j]
+            p.loc[loc1, "value"] = x
+            p.loc[loc2, "value"] = y
             arguments.append({"params": p, "seed": seed})
 
     results = joblib_batch_evaluator(
@@ -103,7 +103,6 @@ def run_2d_gridsearch(
     for row in reshaped_results:
         values = [res["value"] for res in row]
         avg_values.append(np.mean(values))
-    avg_values = np.array(avg_values)
 
     best_index = np.argmin(avg_values)
 
@@ -112,33 +111,18 @@ def run_2d_gridsearch(
 
     fig, ax = plt.subplots(figsize=(7, 6))
 
-    best_i_x, best_i_y = reverse_indexer[best_index]
-    best_x, best_y = grid_x[best_i_x], grid_y[best_i_y]
-
-    if plot_type == "contour":
-
-        ax.contourf(
-            grid_x,
-            grid_y,
-            filled_z.T,
-            levels=20,
-            cmap="YlOrBr",
-        )
-        ax.scatter(best_x, best_y, color="red")
-        ax.set_title("Contours of Criterion Evaluations")
-        ax.set_xlabel(names[0])
-        ax.set_ylabel(names[1])
-    elif plot_type == "heatmap":
-        df = pd.DataFrame(
-            data=filled_z,
-            index=map(lambda x: str(x.round(3)), grid_x),
-            columns=map(lambda x: str(x.round(3)), grid_y),
-        )
-        sns.heatmap(df, ax=ax, cmap="YlOrBr")
+    df = pd.DataFrame(
+        data=filled_z,
+        index=map(lambda x: str(x.round(3)), grid_x),
+        columns=map(lambda x: str(x.round(3)), grid_y),
+    )
+    sns.heatmap(df, ax=ax, cmap="YlOrBr")
 
     fig.tight_layout()
 
-    return reshaped_results, reverse_indexer, best_index, fig
+    plt.close()
+
+    return reshaped_results, dense_grid, best_index, fig
 
 
 def get_mask_around_diagonal(dim, offset=1, flip=True):
