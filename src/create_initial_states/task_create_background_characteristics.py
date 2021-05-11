@@ -152,6 +152,7 @@ def _build_initial_states(
 
     df.index.name = "index"
     df = _only_keep_relevant_columns(df)
+    np.random.seed(1337)
     df = df.sample(frac=1).reset_index(drop=True)
     return df
 
