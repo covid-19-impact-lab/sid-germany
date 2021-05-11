@@ -8,8 +8,9 @@ from sid import get_simulate_func
 from sid.msm import get_diag_weighting_matrix
 from sid.plotting import prepare_data_for_infection_rates_by_contact_models
 
+from src.calculate_moments import aggregate_and_smooth_period_outcome_sim
+from src.calculate_moments import calculate_period_outcome_sim
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
-from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
 from src.manfred.shared import hash_array
 
@@ -46,12 +47,16 @@ def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
 
     sim_start = simulate_kwargs["duration"]["start"]
     sim_end = simulate_kwargs["duration"]["end"]
+    period_outputs = _get_period_outputs_for_simulate()
 
     simulate = get_simulate_func(
         **simulate_kwargs,
         params=params,
         path=path,
         seed=seed,
+        period_outputs=period_outputs,
+        return_last_states=False,
+        return_time_series=False,
     )
 
     calc_moments = _get_calc_moments()
@@ -80,11 +85,11 @@ def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
     )
 
     additional_outputs = {
-        "infection_channels": prepare_data_for_infection_rates_by_contact_models,
+        "infection_channels": _aggregate_infection_channels,
     }
 
     msm_func = get_msm_func(
-        simulate=functools.partial(_simulate_wrapper, simulate=simulate),
+        simulate=simulate,
         calc_moments=calc_moments,
         empirical_moments=empirical_moments,
         replace_nans=lambda x: x * 1,
@@ -97,39 +102,58 @@ def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
     return res
 
 
-def _simulate_wrapper(params, simulate):
-    return simulate(params)["time_series"]
+def _aggregate_infection_channels(simulate_result):
+    return pd.concat(simulate_result["period_outputs"]["infection_channels"])
+
+
+def _get_period_outputs_for_simulate():
+    additional_outputs = {
+        "infections_by_age_group": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="new_known_case",
+            groupby="age_group_rki",
+        ),
+        "aggregated_deaths": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="newly_deceased",
+        ),
+        "infections_by_state": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="new_known_case",
+            groupby="state",
+        ),
+        "aggregated_infections": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="new_known_case",
+        ),
+        "infection_channels": prepare_data_for_infection_rates_by_contact_models,
+    }
+    return additional_outputs
 
 
 def _get_calc_moments():
-    kwargs = {"window": 7, "min_periods": 1}
-
     calc_moments = {
         "infections_by_age_group": functools.partial(
-            smoothed_outcome_per_hundred_thousand_sim,
-            outcome="new_known_case",
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="infections_by_age_group",
             groupby="age_group_rki",
             take_logs=True,
-            **kwargs,
         ),
         "aggregated_deaths": functools.partial(
-            smoothed_outcome_per_hundred_thousand_sim,
-            outcome="newly_deceased",
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="aggregated_deaths",
             take_logs=True,
-            **kwargs,
         ),
         "infections_by_state": functools.partial(
-            smoothed_outcome_per_hundred_thousand_sim,
-            outcome="new_known_case",
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="infections_by_state",
             groupby="state",
             take_logs=True,
-            **kwargs,
         ),
         "aggregated_infections": functools.partial(
-            smoothed_outcome_per_hundred_thousand_sim,
-            outcome="new_known_case",
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="aggregated_infections",
             take_logs=False,
-            **kwargs,
         ),
     }
     return calc_moments

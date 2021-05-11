@@ -3,14 +3,20 @@ import numpy as np
 import pandas as pd
 
 
+DEFAULT_WINDOW = 7
+DEFAULT_TAKE_LOGS = True
+DEFAULT_CENTER = False
+DEFAULT_MIN_PERIODS = 1
+
+
 def smoothed_outcome_per_hundred_thousand_sim(
     df,
     outcome,
     groupby=None,
-    window=14,
-    min_periods=1,
-    take_logs=True,
-    center=False,
+    window=DEFAULT_WINDOW,
+    min_periods=DEFAULT_MIN_PERIODS,
+    take_logs=DEFAULT_TAKE_LOGS,
+    center=DEFAULT_CENTER,
 ):
     df = df.reset_index()
     window, min_periods, groupby = _process_inputs(window, min_periods, groupby)
@@ -29,14 +35,50 @@ def smoothed_outcome_per_hundred_thousand_sim(
     return out
 
 
+def calculate_period_outcome_sim(df, outcome, groupby=None):
+    if groupby is None:
+        groupby = []
+    elif isinstance(groupby, str):
+        groupby = [groupby]
+
+    out = (
+        df.groupby([pd.Grouper(key="date", freq="D")] + groupby)[outcome]
+        .mean()
+        .fillna(0)
+    )
+
+    if isinstance(df, dd.core.DataFrame):
+        out = out.compute()
+
+    return out
+
+
+def aggregate_and_smooth_period_outcome_sim(
+    simulate_result,
+    outcome,
+    groupby=None,
+    window=DEFAULT_WINDOW,
+    min_periods=DEFAULT_MIN_PERIODS,
+    take_logs=DEFAULT_TAKE_LOGS,
+    center=DEFAULT_CENTER,
+):
+    period_outcomes = simulate_result["period_outputs"][outcome]
+    per_individual = pd.concat(period_outcomes)
+
+    out = _smooth_and_scale_daily_outcome_per_individual(
+        per_individual, window, min_periods, groupby, take_logs, center=center
+    )
+    return out
+
+
 def smoothed_outcome_per_hundred_thousand_rki(
     df,
     outcome,
     groupby=None,
-    window=7,
-    min_periods=1,
+    window=DEFAULT_WINDOW,
+    min_periods=DEFAULT_MIN_PERIODS,
     group_sizes=None,
-    take_logs=True,
+    take_logs=DEFAULT_TAKE_LOGS,
 ):
     df = df.reset_index()
     window, min_periods, groupby = _process_inputs(window, min_periods, groupby)
