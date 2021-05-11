@@ -122,9 +122,7 @@ def _add_educ_group_ids(df, seed):
     gb = df.groupby("school_group_id_0")
     df["pos_in_group"] = gb["one"].cumsum() - 1
     df["group_size"] = gb["one"].transform("size")
-    df["educ_a_b_identifier"] = df.eval("pos_in_group < group_size / 2").astype(
-        np.uint8
-    )
+    df["educ_a_b_identifier"] = df.eval("pos_in_group < group_size / 2")
 
     preschool_class_ids, updated_occupation = make_educ_group_columns(
         states=df,
