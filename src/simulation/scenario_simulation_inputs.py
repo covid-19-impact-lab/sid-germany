@@ -165,6 +165,7 @@ def _baseline_policies(fixed_inputs):
     end_date = fixed_inputs["duration"]["end"]
     policies = get_enacted_policies(fixed_inputs["contact_models"])
     policies = shorten_policies(policies, start_date, end_date)
+    return policies
 
 
 def _baseline_rapid_test_models(fixed_inputs):
