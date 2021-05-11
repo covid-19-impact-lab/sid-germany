@@ -37,6 +37,7 @@ def get_household_contact_model():
             "is_recurrent": True,
             "model": cm_funcs.meet_hh_members,
             "assort_by": ["hh_model_group_id"],
+            "is_factorized": True,
             "loc": "households",
         },
     }
@@ -59,6 +60,7 @@ def get_school_contact_models():
                     id_column=f"school_group_id_{i}",
                 ),
                 "assort_by": [f"school_group_id_{i}"],
+                "is_factorized": True,
             },
         }
         model_list.append(model)
@@ -75,6 +77,7 @@ def get_preschool_contact_model():
                 id_column="preschool_group_id_0",
             ),
             "assort_by": ["preschool_group_id_0"],
+            "is_factorized": True,
         }
     }
     return preschool_contact_model
@@ -89,6 +92,7 @@ def get_nursery_contact_model():
                 id_column="nursery_group_id_0",
             ),
             "assort_by": ["nursery_group_id_0"],
+            "is_factorized": True,
         },
     }
     return nursery_contact_model
@@ -120,6 +124,7 @@ def get_work_daily_contact_model():
         "work_recurrent_daily": {
             "is_recurrent": True,
             "assort_by": ["work_daily_group_id"],
+            "is_factorized": True,
             "model": cm_funcs.go_to_daily_work_meeting,
             "loc": "work_recurrent_daily",
         },
@@ -137,6 +142,7 @@ def get_work_weekly_contact_models():
         model = {
             "is_recurrent": True,
             "assort_by": [col_name],
+            "is_factorized": True,
             "model": partial(
                 cm_funcs.go_to_weekly_meeting,
                 day_of_week=weekdays[n % len(weekdays)],
@@ -170,6 +176,7 @@ def get_other_daily_contact_model():
             "is_recurrent": True,
             "loc": "other_recurrent_daily",
             "assort_by": ["other_daily_group_id"],
+            "is_factorized": True,
             "model": partial(
                 cm_funcs.meet_daily_other_contacts,
                 group_col_name="other_daily_group_id",
@@ -197,6 +204,7 @@ def get_other_weekly_contact_models():
         model = {
             "is_recurrent": True,
             "assort_by": [col_name],
+            "is_factorized": True,
             "model": partial(
                 cm_funcs.go_to_weekly_meeting,
                 day_of_week=days[n % len(days)],
