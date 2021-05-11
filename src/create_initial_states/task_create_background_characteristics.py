@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import pytask
+from sid.shared import factorize_assortative_variables
 
 from src.config import BLD
 from src.config import N_HOUSEHOLDS
@@ -143,6 +144,11 @@ def _build_initial_states(
     df["rapid_test_compliance"] = np.random.uniform(low=0, high=1, size=len(df))
 
     df["quarantine_compliance"] = np.random.uniform(low=0, high=1, size=len(df))
+
+    # factorize group id columns
+    to_factorize = [col for col in df if "_group_id" in col]
+    for col in to_factorize:
+        df[col], _ = factorize_assortative_variables(df, [col])
 
     df.index.name = "index"
     df = _only_keep_relevant_columns(df)
