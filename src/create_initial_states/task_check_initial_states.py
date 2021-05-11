@@ -189,7 +189,6 @@ def _check_educ_group_ids(df):
             check_names=False,
         )
 
-    assert set(df["school_group_id_0_a_b"].unique()) == {1, 0}
     assert df.query("age < 3")["occupation"].isin(["nursery", "stays home"]).all()
     assert (df.query("3 <= age <= 14")["nursery_group_id_0"] == -1).all()
     preschool_kid_groups = df.query("3 <= age < 6")["preschool_group_id_0"]
@@ -204,10 +203,7 @@ def _check_educ_group_ids(df):
     _check_educ_group_sizes(df)
     _check_educ_group_assortativeness(df)
 
-    assert set(df["school_group_id_0_a_b"].unique()) == {0, 1}
-    assert 0.49 < df["school_group_id_0_a_b"].mean() < 0.51
-    assert (df["school_group_id_0_a_b"] == df["school_group_id_1_a_b"]).all()
-    assert (df["school_group_id_0_a_b"] == df["school_group_id_2_a_b"]).all()
+    assert 0.49 < df["educ_a_b_identifier"].mean() < 0.51
 
 
 def _check_educators(df):

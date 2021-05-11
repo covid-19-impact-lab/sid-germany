@@ -311,7 +311,7 @@ def _create_educ_contact_priority(df):
 
 def _only_keep_relevant_columns(df):
     background_vars = [
-        "age",  # used by `implement_a_b_school_system_above_age`
+        "age",  # used by educ policies
         "age_group",  # assort_by variable
         "age_group_rki",  # for plotting and comparison
         "county",  # assort_by variable
@@ -337,8 +337,8 @@ def _only_keep_relevant_columns(df):
         "school_group_id_0",
         "school_group_id_1",
         "school_group_id_2",
+        "educ_a_b_identifier",
     ]
-    a_b_vars = [var + "_a_b" for var in educ_contact_group_ids]
 
     non_educ_contact_group_ids = (
         [
@@ -349,9 +349,7 @@ def _only_keep_relevant_columns(df):
         + [f"work_weekly_group_id_{i}" for i in range(14)]
     )
 
-    keep = (
-        background_vars + educ_contact_group_ids + a_b_vars + non_educ_contact_group_ids
-    )
+    keep = background_vars + educ_contact_group_ids + non_educ_contact_group_ids
 
     to_drop = [
         "gender",
