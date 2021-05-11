@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import pytask
 import seaborn as sns
-from pandas.api.types import is_categorical_dtype
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
@@ -59,16 +58,6 @@ def task_check_initial_states(depends_on, produces):
     _check_educ_group_ids(df)
     _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
     _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
-    not_categorical_group_ids = [
-        col
-        for col in df
-        if "group_id" in col
-        and not col.endswith("_a_b")
-        and not is_categorical_dtype(df[col])
-    ]
-    assert (
-        len(not_categorical_group_ids) == 0
-    ), f"There are non categorical group id columns: {not_categorical_group_ids}"
 
     synthetic_age_shares = df["age_group"].value_counts(normalize=True)
     diff = synthetic_age_shares - true_age_shares
@@ -205,7 +194,7 @@ def _check_educ_group_ids(df):
     assert (df.query("3 <= age <= 14")["nursery_group_id_0"] == -1).all()
     preschool_kid_groups = df.query("3 <= age < 6")["preschool_group_id_0"]
     assert (preschool_kid_groups != -1).all()
-    assert (preschool_kid_groups.value_counts().drop(-1).isin([8, 9, 10])).all()
+    assert (preschool_kid_groups.value_counts().isin([8, 9, 10])).all()
     kids = df.query("6 < age <= 14")
     assert (kids["preschool_group_id_0"] == -1).all()
     assert (kids["school_group_id_0"] != -1).all()
@@ -327,3 +316,12 @@ def _check_other_group_ids(df, daily_dist, weekly_dist):
     goal_o_daily_group_size_shares.index += 1
     diff_btw_o_shares = o_daily_group_size_shares - goal_o_daily_group_size_shares
     assert np.abs(diff_btw_o_shares).max() < 0.1
+
+
+def _check_group_id_cols_are_factorized(df):
+    group_id_cols = [col for col in df if "_group_id" in col]
+    for col in group_id_cols:
+        unique_non_nan_values = sorted(df[col].unique())
+        unique_non_nan_values.remove(-1)
+        expected_values = np.arange(len(unique_non_nan_values))
+        assert (unique_non_nan_values == expected_values).all()
