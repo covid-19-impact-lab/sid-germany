@@ -320,7 +320,6 @@ def _only_keep_relevant_columns(df):
         "hh_model_group_id",
         "adult_in_hh_at_home",
         "educ_contact_priority",
-        "vaccination_group",
         "vaccination_rank",
         "rapid_test_compliance",
         "quarantine_compliance",
@@ -353,6 +352,7 @@ def _only_keep_relevant_columns(df):
         "index",
         "stays_home_when_schools_close",  # not used at the moment
         "work_type",
+        "vaccination_group",
     ]
 
     assert set(keep + to_drop) == set(df.columns)

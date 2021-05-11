@@ -56,7 +56,6 @@ def task_check_initial_states(depends_on, produces):
 
     _check_work_contact_priority(df)
     _check_educ_contact_priority(df)
-    _check_vaccination_group(df["vaccination_group"])
     _check_educ_group_ids(df)
     _check_work_group_ids(df, work_daily_dist, work_weekly_dist)
     _check_other_group_ids(df, other_daily_dist, other_weekly_dist)
@@ -328,15 +327,3 @@ def _check_other_group_ids(df, daily_dist, weekly_dist):
     goal_o_daily_group_size_shares.index += 1
     diff_btw_o_shares = o_daily_group_size_shares - goal_o_daily_group_size_shares
     assert np.abs(diff_btw_o_shares).max() < 0.1
-
-
-def _check_vaccination_group(vaccination_group):
-    assert 0.085 < (vaccination_group == 1).mean() < 0.095
-    assert 0.155 < (vaccination_group == 2).mean() < 0.165
-    assert 0.185 < (vaccination_group == 3).mean() < 0.195
-    assert 0.564 < (vaccination_group == 4).mean() < 0.575
-    res_shares = vaccination_group.value_counts(normalize=True)
-    target_shares = pd.Series([0.09, 0.15, 0.19, 0.57], index=[1, 2, 3, 4])
-    assert np.abs(target_shares - res_shares).mean() < 0.01
-    assert np.abs(target_shares - res_shares).max() < 0.02
-    assert vaccination_group.notnull().all()
