@@ -54,10 +54,7 @@ def plot_estimation_moment(results, name):
 
     for ax in axes:
         ax.set_ylabel(moment_name)
-        ax.xaxis.set_major_locator(dt.MonthLocator())
-        ax.xaxis.set_major_formatter(dt.DateFormatter("%b %Y"))
-        ax.xaxis.set_minor_locator(dt.DayLocator())
-        ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+        ax = format_date_axis(ax)
 
     fig.tight_layout()
     plt.close()
@@ -224,3 +221,11 @@ def _aggregate_models_over_domain(df):
     )
 
     return df
+
+
+def format_date_axis(ax):
+    ax.xaxis.set_major_locator(dt.MonthLocator())
+    ax.xaxis.set_major_formatter(dt.DateFormatter("%b %Y"))
+    ax.xaxis.set_minor_locator(dt.DayLocator())
+    ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+    return ax

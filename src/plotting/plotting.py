@@ -11,7 +11,7 @@ from matplotlib.dates import DateFormatter
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
-
+from src.plotting.msm_plots import format_date_axis
 
 plt.rcParams.update(
     {
@@ -159,6 +159,8 @@ def plot_incidences(
     ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
     ax.set_title(title)
     ax.legend(loc="upper center", bbox_to_anchor=(-0.0, -0.5, 1, 0.2), ncol=2)
+    fig.tight_layout()
+    ax = format_date_axis(ax)
     return fig, ax
 
 
