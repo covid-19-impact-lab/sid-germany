@@ -242,7 +242,6 @@ def mixed_educ_policy(
     attends_always = states["educ_worker"] | states.eval(always_attend_query)
     attends_because_of_a_b_schooling = _identify_who_attends_because_of_a_b_schooling(
         states=states,
-        group_column=group_id_column + "_a_b",
         a_b_query=a_b_query,
         a_b_rhythm=a_b_rhythm,
     )
@@ -263,9 +262,7 @@ def mixed_educ_policy(
     return contacts
 
 
-def _identify_who_attends_because_of_a_b_schooling(
-    states, group_column, a_b_query, a_b_rhythm
-):
+def _identify_who_attends_because_of_a_b_schooling(states, a_b_query, a_b_rhythm):
     """Identify who attends school because (s)he is a student in A/B mode.
 
     We can ignore educ workers here because they are already covered in attends_always.
@@ -282,9 +279,9 @@ def _identify_who_attends_because_of_a_b_schooling(
         date = get_date(states)
         a_b_eligible = states.eval(a_b_query)
         if a_b_rhythm == "weekly":
-            in_attend_group = states[group_column] == date.week % 2
+            in_attend_group = states["educ_a_b_identifier"] == (date.week % 2 == 1)
         elif a_b_rhythm == "daily":
-            in_attend_group = states[group_column] == date.day % 2
+            in_attend_group = states["educ_a_b_identifier"] == (date.day % 2 == 1)
         attends_because_of_a_b_schooling = a_b_eligible & in_attend_group
     else:
         raise ValueError(
