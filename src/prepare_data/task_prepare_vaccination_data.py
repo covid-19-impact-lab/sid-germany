@@ -114,8 +114,8 @@ def _plot_labeled_series(labeled):
     colors = get_colors("categorical", len(labeled))
     for (label, sr), color in zip(labeled, colors):
         sns.lineplot(
-            x=sr.index,
-            y=sr,
+            x=sr.loc["2020-12-15":].index,
+            y=sr.loc["2020-12-15":],
             label=label,
             linewidth=2,
             color=color,
