@@ -30,7 +30,12 @@ TRANSLATIONS = {
 PLOTS = {
     "fall": ["fall_baseline"],
     "spring": ["spring_baseline"],
-    "future": ["future_baseline", "future_educ_open", "future_reduced_test_demand"],
+    "future": [
+        "future_baseline",
+        "future_educ_open",
+        "future_reduced_test_demand",
+        "future_strict_home_office",
+    ],
 }
 """Dict[str, List[str]]: A dictionary containing the plots to create.
 

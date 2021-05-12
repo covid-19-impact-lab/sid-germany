@@ -12,16 +12,19 @@ from functools import partial
 
 import pandas as pd
 
-from src.config import SCENARIO_START
+from src.config import FUTURE_SCENARIO_START
+from src.config import SPRING_SCENARIO_START
 from src.config import VERY_LATE
 from src.policies.domain_level_policy_blocks import apply_emergency_care_policies
 from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
+from src.policies.domain_level_policy_blocks import reduce_work_models
 from src.policies.enacted_policies import get_enacted_policies
 from src.policies.enacted_policies import get_school_options_for_strict_emergency_care
 from src.policies.enacted_policies import HYGIENE_MULTIPLIER
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import combine_dictionaries
 from src.policies.policy_tools import remove_educ_policies
+from src.policies.policy_tools import remove_work_policies
 from src.policies.policy_tools import shorten_policies
 from src.policies.policy_tools import split_policies
 from src.testing.rapid_test_reactions import rapid_test_reactions
@@ -40,22 +43,25 @@ def baseline(paths, fixed_inputs):
     return baseline_scenario_inputs
 
 
-def open_all_educ_after_scenario_start(paths, fixed_inputs):
-    out = open_all_educ_after_date(
-        paths=paths, fixed_inputs=fixed_inputs, split_date=SCENARIO_START
+# ================================================================================
+
+
+def open_all_educ_after_spring_scenario_start(paths, fixed_inputs):
+    out = _open_all_educ_after_date(
+        paths=paths, fixed_inputs=fixed_inputs, split_date=SPRING_SCENARIO_START
     )
     return out
 
 
 def open_all_educ_after_easter(paths, fixed_inputs):
     easter_monday = "2021-04-05"
-    out = open_all_educ_after_date(
+    out = _open_all_educ_after_date(
         paths=paths, fixed_inputs=fixed_inputs, split_date=easter_monday
     )
     return out
 
 
-def open_all_educ_after_date(paths, fixed_inputs, split_date):
+def _open_all_educ_after_date(paths, fixed_inputs, split_date):
     start_date = fixed_inputs["duration"]["start"]
     end_date = fixed_inputs["duration"]["end"]
     contact_models = fixed_inputs["contact_models"]
@@ -104,7 +110,7 @@ def only_strict_emergency_care_after_april_5(paths, fixed_inputs):
         contact_models=contact_models,
         block_info=block_info,
         educ_type="school",
-        **school_options
+        **school_options,
     )
 
     new_policies = combine_dictionaries(
@@ -121,6 +127,9 @@ def only_strict_emergency_care_after_april_5(paths, fixed_inputs):
         "contact_policies": new_policies,
     }
     return out
+
+
+# ================================================================================
 
 
 def no_rapid_tests(paths, fixed_inputs):
@@ -157,7 +166,65 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
     return scenario_inputs
 
 
-# ----------------------------------------------------------------------------
+# ================================================================================
+
+
+def strict_home_office_after_future_scenario_start(paths, fixed_inputs):
+    start_date = fixed_inputs["duration"]["start"]
+    end_date = fixed_inputs["duration"]["end"]
+    contact_models = fixed_inputs["contact_models"]
+    enacted_policies = get_enacted_policies(contact_models)
+
+    new_policies = _get_policies_with_different_work_attend_multiplier_after_date(
+        enacted_policies=enacted_policies,
+        contact_models=contact_models,
+        new_attend_multiplier=0.54,
+        split_date=FUTURE_SCENARIO_START,
+        prefix="work_strict_home_office_after_future_scenario_start",
+    )
+    new_policies = shorten_policies(new_policies, start_date, end_date)
+
+    out = {
+        "contact_policies": new_policies,
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return out
+
+
+def _get_policies_with_different_work_attend_multiplier_after_date(
+    enacted_policies, contact_models, new_attend_multiplier, split_date, prefix
+):
+    """Set the attend work multiplier to **new_attend_multiplier** after **date**.
+
+    In April 2020, the mean work multiplier was 0.54. In November 2020 it was 0.83.
+
+    """
+    stays_same, to_change = split_policies(enacted_policies, split_date=split_date)
+    after_split_without_work_policies = remove_work_policies(to_change)
+
+    block_info = {
+        "prefix": prefix,
+        "start_date": split_date,
+        "end_date": VERY_LATE,
+    }
+    new_work_policies = reduce_work_models(
+        contact_models,
+        block_info,
+        new_attend_multiplier,
+        hygiene_multiplier=HYGIENE_MULTIPLIER,
+    )
+
+    new_policies = combine_dictionaries(
+        [stays_same, after_split_without_work_policies, new_work_policies]
+    )
+    return new_policies
+
+
+# ================================================================================
 
 
 def _baseline_policies(fixed_inputs):

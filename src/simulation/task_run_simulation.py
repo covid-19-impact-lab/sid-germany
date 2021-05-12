@@ -112,15 +112,21 @@ NAMED_SCENARIOS = {
     },
     # Future Scenarios
     "future_educ_open": {
-        "sim_input_scenario": "open_all_educ_after_scenario_start",
+        "sim_input_scenario": "open_all_educ_after_spring_scenario_start",
         "params_scenario": "baseline",
         "n_seeds": n_main_scenario_seeds,
         **prediction_dates,
     },
     "future_reduced_test_demand": {
         "sim_input_scenario": "baseline",
-        "params_scenario": "reduce_rapid_test_demand_after_may_17",
+        "params_scenario": "reduce_rapid_test_demand_after_future_scenario_start",
         "n_seeds": n_main_scenario_seeds,
+        **prediction_dates,
+    },
+    "future_strict_home_office": {
+        "sim_input_scenario": "strict_home_office_after_future_scenario_start",
+        "params_scenario": "baseline",
+        "n_seeds": 2,
         **prediction_dates,
     },
 }
