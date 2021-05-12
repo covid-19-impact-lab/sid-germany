@@ -8,8 +8,9 @@ from sid import get_simulate_func
 from sid.msm import get_diag_weighting_matrix
 from sid.plotting import prepare_data_for_infection_rates_by_contact_models
 
+from src.calculate_moments import aggregate_and_smooth_period_outcome_sim
+from src.calculate_moments import calculate_period_outcome_sim
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
-from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
 from src.manfred.shared import hash_array
 
@@ -41,17 +42,27 @@ def get_index_bundles(params):
 
 
 def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
+    """Build and evaluate a msm criterion function.
+
+    Building the criterion function freshly for each run is necessary for it to be
+    parallelizable.
+
+    """
     params_hash = hash_array(params["value"].to_numpy())
     path = BLD / "exploration" / f"{prefix}_{params_hash}_{os.getpid()}"
 
     sim_start = simulate_kwargs["duration"]["start"]
     sim_end = simulate_kwargs["duration"]["end"]
+    period_outputs = _get_period_outputs_for_simulate()
 
     simulate = get_simulate_func(
         **simulate_kwargs,
         params=params,
         path=path,
         seed=seed,
+        period_outputs=period_outputs,
+        return_last_states=False,
+        return_time_series=False,
     )
 
     calc_moments = _get_calc_moments()
@@ -80,11 +91,11 @@ def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
     )
 
     additional_outputs = {
-        "infection_channels": prepare_data_for_infection_rates_by_contact_models,
+        "infection_channels": _aggregate_infection_channels,
     }
 
     msm_func = get_msm_func(
-        simulate=functools.partial(_simulate_wrapper, simulate=simulate),
+        simulate=simulate,
         calc_moments=calc_moments,
         empirical_moments=empirical_moments,
         replace_nans=lambda x: x * 1,
@@ -97,48 +108,80 @@ def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
     return res
 
 
-def _simulate_wrapper(params, simulate):
-    return simulate(params)["time_series"]
+def _aggregate_infection_channels(simulate_result):
+    """Aggregate the infection channel data that was calculated in each period."""
+    return pd.concat(simulate_result["period_outputs"]["infection_channels"])
+
+
+def _get_period_outputs_for_simulate():
+    """Construct the period_outputs argument for ``get_simulate_func``.
+
+    All estimation moments as well as the infection channel data are calculated
+    as per period outcomes. This needs much less memory than calculating those outcomes
+    from the full time series.
+
+    """
+    additional_outputs = {
+        "infections_by_age_group": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="new_known_case",
+            groupby="age_group_rki",
+        ),
+        "aggregated_deaths": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="newly_deceased",
+        ),
+        "infections_by_state": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="new_known_case",
+            groupby="state",
+        ),
+        "aggregated_infections": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="new_known_case",
+        ),
+        "infection_channels": prepare_data_for_infection_rates_by_contact_models,
+    }
+    return additional_outputs
 
 
 def _get_calc_moments():
-    kwargs = {"window": 7, "min_periods": 1}
+    """Construct the ``calc_moments`` argument for ``get_msm_func``.
 
+    Instead of calculating those moments from the full time series we provide functions
+    that simply aggregate and smooth the per period outcomes that are calculated on
+    each simulated day.
+
+    """
     calc_moments = {
         "infections_by_age_group": functools.partial(
-            smoothed_outcome_per_hundred_thousand_sim,
-            outcome="new_known_case",
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="infections_by_age_group",
             groupby="age_group_rki",
             take_logs=True,
-            **kwargs,
         ),
         "aggregated_deaths": functools.partial(
-            smoothed_outcome_per_hundred_thousand_sim,
-            outcome="newly_deceased",
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="aggregated_deaths",
             take_logs=True,
-            **kwargs,
         ),
         "infections_by_state": functools.partial(
-            smoothed_outcome_per_hundred_thousand_sim,
-            outcome="new_known_case",
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="infections_by_state",
             groupby="state",
             take_logs=True,
-            **kwargs,
         ),
         "aggregated_infections": functools.partial(
-            smoothed_outcome_per_hundred_thousand_sim,
-            outcome="new_known_case",
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="aggregated_infections",
             take_logs=False,
-            **kwargs,
         ),
     }
     return calc_moments
 
 
 def _get_empirical_moments(df, age_group_sizes, state_sizes):
-
-    kwargs = {"window": 7, "min_periods": 1}
-
+    """Construct the ``empirical_moments`` argument for ``get_msm_func``."""
     empirical_moments = {
         "infections_by_age_group": smoothed_outcome_per_hundred_thousand_rki(
             df=df,
@@ -146,13 +189,11 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes):
             groupby="age_group_rki",
             group_sizes=age_group_sizes,
             take_logs=True,
-            **kwargs,
         ),
         "aggregated_deaths": smoothed_outcome_per_hundred_thousand_rki(
             df=df,
             outcome="newly_deceased",
             take_logs=True,
-            **kwargs,
         ),
         "infections_by_state": smoothed_outcome_per_hundred_thousand_rki(
             df=df,
@@ -160,13 +201,11 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes):
             groupby="state",
             group_sizes=state_sizes,
             take_logs=True,
-            **kwargs,
         ),
         "aggregated_infections": smoothed_outcome_per_hundred_thousand_rki(
             df=df,
             outcome="newly_infected",
             take_logs=False,
-            **kwargs,
         ),
     }
     return empirical_moments
@@ -209,6 +248,7 @@ def _get_grouped_weight_series(group_weights, moment_series, scaling_factor=1):
     moment_series (pd.Series): The empirical moment for which the
         weights are constructed. It is assumed that the group is
         indicated by the second index level.
+
     """
     assert 0.99 <= group_weights.sum() <= 1, "Group weights should sum to 1."
 
