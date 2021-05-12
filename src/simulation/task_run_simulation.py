@@ -114,7 +114,13 @@ NAMED_SCENARIOS = {
     "future_educ_open": {
         "sim_input_scenario": "open_all_educ_after_scenario_start",
         "params_scenario": "baseline",
-        "n_seeds": n_side_scenario_seeds,
+        "n_seeds": n_main_scenario_seeds,
+        **prediction_dates,
+    },
+    "future_reduced_test_demand": {
+        "sim_input_scenario": "baseline",
+        "params_scenario": "reduce_rapid_test_demand_after_may_17",
+        "n_seeds": n_main_scenario_seeds,
         **prediction_dates,
     },
 }
