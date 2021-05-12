@@ -5,8 +5,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import sid
-from matplotlib.dates import AutoDateLocator
-from matplotlib.dates import DateFormatter
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
@@ -135,10 +133,10 @@ def plot_incidences(
         national_data = cropped_rki.groupby("date").sum()
         if rki == "new_known_case":
             rki_col = "newly_infected"
-            label = "RKI Fallzahlen"
+            label = "official case numbers"
         elif rki == "newly_infected":
             rki_col = "upscaled_newly_infected"
-            label = "DunkelzifferRadar Schätzung der \ntatsächlichen Inzidenz"
+            label = "upscaled official case numbers"
         else:
             raise ValueError(f"No matching RKI variable found to {rki}")
 
@@ -156,11 +154,10 @@ def plot_incidences(
         )
 
     fig, ax = style_plot(fig, ax)
-    ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
+    ax.set_ylabel("smoothed weekly incidence")
     ax.set_title(title)
     ax.legend(loc="upper center", bbox_to_anchor=(-0.0, -0.5, 1, 0.2), ncol=2)
     fig.tight_layout()
-    ax = format_date_axis(ax)
     return fig, ax
 
 
@@ -170,12 +167,8 @@ def style_plot(fig, axes):
 
     for ax in axes:
         ax.set_ylabel("")
-        ax.set_xlabel("Datum")
-        n_days = ax.get_xlim()[1] - ax.get_xlim()[0]
-        date_form = DateFormatter("%d.%m") if n_days < 100 else DateFormatter("%m/%Y")
-        ax.xaxis.set_major_formatter(date_form)
-        loc = AutoDateLocator(minticks=5, maxticks=12)
-        ax.xaxis.set_major_locator(loc)
+        ax.set_xlabel("")
+        ax = format_date_axis(ax)
         ax.grid(axis="y")
     sns.despine()
     return fig, ax

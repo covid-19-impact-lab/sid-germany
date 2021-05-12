@@ -21,17 +21,28 @@ PY_DEPENDENCIES = {
     "py_process_sim_outputs": SRC / "simulation" / "task_process_simulation_outputs.py",
 }
 
-TRANSLATIONS = {
-    "newly_infected": "Tatsächliche Inzidenz",
-    "new_known_case": "Beobachtete Inzidenz",
-    "fall": "den Herbst",
-    "spring": "den Frühling",
-    "future": "den Sommer",
-}
-
 PLOTS = {
     "fall": ["fall_baseline"],
-    "spring": ["spring_baseline"],
+    "effect_of_vaccines": ["spring_baseline", "spring_without_vaccines"],
+    "effect_of_rapid_tests": [
+        "spring_baseline",
+        "spring_without_rapid_tests_at_schools",
+        "spring_without_rapid_tests_at_work",
+        "spring_without_rapid_tests",
+    ],
+    "vaccines_vs_rapid_tests": [
+        "spring_baseline",
+        "spring_without_vaccines",
+        # maybe replace the rapid test scenario with a different one.
+        "spring_without_rapid_tests",
+    ],
+    "rapid_tests_vs_school_closures": [
+        "spring_baseline",
+        "spring_emergency_care_after_easter_no_school_rapid_tests",
+        "spring_educ_open_after_easter",
+        "spring_educ_open_after_easter_educ_tests_every_other_day",
+        "spring_educ_open_after_easter_educ_tests_every_day",
+    ],
     "future": [
         "future_baseline",
         "future_educ_open",
@@ -90,20 +101,21 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
     depends_on = filter_dictionary(lambda x: not x.startswith("py_"), depends_on)
 
     dfs = {name: pd.read_parquet(path) for name, path in depends_on.items()}
-    title = f"{TRANSLATIONS[outcome]} für {TRANSLATIONS[comparison_name]}"
+    nice_name = comparison_name.replace("_", " ").title()
+    title = f"{outcome.replace('_', ' ').title()} in {nice_name}"
 
     fig, ax = plot_incidences(
         incidences=dfs,
         title=title,
-        name_to_label={name: name.replace("_", " ").title() for name in dfs},
+        name_to_label={name: name.replace("_", " ") for name in dfs},
         rki=outcome,
     )
     if "future" in comparison_name:
         ax.axvline(
-            pd.Timestamp(FUTURE_SCENARIO_START), color="k", label="Szenarienstart"
+            pd.Timestamp(FUTURE_SCENARIO_START), color="k", label="scenario start"
         )
     elif "spring" in comparison_name:
         ax.axvline(
-            pd.Timestamp(SPRING_SCENARIO_START), color="k", label="Szenarienstart"
+            pd.Timestamp(SPRING_SCENARIO_START), color="k", label="scenario start"
         )
     plt.savefig(produces, dpi=200, transparent=False, facecolor="w")
