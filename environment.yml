@@ -32,7 +32,7 @@ dependencies:
   - python-snappy
   - scipy
   - seaborn
-  - sid-dev =0.0.5
+  - sid-dev>=0.0.6
   - snakeviz
   - line_profiler
   - xlrd<=1.2.0

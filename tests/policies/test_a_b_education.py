@@ -15,7 +15,7 @@ def fake_states():
     # date at which schools are open in Berlin but closed in Bavaria
     # date with uneven week number, i.e. where group a attends school
     states["date"] = pd.Timestamp("2020-04-23")
-    states["school_group_id_0_a_b"] = [0, 1] * 5
+    states["educ_a_b_identifier"] = [False, True] * 5
     states["occupation"] = pd.Categorical(
         ["school"] * 8 + ["preschool_teacher", "school_teacher"]
     )
@@ -85,7 +85,7 @@ def test_mixed_educ_policy_others_home_no_hygiene():
     states["county"] = [1, 1, 2, 2, 2, 2, 2, 2]
     states["educ_worker"] = [True, False, True, False, False, False, False, False]
     states["school_group_id_0"] = [11, 11, 22, 22, 22, 22, 22, -1]
-    states["school_group_id_0_a_b"] = [0, 1, 1, 1, 0, 1, 0, 1]
+    states["educ_a_b_identifier"] = [False, True, True, True, False, True, False, True]
     states["date"] = pd.Timestamp("2021-01-04")  # week 1
 
     contacts = pd.Series([True] * 6 + [False] * 2, index=states.index)
@@ -111,7 +111,7 @@ def test_mixed_educ_policy_others_home_no_hygiene():
 def test_mixed_educ_policy_no_contacts():
     states = pd.DataFrame()
     states["educ_worker"] = [True, False, True, False, False, False, False]
-    states["school_group_id_0_a_b"] = [0, 1, 0, 1, 0, 1, 0]
+    states["educ_a_b_identifier"] = [False, True, False, True, False, True, False]
     states["school_group_id_0"] = [11, 11, 22, 22, 22, 22, -1]
     states["date"] = pd.Timestamp("2021-01-04")  # week 1
     states["county"] = 33
@@ -136,7 +136,7 @@ def test_mixed_educ_policy_no_contacts():
 def test_identify_who_attends_because_of_a_b_schooling():
     states = pd.DataFrame()
     states["county"] = [1, 1, 2, 2, 2]
-    states["group_col"] = [0, 1, 0, 1, 0]
+    states["educ_a_b_identifier"] = [False, True, False, True, False]
     states["date"] = pd.Timestamp("2021-01-04")  # week number 1
     # wrong county, wrong county, wrong week, right week, wrong week
     expected = pd.Series([False, False, False, True, False])
@@ -145,7 +145,6 @@ def test_identify_who_attends_because_of_a_b_schooling():
     res = _identify_who_attends_because_of_a_b_schooling(
         states,
         a_b_query=a_b_query,
-        group_column="group_col",
         a_b_rhythm="weekly",
     )
     pd.testing.assert_series_equal(res, expected)
@@ -153,16 +152,15 @@ def test_identify_who_attends_because_of_a_b_schooling():
 
 def test_identify_who_attends_because_of_a_b_schooling_daily():
     states = pd.DataFrame()
-    states["group_col"] = [0, 1, 0, 1, 0]
+    states["educ_a_b_identifier"] = [False, True, False, True, False]
     states["county"] = 2
     states["date"] = pd.Timestamp("2021-01-05")
-    expected = states["group_col"].astype(bool)
+    expected = states["educ_a_b_identifier"].astype(bool)
 
     a_b_query = "county == 2"
     res = _identify_who_attends_because_of_a_b_schooling(
         states=states,
         a_b_query=a_b_query,
-        group_column="group_col",
         a_b_rhythm="daily",
     )
     pd.testing.assert_series_equal(res, expected, check_names=False)
@@ -172,16 +170,15 @@ def test_idenfy_who_attends_because_of_a_b_schooling_daily2():
     states = pd.DataFrame()
     states["educ_worker"] = [False, False, True, False, False]
     states["county"] = 2
-    states["group_col"] = [0, 1, 0, 1, 0]
+    states["educ_a_b_identifier"] = [False, True, False, True, False]
     states["date"] = pd.Timestamp("2021-01-12")
 
-    expected = ~states["group_col"].astype(bool)
+    expected = ~states["educ_a_b_identifier"].astype(bool)
 
     a_b_query = "county == 2"
     res = _identify_who_attends_because_of_a_b_schooling(
         states=states,
         a_b_query=a_b_query,
-        group_column="group_col",
         a_b_rhythm="daily",
     )
     pd.testing.assert_series_equal(res, expected, check_names=False)

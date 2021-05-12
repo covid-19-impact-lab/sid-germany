@@ -157,6 +157,8 @@ def create_vaccination_group(states, seed):
     vaccination_group[third_priority] = 3
 
     vaccination_group = vaccination_group.fillna(4)
+    if len(vaccination_group) > 1_000_000:
+        _check_vaccination_group(vaccination_group)
     return vaccination_group
 
 
@@ -267,3 +269,19 @@ def _sample_from_subgroups(
     sampled = young_sampled | old_sampled
 
     return sampled
+
+
+def _check_vaccination_group(vaccination_group):
+    share_group_1 = (vaccination_group == 1).mean()
+    share_group_2 = (vaccination_group == 2).mean()
+    share_group_3 = (vaccination_group == 3).mean()
+    share_group_4 = (vaccination_group == 4).mean()
+    assert 0.085 < share_group_1 < 0.095, share_group_1
+    assert 0.155 < share_group_2 < 0.165, share_group_2
+    assert 0.185 < share_group_3 < 0.195, share_group_3
+    assert 0.564 < share_group_4 < 0.575, share_group_4
+    res_shares = vaccination_group.value_counts(normalize=True)
+    target_shares = pd.Series([0.09, 0.15, 0.19, 0.57], index=[1, 2, 3, 4])
+    assert np.abs(target_shares - res_shares).mean() < 0.01
+    assert np.abs(target_shares - res_shares).max() < 0.02
+    assert vaccination_group.notnull().all()
