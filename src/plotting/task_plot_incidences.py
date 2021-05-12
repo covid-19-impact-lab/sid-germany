@@ -3,6 +3,8 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
+from src.config import FUTURE_SCENARIO_START
+from src.config import SPRING_SCENARIO_START
 from src.config import SRC
 from src.plotting.plotting import plot_incidences
 from src.policies.policy_tools import filter_dictionary
@@ -96,4 +98,12 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
         name_to_label={name: name.replace("_", " ").title() for name in dfs},
         rki=outcome,
     )
+    if "future" in comparison_name:
+        ax.axvline(
+            pd.Timestamp(FUTURE_SCENARIO_START), color="k", label="Szenarienstart"
+        )
+    elif "spring" in comparison_name:
+        ax.axvline(
+            pd.Timestamp(SPRING_SCENARIO_START), color="k", label="Szenarienstart"
+        )
     plt.savefig(produces, dpi=200, transparent=False, facecolor="w")
