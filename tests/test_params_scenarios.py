@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from src.simulation.params_scenarios import _build_new_date_params
+from src.simulation.params_scenarios import change_date_params_after_date
 
 
 @pytest.fixture
@@ -36,3 +37,19 @@ def test_build_new_date_params(params):
     ]
 
     pd.testing.assert_frame_equal(res, expected)
+
+
+def test_change_date_params_after_date(params):
+    res = change_date_params_after_date(
+        params=params,
+        loc=("category", "subcategory"),
+        change_date="2021-05-15",
+        new_val=0.3,
+    )
+
+    expected = params.copy(deep=True)
+    expected.loc[("category", "subcategory", "2021-05-14")] = 0.9
+    expected.loc[("category", "subcategory", "2021-05-15")] = 0.3
+    expected.loc[("category", "subcategory", "2025-12-31")] = 0.3
+
+    pd.testing.assert_frame_equal(res, expected, check_like=True)

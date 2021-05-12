@@ -81,9 +81,10 @@ def change_date_params_after_date(params, loc, change_date, new_val):
     before_params_slice = params.loc[loc]
     new_params_slice = _build_new_date_params(before_params_slice, change_date, new_val)
 
-    new_params_slice.index = new_params_slice.index.astype(str)
-    new_params_slice = pd.concat({loc[0]: new_params_slice}, names=["category"])
+    new_params_slice.index = [str(x.date()) for x in new_params_slice.index]
+    # The order of prepending the index levels is important to have the correct result.
     new_params_slice = pd.concat({loc[1]: new_params_slice}, names=["subcategory"])
+    new_params_slice = pd.concat({loc[0]: new_params_slice}, names=["category"])
 
     new_params = pd.concat([params.drop(index=loc), new_params_slice])
 
@@ -93,7 +94,10 @@ def change_date_params_after_date(params, loc, change_date, new_val):
 def _build_new_date_params(before_params_slice, change_date, new_val):
     before = get_piecewise_linear_interpolation(before_params_slice)
     day_before = change_date - pd.Timedelta(days=1)
-    val_before_change = before.loc[day_before]
+    if day_before in before:
+        val_before_change = before.loc[day_before]
+    else:
+        val_before_change = before.iloc[-1]
 
     new_params_slice = before_params_slice.copy(deep=True)
     new_params_slice.index = pd.DatetimeIndex(new_params_slice.index)
@@ -105,4 +109,5 @@ def _build_new_date_params(before_params_slice, change_date, new_val):
     new_params_slice.loc[change_date] = new_val
     # maintain the new value over time
     new_params_slice.loc[pd.Timestamp("2025-12-31")] = new_val
+    new_params_slice = new_params_slice.sort_index()
     return new_params_slice
