@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import pytask
+from sid.shared import factorize_assortative_variables
 
 from src.config import BLD
 from src.config import N_HOUSEHOLDS
@@ -144,8 +145,14 @@ def _build_initial_states(
 
     df["quarantine_compliance"] = np.random.uniform(low=0, high=1, size=len(df))
 
+    # factorize group id columns
+    to_factorize = [col for col in df if "_group_id" in col]
+    for col in to_factorize:
+        df[col], _ = factorize_assortative_variables(df, [col])
+
     df.index.name = "index"
     df = _only_keep_relevant_columns(df)
+    np.random.seed(1337)
     df = df.sample(frac=1).reset_index(drop=True)
     return df
 
@@ -305,7 +312,7 @@ def _create_educ_contact_priority(df):
 
 def _only_keep_relevant_columns(df):
     background_vars = [
-        "age",  # used by `implement_a_b_school_system_above_age`
+        "age",  # used by educ policies
         "age_group",  # assort_by variable
         "age_group_rki",  # for plotting and comparison
         "county",  # assort_by variable
@@ -320,7 +327,6 @@ def _only_keep_relevant_columns(df):
         "hh_model_group_id",
         "adult_in_hh_at_home",
         "educ_contact_priority",
-        "vaccination_group",
         "vaccination_rank",
         "rapid_test_compliance",
         "quarantine_compliance",
@@ -332,8 +338,8 @@ def _only_keep_relevant_columns(df):
         "school_group_id_0",
         "school_group_id_1",
         "school_group_id_2",
+        "educ_a_b_identifier",
     ]
-    a_b_vars = [var + "_a_b" for var in educ_contact_group_ids]
 
     non_educ_contact_group_ids = (
         [
@@ -344,15 +350,14 @@ def _only_keep_relevant_columns(df):
         + [f"work_weekly_group_id_{i}" for i in range(14)]
     )
 
-    keep = (
-        background_vars + educ_contact_group_ids + a_b_vars + non_educ_contact_group_ids
-    )
+    keep = background_vars + educ_contact_group_ids + non_educ_contact_group_ids
 
     to_drop = [
         "gender",
         "index",
         "stays_home_when_schools_close",  # not used at the moment
         "work_type",
+        "vaccination_group",
     ]
 
     assert set(keep + to_drop) == set(df.columns)
