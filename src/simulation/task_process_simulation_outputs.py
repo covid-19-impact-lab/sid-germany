@@ -26,7 +26,7 @@ def create_parametrization(named_scenarios, fast_flag, outcomes):
                 for seed in range(specs["n_seeds"])
             }
 
-            # this handles the case of 0 seeds
+            # this handles the case of 0 seeds, i.e. skipped scenarios
             if dependencies:
                 produces = create_path_for_weekly_outcome_of_scenario(
                     name, fast_flag, outcome

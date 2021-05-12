@@ -30,7 +30,7 @@ TRANSLATIONS = {
 PLOTS = {
     "fall": ["fall_baseline"],
     "spring": ["spring_baseline"],
-    "future": ["future_baseline"],
+    "future": ["future_baseline", "future_educ_open", "future_reduced_test_demand"],
 }
 """Dict[str, List[str]]: A dictionary containing the plots to create.
 
@@ -45,14 +45,18 @@ def create_path_for_figure_of_weekly_outcome_of_scenario(name, fast_flag, outcom
 
 
 def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
+    available_scenarios = {
+        name for name, spec in NAMED_SCENARIOS.items() if spec["n_seeds"] > 0
+    }
     parametrization = []
     for outcome in outcomes:
-        for comparison_name, plot in plots.items():
+        for comparison_name, to_compare in plots.items():
+            to_compare = available_scenarios.intersection(to_compare)
             depends_on = {
                 scenario_name: create_path_for_weekly_outcome_of_scenario(
                     scenario_name, fast_flag, outcome
                 )
-                for scenario_name in plot
+                for scenario_name in to_compare
             }
 
             missing_scenarios = set(depends_on) - set(named_scenarios)

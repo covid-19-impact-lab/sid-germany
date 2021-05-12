@@ -17,7 +17,7 @@ if FAST_FLAG == "debug":
     n_side_scenario_seeds = 0
 elif FAST_FLAG == "verify":
     n_baseline_seeds = 18
-    n_main_scenario_seeds = 0
+    n_main_scenario_seeds = 5
     n_side_scenario_seeds = 0
 elif FAST_FLAG == "full":
     n_baseline_seeds = 20
