@@ -212,9 +212,9 @@ def _get_policies_with_different_work_attend_multiplier_after_date(
         "end_date": VERY_LATE,
     }
     new_work_policies = reduce_work_models(
-        contact_models,
-        block_info,
-        new_attend_multiplier,
+        contact_models=contact_models,
+        block_info=block_info,
+        attend_multiplier=new_attend_multiplier,
         hygiene_multiplier=HYGIENE_MULTIPLIER,
     )
 

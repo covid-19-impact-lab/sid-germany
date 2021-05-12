@@ -126,7 +126,7 @@ NAMED_SCENARIOS = {
     "future_strict_home_office": {
         "sim_input_scenario": "strict_home_office_after_future_scenario_start",
         "params_scenario": "baseline",
-        "n_seeds": 2,
+        "n_seeds": n_side_scenario_seeds,
         **prediction_dates,
     },
 }
