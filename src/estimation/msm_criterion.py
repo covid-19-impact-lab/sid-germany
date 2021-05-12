@@ -117,7 +117,7 @@ def _get_period_outputs_for_simulate():
     """Construct the period_outputs argument for ``get_simulate_func``.
 
     All estimation moments as well as the infection channel data are calculated
-    as per period outcomes. This needs much less memory that calculating those outcomes
+    as per period outcomes. This needs much less memory than calculating those outcomes
     from the full time series.
 
     """

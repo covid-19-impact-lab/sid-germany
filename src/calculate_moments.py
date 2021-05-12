@@ -18,7 +18,7 @@ def smoothed_outcome_per_hundred_thousand_sim(
     take_logs=DEFAULT_TAKE_LOGS,
     center=DEFAULT_CENTER,
 ):
-    """Calculated a smoothed outcome on the per 100 000 people level on simulated data.
+    """Calculate a daily smoothed outcome on the per 100 000 people level on simulated data.
 
     Args:
         df (pandas.DataFrame or dask.dataframe): Simulated time series.
@@ -58,7 +58,7 @@ def calculate_period_outcome_sim(df, outcome, groupby=None):
     """Calculate an outcome on a dataset of one period.
 
     This uses a groupby over the date column such that the date is preserved as the
-    first index level of the result. Only meant to be during the msm estimation.
+    first index level of the result. Only meant to be used during the msm estimation.
 
     Args:
         df (pandas.DataFrame): Simulated states DataFrame for one period.
