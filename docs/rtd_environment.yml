@@ -8,7 +8,8 @@ dependencies:
   # Sphinx dependencies.
   - furo
   - ipython
-  - nbsphinx
+  - nbsphinx!=0.8.5
+  - jinja=2
   - sphinx
   - sphinx-autoapi
   - sphinx-autodoc-typehints

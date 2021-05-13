@@ -41,12 +41,13 @@ dependencies:
   # Sphinx dependencies.
   - furo
   - ipython
-  - nbsphinx
+  - nbsphinx!=0.8.5
   - sphinx
   - sphinx-autoapi
   - sphinx-autodoc-typehints
   - sphinx-copybutton
   - sphinx-panels
+  - jinja2=2
 
   - pip:
     - DFO-LS
