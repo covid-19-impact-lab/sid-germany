@@ -2,6 +2,7 @@
 
 Every public function receives the dependency paths and fixed inputs as arguments
 and must return a dictionary with the following entries:
+
     - contact_policies
     - vaccination_models
     - rapid_test_models

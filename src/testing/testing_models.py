@@ -79,7 +79,7 @@ def _calculate_test_demand_from_share_known_cases(
     individuals.
 
     Args:
-        states (pandas.DataFrame): See :ref:`states`
+        states (pandas.DataFrame): sid states DataFrame.
         share_known_cases (float): The share of cases that is detected via PCR tests.
         share_of_tests_for_symptomatics (float): The share of positive tests
             that discovered a symptomatic case.
@@ -132,7 +132,7 @@ def _calculate_test_demand_from_rapid_tests(states, share_requesting_confirmatio
     or not at all.
 
     Args:
-        states (pandas.DataFrame): See :ref:`states`
+        states (pandas.DataFrame): sid states DataFrame.
         share_requesting_confirmation (float): The share of people that requests a PCR
             test after a positive rapid test.
 

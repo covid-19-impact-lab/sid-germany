@@ -156,7 +156,7 @@ def split_policies(
     both resulting dictionaries.
 
     Args:
-        policies (dict): See :ref:`policies`.
+        policies (dict)
         split_date(pandas.Timestamp or str): The start date of the second dictionary.
         start_date (pandas.Timestamp or str): The start date of the first dictionary.
         end_date (pandas.Timestamp or str): The end date of the second dictionary.

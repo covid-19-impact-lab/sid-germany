@@ -164,6 +164,7 @@ def _add_virus_strain_params(params):
     """Add parameters governing the infectiousness of the virus strains.
 
     source: https://doi.org/10.1101/2020.12.24.20248822
+
     "We estimate that this variant has a 43–90% (range of 95% credible
     intervals 38–130%) higher reproduction number than preexisting variants"
 
@@ -235,7 +236,7 @@ def _add_educ_rapid_test_fade_in_params(params):
     """Add the shares how many people with educ contacts get a rapid test.
 
     Sources:
-        17-24 of March 2021 (Mon, 2021-03-22):
+        - 17-24 of March 2021 (Mon, 2021-03-22):
             - NRW had 80% tests for students before Easter (https://bit.ly/3u7z8Rx)
             - BY: test offers to educ_workers (https://bit.ly/3tbVX5u)
             - BW: only tests for educ workers (https://bit.ly/2S7251M)
@@ -254,7 +255,7 @@ def _add_educ_rapid_test_fade_in_params(params):
 
             => assume 90% of teachers and 30% of students do rapid tests
 
-        After Easter (2021-04-07):
+        - After Easter (2021-04-07):
             - NRW: tests are mandatory for all
             - Bavaria: tests are mandatory for all (https://bit.ly/3nz5fXS,
               https://bit.ly/2QHilX3)
@@ -334,8 +335,7 @@ def _add_rapid_test_reaction_params(params):
     source: The COSMO Study of 2021-03-09 (https://bit.ly/3gHlcKd)
     In section 3.5 "Verhalten nach positivem Selbsttest"
     85% claim they would isolate ("isoliere mich und beschränke meine Kontakte
-    bis zur Klärung")
-        => We use this multiplier of 0.15 here.
+    bis zur Klärung") => We use this multiplier of 0.15 here.
 
     We assume households are only reduced by 30%, i.e. have a multiplier of 0.7.
 
