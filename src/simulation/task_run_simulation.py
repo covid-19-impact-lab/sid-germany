@@ -12,7 +12,7 @@ DEPENDENCIES = get_simulation_dependencies(debug=FAST_FLAG == "debug")
 
 
 if FAST_FLAG == "debug":
-    n_baseline_seeds = 1
+    n_baseline_seeds = 2
     n_main_scenario_seeds = 0
     n_side_scenario_seeds = 0
 elif FAST_FLAG == "verify":

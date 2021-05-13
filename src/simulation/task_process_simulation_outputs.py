@@ -10,7 +10,12 @@ from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
 
 
-OUTCOMES = ["newly_infected", "new_known_case"]
+OUTCOMES = [
+    "newly_infected",
+    "new_known_case",
+    "currently_infected",
+    "knows_currently_infected",
+]
 
 
 def create_path_for_weekly_outcome_of_scenario(name, fast_flag, outcome, groupby):
@@ -39,9 +44,9 @@ def create_parametrization(named_scenarios, fast_flag, outcomes):
                         name, fast_flag, outcome, groupby
                     )
 
-                    parametrization.append((dependencies, outcome, produces))
+                    parametrization.append((dependencies, outcome, groupby, produces))
 
-    return "depends_on, outcome, produces", parametrization
+    return "depends_on, outcome, groupby, produces", parametrization
 
 
 SIGNATURE, PARAMETRIZATION = create_parametrization(
@@ -50,11 +55,11 @@ SIGNATURE, PARAMETRIZATION = create_parametrization(
 
 
 @pytask.mark.parametrize(SIGNATURE, PARAMETRIZATION)
-def task_create_weekly_outcome_for_scenario(depends_on, outcome, produces):
+def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produces):
     ddfs = {
         seed: dd.read_parquet(depends_on[seed].parent.parent.joinpath("time_series"))
         for seed in sorted(depends_on)
     }
-    weekly_outcomes = weekly_incidences_from_results(ddfs.values(), outcome)
+    weekly_outcomes = weekly_incidences_from_results(ddfs.values(), outcome, groupby)
     weekly_outcomes = weekly_outcomes.rename(columns=str)
     weekly_outcomes.to_parquet(produces)
