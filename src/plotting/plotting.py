@@ -175,6 +175,45 @@ def plot_incidences(
     return fig, ax
 
 
+def plot_share_known_cases(share_known_cases, title):
+    n_groups = share_known_cases.index.get_level_values("age_group_rki").nunique()
+    colors = sid.get_colors("categorical", n_groups)
+    # 3rd entry is not well distinguishable from the first
+    if len(colors) >= 3:
+        colors[2] = "#2E8B57"  # seagreen
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    for col in share_known_cases:
+        alpha = 0.6 if col == "mean" else 0.2
+        linewidth = 2.5 if col == "mean" else 1
+        sns.lineplot(
+            data=share_known_cases.reset_index(),
+            x="date",
+            y=col,
+            hue="age_group_rki",
+            linewidth=linewidth,
+            alpha=alpha,
+        )
+
+    fig, ax = style_plot(fig, ax)
+    ax.set_title(title)
+
+    # Reduce the legend to have each age group only once and move it to below the plot
+    x, y, width, height = 0.0, -0.3, 1, 0.2
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(
+        handles[:n_groups],
+        labels[:n_groups],
+        loc="upper center",
+        bbox_to_anchor=(x, y, width, height),
+        ncol=n_groups,
+    )
+
+    fig.tight_layout()
+    return fig, ax
+
+
 def style_plot(fig, axes):
     if not isinstance(axes, np.ndarray):
         axes = [axes]
