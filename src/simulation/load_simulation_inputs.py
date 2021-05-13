@@ -105,6 +105,8 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
             "n_has_infected",
             "channel_infected_by_contact",
             "state",
+            "knows_currently_infected",
+            "currently_infected",
         ],
     }
 
@@ -233,6 +235,7 @@ def get_simulation_dependencies(debug):
         / "scenario_simulation_inputs.py",
         "params_scenarios": SRC / "simulation" / "params_scenarios.py",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
+        "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
     }
 
     return out

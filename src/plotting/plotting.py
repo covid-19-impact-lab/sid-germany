@@ -86,7 +86,12 @@ def calculate_virus_strain_shares(results):
 
 
 def plot_incidences(
-    incidences, title, name_to_label, n_single_runs: Optional[int] = None, rki=False
+    incidences,
+    title,
+    name_to_label,
+    n_single_runs: Optional[int] = None,
+    rki=False,
+    scenario_start=None,
 ):
     """Plot incidences.
 
@@ -98,6 +103,7 @@ def plot_incidences(
             visualize to show statistical uncertainty. Passing ``None`` will plot all
             runs.
         rki (bool): Whether to plot the rki data.
+        scenario_start (pd.Timestamp): time of the scenario start
 
     Returns:
         fig, ax
@@ -157,6 +163,8 @@ def plot_incidences(
         sns.lineplot(
             x=weekly_smoothed.index, y=weekly_smoothed, ax=ax, color="k", label=label
         )
+    if scenario_start:
+        ax.axvline(scenario_start, label="scenario start", color="darkgrey")
 
     fig, ax = style_plot(fig, ax)
     ax.set_ylabel("smoothed weekly incidence")

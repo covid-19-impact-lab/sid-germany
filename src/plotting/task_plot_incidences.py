@@ -11,7 +11,6 @@ from src.policies.policy_tools import filter_dictionary
 from src.simulation.task_process_simulation_outputs import (
     create_path_for_weekly_outcome_of_scenario,
 )
-from src.simulation.task_process_simulation_outputs import OUTCOMES
 from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
 
@@ -90,7 +89,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
 
 
 SIGNATURE, PARAMETRIZATION = create_parametrization(
-    PLOTS, NAMED_SCENARIOS, FAST_FLAG, OUTCOMES
+    PLOTS, NAMED_SCENARIOS, FAST_FLAG, ["newly_infected", "new_known_case"]
 )
 
 
@@ -100,22 +99,22 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.startswith("py_"), depends_on)
 
-    dfs = {name: pd.read_parquet(path) for name, path in depends_on.items()}
+    dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
     nice_name = comparison_name.replace("_", " ").title()
     title = f"{outcome.replace('_', ' ').title()} in {nice_name}"
+
+    if "future" in comparison_name:
+        scenario_start = pd.Timestamp(FUTURE_SCENARIO_START)
+    elif "spring" in comparison_name:
+        scenario_start = pd.Timestamp(SPRING_SCENARIO_START)
+    else:
+        scenario_start = None
 
     fig, ax = plot_incidences(
         incidences=dfs,
         title=title,
         name_to_label={name: name.replace("_", " ") for name in dfs},
         rki=outcome,
+        scenario_start=scenario_start,
     )
-    if "future" in comparison_name:
-        ax.axvline(
-            pd.Timestamp(FUTURE_SCENARIO_START), color="k", label="scenario start"
-        )
-    elif "spring" in comparison_name:
-        ax.axvline(
-            pd.Timestamp(SPRING_SCENARIO_START), color="k", label="scenario start"
-        )
     plt.savefig(produces, dpi=200, transparent=False, facecolor="w")

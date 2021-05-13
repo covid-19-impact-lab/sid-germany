@@ -20,9 +20,9 @@ OUTCOMES = [
 
 def create_path_for_weekly_outcome_of_scenario(name, fast_flag, outcome, groupby):
     if groupby is None:
-        file_name = f"{fast_flag}_{name}_{outcome}.parquet"
+        file_name = f"{fast_flag}_{name}_{outcome}.pickle"
     else:
-        file_name = f"{fast_flag}_{name}_{outcome}_by_{groupby}.parquet"
+        file_name = f"{fast_flag}_{name}_{outcome}_by_{groupby}.pickle"
     return BLD / "simulations" / file_name
 
 
@@ -62,4 +62,4 @@ def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produc
     }
     weekly_outcomes = weekly_incidences_from_results(ddfs.values(), outcome, groupby)
     weekly_outcomes = weekly_outcomes.rename(columns=str)
-    weekly_outcomes.to_parquet(produces)
+    weekly_outcomes.to_pickle(produces)
