@@ -9,6 +9,7 @@ import sid
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
+from src.config import SCENARIO_START
 from src.plotting.msm_plots import format_date_axis
 
 plt.rcParams.update(
@@ -91,7 +92,7 @@ def plot_incidences(
     name_to_label,
     n_single_runs: Optional[int] = None,
     rki=False,
-    scenario_start=None,
+    plot_scenario_start=False,
 ):
     """Plot incidences.
 
@@ -103,7 +104,7 @@ def plot_incidences(
             visualize to show statistical uncertainty. Passing ``None`` will plot all
             runs.
         rki (bool): Whether to plot the rki data.
-        scenario_start (pd.Timestamp): time of the scenario start
+        plot_scenario_start (bool): whether to plot the scenario_start
 
     Returns:
         fig, ax
@@ -163,8 +164,10 @@ def plot_incidences(
         sns.lineplot(
             x=weekly_smoothed.index, y=weekly_smoothed, ax=ax, color="k", label=label
         )
-    if scenario_start:
-        ax.axvline(scenario_start, label="scenario start", color="darkgrey")
+    if plot_scenario_start:
+        ax.axvline(
+            pd.Timestamp(SCENARIO_START), label="scenario start", color="darkgrey"
+        )
 
     fig, ax = style_plot(fig, ax)
     ax.set_ylabel("smoothed weekly incidence")
@@ -177,11 +180,8 @@ def plot_incidences(
 
 def plot_share_known_cases(share_known_cases, title):
     n_groups = share_known_cases.index.get_level_values("age_group_rki").nunique()
-    colors = sid.get_colors("categorical", n_groups)
-    # 3rd entry is not well distinguishable from the first
-    if len(colors) >= 3:
-        colors[2] = "#2E8B57"  # seagreen
-
+    colors = sid.get_colors("ordered", n_groups)
+    sns.set_palette(colors)
     fig, ax = plt.subplots(figsize=(10, 5))
 
     for col in share_known_cases:

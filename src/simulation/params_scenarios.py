@@ -2,11 +2,11 @@ import warnings
 
 import pandas as pd
 
-from src.config import FUTURE_SCENARIO_START
+from src.config import SCENARIO_START
 from src.testing.shared import get_piecewise_linear_interpolation
 
 
-def reduce_rapid_test_demand_after_future_scenario_start(params):
+def reduce_rapid_test_demand_after_scenario_start(params):
     """Reduce rapid tests of households and workers.
 
     Since only the offer share of workers' rapid tests is time variant we change the
@@ -18,7 +18,7 @@ def reduce_rapid_test_demand_after_future_scenario_start(params):
     event was 0.4 before the estimation. This needs to be updated afterwards.
 
     """
-    change_date = pd.Timestamp(FUTURE_SCENARIO_START)
+    change_date = pd.Timestamp(SCENARIO_START)
 
     new_hh_val = 0.25
     warnings.warn(

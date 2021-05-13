@@ -3,8 +3,7 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
-from src.config import FUTURE_SCENARIO_START
-from src.config import SPRING_SCENARIO_START
+from src.config import SCENARIO_START
 from src.config import SRC
 from src.plotting.plotting import plot_share_known_cases
 from src.simulation.task_process_simulation_outputs import (
@@ -68,11 +67,7 @@ def task_plot_share_known_cases_per_scenario(depends_on, title, produces):
     fig, ax = plot_share_known_cases(share_known_cases, title)
     if "Future" in title:
         ax.axvline(
-            pd.Timestamp(FUTURE_SCENARIO_START), color="k", label="scenario start"
-        )
-    elif "Spring" in title:
-        ax.axvline(
-            pd.Timestamp(SPRING_SCENARIO_START), color="k", label="scenario start"
+            pd.Timestamp(SCENARIO_START), label="scenario start", color="darkgrey"
         )
 
     fig.savefig(produces)

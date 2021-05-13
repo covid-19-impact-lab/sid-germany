@@ -3,8 +3,6 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
-from src.config import FUTURE_SCENARIO_START
-from src.config import SPRING_SCENARIO_START
 from src.config import SRC
 from src.plotting.plotting import plot_incidences
 from src.policies.policy_tools import filter_dictionary
@@ -103,18 +101,11 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
     nice_name = comparison_name.replace("_", " ").title()
     title = f"{outcome.replace('_', ' ').title()} in {nice_name}"
 
-    if "future" in comparison_name:
-        scenario_start = pd.Timestamp(FUTURE_SCENARIO_START)
-    elif "spring" in comparison_name:
-        scenario_start = pd.Timestamp(SPRING_SCENARIO_START)
-    else:
-        scenario_start = None
-
     fig, ax = plot_incidences(
         incidences=dfs,
         title=title,
         name_to_label={name: name.replace("_", " ") for name in dfs},
         rki=outcome,
-        scenario_start=scenario_start,
+        plot_scenario_start="future" in comparison_name,
     )
     plt.savefig(produces, dpi=200, transparent=False, facecolor="w")

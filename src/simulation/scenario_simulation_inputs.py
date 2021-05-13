@@ -13,8 +13,7 @@ from functools import partial
 
 import pandas as pd
 
-from src.config import FUTURE_SCENARIO_START
-from src.config import SPRING_SCENARIO_START
+from src.config import SCENARIO_START
 from src.config import VERY_LATE
 from src.policies.domain_level_policy_blocks import apply_emergency_care_policies
 from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
@@ -47,17 +46,18 @@ def baseline(paths, fixed_inputs):
 # ================================================================================
 
 
-def open_all_educ_after_spring_scenario_start(paths, fixed_inputs):
+def open_all_educ_after_scenario_start(paths, fixed_inputs):
     out = _open_all_educ_after_date(
-        paths=paths, fixed_inputs=fixed_inputs, split_date=SPRING_SCENARIO_START
+        paths=paths, fixed_inputs=fixed_inputs, split_date=SCENARIO_START
     )
     return out
 
 
 def open_all_educ_after_easter(paths, fixed_inputs):
-    easter_monday = "2021-04-05"
+    # day after easter monday as the split date belongs to the 2nd dictionary
+    after_easter = "2021-04-06"
     out = _open_all_educ_after_date(
-        paths=paths, fixed_inputs=fixed_inputs, split_date=easter_monday
+        paths=paths, fixed_inputs=fixed_inputs, split_date=after_easter
     )
     return out
 
@@ -90,13 +90,14 @@ def only_strict_emergency_care_after_april_5(paths, fixed_inputs):
     contact_models = fixed_inputs["contact_models"]
     enacted_policies = get_enacted_policies(contact_models)
 
-    split_date = "2021-04-06"  # the split date belongs to the 2nd dictionary
-    stays_same, to_change = split_policies(enacted_policies, split_date=split_date)
+    # day after easter monday as the split date belongs to the 2nd dictionary
+    after_easter = "2021-04-06"
+    stays_same, to_change = split_policies(enacted_policies, split_date=after_easter)
     keep = remove_educ_policies(to_change)
 
     block_info = {
         "prefix": "emergency_care_after_april_5",
-        "start_date": split_date,
+        "start_date": after_easter,
         "end_date": VERY_LATE,
     }
     new_young_educ_policies = apply_emergency_care_policies(
@@ -170,7 +171,7 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
 # ================================================================================
 
 
-def strict_home_office_after_future_scenario_start(paths, fixed_inputs):
+def strict_home_office_after_scenario_start(paths, fixed_inputs):
     start_date = fixed_inputs["duration"]["start"]
     end_date = fixed_inputs["duration"]["end"]
     contact_models = fixed_inputs["contact_models"]
@@ -180,8 +181,8 @@ def strict_home_office_after_future_scenario_start(paths, fixed_inputs):
         enacted_policies=enacted_policies,
         contact_models=contact_models,
         new_attend_multiplier=0.54,
-        split_date=FUTURE_SCENARIO_START,
-        prefix="work_strict_home_office_after_future_scenario_start",
+        split_date=SCENARIO_START,
+        prefix="work_strict_home_office_after_scenario_start",
     )
     new_policies = shorten_policies(new_policies, start_date, end_date)
 
