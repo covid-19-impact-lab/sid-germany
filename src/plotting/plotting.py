@@ -20,7 +20,11 @@ plt.rcParams.update(
 )
 
 
-def weekly_incidences_from_results(results, outcome):
+def weekly_incidences_from_results(
+    results,
+    outcome,
+    groupby=None,
+):
     """Create the weekly incidences from a list of simulation runs.
 
     Args:
@@ -42,6 +46,7 @@ def weekly_incidences_from_results(results, outcome):
                 take_logs=False,
                 window=7,
                 center=False,
+                groupby=groupby,
             )
             * 7
         )
@@ -156,7 +161,8 @@ def plot_incidences(
     fig, ax = style_plot(fig, ax)
     ax.set_ylabel("smoothed weekly incidence")
     ax.set_title(title)
-    ax.legend(loc="upper center", bbox_to_anchor=(-0.0, -0.5, 1, 0.2), ncol=2)
+    x, y, width, height = 0.0, -0.3, 1, 0.2
+    ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=2)
     fig.tight_layout()
     return fig, ax
 

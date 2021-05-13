@@ -13,26 +13,33 @@ from src.simulation.task_run_simulation import NAMED_SCENARIOS
 OUTCOMES = ["newly_infected", "new_known_case"]
 
 
-def create_path_for_weekly_outcome_of_scenario(name, fast_flag, outcome):
-    return BLD / "simulations" / f"{fast_flag}_{name}_{outcome}.parquet"
+def create_path_for_weekly_outcome_of_scenario(name, fast_flag, outcome, groupby):
+    if groupby is None:
+        file_name = f"{fast_flag}_{name}_{outcome}.parquet"
+    else:
+        file_name = f"{fast_flag}_{name}_{outcome}_by_{groupby}.parquet"
+    return BLD / "simulations" / file_name
 
 
 def create_parametrization(named_scenarios, fast_flag, outcomes):
     parametrization = []
     for outcome in outcomes:
-        for name, specs in named_scenarios.items():
-            dependencies = {
-                seed: create_path_to_last_states_of_simulation(fast_flag, name, seed)
-                for seed in range(specs["n_seeds"])
-            }
+        for groupby in [None, "age_group_rki"]:
+            for name, specs in named_scenarios.items():
+                dependencies = {
+                    seed: create_path_to_last_states_of_simulation(
+                        fast_flag, name, seed
+                    )
+                    for seed in range(specs["n_seeds"])
+                }
 
-            # this handles the case of 0 seeds, i.e. skipped scenarios
-            if dependencies:
-                produces = create_path_for_weekly_outcome_of_scenario(
-                    name, fast_flag, outcome
-                )
+                # this handles the case of 0 seeds, i.e. skipped scenarios
+                if dependencies:
+                    produces = create_path_for_weekly_outcome_of_scenario(
+                        name, fast_flag, outcome, groupby
+                    )
 
-                parametrization.append((dependencies, outcome, produces))
+                    parametrization.append((dependencies, outcome, produces))
 
     return "depends_on, outcome, produces", parametrization
 

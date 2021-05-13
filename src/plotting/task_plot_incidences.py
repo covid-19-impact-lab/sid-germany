@@ -72,7 +72,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
             to_compare = available_scenarios.intersection(to_compare)
             depends_on = {
                 scenario_name: create_path_for_weekly_outcome_of_scenario(
-                    scenario_name, fast_flag, outcome
+                    scenario_name, fast_flag, outcome, None
                 )
                 for scenario_name in to_compare
             }
