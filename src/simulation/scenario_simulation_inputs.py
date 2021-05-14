@@ -152,14 +152,13 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
     init_start = start_date - pd.Timedelta(31, unit="D")
 
     vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
-    vaccination_shares["2021-02-15":] = 0.0
-    vaccination_func = partial(
-        find_people_to_vaccinate,
-        vaccination_shares=vaccination_shares,
-        init_start=init_start,
+    vaccination_models = _get_vaccination_model_with_new_value_after_date(
+        vaccination_shares,
+        init_start,
+        change_date="2021-02-15",
+        new_val=5,
+        name="only_vaccinate_until_feb_15",
     )
-    vaccination_models = {"only_vaccinate_until_feb_15": {"model": vaccination_func}}
-
     scenario_inputs = {
         "vaccination_models": vaccination_models,
         "contact_policies": _baseline_policies(fixed_inputs),
@@ -189,18 +188,13 @@ def vaccinations_after_scenario_start_as_on_strongest_week_day(paths, fixed_inpu
         vacc_shares = yaml.load(f)
 
     vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
-    vaccination_shares[SCENARIO_START:] = max(vacc_shares.values())
-    vaccination_func = partial(
-        find_people_to_vaccinate,
-        vaccination_shares=vaccination_shares,
-        init_start=init_start,
+    vaccination_models = _get_vaccination_model_with_new_value_after_date(
+        vaccination_shares,
+        init_start,
+        change_date=SCENARIO_START,
+        new_val=max(vacc_shares.values()),
+        model_name="highest_vacc_share_after_scenario_start",
     )
-    vaccination_models = {
-        "vaccinate_as_on_strongest_weekday_after_scenario_start": {
-            "model": vaccination_func
-        }
-    }
-
     scenario_inputs = {
         "vaccination_models": vaccination_models,
         "contact_policies": _baseline_policies(fixed_inputs),
@@ -210,6 +204,55 @@ def vaccinations_after_scenario_start_as_on_strongest_week_day(paths, fixed_inpu
         ),
     }
     return scenario_inputs
+
+
+def vaccinations_after_easter_as_on_strongest_week_day(paths, fixed_inputs):
+    """Increase the vaccination rate to that of the best average weekday.
+
+    Averages were taken over the time since familiy physicians started vaccinating.
+    This vaccination rate is extrapolated to every day, including weekends.
+
+    """
+    warnings.warn(
+        "The ambitious vaccination model abstracts from possible delivery constraints."
+    )
+    start_date = fixed_inputs["duration"]["start"]
+    init_start = start_date - pd.Timedelta(31, unit="D")
+
+    vacc_shares_path = BLD / "data" / "vaccinations" / "mean_vacc_share_per_day.yaml"
+    with open(vacc_shares_path) as f:
+        vacc_shares = yaml.load(f)
+
+    vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
+    vaccination_models = _get_vaccination_model_with_new_value_after_date(
+        vaccination_shares,
+        init_start,
+        change_date="2021-04-06",  # Tuesday after Easter Monday
+        new_val=max(vacc_shares.values()),
+        model_name="highest_vacc_share_after_scenario_start",
+    )
+    scenario_inputs = {
+        "vaccination_models": vaccination_models,
+        "contact_policies": _baseline_policies(fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return scenario_inputs
+
+
+def _get_vaccination_model_with_new_value_after_date(
+    vaccination_shares, init_start, change_date, new_val, model_name
+):
+    vaccination_shares[change_date:] = new_val
+    vaccination_func = partial(
+        find_people_to_vaccinate,
+        vaccination_shares=vaccination_shares,
+        init_start=init_start,
+    )
+    vaccination_models = {model_name: {"model": vaccination_func}}
+    return vaccination_models
 
 
 # ================================================================================

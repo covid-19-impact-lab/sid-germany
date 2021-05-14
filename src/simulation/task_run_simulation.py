@@ -17,7 +17,7 @@ if FAST_FLAG == "debug":
     n_side_scenario_seeds = 0
 elif FAST_FLAG == "verify":
     n_baseline_seeds = 5  # 3x
-    n_main_scenario_seeds = 4  # 4x
+    n_main_scenario_seeds = 2  # 4x
     n_side_scenario_seeds = 0  # 9x
 elif FAST_FLAG == "full":
     n_baseline_seeds = 20
@@ -65,6 +65,12 @@ NAMED_SCENARIOS = {
         "sim_input_scenario": "no_vaccinations_after_feb_15",
         "params_scenario": "baseline",
         "n_seeds": n_main_scenario_seeds,
+        **spring_dates,
+    },
+    "spring_with_more_vaccines": {
+        "sim_input_scenario": "vaccinations_after_easter_as_on_strongest_week_day",
+        "params_scenario": "baseline",
+        "n_seeds": n_side_scenario_seeds,
         **spring_dates,
     },
     "spring_without_rapid_tests_at_schools": {

@@ -27,13 +27,13 @@ def reduce_rapid_test_demand_after_scenario_start(params):
     )
     new_work_offer_share = 0.35
 
-    params = change_date_params_after_date(
+    params = _change_date_params_after_date(
         params=params,
         loc=("rapid_test_demand", "hh_member_demand"),
         change_date=change_date,
         new_val=new_hh_val,
     )
-    params = change_date_params_after_date(
+    params = _change_date_params_after_date(
         params=params,
         loc=("rapid_test_demand", "share_workers_receiving_offer"),
         change_date=change_date,
@@ -43,7 +43,7 @@ def reduce_rapid_test_demand_after_scenario_start(params):
     return params
 
 
-def change_date_params_after_date(params, loc, change_date, new_val):
+def _change_date_params_after_date(params, loc, change_date, new_val):
     """Change time variant params after a certain date.
 
     This function can be used to change any params that are fed to
@@ -159,7 +159,7 @@ def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
     """Implement a rapid test scheme where a certain share of workers get tested."""
     params = params.copy(deep=True)
     params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1.0
-    params = change_date_params_after_date(
+    params = _change_date_params_after_date(
         params=params, change_date=change_date, new_val=new_val
     )
     return params
