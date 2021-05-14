@@ -9,10 +9,13 @@ and must return a dictionary with the following entries:
     - rapid_test_reaction_models
 
 """
+import warnings
 from functools import partial
 
 import pandas as pd
+import yaml
 
+from src.config import BLD
 from src.config import SCENARIO_START
 from src.config import VERY_LATE
 from src.policies.domain_level_policy_blocks import apply_emergency_care_policies
@@ -156,6 +159,47 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
         init_start=init_start,
     )
     vaccination_models = {"only_vaccinate_until_feb_15": {"model": vaccination_func}}
+
+    scenario_inputs = {
+        "vaccination_models": vaccination_models,
+        "contact_policies": _baseline_policies(fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return scenario_inputs
+
+
+def vaccinations_after_scenario_start_as_on_strongest_week_day(paths, fixed_inputs):
+    """Increase the vaccination rate to that of the best average weekday.
+
+    Averages were taken over the time since familiy physicians started vaccinating.
+    This vaccination rate is extrapolated to every day, including weekends.
+
+    """
+    warnings.warn(
+        "The ambitious vaccination model abstracts from possible delivery constraints."
+    )
+    start_date = fixed_inputs["duration"]["start"]
+    init_start = start_date - pd.Timedelta(31, unit="D")
+
+    vacc_shares_path = BLD / "data" / "vaccinations" / "mean_vacc_share_per_day.yaml"
+    with open(vacc_shares_path) as f:
+        vacc_shares = yaml.load(f)
+
+    vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
+    vaccination_shares[SCENARIO_START:] = max(vacc_shares.values())
+    vaccination_func = partial(
+        find_people_to_vaccinate,
+        vaccination_shares=vaccination_shares,
+        init_start=init_start,
+    )
+    vaccination_models = {
+        "vaccinate_as_on_strongest_weekday_after_scenario_start": {
+            "model": vaccination_func
+        }
+    }
 
     scenario_inputs = {
         "vaccination_models": vaccination_models,
