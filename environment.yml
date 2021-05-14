@@ -47,7 +47,6 @@ dependencies:
   - sphinx-autodoc-typehints
   - sphinx-copybutton
   - sphinx-panels
-  - jinja2=2
 
   - pip:
     - DFO-LS

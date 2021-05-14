@@ -9,7 +9,6 @@ dependencies:
   - furo
   - ipython
   - nbsphinx!=0.8.5
-  - jinja2=2
   - sphinx
   - sphinx-autoapi
   - sphinx-autodoc-typehints
