@@ -16,9 +16,9 @@ if FAST_FLAG == "debug":
     n_main_scenario_seeds = 0
     n_side_scenario_seeds = 0
 elif FAST_FLAG == "verify":
-    n_baseline_seeds = 10  # 3x
-    n_main_scenario_seeds = 5  # 4x
-    n_side_scenario_seeds = 1  # 7x
+    n_baseline_seeds = 5  # 3x
+    n_main_scenario_seeds = 4  # 4x
+    n_side_scenario_seeds = 0  # 9x
 elif FAST_FLAG == "full":
     n_baseline_seeds = 20
     n_main_scenario_seeds = 20
@@ -31,7 +31,7 @@ else:
 
 spring_dates = {
     "start_date": "2021-02-15",
-    "end_date": "2021-05-07",
+    "end_date": "2021-05-16",
 }
 
 prediction_dates = {
@@ -85,6 +85,16 @@ NAMED_SCENARIOS = {
         "n_seeds": n_side_scenario_seeds,
         **spring_dates,
     },
+    # Note this scenario does still assume that only 70% of employers comply, i.e.
+    # it ensures that 70% of workers get regularly tested. Given that the share of
+    # workers accepting a rapid test from their employer is time invariant this also
+    # means that before Easter there is already a lot more testing going on.
+    "spring_with_obligatory_work_rapid_tests": {
+        "sim_input_scenario": "baseline",
+        "params_scenario": "obligatory_rapid_tests_for_employees",
+        "n_seeds": n_side_scenario_seeds,
+        **spring_dates,
+    },
     # Rapid Tests vs School Closures
     "spring_emergency_care_after_easter_no_school_rapid_tests": {
         "sim_input_scenario": "only_strict_emergency_care_after_april_5",
@@ -129,6 +139,18 @@ NAMED_SCENARIOS = {
     },
     "future_strict_home_office": {
         "sim_input_scenario": "strict_home_office_after_scenario_start",
+        "params_scenario": "baseline",
+        "n_seeds": n_side_scenario_seeds,
+        **prediction_dates,
+    },
+    "future_more_rapid_tests_at_work": {
+        "sim_input_scenario": "baseline",
+        "params_scenario": "rapid_test_with_90pct_compliance_after_scenario_start",
+        "n_seeds": n_side_scenario_seeds,
+        **prediction_dates,
+    },
+    "future_optimistic_vaccinations": {
+        "sim_input_scenario": "vaccinations_after_scenario_start_as_on_strongest_week_day",  # noqa: E501
         "params_scenario": "baseline",
         "n_seeds": n_side_scenario_seeds,
         **prediction_dates,

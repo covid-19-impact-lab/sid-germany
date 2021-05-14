@@ -52,6 +52,18 @@ def change_date_params_after_date(params, loc, change_date, new_val):
     The resulting piecewise linear interpolation is the same until change_date
     and then falls on change_date to the new value and stays there.
 
+    Args:
+        params (pandas.DataFrame)
+        loc (tuple): tuple of length two, identifying the slice of time variant
+            parameters to be changed.
+        change_date (str or pandas.Timestamp): date from which on the parameter will
+            take the new value.
+        new_val (float): the new value which the parameter will take after change_date.
+
+    Returns:
+        params (pandas.DataFrame): the full params that were passed to this function
+            with the loc exchanged for the new time variant parameters.
+
     """
     change_date = pd.Timestamp(change_date)
     with warnings.catch_warnings():
@@ -122,4 +134,32 @@ def rapid_tests_at_school_every_other_day_after_april_5(params):
 def rapid_tests_at_school_every_day_after_april_5(params):
     params = params.copy(deep=True)
     params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 1
+    return params
+
+
+def obligatory_rapid_tests_for_employees(params):
+    """Assume every worker who is offered a test accepts the offer.
+
+    Note that this does not mean that every worker gets regularly tested as only up to
+    70% of employers offer tests after the ordinance was passed.
+
+    """
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1.0
+    return params
+
+
+def rapid_test_with_90pct_compliance_after_scenario_start(params):
+    return _rapid_test_with_fixed_compliance_after_date(
+        params, change_date=SCENARIO_START, new_val=0.9
+    )
+
+
+def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
+    """Implement a rapid test scheme where a certain share of workers get tested."""
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1.0
+    params = change_date_params_after_date(
+        params=params, change_date=change_date, new_val=new_val
+    )
     return params

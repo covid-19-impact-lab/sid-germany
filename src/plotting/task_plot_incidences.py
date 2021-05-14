@@ -26,6 +26,7 @@ PLOTS = {
         "spring_without_rapid_tests_at_schools",
         "spring_without_rapid_tests_at_work",
         "spring_without_rapid_tests",
+        "spring_with_obligatory_work_rapid_tests",
     ],
     "vaccines_vs_rapid_tests": [
         "spring_baseline",
@@ -45,6 +46,7 @@ PLOTS = {
         "future_educ_open",
         "future_reduced_test_demand",
         "future_strict_home_office",
+        "future_optimistic_vaccinations",
     ],
 }
 """Dict[str, List[str]]: A dictionary containing the plots to create.
@@ -53,6 +55,16 @@ Each key in the dictionary is a name for a collection of scenarios. The values a
 of scenario names which are combined to create the collection.
 
 """
+
+available_scenarios = {
+    name for name, spec in NAMED_SCENARIOS.items() if spec["n_seeds"] > 0
+}
+plotted_scenarios = {x for scenarios in PLOTS.values() for x in scenarios}
+assert available_scenarios.issubset(
+    plotted_scenarios
+), "The following scenarios do not appear in any plots: " + "\n\t".join(
+    available_scenarios.difference(plotted_scenarios)
+)
 
 
 def create_path_for_figure_of_weekly_outcome_of_scenario(name, fast_flag, outcome):
