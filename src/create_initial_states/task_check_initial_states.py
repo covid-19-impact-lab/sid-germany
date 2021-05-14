@@ -61,9 +61,9 @@ def task_check_initial_states(depends_on, produces):
 
     synthetic_age_shares = df["age_group"].value_counts(normalize=True)
     diff = synthetic_age_shares - true_age_shares
-    assert np.abs(diff).max() <= 0.041, (
+    assert np.abs(diff).max() <= 0.045, (
         "The largest difference between the age group shares in the synthetic "
-        "and the true population clearly exceeds 4%."
+        "and the true population exceeds 4.5%."
     )
     assert np.abs(diff).mean() <= 0.015, (
         "The mean difference between the age group shares in the synthetic "
