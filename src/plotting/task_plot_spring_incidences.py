@@ -17,7 +17,7 @@ def task_plot_spring_incidences(depends_on, produces):
     smoothed_incidence = rki_incidence.rolling(7, center=True).sum()
     smoothed_incidence = smoothed_incidence.dropna()
 
-    start_date = pd.Timestamp("2021-03-01")
+    start_date = pd.Timestamp("2021-02-01")
     plot_data = smoothed_incidence.loc[start_date:].reset_index()
 
     fig, ax = plt.subplots(figsize=(10, 4))

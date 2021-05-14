@@ -92,9 +92,10 @@ NAMED_SCENARIOS = {
         "n_seeds": n_side_scenario_seeds,
         **spring_dates,
     },
-    # For the school opening scenarios we assume that the supply is large enough to
-    # allow the same fraction of individuals that should be tested is actually tested
-    # After Easter that was 95% for educ workers and 75% for school pupils
+    # For the school opening scenarios we assume that the supply of rapid tests is large
+    # enough to allow the same fraction of individuals that should be tested is actually
+    # tested. After Easter that was 95% for educ workers and 75% for school pupils and
+    # increases from there to 1 for pupils.
     "spring_educ_open_after_easter": {
         "sim_input_scenario": "open_all_educ_after_easter",
         "params_scenario": "baseline",
