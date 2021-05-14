@@ -1,10 +1,10 @@
-import matplotlib.dates as dt
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import pandas as pd
 import seaborn as sns
 from estimagic.visualization.colors import get_colors
 from sid.plotting import plot_infection_rates_by_contact_models
+
+from src.plotting.plotting import format_date_axis
 
 
 plt.rcParams.update(
@@ -221,11 +221,3 @@ def _aggregate_models_over_domain(df):
     )
 
     return df
-
-
-def format_date_axis(ax):
-    ax.xaxis.set_major_locator(dt.MonthLocator())
-    ax.xaxis.set_major_formatter(dt.DateFormatter("%b %Y"))
-    ax.xaxis.set_minor_locator(dt.DayLocator())
-    ax.xaxis.set_minor_formatter(ticker.NullFormatter())
-    return ax

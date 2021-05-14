@@ -1,6 +1,8 @@
 from typing import Optional
 
+import matplotlib.dates as dt
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -10,7 +12,6 @@ from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
 from src.config import SCENARIO_START
-from src.plotting.msm_plots import format_date_axis
 
 plt.rcParams.update(
     {
@@ -221,7 +222,16 @@ def style_plot(fig, axes):
     for ax in axes:
         ax.set_ylabel("")
         ax.set_xlabel("")
-        ax = format_date_axis(ax)
         ax.grid(axis="y")
+        ax = format_date_axis(ax)
     sns.despine()
     return fig, ax
+
+
+def format_date_axis(ax):
+    ax.xaxis.set_major_locator(dt.MonthLocator())
+    # for month and year use "%b %Y"
+    ax.xaxis.set_major_formatter(dt.DateFormatter("%B"))
+    ax.xaxis.set_minor_locator(dt.DayLocator())
+    ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+    return ax
