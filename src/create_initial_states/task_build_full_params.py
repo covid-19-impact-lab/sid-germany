@@ -102,6 +102,7 @@ def task_create_full_params(depends_on, produces):
     params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.25
 
     params = _convert_index_to_int_where_possible(params)
+    assert params["value"].notnull().all(), "Params contains NaNs."
     params.to_pickle(produces)
 
 
@@ -164,6 +165,7 @@ def _add_virus_strain_params(params):
     """Add parameters governing the infectiousness of the virus strains.
 
     source: https://doi.org/10.1101/2020.12.24.20248822
+
     "We estimate that this variant has a 43–90% (range of 95% credible
     intervals 38–130%) higher reproduction number than preexisting variants"
 
@@ -180,17 +182,17 @@ def _add_vacation_model_distribution_params(params):
     params = params.copy(deep=True)
     loc = ("additional_other_vacation_contact", "probability")
     # 2020
-    params.loc[(*loc, "Winterferien"), "value"] = 0.275
-    params.loc[(*loc, "Osterferien"), "value"] = 0.275
-    params.loc[(*loc, "Pfingstferien"), "value"] = 0.275
-    params.loc[(*loc, "Sommerferien"), "value"] = 0.275
-    params.loc[(*loc, "Herbstferien"), "value"] = 0.275
-    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.275
+    params.loc[(*loc, "Winterferien"), "value"] = 0.3
+    params.loc[(*loc, "Osterferien"), "value"] = 0.3
+    params.loc[(*loc, "Pfingstferien"), "value"] = 0.3
+    params.loc[(*loc, "Sommerferien"), "value"] = 0.3
+    params.loc[(*loc, "Herbstferien"), "value"] = 0.3
+    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.3
     # 2021
-    params.loc[(*loc, "Winterferien2021"), "value"] = 0.275
-    params.loc[(*loc, "Osterferien2021"), "value"] = 0.275
-    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.275
-    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.275
+    params.loc[(*loc, "Winterferien2021"), "value"] = 0.3
+    params.loc[(*loc, "Osterferien2021"), "value"] = 0.3
+    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.3
+    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.3
     return params
 
 
@@ -209,7 +211,7 @@ def _add_work_rapid_test_params(params):
 
     2021-04-15: 70% of workers expected to get weekly tests (https://bit.ly/32BqKhd)
     COSMO (https://bit.ly/3t1z0lf, 2021-04-20) report <2/3 of people having
-    work contacts receiving a test offer.
+    work contacts receiving a test offer. We summarize this as 2/3 getting a test.
 
     2021-04-19: employers are required by law to offer two weekly tests
     (https://bit.ly/3tJNUh1, https://bit.ly/2QfNctJ)
@@ -226,8 +228,8 @@ def _add_work_rapid_test_params(params):
     params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.2
     params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
-    params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.7
     params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
+    params.loc[(*offer_loc, "2025-12-13"), "value"] = 0.7
     return params
 
 
@@ -235,7 +237,7 @@ def _add_educ_rapid_test_fade_in_params(params):
     """Add the shares how many people with educ contacts get a rapid test.
 
     Sources:
-        17-24 of March 2021 (Mon, 2021-03-22):
+        - 17-24 of March 2021 (Mon, 2021-03-22):
             - NRW had 80% tests for students before Easter (https://bit.ly/3u7z8Rx)
             - BY: test offers to educ_workers (https://bit.ly/3tbVX5u)
             - BW: only tests for educ workers (https://bit.ly/2S7251M)
@@ -254,7 +256,7 @@ def _add_educ_rapid_test_fade_in_params(params):
 
             => assume 90% of teachers and 30% of students do rapid tests
 
-        After Easter (2021-04-07):
+        - After Easter (2021-04-07):
             - NRW: tests are mandatory for all
             - Bavaria: tests are mandatory for all (https://bit.ly/3nz5fXS,
               https://bit.ly/2QHilX3)
@@ -272,22 +274,29 @@ def _add_educ_rapid_test_fade_in_params(params):
     params = params.copy(deep=True)
 
     loc = ("rapid_test_demand", "educ_worker_shares")
-    params.loc[(*loc, "2020-01-01")] = 0.0
-    params.loc[(*loc, "2021-01-01")] = 0.0
+    params.loc[(*loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*loc, "2021-01-01"), "value"] = 0.0
     # this is arbitrary to have a more convex shape
-    params.loc[(*loc, "2021-03-01")] = 0.3
-    params.loc[(*loc, "2021-03-22")] = 0.9
-    params.loc[(*loc, "2021-04-07")] = 0.95
-    params.loc[(*loc, "2021-04-19")] = 0.95
-    params.loc[(*loc, "2021-06-01")] = 0.95
+    params.loc[(*loc, "2021-03-01"), "value"] = 0.3
+    params.loc[(*loc, "2021-03-22"), "value"] = 0.9
+    params.loc[(*loc, "2021-04-07"), "value"] = 0.95
+    params.loc[(*loc, "2021-04-19"), "value"] = 0.95
+    params.loc[(*loc, "2021-06-01"), "value"] = 0.95
+    params.loc[(*loc, "2025-12-31"), "value"] = 0.95
 
     loc = ("rapid_test_demand", "student_shares")
-    params.loc[(*loc, "2020-01-01")] = 0.0
-    params.loc[(*loc, "2021-01-01")] = 0.0
-    params.loc[(*loc, "2021-03-22")] = 0.3
-    params.loc[(*loc, "2021-04-07")] = 0.75
-    params.loc[(*loc, "2021-04-19")] = 0.95
-    params.loc[(*loc, "2021-06-01")] = 1.0
+    params.loc[(*loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*loc, "2021-01-01"), "value"] = 0.0
+    params.loc[(*loc, "2021-03-22"), "value"] = 0.3
+    params.loc[(*loc, "2021-04-07"), "value"] = 0.75
+    params.loc[(*loc, "2021-04-19"), "value"] = 0.95
+    params.loc[(*loc, "2021-06-01"), "value"] = 1.0
+    params.loc[(*loc, "2025-12-31"), "value"] = 1.0
+
+    # Assume weekly tests before Easter and twice weekly tests after Easter
+    # We should get a fade-in through different ends of Easter vaccation
+    params.loc[("rapid_test_demand", "educ_frequency", "before_easter"), "value"] = 7
+    params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 3
 
     return params
 
@@ -316,7 +325,7 @@ def _add_hh_rapid_test_fade_in_params(params):
     params.loc[(*loc, "2021-05-01"), "value"] = 0.4
     params.loc[(*loc, "2021-05-15"), "value"] = 0.5
     params.loc[(*loc, "2021-06-01"), "value"] = 0.75
-    params.loc[(*loc, "2021-10-01"), "value"] = 0.75
+    params.loc[(*loc, "2025-12-31"), "value"] = 0.75
 
     return params
 
@@ -327,8 +336,7 @@ def _add_rapid_test_reaction_params(params):
     source: The COSMO Study of 2021-03-09 (https://bit.ly/3gHlcKd)
     In section 3.5 "Verhalten nach positivem Selbsttest"
     85% claim they would isolate ("isoliere mich und beschränke meine Kontakte
-    bis zur Klärung")
-        => We use this multiplier of 0.15 here.
+    bis zur Klärung") => We use this multiplier of 0.15 here.
 
     We assume households are only reduced by 30%, i.e. have a multiplier of 0.7.
 
@@ -367,7 +375,7 @@ def _build_share_known_cases_params():
             # free parameters
             "2021-01-01": 0.2,
             "2021-01-30": 0.31,
-            "2021-06-15": 0.31,
+            "2021-07-15": 0.31,
         },
         name="value",
     ).to_frame()
