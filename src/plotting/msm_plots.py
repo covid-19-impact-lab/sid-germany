@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from estimagic.visualization.colors import get_colors
@@ -37,16 +38,20 @@ def plot_estimation_moment(results, name):
             groups = sorted(raw_groups)
 
         n_groups = len(groups)
-        fig, axes = plt.subplots(figsize=(6, n_groups * 3), nrows=n_groups)
+
+        n_rows = int(np.ceil(n_groups / 2))
+        fig, axes = plt.subplots(figsize=(9, n_rows * 2), nrows=n_rows, ncols=2)
+        axes = axes.flatten()
         for group, ax in zip(groups, axes):
             _plot_simulated_and_empirical_moment(
                 simulated=simulated.loc[group],
                 empirical=empirical.loc[group],
                 ax=ax,
             )
+            ax.set_title(f"{group_name}: {group}")
     else:
         simulated, empirical = _extract_aggregated_moment(results, name)
-        fig, ax = plt.subplots(figsize=(6, 3))
+        fig, ax = plt.subplots(figsize=(4.5, 2))
         axes = [ax]
         _plot_simulated_and_empirical_moment(
             simulated=simulated, empirical=empirical, ax=ax
@@ -122,7 +127,7 @@ def _plot_simulated_and_empirical_moment(simulated, empirical, ax=None):
     dates = simulated.index
 
     for run in simulated:
-        sns.lineplot(x=dates, y=simulated[run], ax=ax, color=sim_color, alpha=0.3)
+        sns.lineplot(x=dates, y=simulated[run], ax=ax, color=sim_color, alpha=0.15)
 
     sns.lineplot(
         x=dates,

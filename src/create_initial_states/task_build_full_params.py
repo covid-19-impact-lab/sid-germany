@@ -98,10 +98,11 @@ def task_create_full_params(depends_on, produces):
     params = _add_rapid_test_reaction_params(params)
 
     # seasonality parameter
-    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.2
-    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.4
+    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.15
+    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.25
 
     params = _convert_index_to_int_where_possible(params)
+    assert params["value"].notnull().all(), "Params contains NaNs."
     params.to_pickle(produces)
 
 
@@ -181,17 +182,17 @@ def _add_vacation_model_distribution_params(params):
     params = params.copy(deep=True)
     loc = ("additional_other_vacation_contact", "probability")
     # 2020
-    params.loc[(*loc, "Winterferien"), "value"] = 0.2
-    params.loc[(*loc, "Osterferien"), "value"] = 0.2
-    params.loc[(*loc, "Pfingstferien"), "value"] = 0.2
-    params.loc[(*loc, "Sommerferien"), "value"] = 0.2
-    params.loc[(*loc, "Herbstferien"), "value"] = 0.2
-    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.2
+    params.loc[(*loc, "Winterferien"), "value"] = 0.3
+    params.loc[(*loc, "Osterferien"), "value"] = 0.3
+    params.loc[(*loc, "Pfingstferien"), "value"] = 0.3
+    params.loc[(*loc, "Sommerferien"), "value"] = 0.3
+    params.loc[(*loc, "Herbstferien"), "value"] = 0.3
+    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.3
     # 2021
-    params.loc[(*loc, "Winterferien2021"), "value"] = 0.2
-    params.loc[(*loc, "Osterferien2021"), "value"] = 0.2
-    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.2
-    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.2
+    params.loc[(*loc, "Winterferien2021"), "value"] = 0.3
+    params.loc[(*loc, "Osterferien2021"), "value"] = 0.3
+    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.3
+    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.3
     return params
 
 

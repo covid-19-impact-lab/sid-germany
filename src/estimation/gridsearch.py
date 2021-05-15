@@ -109,7 +109,7 @@ def run_2d_gridsearch(
     filled_z = np.full(mask.shape, np.nan)
     filled_z[mask] = avg_values
 
-    fig, ax = plt.subplots(figsize=(7, 6))
+    fig, ax = plt.subplots(figsize=(6, 5))
 
     df = pd.DataFrame(
         data=filled_z,
@@ -119,8 +119,6 @@ def run_2d_gridsearch(
     sns.heatmap(df, ax=ax, cmap="YlOrBr")
 
     fig.tight_layout()
-
-    plt.close()
 
     return reshaped_results, dense_grid, best_index, fig
 

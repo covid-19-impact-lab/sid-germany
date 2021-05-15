@@ -276,10 +276,10 @@ def _check_vaccination_group(vaccination_group):
     share_group_2 = (vaccination_group == 2).mean()
     share_group_3 = (vaccination_group == 3).mean()
     share_group_4 = (vaccination_group == 4).mean()
-    assert 0.085 < share_group_1 < 0.095, share_group_1
-    assert 0.155 < share_group_2 < 0.165, share_group_2
-    assert 0.185 < share_group_3 < 0.195, share_group_3
-    assert 0.564 < share_group_4 < 0.575, share_group_4
+    assert 0.08 < share_group_1 < 0.10, share_group_1
+    assert 0.15 < share_group_2 < 0.17, share_group_2
+    assert 0.18 < share_group_3 < 0.19, share_group_3
+    assert 0.55 < share_group_4 < 0.6, share_group_4
     res_shares = vaccination_group.value_counts(normalize=True)
     target_shares = pd.Series([0.09, 0.15, 0.19, 0.57], index=[1, 2, 3, 4])
     assert np.abs(target_shares - res_shares).mean() < 0.01

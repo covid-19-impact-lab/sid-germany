@@ -81,7 +81,7 @@ def task_create_initial_states_microcensus(depends_on, produces):
             other_daily_dist=other_daily_dist,
             other_weekly_dist=other_weekly_dist,
             n_households=n_hhs,
-            seed=4874,
+            seed=3933,
             no_vaccination_share=no_vaccination_share,
         )
         df.to_parquet(path)
