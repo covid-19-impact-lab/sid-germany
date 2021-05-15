@@ -33,6 +33,7 @@ PLOTS = {
         "spring_without_vaccines",
         # maybe replace the rapid test scenario with a different one.
         "spring_without_rapid_tests",
+        "spring_with_more_vaccines",
     ],
     "rapid_tests_vs_school_closures": [
         "spring_baseline",
