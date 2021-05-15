@@ -47,6 +47,7 @@ PLOTS = {
         "future_reduced_test_demand",
         "future_strict_home_office",
         "future_optimistic_vaccinations",
+        "future_more_rapid_tests_at_work",
     ],
 }
 """Dict[str, List[str]]: A dictionary containing the plots to create.
