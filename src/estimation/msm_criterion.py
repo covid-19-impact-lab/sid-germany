@@ -213,6 +213,11 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes):
 
 def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
     """Get a weighting matrix for msm estimation."""
+    # set the weight of the oldest group a bit lower because we do not have
+    # old age homes in our model and expect not to match that moment very well.
+    age_weights = age_weights.copy(deep=True)
+    age_weights["80-100"] = age_weights["80-100"] * 0.5
+    age_weights = age_weights / age_weights.sum()
     infections_by_age_weights = _get_grouped_weight_series(
         group_weights=age_weights,
         moment_series=empirical_moments["infections_by_age_group"],
@@ -222,7 +227,7 @@ def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
     infections_by_state_weights = _get_grouped_weight_series(
         group_weights=state_weights,
         moment_series=empirical_moments["infections_by_state"],
-        scaling_factor=0.2,
+        scaling_factor=1,
     )
 
     weights = {
