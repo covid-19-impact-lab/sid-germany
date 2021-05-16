@@ -123,3 +123,4 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
         plot_scenario_start="summer" in comparison_name,
     )
     plt.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    plt.close()

@@ -1,4 +1,5 @@
 """Create plots, illustrating the share known cases over time."""
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 
@@ -73,3 +74,4 @@ def task_plot_share_known_cases_per_scenario(depends_on, title, produces):
         )
 
     fig.savefig(produces)
+    plt.close()
