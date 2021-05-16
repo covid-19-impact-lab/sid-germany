@@ -8,8 +8,8 @@ from src.plotting.plotting import PY_DEPENDENCIES
 from src.policies.policy_tools import filter_dictionary
 from src.simulation.task_process_simulation_outputs import (
     create_path_for_weekly_outcome_of_scenario,
-    get_available_scenarios,
 )
+from src.simulation.task_process_simulation_outputs import get_available_scenarios
 from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
 
