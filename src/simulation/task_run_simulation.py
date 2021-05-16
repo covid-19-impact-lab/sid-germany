@@ -12,13 +12,13 @@ DEPENDENCIES = get_simulation_dependencies(debug=FAST_FLAG == "debug")
 
 
 if FAST_FLAG == "debug":
-    n_baseline_seeds = 2
-    n_main_scenario_seeds = 0
-    n_side_scenario_seeds = 0
+    n_baseline_seeds = 1
+    n_main_scenario_seeds = 1
+    n_side_scenario_seeds = 1
 elif FAST_FLAG == "verify":
-    n_baseline_seeds = 5  # 3x
-    n_main_scenario_seeds = 2  # 4x
-    n_side_scenario_seeds = 0  # 9x
+    n_baseline_seeds = 5
+    n_main_scenario_seeds = 2
+    n_side_scenario_seeds = 1
 elif FAST_FLAG == "full":
     n_baseline_seeds = 20
     n_main_scenario_seeds = 20
@@ -34,8 +34,8 @@ spring_dates = {
     "end_date": "2021-05-16",
 }
 
-prediction_dates = {
-    "start_date": "2021-04-15",
+summer_dates = {
+    "start_date": "2021-05-01",
     "end_date": "2021-07-01",
 }
 
@@ -54,11 +54,11 @@ NAMED_SCENARIOS = {
         "n_seeds": n_baseline_seeds,
         **spring_dates,
     },
-    "future_baseline": {
+    "summer_baseline": {
         "sim_input_scenario": "baseline",
         "params_scenario": "baseline",
         "n_seeds": n_baseline_seeds,
-        **prediction_dates,
+        **summer_dates,
     },
     # Policy Scenarios
     "spring_without_vaccines": {
@@ -130,36 +130,36 @@ NAMED_SCENARIOS = {
         "n_seeds": n_side_scenario_seeds,
         **spring_dates,
     },
-    # Future Scenarios
-    "future_educ_open": {
-        "sim_input_scenario": "open_all_educ_after_scenario_start",
+    # Summer Scenarios
+    "summer_educ_open": {
+        "sim_input_scenario": "open_all_educ_after_summer_scenario_start",
         "params_scenario": "baseline",
         "n_seeds": n_main_scenario_seeds,
-        **prediction_dates,
+        **summer_dates,
     },
-    "future_reduced_test_demand": {
+    "summer_reduced_test_demand": {
         "sim_input_scenario": "baseline",
-        "params_scenario": "reduce_rapid_test_demand_after_scenario_start",
+        "params_scenario": "reduce_rapid_test_demand_after_summer_scenario_start",
         "n_seeds": n_main_scenario_seeds,
-        **prediction_dates,
+        **summer_dates,
     },
-    "future_strict_home_office": {
-        "sim_input_scenario": "strict_home_office_after_scenario_start",
+    "summer_strict_home_office": {
+        "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
         "params_scenario": "baseline",
         "n_seeds": n_side_scenario_seeds,
-        **prediction_dates,
+        **summer_dates,
     },
-    "future_more_rapid_tests_at_work": {
+    "summer_more_rapid_tests_at_work": {
         "sim_input_scenario": "baseline",
-        "params_scenario": "rapid_test_with_90pct_compliance_after_scenario_start",
+        "params_scenario": "rapid_test_with_90pct_compliance_after_summer_scenario_start",  # noqa: E501
         "n_seeds": n_side_scenario_seeds,
-        **prediction_dates,
+        **summer_dates,
     },
-    "future_optimistic_vaccinations": {
-        "sim_input_scenario": "vaccinations_after_scenario_start_as_on_strongest_week_day",  # noqa: E501
+    "summer_optimistic_vaccinations": {
+        "sim_input_scenario": "vaccinations_after_summer_scenario_start_as_on_strongest_week_day",  # noqa: E501
         "params_scenario": "baseline",
         "n_seeds": n_side_scenario_seeds,
-        **prediction_dates,
+        **summer_dates,
     },
 }
 

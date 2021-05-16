@@ -16,7 +16,7 @@ import pandas as pd
 import yaml
 
 from src.config import BLD
-from src.config import SCENARIO_START
+from src.config import SUMMER_SCENARIO_START
 from src.config import VERY_LATE
 from src.policies.domain_level_policy_blocks import apply_emergency_care_policies
 from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
@@ -49,9 +49,9 @@ def baseline(paths, fixed_inputs):
 # ================================================================================
 
 
-def open_all_educ_after_scenario_start(paths, fixed_inputs):
+def open_all_educ_after_summer_scenario_start(paths, fixed_inputs):
     out = _open_all_educ_after_date(
-        paths=paths, fixed_inputs=fixed_inputs, split_date=SCENARIO_START
+        paths=paths, fixed_inputs=fixed_inputs, split_date=SUMMER_SCENARIO_START
     )
     return out
 
@@ -157,7 +157,7 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
         init_start,
         change_date="2021-02-15",
         new_val=5,
-        name="only_vaccinate_until_feb_15",
+        model_name="only_vaccinate_until_feb_15",
     )
     scenario_inputs = {
         "vaccination_models": vaccination_models,
@@ -170,7 +170,9 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
     return scenario_inputs
 
 
-def vaccinations_after_scenario_start_as_on_strongest_week_day(paths, fixed_inputs):
+def vaccinations_after_summer_scenario_start_as_on_strongest_week_day(
+    paths, fixed_inputs
+):
     """Increase the vaccination rate to that of the best average weekday.
 
     Averages were taken over the time since familiy physicians started vaccinating.
@@ -185,15 +187,15 @@ def vaccinations_after_scenario_start_as_on_strongest_week_day(paths, fixed_inpu
 
     vacc_shares_path = BLD / "data" / "vaccinations" / "mean_vacc_share_per_day.yaml"
     with open(vacc_shares_path) as f:
-        vacc_shares = yaml.load(f)
+        vacc_shares = yaml.safe_load(f)
 
     vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
     vaccination_models = _get_vaccination_model_with_new_value_after_date(
         vaccination_shares,
         init_start,
-        change_date=SCENARIO_START,
+        change_date=SUMMER_SCENARIO_START,
         new_val=max(vacc_shares.values()),
-        model_name="highest_vacc_share_after_scenario_start",
+        model_name="highest_vacc_share_after_summer_scenario_start",
     )
     scenario_inputs = {
         "vaccination_models": vaccination_models,
@@ -221,7 +223,7 @@ def vaccinations_after_easter_as_on_strongest_week_day(paths, fixed_inputs):
 
     vacc_shares_path = BLD / "data" / "vaccinations" / "mean_vacc_share_per_day.yaml"
     with open(vacc_shares_path) as f:
-        vacc_shares = yaml.load(f)
+        vacc_shares = yaml.safe_load(f)
 
     vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
     vaccination_models = _get_vaccination_model_with_new_value_after_date(
@@ -229,7 +231,7 @@ def vaccinations_after_easter_as_on_strongest_week_day(paths, fixed_inputs):
         init_start,
         change_date="2021-04-06",  # Tuesday after Easter Monday
         new_val=max(vacc_shares.values()),
-        model_name="highest_vacc_share_after_scenario_start",
+        model_name="highest_vacc_share_after_easter",
     )
     scenario_inputs = {
         "vaccination_models": vaccination_models,
@@ -258,7 +260,7 @@ def _get_vaccination_model_with_new_value_after_date(
 # ================================================================================
 
 
-def strict_home_office_after_scenario_start(paths, fixed_inputs):
+def strict_home_office_after_summer_scenario_start(paths, fixed_inputs):
     start_date = fixed_inputs["duration"]["start"]
     end_date = fixed_inputs["duration"]["end"]
     contact_models = fixed_inputs["contact_models"]
@@ -268,8 +270,8 @@ def strict_home_office_after_scenario_start(paths, fixed_inputs):
         enacted_policies=enacted_policies,
         contact_models=contact_models,
         new_attend_multiplier=0.54,
-        split_date=SCENARIO_START,
-        prefix="work_strict_home_office_after_scenario_start",
+        split_date=SUMMER_SCENARIO_START,
+        prefix="work_strict_home_office_after_summer_scenario_start",
     )
     new_policies = shorten_policies(new_policies, start_date, end_date)
 

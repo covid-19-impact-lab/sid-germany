@@ -11,7 +11,7 @@ import sid
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
-from src.config import SCENARIO_START
+from src.config import SUMMER_SCENARIO_START
 
 plt.rcParams.update(
     {
@@ -167,7 +167,9 @@ def plot_incidences(
         )
     if plot_scenario_start:
         ax.axvline(
-            pd.Timestamp(SCENARIO_START), label="scenario start", color="darkgrey"
+            pd.Timestamp(SUMMER_SCENARIO_START),
+            label="scenario start",
+            color="darkgrey",
         )
 
     fig, ax = style_plot(fig, ax)

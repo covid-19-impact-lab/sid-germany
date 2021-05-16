@@ -3,8 +3,8 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
-from src.config import SCENARIO_START
 from src.config import SRC
+from src.config import SUMMER_SCENARIO_START
 from src.plotting.plotting import plot_share_known_cases
 from src.simulation.task_process_simulation_outputs import (
     create_path_for_weekly_outcome_of_scenario,
@@ -65,9 +65,11 @@ def task_plot_share_known_cases_per_scenario(depends_on, title, produces):
     share_known_cases = knows_currently_infected / currently_infected
     share_known_cases["mean"] = share_known_cases.mean(axis=1)
     fig, ax = plot_share_known_cases(share_known_cases, title)
-    if "Future" in title:
+    if "summer" in title.lower():
         ax.axvline(
-            pd.Timestamp(SCENARIO_START), label="scenario start", color="darkgrey"
+            pd.Timestamp(SUMMER_SCENARIO_START),
+            label="scenario start",
+            color="darkgrey",
         )
 
     fig.savefig(produces)

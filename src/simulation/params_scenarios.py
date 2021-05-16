@@ -2,11 +2,11 @@ import warnings
 
 import pandas as pd
 
-from src.config import SCENARIO_START
+from src.config import SUMMER_SCENARIO_START
 from src.testing.shared import get_piecewise_linear_interpolation
 
 
-def reduce_rapid_test_demand_after_scenario_start(params):
+def reduce_rapid_test_demand_after_summer_scenario_start(params):
     """Reduce rapid tests of households and workers.
 
     Since only the offer share of workers' rapid tests is time variant we change the
@@ -18,7 +18,7 @@ def reduce_rapid_test_demand_after_scenario_start(params):
     event was 0.4 before the estimation. This needs to be updated afterwards.
 
     """
-    change_date = pd.Timestamp(SCENARIO_START)
+    change_date = pd.Timestamp(SUMMER_SCENARIO_START)
 
     new_hh_val = 0.25
     warnings.warn(
@@ -149,9 +149,9 @@ def obligatory_rapid_tests_for_employees(params):
     return params
 
 
-def rapid_test_with_90pct_compliance_after_scenario_start(params):
+def rapid_test_with_90pct_compliance_after_summer_scenario_start(params):
     return _rapid_test_with_fixed_compliance_after_date(
-        params, change_date=SCENARIO_START, new_val=0.9
+        params, change_date=SUMMER_SCENARIO_START, new_val=0.9
     )
 
 
@@ -159,7 +159,8 @@ def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
     """Implement a rapid test scheme where a certain share of workers get tested."""
     params = params.copy(deep=True)
     params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1.0
+    loc = ("rapid_test_demand", "share_workers_receiving_offer")
     params = _change_date_params_after_date(
-        params=params, change_date=change_date, new_val=new_val
+        params=params, change_date=change_date, new_val=new_val, loc=loc
     )
     return params

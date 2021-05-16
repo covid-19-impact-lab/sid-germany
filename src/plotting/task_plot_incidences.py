@@ -42,13 +42,13 @@ PLOTS = {
         "spring_educ_open_after_easter_educ_tests_every_other_day",
         "spring_educ_open_after_easter_educ_tests_every_day",
     ],
-    "future": [
-        "future_baseline",
-        "future_educ_open",
-        "future_reduced_test_demand",
-        "future_strict_home_office",
-        "future_optimistic_vaccinations",
-        "future_more_rapid_tests_at_work",
+    "summer": [
+        "summer_baseline",
+        "summer_educ_open",
+        "summer_reduced_test_demand",
+        "summer_strict_home_office",
+        "summer_optimistic_vaccinations",
+        "summer_more_rapid_tests_at_work",
     ],
 }
 """Dict[str, List[str]]: A dictionary containing the plots to create.
@@ -120,6 +120,6 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
         title=title,
         name_to_label={name: name.replace("_", " ") for name in dfs},
         rki=outcome,
-        plot_scenario_start="future" in comparison_name,
+        plot_scenario_start="summer" in comparison_name,
     )
     plt.savefig(produces, dpi=200, transparent=False, facecolor="w")
