@@ -115,6 +115,15 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
 
     virus_shares = pd.read_pickle(paths["virus_shares"])
 
+    group_weights = pd.read_pickle(paths["rki_age_groups"])["weight"]
+    # ===========
+    print("take share known cases")
+    print("still need to remove old upscaled infections.")
+    group_share_known_cases = pd.Series(0.5, index=group_weights.index)
+    group_share_known_cases.index.name = "age_group_rki"
+    # ============
+    overall_share_known_cases = pd.read_pickle(paths["overall_share_known_cases"])
+
     initial_conditions = create_initial_conditions(
         start=init_start,
         end=init_end,
@@ -123,6 +132,9 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         virus_shares=virus_shares,
         synthetic_data_path=paths["initial_states"],
         reported_infections_path=paths["rki"],
+        overall_share_known_cases=overall_share_known_cases,
+        group_share_known_cases=group_share_known_cases,
+        group_weights=group_weights,
     )
 
     if end_date <= pd.Timestamp("2021-01-01"):
@@ -273,6 +285,11 @@ def get_simulation_dependencies(debug):
         "seasonality_factor_model": SRC / "simulation" / "seasonality.py",
         "params": BLD / "params.pkl",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
+        "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
+        "overall_share_known_cases": BLD
+        / "data"
+        / "processed_time_series"
+        / "share_known_cases.pkl",
     }
 
     return out
