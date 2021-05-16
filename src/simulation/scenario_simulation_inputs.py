@@ -278,6 +278,12 @@ def _get_vaccination_model_with_new_value_after_date(
 
 
 def strict_home_office_after_summer_scenario_start(paths, fixed_inputs):
+    """Define strict home office after summer scenario starts.
+    
+    The attendance multiplier is set to 0.54  which corresponds to the mean work
+    multiplier in April 2020.
+    
+    """
     start_date = fixed_inputs["duration"]["start"]
     end_date = fixed_inputs["duration"]["end"]
     contact_models = fixed_inputs["contact_models"]
