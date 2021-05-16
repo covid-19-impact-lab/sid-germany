@@ -133,14 +133,8 @@ def plot_incidences(
         keep_dates = rki_dates.intersection(dates).unique().sort_values()
         cropped_rki = rki_data.loc[keep_dates]
         national_data = cropped_rki.groupby("date").sum()
-        if rki == "new_known_case":
-            rki_col = "newly_infected"
-            label = "RKI Fallzahlen"
-        elif rki == "newly_infected":
-            rki_col = "upscaled_newly_infected"
-            label = "DunkelzifferRadar Schätzung der \ntatsächlichen Inzidenz"
-        else:
-            raise ValueError(f"No matching RKI variable found to {rki}")
+        rki_col = "newly_infected"
+        label = "RKI Fallzahlen"
 
         weekly_smoothed = (
             smoothed_outcome_per_hundred_thousand_rki(

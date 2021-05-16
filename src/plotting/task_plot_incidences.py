@@ -59,5 +59,7 @@ SIGNATURE, PARAMETRIZATION = create_parametrization(
 @pytask.mark.parametrize(SIGNATURE, PARAMETRIZATION)
 def task_plot_weekly_outcomes(depends_on, plot_name, outcome, produces):
     dfs = {name: pd.read_parquet(path) for name, path in depends_on.items()}
-    fig, ax = plot_incidences(dfs, plot_name, {name: name for name in dfs}, rki=outcome)
+    fig, ax = plot_incidences(
+        dfs, plot_name, {name: name for name in dfs}, rki=outcome == "new_known_case"
+    )
     plt.savefig(produces)

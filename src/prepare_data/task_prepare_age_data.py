@@ -39,9 +39,9 @@ def task_prepare_age_data_de(depends_on, produces):
 
     # rki
 
-    rki_age_groups = raw.copy()
-    rki_age_groups["rki_age_groups"] = create_age_groups_rki(rki_age_groups)
+    age_group_rki = raw.copy()
+    age_group_rki["age_group_rki"] = create_age_groups_rki(age_group_rki)
 
-    rki_age_groups = rki_age_groups.groupby("rki_age_groups")["n"].sum().to_frame()
-    rki_age_groups["weight"] = rki_age_groups["n"] / rki_age_groups["n"].sum()
-    rki_age_groups.to_pickle(produces[1])
+    age_group_rki = age_group_rki.groupby("age_group_rki")["n"].sum().to_frame()
+    age_group_rki["weight"] = age_group_rki["n"] / age_group_rki["n"].sum()
+    age_group_rki.to_pickle(produces[1])

@@ -121,9 +121,9 @@ def _scale_up_empirical_new_infections(
     start = dates.min()
     end = dates.max()
     date_range = pd.date_range(start, end, name="date")
+
     age_groups = empirical_infections.index.get_level_values("age_group_rki").unique()
     group_weights = group_weights.copy(deep=True)
-    group_weights.index.name = "age_group_rki"
     age_weights = group_weights / group_weights.sum()
 
     if overall_share_known_cases is not None:

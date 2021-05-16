@@ -13,18 +13,14 @@ Explanation on the coding of the variables
 - https://covid19-de-stats.sourceforge.io/rki-fall-tabelle.html
 
 """
-import warnings
 from datetime import datetime
 from datetime import timedelta
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytask
-import seaborn as sns
 
 from src.config import BLD
-from src.testing.shared import get_piecewise_linear_interpolation
 
 
 DROPPPED_COLUMNS = [
@@ -77,28 +73,17 @@ TRANSLATE_STATES = {
 @pytask.mark.depends_on(
     {
         "rki": BLD / "data" / "raw_time_series" / "rki.csv",
-        "params": BLD / "params.pkl",
     }
 )
 @pytask.mark.produces(
     {
         "data": BLD / "data" / "processed_time_series" / "rki.pkl",
-        "plot": BLD / "data" / "processed_time_series" / "rki_reported_vs_upscaled.png",
     }
 )
 def task_prepare_rki_data(depends_on, produces):
     df = pd.read_csv(depends_on["rki"], parse_dates=["Refdatum"])
     df = df.drop(columns=DROPPPED_COLUMNS)
     df = df.rename(columns=RENAME_COLUMNS)
-
-    params = pd.read_pickle(depends_on["params"])
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore", message="indexing past lexsort depth may impact performance."
-        )
-        params_slice = params.loc[("share_known_cases", "share_known_cases")]
-    share_known_cases = get_piecewise_linear_interpolation(params_slice)
-
     df["age_group_rki"] = (
         df["age_group"].replace(AGE_GROUPS_TO_INTERVALS).astype("category")
     )
@@ -127,15 +112,6 @@ def task_prepare_rki_data(depends_on, produces):
     cropped["state"] = cropped.index.get_level_values("county")
     cropped["state"] = cropped["state"].replace(county_to_state)
     cropped["state"] = cropped["state"].replace(TRANSLATE_STATES)
-
-    undetected_multiplier = 1 / share_known_cases
-    cropped["date"] = cropped.index.get_level_values("date")
-    cropped["undetected_multiplier"] = cropped["date"].replace(undetected_multiplier)
-    cropped["upscaled_newly_infected"] = (
-        cropped["newly_infected"] * cropped["undetected_multiplier"]
-    )
-    cropped = cropped.drop(columns=["date", "undetected_multiplier"])
-
     assert cropped.notnull().all().all()
     dates = cropped.index.get_level_values("date").unique()
     expected_dates = pd.date_range(dates.min(), dates.max())
@@ -145,23 +121,3 @@ def task_prepare_rki_data(depends_on, produces):
     ), f"There are missing dates in the RKI data: {missing_dates}"
 
     cropped.to_pickle(produces["data"])
-
-    reported_per_day = cropped["newly_infected"].groupby("date").sum()
-    upscaled_per_day = cropped["upscaled_newly_infected"].groupby("date").sum()
-    fig, ax = plt.subplots(figsize=(8, 3))
-    sns.lineplot(
-        x=reported_per_day.index, y=reported_per_day, ax=ax, label="Reported Cases"
-    )
-    sns.lineplot(
-        x=upscaled_per_day.index,
-        y=upscaled_per_day,
-        ax=ax,
-        label="Corrected for Undetected Infections",
-    )
-
-    ax.set_title("Reported Versus Corrected Cases")
-    plt.legend(frameon=False)
-    sns.despine()
-    fig.tight_layout()
-    fig.savefig(produces["plot"])
-    plt.close()
