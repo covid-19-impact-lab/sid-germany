@@ -4,21 +4,14 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
-from src.config import SRC
 from src.config import SUMMER_SCENARIO_START
 from src.plotting.plotting import plot_share_known_cases
+from src.plotting.plotting import PY_DEPENDENCIES
 from src.simulation.task_process_simulation_outputs import (
     create_path_for_share_known_cases_of_scenario,
 )
 from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
-
-
-PY_DEPENDENCIES = {
-    "py_config": SRC / "config.py",
-    "py_plot_incidences": SRC / "plotting" / "plotting.py",
-    "py_process_sim_outputs": SRC / "simulation" / "task_process_simulation_outputs.py",
-}
 
 
 def create_path_for_share_known_cases_plot(name, fast_flag, groupby):
