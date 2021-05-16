@@ -55,7 +55,7 @@ SIGNATURE, PARAMETRIZATION = create_incidence_parametrization(
 )
 
 
-@pytask.mark.parametrize(SIGNATURE, PARAMETRIZATION)
+@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produces):
     ddfs = {
         seed: dd.read_parquet(depends_on[seed].parent.parent.joinpath("time_series"))

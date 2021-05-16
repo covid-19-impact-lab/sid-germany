@@ -192,7 +192,7 @@ def vaccinations_after_summer_scenario_start_as_on_strongest_week_day(
 ):
     """Increase the vaccination rate to that of the best average weekday.
 
-    Averages were taken over the time since familiy physicians started vaccinating.
+    Averages were taken over the time since family physicians started vaccinating.
     This vaccination rate is extrapolated to every day, including weekends.
 
     """
