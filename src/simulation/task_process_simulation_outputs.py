@@ -31,7 +31,7 @@ def create_path_for_weekly_outcome_of_scenario(name, fast_flag, outcome, groupby
         file_name = f"{fast_flag}_{name}_{outcome}.pkl"
     else:
         file_name = f"{fast_flag}_{name}_{outcome}_by_{groupby}.pkl"
-    return BLD / "simulations" / file_name
+    return BLD / "simulations" / "incidences" / file_name
 
 
 def create_incidence_parametrization(named_scenarios, fast_flag, outcomes):
@@ -57,7 +57,7 @@ def create_incidence_parametrization(named_scenarios, fast_flag, outcomes):
     return "depends_on, outcome, groupby, produces", parametrization
 
 
-SIGNATURE, PARAMETRIZATION = create_incidence_parametrization(
+_SIGNATURE, _PARAMETRIZATION = create_incidence_parametrization(
     NAMED_SCENARIOS, FAST_FLAG, OUTCOMES
 )
 
@@ -74,7 +74,8 @@ def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produc
 
 
 def create_path_for_share_known_cases_of_scenario(name, fast_flag):
-    return BLD / "simulations" / f"{fast_flag}_{name}_share_known_cases.pkl"
+    file_name = f"{fast_flag}_{name}.pkl"
+    return BLD / "simulations" / "share_known_cases" / file_name
 
 
 def create_share_known_cases_parametrization(named_scenarios, fast_flag):
