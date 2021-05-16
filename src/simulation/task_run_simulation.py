@@ -14,13 +14,13 @@ DEPENDENCIES = get_simulation_dependencies(debug=FAST_FLAG == "debug")
 
 
 if FAST_FLAG == "debug":
-    n_baseline_seeds = 1
-    n_main_scenario_seeds = 1
-    n_side_scenario_seeds = 1
-elif FAST_FLAG == "verify":
+    n_baseline_seeds = 2
+    n_main_scenario_seeds = 0
+    n_side_scenario_seeds = 0
+elif FAST_FLAG == "verify":  # use 27 cores -> 2 rounds
     n_baseline_seeds = 10  # 3x
-    n_main_scenario_seeds = 4  # 4x
-    n_side_scenario_seeds = 2
+    n_main_scenario_seeds = 3  # 4x
+    n_side_scenario_seeds = 1  # 11
 elif FAST_FLAG == "full":
     n_baseline_seeds = 20
     n_main_scenario_seeds = 20
