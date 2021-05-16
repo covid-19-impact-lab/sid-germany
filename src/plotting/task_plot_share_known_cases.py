@@ -9,6 +9,7 @@ from src.plotting.plotting import plot_share_known_cases
 from src.plotting.plotting import PY_DEPENDENCIES
 from src.simulation.task_process_simulation_outputs import (
     create_path_for_share_known_cases_of_scenario,
+    get_available_scenarios,
 )
 from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
@@ -24,9 +25,7 @@ def create_path_for_share_known_cases_plot(name, fast_flag, groupby):
 
 def create_parametrization(named_scenarios, fast_flag):
     """Create the parametrization for the share known cases plots."""
-    available_scenarios = {
-        name for name, spec in named_scenarios.items() if spec["n_seeds"] > 0
-    }
+    available_scenarios = get_available_scenarios(named_scenarios)
     parametrization = []
 
     for scenario_name in available_scenarios:

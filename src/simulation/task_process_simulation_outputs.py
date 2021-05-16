@@ -19,6 +19,13 @@ OUTCOMES = [
 ]
 
 
+def get_available_scenarios(named_scenarios):
+    available_scenarios = {
+        name for name, spec in named_scenarios.items() if spec["n_seeds"] > 0
+    }
+    return available_scenarios
+
+
 def create_path_for_weekly_outcome_of_scenario(name, fast_flag, outcome, groupby):
     if groupby is None:
         file_name = f"{fast_flag}_{name}_{outcome}.pkl"
@@ -72,9 +79,7 @@ def create_path_for_share_known_cases_of_scenario(name, fast_flag):
 
 def create_share_known_cases_parametrization(named_scenarios, fast_flag):
     """Create the parametrization for the share known cases."""
-    available_scenarios = {
-        name for name, spec in named_scenarios.items() if spec["n_seeds"] > 0
-    }
+    available_scenarios = get_available_scenarios(named_scenarios)
     parametrization = []
     outcomes = ["currently_infected", "knows_currently_infected"]
 

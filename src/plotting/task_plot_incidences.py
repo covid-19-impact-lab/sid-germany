@@ -8,6 +8,7 @@ from src.plotting.plotting import PY_DEPENDENCIES
 from src.policies.policy_tools import filter_dictionary
 from src.simulation.task_process_simulation_outputs import (
     create_path_for_weekly_outcome_of_scenario,
+    get_available_scenarios,
 )
 from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
@@ -53,14 +54,13 @@ of scenario names which are combined to create the collection.
 
 """
 
-available_scenarios = {
-    name for name, spec in NAMED_SCENARIOS.items() if spec["n_seeds"] > 0
-}
+AVAILABLE_SCENARIOS = get_available_scenarios(NAMED_SCENARIOS)
+
 plotted_scenarios = {x for scenarios in PLOTS.values() for x in scenarios}
-assert available_scenarios.issubset(
+assert AVAILABLE_SCENARIOS.issubset(
     plotted_scenarios
 ), "The following scenarios do not appear in any plots: " + "\n\t".join(
-    available_scenarios.difference(plotted_scenarios)
+    AVAILABLE_SCENARIOS.difference(plotted_scenarios)
 )
 
 
@@ -69,9 +69,7 @@ def create_path_for_figure_of_weekly_outcome_of_scenario(name, fast_flag, outcom
 
 
 def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
-    available_scenarios = {
-        name for name, spec in NAMED_SCENARIOS.items() if spec["n_seeds"] > 0
-    }
+    available_scenarios = get_available_scenarios(named_scenarios)
     parametrization = []
     for outcome in outcomes:
         for comparison_name, to_compare in plots.items():
