@@ -53,6 +53,7 @@ def task_prepare_virus_variant_data(depends_on, produces):
     assert strain_data.notnull().all().all()
     expected_dates = pd.date_range(strain_data.index.min(), strain_data.index.max())
     assert (strain_data.index == expected_dates).all()
+
     strain_data.to_pickle(produces["final_strain_shares"])
 
     virus_shares = {

@@ -8,6 +8,8 @@ from src.simulation.load_simulation_inputs import load_simulation_inputs
 from src.simulation.load_simulation_inputs import named_scenarios_to_parametrization
 
 
+SPRING_START = "2021-02-15"
+
 DEPENDENCIES = get_simulation_dependencies(debug=FAST_FLAG == "debug")
 
 
@@ -16,9 +18,9 @@ if FAST_FLAG == "debug":
     n_main_scenario_seeds = 1
     n_side_scenario_seeds = 1
 elif FAST_FLAG == "verify":
-    n_baseline_seeds = 5
-    n_main_scenario_seeds = 2
-    n_side_scenario_seeds = 1
+    n_baseline_seeds = 10  # 3x
+    n_main_scenario_seeds = 4  # 4x
+    n_side_scenario_seeds = 2
 elif FAST_FLAG == "full":
     n_baseline_seeds = 20
     n_main_scenario_seeds = 20
@@ -30,12 +32,12 @@ else:
     )
 
 spring_dates = {
-    "start_date": "2021-02-15",
+    "start_date": SPRING_START,
     "end_date": "2021-05-16",
 }
 
 summer_dates = {
-    "start_date": "2021-05-01",
+    "start_date": SPRING_START,
     "end_date": "2021-07-01",
 }
 

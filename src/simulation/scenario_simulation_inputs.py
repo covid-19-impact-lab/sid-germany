@@ -20,6 +20,7 @@ from src.config import SUMMER_SCENARIO_START
 from src.config import VERY_LATE
 from src.policies.domain_level_policy_blocks import apply_emergency_care_policies
 from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
+from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
 from src.policies.enacted_policies import get_enacted_policies
 from src.policies.enacted_policies import get_school_options_for_strict_emergency_care
@@ -65,7 +66,9 @@ def open_all_educ_after_easter(paths, fixed_inputs):
     return out
 
 
-def _open_all_educ_after_date(paths, fixed_inputs, split_date):
+def _open_all_educ_after_date(
+    paths, fixed_inputs, split_date, multiplier=HYGIENE_MULTIPLIER
+):
     start_date = fixed_inputs["duration"]["start"]
     end_date = fixed_inputs["duration"]["end"]
     contact_models = fixed_inputs["contact_models"]
@@ -73,7 +76,21 @@ def _open_all_educ_after_date(paths, fixed_inputs, split_date):
 
     stays_same, to_change = split_policies(enacted_policies, split_date=split_date)
     after_split_without_educ_policies = remove_educ_policies(to_change)
-    new_policies = combine_dictionaries([stays_same, after_split_without_educ_policies])
+    block_info = {
+        "prefix": f"open_all_educ_after_{pd.Timestamp(split_date).date()}",
+        "start_date": split_date,
+        "end_date": VERY_LATE,
+    }
+
+    new_educ_policies = reduce_educ_models(
+        contact_models=contact_models,
+        block_info=block_info,
+        educ_type="all",
+        multiplier=multiplier,
+    )
+    new_policies = combine_dictionaries(
+        [stays_same, after_split_without_educ_policies, new_educ_policies]
+    )
     new_policies = shorten_policies(new_policies, start_date, end_date)
 
     out = {
