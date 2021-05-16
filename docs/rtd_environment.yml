@@ -8,10 +8,9 @@ dependencies:
   # Sphinx dependencies.
   - furo
   - ipython
-  - nbsphinx!=0.8.5
+  - nbsphinx
   - sphinx
   - sphinx-autoapi
   - sphinx-autodoc-typehints
   - sphinx-copybutton
   - sphinx-panels
-  - jinja2=2

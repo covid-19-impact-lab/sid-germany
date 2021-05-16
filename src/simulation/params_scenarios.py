@@ -145,7 +145,7 @@ def obligatory_rapid_tests_for_employees(params):
 
     """
     params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1.0
+    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1
     return params
 
 
@@ -158,7 +158,7 @@ def rapid_test_with_90pct_compliance_after_summer_scenario_start(params):
 def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
     """Implement a rapid test scheme where a certain share of workers get tested."""
     params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1.0
+    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1
     loc = ("rapid_test_demand", "share_workers_receiving_offer")
     params = _change_date_params_after_date(
         params=params, change_date=change_date, new_val=new_val, loc=loc

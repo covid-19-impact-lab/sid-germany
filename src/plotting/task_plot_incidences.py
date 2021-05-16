@@ -93,13 +93,13 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
     return "depends_on, comparison_name, outcome, produces", parametrization
 
 
-SIGNATURE, PARAMETRIZATION = create_parametrization(
+_SIGNATURE, _PARAMETRIZATION = create_parametrization(
     PLOTS, NAMED_SCENARIOS, FAST_FLAG, ["newly_infected", "new_known_case"]
 )
 
 
 @pytask.mark.depends_on(PY_DEPENDENCIES)
-@pytask.mark.parametrize(SIGNATURE, PARAMETRIZATION)
+@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.startswith("py_"), depends_on)
