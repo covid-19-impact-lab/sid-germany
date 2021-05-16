@@ -9,8 +9,8 @@ from src.plotting.plotting import plot_share_known_cases
 from src.plotting.plotting import PY_DEPENDENCIES
 from src.simulation.task_process_simulation_outputs import (
     create_path_for_share_known_cases_of_scenario,
-    get_available_scenarios,
 )
+from src.simulation.task_process_simulation_outputs import get_available_scenarios
 from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
 
@@ -42,13 +42,10 @@ def create_parametrization(named_scenarios, fast_flag):
     return "depends_on, title, produces", parametrization
 
 
-_SIGNATURE, _PARAMETRIZATION = create_parametrization(NAMED_SCENARIOS, FAST_FLAG)
-
-
 @pytask.mark.depends_on(PY_DEPENDENCIES)
-@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
+@pytask.mark.parametrize(*create_parametrization(NAMED_SCENARIOS, FAST_FLAG))
 def task_plot_share_known_cases_per_scenario(depends_on, title, produces):
-    share_known_cases = pd.read_pickle(depends_on)
+    share_known_cases = pd.read_pickle(depends_on[0])
     fig, ax = plot_share_known_cases(share_known_cases, title)
     if "summer" in title.lower():
         ax.axvline(
