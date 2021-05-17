@@ -1,3 +1,4 @@
+import warnings
 from functools import partial
 
 import pandas as pd
@@ -12,6 +13,7 @@ from src.policies.policy_tools import combine_dictionaries
 from src.simulation import scenario_simulation_inputs
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
+from src.testing.shared import get_piecewise_linear_interpolation
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -120,7 +122,13 @@ def load_simulation_inputs(
     else:
         group_share_known_cases = None
 
-    overall_share_known_cases = pd.read_pickle(paths["overall_share_known_cases"])
+    params = pd.read_pickle(paths["params"])
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        params_slice = params.loc[("share_known_cases", "share_known_cases")]
+    overall_share_known_cases = get_piecewise_linear_interpolation(params_slice)
 
     initial_conditions = create_initial_conditions(
         start=init_start,
@@ -249,10 +257,6 @@ def get_simulation_dependencies(debug):
         "params_scenarios": SRC / "simulation" / "params_scenarios.py",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
         "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
-        "overall_share_known_cases": BLD
-        / "data"
-        / "processed_time_series"
-        / "share_known_cases.pkl",
         "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
     }
 
