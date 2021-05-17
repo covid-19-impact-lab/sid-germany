@@ -102,7 +102,7 @@ def _scale_up_empirical_new_infections(
 
     Args:
         empirical_infections (pandas.DataFrame): Must have the index levels date, county
-        and age_group_rki and contain the column "newly_infected".
+            and age_group_rki and contain the column "newly_infected".
         group_share_known_cases (pandas.Series): Series with age_groups in the index.
             The values are interpreted as share of known cases for each age group.
         group_weights (pandas.Series): Series with sizes or weights of age groups.
@@ -121,10 +121,7 @@ def _scale_up_empirical_new_infections(
     start = dates.min()
     end = dates.max()
     date_range = pd.date_range(start, end, name="date")
-
-    age_groups = empirical_infections.index.get_level_values("age_group_rki").unique()
-    group_weights = group_weights.copy(deep=True)
-    age_weights = group_weights / group_weights.sum()
+    group_weights = group_weights / group_weights.sum()
 
     if overall_share_known_cases is not None:
         overall_share_known_cases = (
@@ -133,35 +130,17 @@ def _scale_up_empirical_new_infections(
             .fillna(method="ffill")
         )
 
-    # None given
-    if group_share_known_cases is None and overall_share_known_cases is None:
-        raise ValueError("Either group or overall share_known_cases must be given.")
-    # both given
-    elif group_share_known_cases is not None and overall_share_known_cases is not None:
-        implied_overall = group_share_known_cases @ age_weights
-        scaling_factor = overall_share_known_cases / implied_overall
-        share_known = pd.DataFrame(
-            data=[group_share_known_cases] * len(date_range), index=date_range
-        )
-        for col in share_known:
-            share_known[col] = share_known[col] * scaling_factor
-
-    # only overall given
-    elif overall_share_known_cases is not None:
-        share_known = pd.concat([overall_share_known_cases] * len(age_groups), axis=1)
-        share_known.columns = age_groups
-    # only group given
-    else:
-        share_known = pd.DataFrame(
-            data=[group_share_known_cases] * len(date_range), index=date_range
-        )
-
-    share_known = share_known.stack()
-    share_known.name = "share_known_cases"
+    expanded_group_share_known_cases = _create_group_specific_share_known_cases(
+        group_share_known_cases,
+        group_weights,
+        overall_share_known_cases,
+        group_weights,
+        date_range,
+    )
 
     merged = pd.merge(
         empirical_infections.reset_index(),
-        right=share_known.reset_index(),
+        right=expanded_group_share_known_cases.reset_index(),
         on=["date", "age_group_rki"],
     )
 
@@ -170,3 +149,57 @@ def _scale_up_empirical_new_infections(
     )
     merged = merged.set_index(["date", "county", "age_group_rki"])
     return merged["upscaled_newly_infected"]
+
+
+def _create_group_specific_share_known_cases(
+    group_share_known_cases,
+    group_weights,
+    overall_share_known_cases,
+    date_range,
+):
+    """Create the group specific share known cases.
+
+    Args:
+        group_share_known_cases (pandas.Series): Series with age_groups in the index.
+            The values are interpreted as share of known cases for each age group.
+        group_weights (pandas.Series): Series with sizes or weights of age groups.
+        overall_share_known_cases (pd.Series): Series with date index that contains the
+            aggregated share of known cases over time.
+
+
+    Returns:
+        pandas.Series: The values are the group specific share known cases. The index
+            is a MultiIndex identifying the date and the group of each value.
+
+    """
+    age_groups = group_weights.index
+    # None given
+    if group_share_known_cases is None and overall_share_known_cases is None:
+        raise ValueError("Either group or overall share_known_cases must be given.")
+    # both given
+    elif group_share_known_cases is not None and overall_share_known_cases is not None:
+        implied_overall = group_share_known_cases @ group_weights
+        scaling_factor = overall_share_known_cases / implied_overall
+        group_share_known_cases_df = pd.DataFrame(
+            data=[group_share_known_cases] * len(date_range), index=date_range
+        )
+        for col in group_share_known_cases_df:
+            group_share_known_cases_df[col] = (
+                group_share_known_cases_df[col] * scaling_factor
+            )
+
+    # only overall given
+    elif overall_share_known_cases is not None:
+        group_share_known_cases_df = pd.concat(
+            [overall_share_known_cases] * len(age_groups), axis=1
+        )
+        group_share_known_cases_df.columns = age_groups
+    # only group given
+    else:
+        group_share_known_cases_df = pd.DataFrame(
+            data=[group_share_known_cases] * len(date_range), index=date_range
+        )
+
+    out = group_share_known_cases_df.stack()
+    out.name = "group_share_known_cases"
+    return out

@@ -4,7 +4,7 @@ import pandas.testing as pdt
 import pytest
 
 from src.create_initial_states.create_initial_conditions import (
-    _scale_up_empirical_new_infections,
+    _create_group_specific_share_known_cases,
 )
 from src.create_initial_states.create_initial_infections import (
     _add_variant_info_to_infections,
@@ -114,58 +114,30 @@ def test_add_variant_info_to_infections():
 
 GROUPS = ["0-4", "5-14", "15-34", "35-59", "60-79", "80-100"]
 
-
-@pytest.fixture
-def group_share_known_cases():
-    return pd.Series([], index=GROUPS)
+DATES = pd.date_range("2021-04-01", "2021-04-03")
 
 
 @pytest.fixture
 def overall_share_known_cases():
-    return pd.Series([], index=[])
+    return pd.Series([0.3, 0.5, 0.7], index=DATES)
 
 
 @pytest.fixture
 def group_weights():
-    return pd.Series([0.1, 0.1, 0.2, 0.3, 0.2, 0.1], GROUPS)
+    return pd.Series([0.1, 0.1, 0.2, 0.3, 0.2, 0.1], index=GROUPS)
 
 
-def test_scale_up_empirical_new_infections_just_overall(empirical_infections):
-    overall_share_known_cases = pd.Series()
-    res = _scale_up_empirical_new_infections(
-        empirical_infections, overall_share_known_cases=overall_share_known_cases
-    )
-    expected = empirical_infections.copy()
-    assert res.equals(expected)
-
-
-def test_scale_up_empirical_new_infections_just_group(
-    empirical_infections, group_share_known_cases, group_weights
+def test_create_group_specific_share_known_cases_just_overall(
+    overall_share_known_cases, group_weights
 ):
-    res = _scale_up_empirical_new_infections(
-        empirical_infections=empirical_infections,
-        group_share_known_cases=group_share_known_cases,
-        group_weights=group_weights,
-    )
-    expected = empirical_infections.copy()
-    assert res.equals(expected)
-
-
-def test_scale_up_empirical_new_infections_both_given(
-    empirical_infections,
-    overall_share_known_cases,
-    group_weights,
-    group_share_known_cases,
-):
-    group_share_known_cases = pd.DataFrame()
-    group_weights = pd.Series()
-    overall_share_known_cases = pd.Series()
-
-    res = _scale_up_empirical_new_infections(
-        empirical_infections=empirical_infections,
-        group_share_known_cases=group_share_known_cases,
-        group_weights=group_weights,
+    res = _create_group_specific_share_known_cases(
         overall_share_known_cases=overall_share_known_cases,
+        group_share_known_cases=None,
+        group_weights=group_weights,
+        date_range=DATES,
     )
-    expected = empirical_infections.copy()
+    expected = pd.DataFrame(
+        [[0.3] * 6, [0.5] * 6, [0.7] * 6], index=DATES, columns=GROUPS
+    ).stack()
+
     assert res.equals(expected)
