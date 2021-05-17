@@ -127,6 +127,11 @@ def group_weights():
     return pd.Series([0.1, 0.1, 0.2, 0.3, 0.2, 0.1], index=GROUPS)
 
 
+@pytest.fixture
+def group_share_known_cases():
+    return pd.Series([0.1, 0.2, 0.3, 0.4, 0.5, 0.8], index=GROUPS)
+
+
 def test_create_group_specific_share_known_cases_just_overall(
     overall_share_known_cases, group_weights
 ):
@@ -141,11 +146,6 @@ def test_create_group_specific_share_known_cases_just_overall(
     )
 
     assert res.equals(expected)
-
-
-@pytest.fixture
-def group_share_known_cases():
-    return pd.Series([0.1, 0.2, 0.3, 0.4, 0.5, 0.8], index=GROUPS)
 
 
 def test_create_group_specific_share_known_cases_just_group(
@@ -167,3 +167,31 @@ def test_create_group_specific_share_known_cases_just_group(
         columns=GROUPS,
     )
     assert res.equals(expected)
+
+
+def test_create_group_specific_share_known_cases_both_given(
+    overall_share_known_cases,
+    group_weights,
+    group_share_known_cases,
+):
+
+    res = _create_group_specific_share_known_cases(
+        overall_share_known_cases=overall_share_known_cases,
+        group_share_known_cases=group_share_known_cases,
+        group_weights=group_weights,
+        date_range=DATES,
+    )
+
+    # implied overall: 0.01 + 0.02 + 0.06 + 0.12 + 0.1 + 0.08 = 0.39
+    expected = pd.DataFrame(
+        [
+            [0.07692308, 0.15384615, 0.23076923, 0.30769231, 0.38461538, 0.61538462],
+            [0.12820513, 0.25641026, 0.38461538, 0.51282051, 0.64102564, 1.02564103],
+            [0.17948718, 0.35897436, 0.53846154, 0.71794872, 0.8974359, 1.43589744],
+        ],
+        index=DATES,
+        columns=GROUPS,
+    )
+
+    pd.testing.assert_series_equal(res @ group_weights, overall_share_known_cases)
+    pd.testing.assert_frame_equal(res, expected)
