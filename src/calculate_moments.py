@@ -53,6 +53,8 @@ def calculate_weekly_incidences_from_results(
     weekly_incidences = pd.concat(weekly_incidences, axis=1)
     weekly_incidences.columns = range(len(results))
     assert not weekly_incidences.index.duplicated().any()
+    if groupby is not None:
+        assert weekly_incidences.index.get_level_values(groupby).dtype == "category"
     return weekly_incidences
 
 
