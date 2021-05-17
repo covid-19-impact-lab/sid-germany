@@ -9,7 +9,6 @@ and must return a dictionary with the following entries:
     - rapid_test_reaction_models
 
 """
-import warnings
 from functools import partial
 
 import pandas as pd
@@ -195,10 +194,9 @@ def vaccinations_after_summer_scenario_start_as_on_strongest_week_day(
     Averages were taken over the time since family physicians started vaccinating.
     This vaccination rate is extrapolated to every day, including weekends.
 
+    This abstracts from possible constraints on the amount of available doses.
+
     """
-    warnings.warn(
-        "The ambitious vaccination model abstracts from possible delivery constraints."
-    )
     start_date = fixed_inputs["duration"]["start"]
     init_start = start_date - pd.Timedelta(31, unit="D")
 
@@ -231,10 +229,9 @@ def vaccinations_after_easter_as_on_strongest_week_day(paths, fixed_inputs):
     Averages were taken over the time since familiy physicians started vaccinating.
     This vaccination rate is extrapolated to every day, including weekends.
 
+    This abstracts from possible constraints on the amount of available doses.
+
     """
-    warnings.warn(
-        "The ambitious vaccination model abstracts from possible delivery constraints."
-    )
     start_date = fixed_inputs["duration"]["start"]
     init_start = start_date - pd.Timedelta(31, unit="D")
 
