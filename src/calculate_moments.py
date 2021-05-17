@@ -9,6 +9,53 @@ DEFAULT_CENTER = False
 DEFAULT_MIN_PERIODS = 1
 
 
+def calculate_weekly_incidences_from_results(
+    results,
+    outcome,
+    groupby=None,
+):
+    """Create the weekly incidences from a list of simulation runs.
+
+    Args:
+        results (list): list of dask DataFrames with the time series data from sid
+            simulations.
+
+    Returns:
+        weekly_incidences (pandas.DataFrame): every column is the
+            weekly incidence over time for one simulation run.
+            The index are the dates of the simulation period if groupby is None, else
+            the index is a MultiIndex with date and the groups.
+
+    """
+    weekly_incidences = []
+    for res in results:
+        daily_smoothed = smoothed_outcome_per_hundred_thousand_sim(
+            df=res,
+            outcome=outcome,
+            take_logs=False,
+            window=7,
+            center=False,
+            groupby=groupby,
+        )
+        weekly_smoothed = daily_smoothed * 7
+
+        if groupby is None:
+            full_index = pd.date_range(
+                weekly_smoothed.index.min(), weekly_smoothed.index.max()
+            )
+        else:
+            groups = weekly_smoothed.index.get_level_values(groupby).unique()
+            dates = weekly_smoothed.index.get_level_values("date").unique()
+            full_index = pd.MultiIndex.from_product(iterables=[dates, groups])
+        expanded = weekly_smoothed.reindex(full_index).fillna(0)
+        weekly_incidences.append(expanded)
+
+    weekly_incidences = pd.concat(weekly_incidences, axis=1)
+    weekly_incidences.columns = range(len(results))
+    assert not weekly_incidences.index.duplicated().any()
+    return weekly_incidences
+
+
 def smoothed_outcome_per_hundred_thousand_sim(
     df,
     outcome,

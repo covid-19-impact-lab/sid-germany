@@ -9,7 +9,6 @@ import seaborn as sns
 import sid
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
-from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
 from src.config import SRC
 from src.config import SUMMER_SCENARIO_START
@@ -28,54 +27,6 @@ plt.rcParams.update(
         "legend.frameon": False,
     }
 )
-
-
-def weekly_incidences_from_results(
-    results,
-    outcome,
-    groupby=None,
-):
-    """Create the weekly incidences from a list of simulation runs.
-
-    Args:
-        results (list): list of DataFrames with the time series data from sid
-            simulations.
-
-    Returns:
-        weekly_incidences (pandas.DataFrame): every column is the
-            weekly incidence over time for one simulation run.
-            The index are the dates of the simulation period.
-
-    """
-    weekly_incidences = []
-    for res in results:
-        daily_smoothed = smoothed_outcome_per_hundred_thousand_sim(
-            df=res,
-            outcome=outcome,
-            take_logs=False,
-            window=7,
-            center=False,
-            groupby=groupby,
-        )
-        weekly_smoothed = daily_smoothed * 7
-
-        if groupby is None:
-            full_index = pd.date_range(
-                weekly_smoothed.index.min(), weekly_smoothed.index.max()
-            )
-        else:
-            age_groups = weekly_smoothed.index.get_level_values(
-                "age_group_rki"
-            ).unique()
-            dates = weekly_smoothed.index.get_level_values("date").unique()
-            full_index = pd.MultiIndex.from_product(iterables=[dates, age_groups])
-        expanded = weekly_smoothed.reindex(full_index).fillna(0)
-        weekly_incidences.append(expanded)
-
-    weekly_incidences = pd.concat(weekly_incidences, axis=1)
-    weekly_incidences.columns = range(len(results))
-    assert not weekly_incidences.index.duplicated().any()
-    return weekly_incidences
 
 
 def calculate_virus_strain_shares(results):

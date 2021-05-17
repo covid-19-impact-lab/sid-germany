@@ -21,5 +21,5 @@ def load_params(scenario):
     scenario_func = getattr(params_scenarios, scenario)
     params = scenario_func(params)
 
-    assert params.notnull().all()
+    assert params["value"].notnull().all()
     return params

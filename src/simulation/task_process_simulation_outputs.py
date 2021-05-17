@@ -2,8 +2,9 @@ import dask.dataframe as dd
 import pandas as pd
 import pytask
 
+from src.calculate_moments import calculate_weekly_incidences_from_results
 from src.config import BLD
-from src.plotting.plotting import weekly_incidences_from_results
+from src.config import SRC
 from src.simulation.load_simulation_inputs import (
     create_path_to_last_states_of_simulation,
 )
@@ -62,6 +63,7 @@ _SIGNATURE, _PARAMETRIZATION = create_incidence_parametrization(
 )
 
 
+@pytask.mark.depends_on({"calculate_weekly_incidences": SRC / "calculate_moments.py"})
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produces):
     ddfs = {
@@ -69,7 +71,9 @@ def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produc
         for seed in depends_on
         if isinstance(seed, int)
     }
-    weekly_outcomes = weekly_incidences_from_results(ddfs.values(), outcome, groupby)
+    weekly_outcomes = calculate_weekly_incidences_from_results(
+        ddfs.values(), outcome, groupby
+    )
     weekly_outcomes = weekly_outcomes.rename(columns=str)
     weekly_outcomes.to_pickle(produces)
 
