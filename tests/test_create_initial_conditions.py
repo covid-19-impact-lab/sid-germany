@@ -6,6 +6,9 @@ import pytest
 from src.create_initial_states.create_initial_conditions import (
     _create_group_specific_share_known_cases,
 )
+from src.create_initial_states.create_initial_conditions import (
+    _scale_up_empirical_new_infections,
+)
 from src.create_initial_states.create_initial_infections import (
     _add_variant_info_to_infections,
 )
@@ -119,17 +122,23 @@ DATES = pd.date_range("2021-04-01", "2021-04-03")
 
 @pytest.fixture
 def overall_share_known_cases():
-    return pd.Series([0.3, 0.5, 0.7], index=DATES)
+    sr = pd.Series([0.3, 0.5, 0.7], index=DATES)
+    sr.index.name = "date"
+    return sr
 
 
 @pytest.fixture
 def group_weights():
-    return pd.Series([0.1, 0.1, 0.2, 0.3, 0.2, 0.1], index=GROUPS)
+    sr = pd.Series([0.1, 0.1, 0.2, 0.3, 0.2, 0.1], index=GROUPS)
+    sr.index.name = "age_group_rki"
+    return sr
 
 
 @pytest.fixture
 def group_share_known_cases():
-    return pd.Series([0.1, 0.2, 0.3, 0.4, 0.5, 0.8], index=GROUPS)
+    sr = pd.Series([0.1, 0.2, 0.3, 0.4, 0.5, 0.6], index=GROUPS)
+    sr.index.name = "age_group_rki"
+    return sr
 
 
 def test_create_group_specific_share_known_cases_just_overall(
@@ -159,9 +168,9 @@ def test_create_group_specific_share_known_cases_just_group(
     )
     expected = pd.DataFrame(
         [
-            [0.1, 0.2, 0.3, 0.4, 0.5, 0.8],
-            [0.1, 0.2, 0.3, 0.4, 0.5, 0.8],
-            [0.1, 0.2, 0.3, 0.4, 0.5, 0.8],
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
         ],
         index=DATES,
         columns=GROUPS,
@@ -182,16 +191,85 @@ def test_create_group_specific_share_known_cases_both_given(
         date_range=DATES,
     )
 
-    # implied overall: 0.01 + 0.02 + 0.06 + 0.12 + 0.1 + 0.08 = 0.39
+    # implied overall: 0.01 + 0.02 + 0.06 + 0.12 + 0.1 + 0.06 = 0.37
+    # Some
     expected = pd.DataFrame(
         [
-            [0.07692308, 0.15384615, 0.23076923, 0.30769231, 0.38461538, 0.61538462],
-            [0.12820513, 0.25641026, 0.38461538, 0.51282051, 0.64102564, 1.02564103],
-            [0.17948718, 0.35897436, 0.53846154, 0.71794872, 0.8974359, 1.43589744],
+            # 0-4         5-14          14-34       35-59       60-79       80-100
+            [0.08108108, 0.16216216, 0.24324324, 0.32432432, 0.40540541, 0.48648649],
+            [0.13513514, 0.27027027, 0.40540541, 0.54054054, 0.67567568, 0.81081081],
+            [0.18918919, 0.37837838, 0.56756757, 0.75675676, 0.94594595, 1.13513514],
         ],
         index=DATES,
         columns=GROUPS,
     )
+    expected.columns.name = "age_group_rki"
+    expected.index.name = "date"
 
     pd.testing.assert_series_equal(res @ group_weights, overall_share_known_cases)
     pd.testing.assert_frame_equal(res, expected)
+
+
+@pytest.fixture
+def empirical_infections_for_upscaling():
+    df = pd.DataFrame()
+    df["date"] = [date for date in DATES for _ in GROUPS]
+    df["age_group_rki"] = [g for g in GROUPS for _ in DATES]
+    df["county"] = ["A", "B"] * 9
+    df["newly_infected"] = [10, 1, 2, 3] * 4 + [10, 10]
+    df = df.set_index(["date", "county", "age_group_rki"])
+    return df
+
+
+def test_scale_up_empirical_new_infections(
+    empirical_infections_for_upscaling,
+    group_share_known_cases,
+    group_weights,
+    overall_share_known_cases,
+):
+    empirical_infections = empirical_infections_for_upscaling.loc[:"2021-04-02"]
+    res = _scale_up_empirical_new_infections(
+        empirical_infections=empirical_infections,
+        group_share_known_cases=group_share_known_cases,
+        group_weights=group_weights,
+        overall_share_known_cases=overall_share_known_cases,
+    )
+    expected = empirical_infections.copy(deep=True)
+    expected["upscaled_newly_infected"] = [
+        # 2021-04-01
+        # 0-4
+        10 / 0.08108108,
+        1 / 0.08108108,
+        2 / 0.08108108,
+        # 5-14
+        3 / 0.16216216,
+        10 / 0.16216216,
+        1 / 0.16216216,
+        # 2021-04-02
+        # 15-34
+        2 / 0.40540541,
+        3 / 0.40540541,
+        10 / 0.40540541,
+        # 35-59
+        1 / 0.54054054,
+        2 / 0.54054054,
+        3 / 0.54054054,
+    ]
+    pd.testing.assert_series_equal(res, expected["upscaled_newly_infected"])
+
+
+def test_scale_up_empirical_new_infections_raise_error(
+    empirical_infections_for_upscaling,
+    group_share_known_cases,
+    group_weights,
+    overall_share_known_cases,
+):
+    msg = "The group specific share known cases is > 1 for some date and group."
+    with pytest.raises(AssertionError) as excinfo:
+        _scale_up_empirical_new_infections(
+            empirical_infections=empirical_infections_for_upscaling,
+            group_share_known_cases=group_share_known_cases,
+            group_weights=group_weights,
+            overall_share_known_cases=overall_share_known_cases,
+        )
+        assert msg in str(excinfo.value)
