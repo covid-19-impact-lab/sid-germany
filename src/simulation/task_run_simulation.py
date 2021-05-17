@@ -66,11 +66,13 @@ def task_simulate_scenario(
     produces,
     seed,
 ):
+    group_share_known_case_path = depends_on.get("group_share_known_case_path")
     simulation_kwargs = load_simulation_inputs(
         scenario=sim_input_scenario,
         start_date=start_date,
         end_date=end_date,
         debug=FAST_FLAG == "debug",
+        group_share_known_case_path=group_share_known_case_path,
     )
     params = load_params(params_scenario)
     path = produces.parent.parent
