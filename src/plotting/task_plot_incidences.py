@@ -16,23 +16,23 @@ from src.simulation.task_run_simulation import NAMED_SCENARIOS
 
 PLOTS = {
     "fall": ["fall_baseline"],
-    "effect_of_vaccines": ["spring_baseline", "spring_without_vaccines"],
+    "effect_of_vaccines": ["summer_baseline", "spring_without_vaccines"],
     "effect_of_rapid_tests": [
-        "spring_baseline",
+        "summer_baseline",
         "spring_without_rapid_tests_at_schools",
         "spring_without_rapid_tests_at_work",
         "spring_without_rapid_tests",
         "spring_with_obligatory_work_rapid_tests",
     ],
     "vaccines_vs_rapid_tests": [
-        "spring_baseline",
+        "summer_baseline",
         "spring_without_vaccines",
         # maybe replace the rapid test scenario with a different one.
         "spring_without_rapid_tests",
         "spring_with_more_vaccines",
     ],
     "rapid_tests_vs_school_closures": [
-        "spring_baseline",
+        "summer_baseline",
         "spring_emergency_care_after_easter_no_school_rapid_tests",
         "spring_educ_open_after_easter",
         "spring_educ_open_after_easter_educ_tests_every_other_day",
