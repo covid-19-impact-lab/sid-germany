@@ -1,3 +1,5 @@
+import warnings
+
 import pandas as pd
 import pytest
 
@@ -34,14 +36,17 @@ def test_find_people_to_vaccinate_no_refusers(params):
     # 0.35 is vaccinated this period. 0.45 and above not yet.
     expected = pd.Series([True] + [False] * 5)
 
-    res = find_people_to_vaccinate(
-        receives_vaccine=None,
-        states=states,
-        params=params,
-        seed=33,
-        vaccination_shares=vaccination_shares,
-        init_start=pd.Timestamp("2021-01-15"),
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+
+        res = find_people_to_vaccinate(
+            receives_vaccine=None,
+            states=states,
+            params=params,
+            seed=33,
+            vaccination_shares=vaccination_shares,
+            init_start=pd.Timestamp("2021-01-15"),
+        )
 
     pd.testing.assert_series_equal(expected, res, check_names=False)
 
@@ -65,14 +70,17 @@ def test_find_people_to_vaccinate_with_refusers(params):
     # 0.35 and 0.45 get vaccinated. 0.55 belongs to the refusers.
     expected = pd.Series([True, True] + [False] * 4)
 
-    res = find_people_to_vaccinate(
-        receives_vaccine=None,
-        states=states,
-        params=params,
-        seed=33,
-        vaccination_shares=vaccination_shares,
-        init_start=pd.Timestamp("2021-01-15"),
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+
+        res = find_people_to_vaccinate(
+            receives_vaccine=None,
+            states=states,
+            params=params,
+            seed=33,
+            vaccination_shares=vaccination_shares,
+            init_start=pd.Timestamp("2021-01-15"),
+        )
 
     pd.testing.assert_series_equal(expected, res, check_names=False)
 
@@ -93,13 +101,16 @@ def test_find_people_to_vaccinate_start_date(params):
     # everyone up to 0.4 should be vaccinated
     expected = pd.Series([True, False, True, True, False, False])
 
-    res = find_people_to_vaccinate(
-        receives_vaccine=None,
-        states=states,
-        params=params,
-        seed=33,
-        vaccination_shares=vaccination_shares,
-        init_start=pd.Timestamp("2021-02-03"),
-    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+
+        res = find_people_to_vaccinate(
+            receives_vaccine=None,
+            states=states,
+            params=params,
+            seed=33,
+            vaccination_shares=vaccination_shares,
+            init_start=pd.Timestamp("2021-02-03"),
+        )
 
     pd.testing.assert_series_equal(expected, res, check_names=False)
