@@ -1,4 +1,5 @@
 import itertools as it
+import warnings
 
 import pandas as pd
 
@@ -52,7 +53,6 @@ def create_initial_conditions(
 
     """
     seed = it.count(seed)
-    empirical_infections = empirical_infections
     upscaled_empirical_infections = _scale_up_empirical_new_infections(
         empirical_infections=empirical_infections,
         overall_share_known_cases=overall_share_known_cases,
@@ -125,7 +125,7 @@ def _scale_up_empirical_new_infections(
             .fillna(method="ffill")
         )
 
-    group_share_known_cases_df = _create_group_specific_share_known_cases(
+    group_share_known_cases_df = create_group_specific_share_known_cases(
         group_share_known_cases=group_share_known_cases,
         group_weights=group_weights,
         overall_share_known_cases=overall_share_known_cases,
@@ -134,9 +134,12 @@ def _scale_up_empirical_new_infections(
     stacked_group_share_known_cases = group_share_known_cases_df.stack()
     stacked_group_share_known_cases.name = "group_share_known_cases"
 
-    assert not (
-        stacked_group_share_known_cases > 1
-    ).any(), "The group specific share known cases is > 1 for some date and group."
+    if (stacked_group_share_known_cases > 1).any():
+        stacked_group_share_known_cases = stacked_group_share_known_cases.clip(0, 0.95)
+        warnings.warn(
+            "The group specific share known cases is > 1 for some date and group.",
+            UserWarning,
+        )
 
     merged = pd.merge(
         empirical_infections.reset_index(),
@@ -151,7 +154,7 @@ def _scale_up_empirical_new_infections(
     return merged["upscaled_newly_infected"]
 
 
-def _create_group_specific_share_known_cases(
+def create_group_specific_share_known_cases(
     group_share_known_cases,
     group_weights,
     overall_share_known_cases,

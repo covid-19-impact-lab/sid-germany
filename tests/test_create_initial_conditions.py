@@ -4,10 +4,10 @@ import pandas.testing as pdt
 import pytest
 
 from src.create_initial_states.create_initial_conditions import (
-    _create_group_specific_share_known_cases,
+    _scale_up_empirical_new_infections,
 )
 from src.create_initial_states.create_initial_conditions import (
-    _scale_up_empirical_new_infections,
+    create_group_specific_share_known_cases,
 )
 from src.create_initial_states.create_initial_infections import (
     _add_variant_info_to_infections,
@@ -141,10 +141,10 @@ def group_share_known_cases():
     return sr
 
 
-def test_create_group_specific_share_known_cases_just_overall(
+def testcreate_group_specific_share_known_cases_just_overall(
     overall_share_known_cases, group_weights
 ):
-    res = _create_group_specific_share_known_cases(
+    res = create_group_specific_share_known_cases(
         overall_share_known_cases=overall_share_known_cases,
         group_share_known_cases=None,
         group_weights=group_weights,
@@ -157,10 +157,10 @@ def test_create_group_specific_share_known_cases_just_overall(
     assert res.equals(expected)
 
 
-def test_create_group_specific_share_known_cases_just_group(
+def testcreate_group_specific_share_known_cases_just_group(
     group_share_known_cases, group_weights
 ):
-    res = _create_group_specific_share_known_cases(
+    res = create_group_specific_share_known_cases(
         overall_share_known_cases=None,
         group_share_known_cases=group_share_known_cases,
         group_weights=group_weights,
@@ -178,13 +178,13 @@ def test_create_group_specific_share_known_cases_just_group(
     assert res.equals(expected)
 
 
-def test_create_group_specific_share_known_cases_both_given(
+def testcreate_group_specific_share_known_cases_both_given(
     overall_share_known_cases,
     group_weights,
     group_share_known_cases,
 ):
 
-    res = _create_group_specific_share_known_cases(
+    res = create_group_specific_share_known_cases(
         overall_share_known_cases=overall_share_known_cases,
         group_share_known_cases=group_share_known_cases,
         group_weights=group_weights,
@@ -264,12 +264,10 @@ def test_scale_up_empirical_new_infections_raise_error(
     group_weights,
     overall_share_known_cases,
 ):
-    msg = "The group specific share known cases is > 1 for some date and group."
-    with pytest.raises(AssertionError) as excinfo:
+    with pytest.warns(UserWarning):
         _scale_up_empirical_new_infections(
             empirical_infections=empirical_infections_for_upscaling,
             group_share_known_cases=group_share_known_cases,
             group_weights=group_weights,
             overall_share_known_cases=overall_share_known_cases,
         )
-        assert msg in str(excinfo.value)
