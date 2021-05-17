@@ -74,6 +74,7 @@ def weekly_incidences_from_results(
 
     weekly_incidences = pd.concat(weekly_incidences, axis=1)
     weekly_incidences.columns = range(len(results))
+    assert not weekly_incidences.index.duplicated().any()
     return weekly_incidences
 
 

@@ -88,7 +88,9 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
             produces = create_path_for_figure_of_weekly_outcome_of_scenario(
                 comparison_name, fast_flag, outcome
             )
-            parametrization.append((depends_on, comparison_name, outcome, produces))
+            # only create a plot if at least one scenario had a seed.
+            if depends_on:
+                parametrization.append((depends_on, comparison_name, outcome, produces))
 
     return "depends_on, comparison_name, outcome, produces", parametrization
 

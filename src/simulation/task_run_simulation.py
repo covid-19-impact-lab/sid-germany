@@ -50,12 +50,6 @@ NAMED_SCENARIOS = {
         "end_date": "2020-12-23",
         "n_seeds": n_baseline_seeds,
     },
-    "spring_baseline": {
-        "sim_input_scenario": "baseline",
-        "params_scenario": "baseline",
-        "n_seeds": n_baseline_seeds,
-        **spring_dates,
-    },
     "summer_baseline": {
         "sim_input_scenario": "baseline",
         "params_scenario": "baseline",
