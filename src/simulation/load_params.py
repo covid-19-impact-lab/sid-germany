@@ -1,6 +1,7 @@
 import pandas as pd
 
 from src.config import BLD
+from src.simulation import params_scenarios
 
 
 def load_params(scenario):
@@ -17,11 +18,8 @@ def load_params(scenario):
     """
     params = pd.read_pickle(BLD / "params.pkl")
 
-    if scenario == "baseline":
-        pass
-    else:
-        raise ValueError(
-            "The params scenario must be one of ['baseline']. "
-            f"You specified {scenario}."
-        )
+    scenario_func = getattr(params_scenarios, scenario)
+    params = scenario_func(params)
+
+    assert params["value"].notnull().all()
     return params

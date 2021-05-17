@@ -5,18 +5,14 @@ import pandas as pd
 
 from src.config import BLD
 from src.config import SRC
-from src.config import VERY_LATE
 from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
-from src.policies.enacted_policies import get_enacted_policies
-from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
-from src.policies.policy_tools import shorten_policies
+from src.policies.policy_tools import combine_dictionaries
+from src.simulation import scenario_simulation_inputs
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
-from src.testing.rapid_test_reactions import rapid_test_reactions
-from src.testing.rapid_tests import rapid_test_demand
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
@@ -28,8 +24,8 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
     Does **not** include: params, path, seed.
 
     Args:
-        scenario (str): string specifying the scenario. Supported are:
-            - baseline
+        scenario (str): string specifying the scenario. A function with the
+            same name must exist in src.simulation.scenario_simulation_inputs.
 
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
@@ -37,19 +33,20 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
             - contact_models
             - duration
             - events
-            - contact_policies
+            - saved_columns
+            - virus_strains
+            - derived_state_variables
+            - seasonality_factor_model
+            - initial_conditions
+            - susceptibility_factor_model
             - testing_demand_models
             - testing_allocation_models
             - testing_processing_models
-            - saved_columns
-            - initial_conditions
-            - susceptibility_factor_model
-            - virus_strains
+
+            - contact_policies
             - vaccination_models
             - rapid_test_models
             - rapid_test_reaction_models
-            - seasonality_factor_model
-            - derived_state_variables
 
     """
     start_date = pd.Timestamp(start_date)
@@ -65,8 +62,6 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
     init_start = start_date - pd.Timedelta(31, unit="D")
     init_end = start_date - one_day
     duration = {"start": start_date, "end": end_date}
-
-    policies = get_enacted_policies(contact_models)
 
     # testing models
     share_of_tests_for_symptomatics_series = pd.read_pickle(
@@ -110,10 +105,13 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
             "n_has_infected",
             "channel_infected_by_contact",
             "state",
+            "knows_currently_infected",
+            "currently_infected",
         ],
     }
 
     virus_shares = pd.read_pickle(paths["virus_shares"])
+    rki_infections = pd.read_pickle(paths["rki"])
 
     initial_conditions = create_initial_conditions(
         start=init_start,
@@ -121,37 +119,9 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         seed=3930,
         reporting_delay=5,
         virus_shares=virus_shares,
-        synthetic_data_path=paths["initial_states"],
-        reported_infections_path=paths["rki"],
+        synthetic_data=initial_states[["county", "age_group_rki"]],
+        empirical_infections=rki_infections,
     )
-
-    if end_date <= pd.Timestamp("2021-01-01"):
-        vaccination_models = None
-        rapid_test_models = None
-        rapid_test_reaction_models = None
-    else:
-        vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
-        vaccination_func = partial(
-            find_people_to_vaccinate,
-            vaccination_shares=vaccination_shares,
-            init_start=init_start,
-        )
-        vaccination_models = {"standard": {"model": vaccination_func}}
-
-        rapid_test_models = {
-            "standard_rapid_test_demand": {
-                "model": rapid_test_demand,
-                "start": "2021-01-01",
-                "end": VERY_LATE,
-            }
-        }
-        rapid_test_reaction_models = {
-            "rapid_test_reactions": {
-                "model": rapid_test_reactions,
-                "start": "2021-01-01",
-                "end": VERY_LATE,
-            }
-        }
 
     seasonality_factor_model = partial(seasonality_model, contact_models=contact_models)
 
@@ -166,23 +136,11 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         "knows_currently_infected": _knows_currently_infected,
     }
 
-    # Adjust Inputs to the Scenario. This will use getattr
-    if scenario == "baseline":
-        pass
-    else:
-        raise ValueError(
-            f"Unknown scenario {scenario}. "
-            "Only 'baseline' is implemented at the moment'"
-        )
-
-    policies = shorten_policies(policies, start_date, end_date)
-
-    out = {
+    fixed_inputs = {
         "initial_states": initial_states,
         "contact_models": contact_models,
         "duration": duration,
         "events": None,
-        "contact_policies": policies,
         "testing_demand_models": testing_demand_models,
         "testing_allocation_models": testing_allocation_models,
         "testing_processing_models": testing_processing_models,
@@ -190,13 +148,14 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         "initial_conditions": initial_conditions,
         "susceptibility_factor_model": calculate_susceptibility,
         "virus_strains": ["base_strain", "b117"],
-        "vaccination_models": vaccination_models,
-        "rapid_test_models": rapid_test_models,
-        "rapid_test_reaction_models": rapid_test_reaction_models,
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
     }
-    return out
+
+    scenario_func = getattr(scenario_simulation_inputs, scenario)
+    scenario_inputs = scenario_func(paths, fixed_inputs)
+    simulation_inputs = combine_dictionaries([fixed_inputs, scenario_inputs])
+    return simulation_inputs
 
 
 def get_simulation_dependencies(debug):
@@ -272,7 +231,12 @@ def get_simulation_dependencies(debug):
         "rapid_test_reaction_models": SRC / "testing" / "rapid_test_reactions.py",
         "seasonality_factor_model": SRC / "simulation" / "seasonality.py",
         "params": BLD / "params.pkl",
+        "scenario_simulation_inputs": SRC
+        / "simulation"
+        / "scenario_simulation_inputs.py",
+        "params_scenarios": SRC / "simulation" / "params_scenarios.py",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
+        "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
     }
 
     return out
@@ -291,7 +255,7 @@ def named_scenarios_to_parametrization(named_scenarios, fast_flag):
             produces = create_path_to_last_states_of_simulation(fast_flag, name, seed)
             scaled_seed = 500 + 100_000 * seed
             spec_tuple = (
-                specs["policy_scenario"],
+                specs["sim_input_scenario"],
                 specs["params_scenario"],
                 specs["start_date"],
                 specs["end_date"],

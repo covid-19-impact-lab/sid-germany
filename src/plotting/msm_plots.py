@@ -1,11 +1,11 @@
-import matplotlib.dates as dt
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from estimagic.visualization.colors import get_colors
 from sid.plotting import plot_infection_rates_by_contact_models
+
+from src.plotting.plotting import format_date_axis
 
 
 plt.rcParams.update(
@@ -59,10 +59,7 @@ def plot_estimation_moment(results, name):
 
     for ax in axes:
         ax.set_ylabel(moment_name)
-        ax.xaxis.set_major_locator(dt.MonthLocator())
-        ax.xaxis.set_major_formatter(dt.DateFormatter("%b %Y"))
-        ax.xaxis.set_minor_locator(dt.DayLocator())
-        ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+        ax = format_date_axis(ax)
 
     fig.tight_layout()
     plt.close()

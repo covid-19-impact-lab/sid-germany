@@ -1,16 +1,23 @@
 from typing import Optional
 
+import matplotlib.dates as dt
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import sid
-from matplotlib.dates import AutoDateLocator
-from matplotlib.dates import DateFormatter
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
-from src.calculate_moments import smoothed_outcome_per_hundred_thousand_sim
 from src.config import BLD
+from src.config import SRC
+from src.config import SUMMER_SCENARIO_START
+
+
+PY_DEPENDENCIES = {
+    "py_config": SRC / "config.py",
+    "py_plot_incidences": SRC / "plotting" / "plotting.py",
+}
 
 
 plt.rcParams.update(
@@ -20,36 +27,6 @@ plt.rcParams.update(
         "legend.frameon": False,
     }
 )
-
-
-def weekly_incidences_from_results(results, outcome):
-    """Create the weekly incidences from a list of simulation runs.
-
-    Args:
-        results (list): list of DataFrames with the time series data from sid
-            simulations.
-
-    Returns:
-        weekly_incidences (pandas.DataFrame): every column is the
-            weekly incidence over time for one simulation run.
-            The index are the dates of the simulation period.
-
-    """
-    weekly_incidences = []
-    for res in results:
-        weekly_incidences.append(
-            smoothed_outcome_per_hundred_thousand_sim(
-                df=res,
-                outcome=outcome,
-                take_logs=False,
-                window=7,
-                center=False,
-            )
-            * 7
-        )
-    weekly_incidences = pd.concat(weekly_incidences, axis=1)
-    weekly_incidences.columns = range(len(results))
-    return weekly_incidences
 
 
 def calculate_virus_strain_shares(results):
@@ -83,7 +60,12 @@ def calculate_virus_strain_shares(results):
 
 
 def plot_incidences(
-    incidences, title, name_to_label, n_single_runs: Optional[int] = None, rki=False
+    incidences,
+    title,
+    name_to_label,
+    n_single_runs: Optional[int] = None,
+    rki=False,
+    plot_scenario_start=False,
 ):
     """Plot incidences.
 
@@ -95,6 +77,7 @@ def plot_incidences(
             visualize to show statistical uncertainty. Passing ``None`` will plot all
             runs.
         rki (bool): Whether to plot the rki data.
+        plot_scenario_start (bool): whether to plot the scenario_start
 
     Returns:
         fig, ax
@@ -135,10 +118,10 @@ def plot_incidences(
         national_data = cropped_rki.groupby("date").sum()
         if rki == "new_known_case":
             rki_col = "newly_infected"
-            label = "RKI Fallzahlen"
+            label = "official case numbers"
         elif rki == "newly_infected":
             rki_col = "upscaled_newly_infected"
-            label = "DunkelzifferRadar Schätzung der \ntatsächlichen Inzidenz"
+            label = "upscaled official case numbers"
         else:
             raise ValueError(f"No matching RKI variable found to {rki}")
 
@@ -154,11 +137,55 @@ def plot_incidences(
         sns.lineplot(
             x=weekly_smoothed.index, y=weekly_smoothed, ax=ax, color="k", label=label
         )
+    if plot_scenario_start:
+        ax.axvline(
+            pd.Timestamp(SUMMER_SCENARIO_START),
+            label="scenario start",
+            color="darkgrey",
+        )
 
     fig, ax = style_plot(fig, ax)
-    ax.set_ylabel("Geglättete wöchentliche \nNeuinfektionen pro 100 000")
+    ax.set_ylabel("smoothed weekly incidence")
     ax.set_title(title)
-    ax.legend(loc="upper center", bbox_to_anchor=(-0.0, -0.5, 1, 0.2), ncol=2)
+    x, y, width, height = 0.0, -0.3, 1, 0.2
+    ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=2)
+    fig.tight_layout()
+    return fig, ax
+
+
+def plot_share_known_cases(share_known_cases, title):
+    n_groups = share_known_cases.index.get_level_values("age_group_rki").nunique()
+    colors = sid.get_colors("ordered", n_groups)
+    sns.set_palette(colors)
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    for col in share_known_cases:
+        alpha = 0.6 if col == "mean" else 0.2
+        linewidth = 2.5 if col == "mean" else 1
+        sns.lineplot(
+            data=share_known_cases.reset_index(),
+            x="date",
+            y=col,
+            hue="age_group_rki",
+            linewidth=linewidth,
+            alpha=alpha,
+        )
+
+    fig, ax = style_plot(fig, ax)
+    ax.set_title(title)
+
+    # Reduce the legend to have each age group only once and move it to below the plot
+    x, y, width, height = 0.0, -0.3, 1, 0.2
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(
+        handles[:n_groups],
+        labels[:n_groups],
+        loc="upper center",
+        bbox_to_anchor=(x, y, width, height),
+        ncol=n_groups,
+    )
+
+    fig.tight_layout()
     return fig, ax
 
 
@@ -168,12 +195,17 @@ def style_plot(fig, axes):
 
     for ax in axes:
         ax.set_ylabel("")
-        ax.set_xlabel("Datum")
-        n_days = ax.get_xlim()[1] - ax.get_xlim()[0]
-        date_form = DateFormatter("%d.%m") if n_days < 100 else DateFormatter("%m/%Y")
-        ax.xaxis.set_major_formatter(date_form)
-        loc = AutoDateLocator(minticks=5, maxticks=12)
-        ax.xaxis.set_major_locator(loc)
+        ax.set_xlabel("")
         ax.grid(axis="y")
+        ax = format_date_axis(ax)
     sns.despine()
     return fig, ax
+
+
+def format_date_axis(ax):
+    ax.xaxis.set_major_locator(dt.MonthLocator())
+    # for month and year use "%b %Y"
+    ax.xaxis.set_major_formatter(dt.DateFormatter("%B"))
+    ax.xaxis.set_minor_locator(dt.DayLocator())
+    ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+    return ax

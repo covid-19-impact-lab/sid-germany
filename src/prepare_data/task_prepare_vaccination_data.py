@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 import seaborn as sns
+import yaml
 from sid.colors import get_colors
 
 from src.config import BLD
@@ -27,6 +28,7 @@ OUT_PATH = BLD / "data" / "vaccinations"
         "vaccination_shares_extended": OUT_PATH / "vaccination_shares_extended.pkl",
         "fig_first_dose": OUT_PATH / "first_dose.png",
         "fig_vaccination_shares": OUT_PATH / "vaccination_shares.png",
+        "mean_vacc_share_per_day": OUT_PATH / "mean_vacc_share_per_day.yaml",
     }
 )
 def task_prepare_vaccination_data(depends_on, produces):
@@ -57,9 +59,11 @@ def task_prepare_vaccination_data(depends_on, produces):
     after_start = vaccination_shares.loc[start_physicians:]
 
     dayname_to_mean = after_start.groupby(after_start.index.day_name()).mean()
+    with open(produces["mean_vacc_share_per_day"], "w") as f:
+        yaml.dump(data=dayname_to_mean.to_dict(), stream=f)
 
     start_date = vaccination_shares.index.max() + pd.Timedelta(days=1)
-    end_date = start_date + pd.Timedelta(weeks=6)
+    end_date = start_date + pd.Timedelta(weeks=12)
     future_dates = pd.date_range(start_date, end_date)
     future_day_names = future_dates.day_name()
     future_values = future_day_names.to_series().replace(dayname_to_mean)
@@ -114,8 +118,8 @@ def _plot_labeled_series(labeled):
     colors = get_colors("categorical", len(labeled))
     for (label, sr), color in zip(labeled, colors):
         sns.lineplot(
-            x=sr.index,
-            y=sr,
+            x=sr.loc["2020-12-15":].index,
+            y=sr.loc["2020-12-15":],
             label=label,
             linewidth=2,
             color=color,
