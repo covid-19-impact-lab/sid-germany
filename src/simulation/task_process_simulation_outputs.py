@@ -7,7 +7,6 @@ from src.plotting.plotting import weekly_incidences_from_results
 from src.simulation.load_simulation_inputs import (
     create_path_to_last_states_of_simulation,
 )
-from src.simulation.task_run_simulation import all_simulations_finished_path
 from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
 
@@ -63,7 +62,6 @@ _SIGNATURE, _PARAMETRIZATION = create_incidence_parametrization(
 )
 
 
-@pytask.mark.depends_on({"all_simulations_finished": all_simulations_finished_path()})
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produces):
     ddfs = {

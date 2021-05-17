@@ -1,8 +1,6 @@
-import pandas as pd
 import pytask
 from sid import get_simulate_func
 
-from src.config import BLD
 from src.config import FAST_FLAG
 from src.simulation.load_params import load_params
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
@@ -190,14 +188,3 @@ def task_simulate_scenario(
         params=params, path=path, seed=seed, **simulation_kwargs
     )
     simulate(params)
-
-
-def all_simulations_finished_path():
-    return BLD / "simulations" / "all_simulations_finished.txt"
-
-
-@pytask.mark.depends_on([spec[4] for spec in SCENARIOS])
-@pytask.mark.produces(all_simulations_finished_path())
-def task_check_all_simulations_finished(produces):
-    with open(produces, "w") as f:
-        f.write(str(pd.Timestamp.now()))
