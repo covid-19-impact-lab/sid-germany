@@ -130,22 +130,24 @@ def _scale_up_empirical_new_infections(
             .fillna(method="ffill")
         )
 
-    expanded_group_share_known_cases = _create_group_specific_share_known_cases(
+    group_share_known_cases_df = _create_group_specific_share_known_cases(
         group_share_known_cases,
         group_weights,
         overall_share_known_cases,
         group_weights,
         date_range,
     )
+    stacked_group_share_known_cases = group_share_known_cases_df.stack()
+    stacked_group_share_known_cases.name = "group_share_known_cases"
 
     merged = pd.merge(
         empirical_infections.reset_index(),
-        right=expanded_group_share_known_cases.reset_index(),
+        right=stacked_group_share_known_cases.reset_index(),
         on=["date", "age_group_rki"],
     )
 
     merged["upscaled_newly_infected"] = (
-        merged["newly_infected"] / merged["share_known_cases"]
+        merged["newly_infected"] / merged["group_share_known_cases"]
     )
     merged = merged.set_index(["date", "county", "age_group_rki"])
     return merged["upscaled_newly_infected"]
@@ -168,8 +170,9 @@ def _create_group_specific_share_known_cases(
 
 
     Returns:
-        pandas.Series: The values are the group specific share known cases. The index
-            is a MultiIndex identifying the date and the group of each value.
+        pandas.DataFrame: The index are the dates, the columns are the group labels. The
+            value is the share known cases of the particular group on the particular
+            date.
 
     """
     age_groups = group_weights.index
@@ -199,7 +202,4 @@ def _create_group_specific_share_known_cases(
         group_share_known_cases_df = pd.DataFrame(
             data=[group_share_known_cases] * len(date_range), index=date_range
         )
-
-    out = group_share_known_cases_df.stack()
-    out.name = "group_share_known_cases"
-    return out
+    return group_share_known_cases_df

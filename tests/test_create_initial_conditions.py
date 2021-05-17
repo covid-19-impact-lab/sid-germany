@@ -138,6 +138,32 @@ def test_create_group_specific_share_known_cases_just_overall(
     )
     expected = pd.DataFrame(
         [[0.3] * 6, [0.5] * 6, [0.7] * 6], index=DATES, columns=GROUPS
-    ).stack()
+    )
 
+    assert res.equals(expected)
+
+
+@pytest.fixture
+def group_share_known_cases():
+    return pd.Series([0.1, 0.2, 0.3, 0.4, 0.5, 0.8], index=GROUPS)
+
+
+def test_create_group_specific_share_known_cases_just_group(
+    group_share_known_cases, group_weights
+):
+    res = _create_group_specific_share_known_cases(
+        overall_share_known_cases=None,
+        group_share_known_cases=group_share_known_cases,
+        group_weights=group_weights,
+        date_range=DATES,
+    )
+    expected = pd.DataFrame(
+        [
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.8],
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.8],
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.8],
+        ],
+        index=DATES,
+        columns=GROUPS,
+    )
     assert res.equals(expected)
