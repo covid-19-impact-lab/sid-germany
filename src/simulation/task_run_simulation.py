@@ -144,7 +144,7 @@ NAMED_SCENARIOS = {
     "summer_strict_home_office": {
         "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
         "params_scenario": "baseline",
-        "n_seeds": n_side_scenario_seeds,
+        "n_seeds": 0,
         **summer_dates,
     },
     "summer_more_rapid_tests_at_work": {
