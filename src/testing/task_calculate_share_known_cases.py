@@ -26,10 +26,6 @@ from src.testing.shared import get_piecewise_linear_interpolation
 )
 @pytask.mark.produces(
     {
-        "share_known_cases": BLD
-        / "data"
-        / "processed_time_series"
-        / "share_known_cases.pkl",
         "share_known_cases_fig": BLD
         / "data"
         / "processed_time_series"
@@ -52,7 +48,7 @@ def task_calculate_and_plot_share_known_cases(depends_on, produces):
         len(missing_dates) == 0
     ), f"There are missing dates in the share_known: {missing_dates}"
 
-    share_known.to_pickle(produces["share_known_cases"])
+    share_known = share_known.loc["2020-03-01":"2021-04-14"]
 
     params = pd.read_pickle(depends_on["params"])
     with warnings.catch_warnings():
@@ -61,6 +57,7 @@ def task_calculate_and_plot_share_known_cases(depends_on, produces):
         )
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
     share_known_from_params = get_piecewise_linear_interpolation(params_slice)
+    share_known_from_params = share_known_from_params.loc["2020-03-01":"2021-04-14"]
 
     fig, ax = plt.subplots(figsize=(8, 3))
     sns.lineplot(x=share_known.index, y=share_known, ax=ax, label="Dunkelzifferradar")
