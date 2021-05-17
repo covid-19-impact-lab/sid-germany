@@ -173,7 +173,7 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
         vaccination_shares,
         init_start,
         change_date="2021-02-15",
-        new_val=5,
+        new_val=0,
         model_name="only_vaccinate_until_feb_15",
     )
     scenario_inputs = {
@@ -264,6 +264,7 @@ def vaccinations_after_easter_as_on_strongest_week_day(paths, fixed_inputs):
 def _get_vaccination_model_with_new_value_after_date(
     vaccination_shares, init_start, change_date, new_val, model_name
 ):
+    vaccination_shares = vaccination_shares.copy(deep=True)
     vaccination_shares[change_date:] = new_val
     vaccination_func = partial(
         find_people_to_vaccinate,

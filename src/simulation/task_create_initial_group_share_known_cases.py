@@ -9,7 +9,7 @@ from src.simulation.task_process_simulation_outputs import (
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
 
 
-def create_initial_group_share_known_cases(name, fast_flag, date):
+def create_initial_group_share_known_cases_path(name, fast_flag, date):
     file_name = f"{fast_flag}_{name}_for_{date.date()}.pkl"
     return BLD / "simulations" / "share_known_case_prediction" / file_name
 
@@ -20,7 +20,9 @@ def create_parametrization(named_scenarios, fast_flag):
         if "baseline" in name:
             depends_on = create_path_for_share_known_cases_of_scenario(name, fast_flag)
             date = pd.Timestamp(spec["end_date"])
-            produces = create_initial_group_share_known_cases(name, fast_flag, date)
+            produces = create_initial_group_share_known_cases_path(
+                name, fast_flag, date
+            )
             parametrization.append((depends_on, date, produces))
     return "depends_on, date, produces", parametrization
 
