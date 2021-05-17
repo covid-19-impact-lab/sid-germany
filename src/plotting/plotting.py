@@ -49,17 +49,29 @@ def weekly_incidences_from_results(
     """
     weekly_incidences = []
     for res in results:
-        weekly_incidences.append(
-            smoothed_outcome_per_hundred_thousand_sim(
-                df=res,
-                outcome=outcome,
-                take_logs=False,
-                window=7,
-                center=False,
-                groupby=groupby,
-            )
-            * 7
+        daily_smoothed = smoothed_outcome_per_hundred_thousand_sim(
+            df=res,
+            outcome=outcome,
+            take_logs=False,
+            window=7,
+            center=False,
+            groupby=groupby,
         )
+        weekly_smoothed = daily_smoothed * 7
+
+        if groupby is None:
+            full_index = pd.date_range(
+                weekly_smoothed.index.min(), weekly_smoothed.index.max()
+            )
+        else:
+            age_groups = weekly_smoothed.index.get_level_values(
+                "age_group_rki"
+            ).unique()
+            dates = weekly_smoothed.index.get_level_values("date").unique()
+            full_index = pd.MultiIndex.from_product(iterables=[dates, age_groups])
+        expanded = weekly_smoothed.reindex(full_index).fillna(0)
+        weekly_incidences.append(expanded)
+
     weekly_incidences = pd.concat(weekly_incidences, axis=1)
     weekly_incidences.columns = range(len(results))
     return weekly_incidences
