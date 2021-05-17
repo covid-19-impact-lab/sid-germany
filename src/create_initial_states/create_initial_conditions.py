@@ -39,7 +39,7 @@ def create_initial_conditions(
         synthetic_data (pandas.DataFrame): The synthetic population data set. Needs to
             contain 'county' and 'age_group_rki' as columns.
         empirical_infections (pandas.DataFrame): The index must contain 'date', 'county'
-            and 'age_group_rki'. Must contain a column 'upscaled_newly_infected'.
+            and 'age_group_rki'.
         overall_share_known_cases (pd.Series): Series with date index that contains the
             aggregated share of known cases over time.
         group_share_known_cases (pandas.Series): Series with age_groups in the index.
@@ -52,7 +52,7 @@ def create_initial_conditions(
 
     """
     seed = it.count(seed)
-    empirical_infections = empirical_infections["upscaled_newly_infected"]
+    empirical_infections = empirical_infections
     upscaled_empirical_infections = _scale_up_empirical_new_infections(
         empirical_infections=empirical_infections,
         overall_share_known_cases=overall_share_known_cases,
