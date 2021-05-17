@@ -1,6 +1,8 @@
+import pandas as pd
 import pytask
 from sid import get_simulate_func
 
+from src.config import BLD
 from src.config import FAST_FLAG
 from src.simulation.load_params import load_params
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
@@ -14,11 +16,11 @@ DEPENDENCIES = get_simulation_dependencies(debug=FAST_FLAG == "debug")
 
 
 if FAST_FLAG == "debug":
-    n_baseline_seeds = 2
+    n_baseline_seeds = 1
     n_main_scenario_seeds = 0
     n_side_scenario_seeds = 0
 elif FAST_FLAG == "verify":  # use 27 cores -> 2 rounds
-    n_baseline_seeds = 10  # 3x
+    n_baseline_seeds = 10  # 2x
     n_main_scenario_seeds = 3  # 4x
     n_side_scenario_seeds = 1  # 11
 elif FAST_FLAG == "full":
@@ -33,12 +35,12 @@ else:
 
 spring_dates = {
     "start_date": SPRING_START,
-    "end_date": "2021-05-16",
+    "end_date": "2021-05-16" if FAST_FLAG != "debug" else "2021-05-01",
 }
 
 summer_dates = {
     "start_date": SPRING_START,
-    "end_date": "2021-07-01",
+    "end_date": "2021-07-01" if FAST_FLAG != "debug" else "2021-06-01",
 }
 
 NAMED_SCENARIOS = {
@@ -47,7 +49,7 @@ NAMED_SCENARIOS = {
         "sim_input_scenario": "baseline",
         "params_scenario": "baseline",
         "start_date": "2020-10-15",
-        "end_date": "2020-12-23",
+        "end_date": "2020-12-23" if FAST_FLAG != "debug" else "2020-11-15",
         "n_seeds": n_baseline_seeds,
     },
     "summer_baseline": {
@@ -188,3 +190,14 @@ def task_simulate_scenario(
         params=params, path=path, seed=seed, **simulation_kwargs
     )
     simulate(params)
+
+
+def all_simulations_finished_path():
+    return BLD / "simulations" / "all_simulations_finished.txt"
+
+
+@pytask.mark.depends_on([spec[4] for spec in SCENARIOS])
+@pytask.mark.produces(all_simulations_finished_path())
+def task_check_all_simulations_finished(produces):
+    with open(produces, "w") as f:
+        f.write(str(pd.Timestamp.now()))
