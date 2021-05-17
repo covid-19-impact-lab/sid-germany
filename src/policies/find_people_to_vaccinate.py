@@ -38,6 +38,13 @@ def find_people_to_vaccinate(
     no_vaccination_share = params.loc[
         ("vaccinations", "share_refuser", "share_refuser"), "value"
     ]
+
+    assert (
+        vaccination_shares < 0.05
+    ).all(), (
+        "Your vaccination shares imply that >=5% of people get vaccinated on one day."
+    )
+
     cutoffs = vaccination_shares.sort_index().cumsum()
     # set all cutoffs before the init_start to 0.
     # that way on the init_start date everyone who should have been vaccinated
