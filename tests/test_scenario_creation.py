@@ -11,7 +11,9 @@ from src.policies.enacted_policies import HYGIENE_MULTIPLIER
 from src.policies.policy_tools import combine_dictionaries
 from src.policies.single_policy_functions import reduce_work_model
 from src.simulation.params_scenarios import _build_new_date_params
-from src.simulation.params_scenarios import _change_date_params_after_date
+from src.simulation.params_scenarios import (
+    _change_piecewise_linear_parameter_to_fixed_value_after_date,
+)
 from src.simulation.scenario_simulation_inputs import (
     _get_policies_with_different_work_attend_multiplier_after_date,
 )
@@ -51,8 +53,8 @@ def test_build_new_date_params(params):
     pd.testing.assert_frame_equal(res, expected)
 
 
-def test_change_date_params_after_date(params):
-    res = _change_date_params_after_date(
+def test_change_piecewise_linear_parameter_to_fixed_value_after_date(params):
+    res = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params,
         loc=("category", "subcategory"),
         change_date="2021-05-15",

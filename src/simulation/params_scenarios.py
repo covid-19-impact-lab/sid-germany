@@ -33,13 +33,13 @@ def reduce_rapid_test_demand_after_summer_scenario_start_by_half(params):
     new_hh_val = 0.5 * old_hh_val
     new_work_offer_share = 0.5 * old_work_offer_share
 
-    params = _change_date_params_after_date(
+    params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params,
         loc=hh_loc,
         change_date=change_date,
         new_val=new_hh_val,
     )
-    params = _change_date_params_after_date(
+    params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params,
         loc=work_offer_loc,
         change_date=change_date,
@@ -49,8 +49,10 @@ def reduce_rapid_test_demand_after_summer_scenario_start_by_half(params):
     return params
 
 
-def _change_date_params_after_date(params, loc, change_date, new_val):
-    """Change time variant params after a certain date.
+def _change_piecewise_linear_parameter_to_fixed_value_after_date(
+    params, loc, change_date, new_val
+):
+    """Change piecewise linear params to be constant at a new value after a certain date.
 
     This function can be used to change any params that are fed to
     get_piecewise_linear_interpolation.
@@ -166,7 +168,7 @@ def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
     params = params.copy(deep=True)
     params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1
     loc = ("rapid_test_demand", "share_workers_receiving_offer")
-    params = _change_date_params_after_date(
+    params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params, change_date=change_date, new_val=new_val, loc=loc
     )
     return params
