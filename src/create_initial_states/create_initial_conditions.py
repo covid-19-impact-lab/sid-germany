@@ -131,14 +131,17 @@ def _scale_up_empirical_new_infections(
         )
 
     group_share_known_cases_df = _create_group_specific_share_known_cases(
-        group_share_known_cases,
-        group_weights,
-        overall_share_known_cases,
-        group_weights,
-        date_range,
+        group_share_known_cases=group_share_known_cases,
+        group_weights=group_weights,
+        overall_share_known_cases=overall_share_known_cases,
+        date_range=date_range,
     )
     stacked_group_share_known_cases = group_share_known_cases_df.stack()
     stacked_group_share_known_cases.name = "group_share_known_cases"
+
+    assert not (
+        stacked_group_share_known_cases > 1
+    ).any(), "The group specific share known cases is > 1 for some date and group."
 
     merged = pd.merge(
         empirical_infections.reset_index(),
