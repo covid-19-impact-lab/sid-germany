@@ -5,7 +5,6 @@ from src.create_initial_states.create_initial_immunity import create_initial_imm
 from src.create_initial_states.create_initial_infections import (
     create_initial_infections,
 )
-from src.shared import load_dataset
 
 
 def create_initial_conditions(
@@ -14,8 +13,8 @@ def create_initial_conditions(
     seed,
     virus_shares,
     reporting_delay,
-    synthetic_data_path,
-    reported_infections_path,
+    synthetic_data,
+    empirical_infections,
     population_size=POPULATION_GERMANY,
 ):
     """Create the initial conditions, initial_infections and initial_immunity.
@@ -32,11 +31,10 @@ def create_initial_conditions(
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
             demanded time frame.
-        synthetic_data_path (pathlib.Path or str): Path from which to load the
-            snythetic data.
-        reported_infections_path (pathlib.Path or str): Path from which to load the
-            reported infections. The function expects a DataFrame with a column
-            named "newly_infected".
+        synthetic_data (pandas.DataFrame): The synthetic population data set. Needs to
+            contain 'county' and 'age_group_rki' as columns.
+        empirical_infections (pandas.DataFrame): The index must contain 'date', 'county'
+            and 'age_group_rki'. Must contain a column 'upscaled_newly_infected'.
 
     Returns:
         initial_conditions (dict): dictionary containing the initial infections and
@@ -44,10 +42,7 @@ def create_initial_conditions(
 
     """
     seed = it.count(seed)
-    empirical_infections = load_dataset(reported_infections_path)[
-        "upscaled_newly_infected"
-    ]
-    synthetic_data = load_dataset(synthetic_data_path)[["county", "age_group_rki"]]
+    empirical_infections = empirical_infections["upscaled_newly_infected"]
 
     initial_infections = create_initial_infections(
         empirical_infections=empirical_infections,

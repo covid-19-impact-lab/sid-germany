@@ -111,6 +111,7 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
     }
 
     virus_shares = pd.read_pickle(paths["virus_shares"])
+    rki_infections = pd.read_pickle(paths["rki"])
 
     initial_conditions = create_initial_conditions(
         start=init_start,
@@ -118,8 +119,8 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
         seed=3930,
         reporting_delay=5,
         virus_shares=virus_shares,
-        synthetic_data_path=paths["initial_states"],
-        reported_infections_path=paths["rki"],
+        synthetic_data=initial_states[["county", "age_group_rki"]],
+        empirical_infections=rki_infections,
     )
 
     seasonality_factor_model = partial(seasonality_model, contact_models=contact_models)
