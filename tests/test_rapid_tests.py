@@ -41,6 +41,7 @@ def test_calculate_educ_rapid_test_demand(educ_states, contacts):
         contacts=contacts,
         educ_worker_multiplier=1,
         student_multiplier=1,
+        frequency=3,
     )
     expected = pd.Series(
         [False, True, False, False, False, True], index=educ_states.index
@@ -50,7 +51,7 @@ def test_calculate_educ_rapid_test_demand(educ_states, contacts):
 
 def test_get_eligible_educ_participants_early(educ_states, contacts):
     educ_states["date"] = pd.Timestamp("2021-01-01")
-    res = _get_eligible_educ_participants(educ_states, contacts)
+    res = _get_eligible_educ_participants(educ_states, contacts, frequency=7)
     expected = pd.Series(
         [
             False,  # recently tested

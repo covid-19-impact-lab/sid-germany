@@ -4,17 +4,48 @@ import pytask
 
 from src.config import BLD
 from src.plotting.plotting import plot_incidences
+from src.plotting.plotting import PY_DEPENDENCIES
+from src.policies.policy_tools import filter_dictionary
 from src.simulation.task_process_simulation_outputs import (
     create_path_for_weekly_outcome_of_scenario,
 )
-from src.simulation.task_process_simulation_outputs import OUTCOMES
+from src.simulation.task_process_simulation_outputs import get_available_scenarios
 from src.simulation.task_run_simulation import FAST_FLAG
 from src.simulation.task_run_simulation import NAMED_SCENARIOS
 
 
 PLOTS = {
     "fall": ["fall_baseline"],
-    "spring": ["spring_baseline"],
+    "effect_of_vaccines": ["spring_baseline", "spring_without_vaccines"],
+    "effect_of_rapid_tests": [
+        "spring_baseline",
+        "spring_without_rapid_tests_at_schools",
+        "spring_without_rapid_tests_at_work",
+        "spring_without_rapid_tests",
+        "spring_with_obligatory_work_rapid_tests",
+    ],
+    "vaccines_vs_rapid_tests": [
+        "spring_baseline",
+        "spring_without_vaccines",
+        # maybe replace the rapid test scenario with a different one.
+        "spring_without_rapid_tests",
+        "spring_with_more_vaccines",
+    ],
+    "rapid_tests_vs_school_closures": [
+        "spring_baseline",
+        "spring_emergency_care_after_easter_no_school_rapid_tests",
+        "spring_educ_open_after_easter",
+        "spring_educ_open_after_easter_educ_tests_every_other_day",
+        "spring_educ_open_after_easter_educ_tests_every_day",
+    ],
+    "summer": [
+        "summer_baseline",
+        "summer_educ_open",
+        "summer_reduced_test_demand",
+        "summer_strict_home_office",
+        "summer_optimistic_vaccinations",
+        "summer_more_rapid_tests_at_work",
+    ],
 }
 """Dict[str, List[str]]: A dictionary containing the plots to create.
 
@@ -23,20 +54,31 @@ of scenario names which are combined to create the collection.
 
 """
 
+AVAILABLE_SCENARIOS = get_available_scenarios(NAMED_SCENARIOS)
+
+plotted_scenarios = {x for scenarios in PLOTS.values() for x in scenarios}
+assert AVAILABLE_SCENARIOS.issubset(
+    plotted_scenarios
+), "The following scenarios do not appear in any plots: " + "\n\t".join(
+    AVAILABLE_SCENARIOS.difference(plotted_scenarios)
+)
+
 
 def create_path_for_figure_of_weekly_outcome_of_scenario(name, fast_flag, outcome):
     return BLD / "figures" / f"{fast_flag}_{name}_{outcome}.png"
 
 
 def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
+    available_scenarios = get_available_scenarios(named_scenarios)
     parametrization = []
     for outcome in outcomes:
-        for plot_name, plot in plots.items():
+        for comparison_name, to_compare in plots.items():
+            to_compare = available_scenarios.intersection(to_compare)
             depends_on = {
                 scenario_name: create_path_for_weekly_outcome_of_scenario(
-                    scenario_name, fast_flag, outcome
+                    scenario_name, fast_flag, outcome, None
                 )
-                for scenario_name in plot
+                for scenario_name in to_compare
             }
 
             missing_scenarios = set(depends_on) - set(named_scenarios)
@@ -44,22 +86,36 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                 raise ValueError(f"Some scenarios are missing: {missing_scenarios}.")
 
             produces = create_path_for_figure_of_weekly_outcome_of_scenario(
-                plot_name, fast_flag, outcome
+                comparison_name, fast_flag, outcome
             )
-            parametrization.append((depends_on, plot_name, outcome, produces))
+            # only create a plot if at least one scenario had a seed.
+            if depends_on:
+                parametrization.append((depends_on, comparison_name, outcome, produces))
 
-    return "depends_on, plot_name, outcome, produces", parametrization
+    return "depends_on, comparison_name, outcome, produces", parametrization
 
 
-SIGNATURE, PARAMETRIZATION = create_parametrization(
-    PLOTS, NAMED_SCENARIOS, FAST_FLAG, OUTCOMES
+_SIGNATURE, _PARAMETRIZATION = create_parametrization(
+    PLOTS, NAMED_SCENARIOS, FAST_FLAG, ["newly_infected", "new_known_case"]
 )
 
 
-@pytask.mark.parametrize(SIGNATURE, PARAMETRIZATION)
-def task_plot_weekly_outcomes(depends_on, plot_name, outcome, produces):
-    dfs = {name: pd.read_parquet(path) for name, path in depends_on.items()}
+@pytask.mark.depends_on(PY_DEPENDENCIES)
+@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
+def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
+    # drop py file dependencies
+    depends_on = filter_dictionary(lambda x: not x.startswith("py_"), depends_on)
+
+    dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
+    nice_name = comparison_name.replace("_", " ").title()
+    title = f"{outcome.replace('_', ' ').title()} in {nice_name}"
+
     fig, ax = plot_incidences(
-        dfs, plot_name, {name: name for name in dfs}, rki=outcome == "new_known_case"
+        incidences=dfs,
+        title=title,
+        name_to_label={name: name.replace("_", " ") for name in dfs},
+        rki=outcome == "new_known_case",
+        plot_scenario_start="summer" in comparison_name,
     )
-    plt.savefig(produces)
+    plt.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    plt.close()

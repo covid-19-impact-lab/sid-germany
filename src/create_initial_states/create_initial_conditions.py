@@ -2,13 +2,11 @@ import itertools as it
 
 import pandas as pd
 
-from src.config import BLD
 from src.config import POPULATION_GERMANY
 from src.create_initial_states.create_initial_immunity import create_initial_immunity
 from src.create_initial_states.create_initial_infections import (
     create_initial_infections,
 )
-from src.shared import load_dataset
 
 
 def create_initial_conditions(
@@ -17,8 +15,8 @@ def create_initial_conditions(
     seed,
     virus_shares,
     reporting_delay,
-    synthetic_data_path,
-    reported_infections_path=BLD / "data" / "processed_time_series" / "rki.pkl",
+    synthetic_data,
+    empirical_infections,
     population_size=POPULATION_GERMANY,
     overall_share_known_cases=None,
     group_share_known_cases=None,
@@ -38,16 +36,15 @@ def create_initial_conditions(
         reporting_delay (int): Number of days by which the reporting of cases is
             delayed. If given, later days are used to get the infections of the
             demanded time frame.
-        synthetic_data_path (pathlib.Path or str): Path from which to load the
-            snythetic data.
-        reported_infections_path (pathlib.Path or str): Path from which to load the
-            reported infections. The function expects a DataFrame with a column
-            named "newly_infected".
+        synthetic_data (pandas.DataFrame): The synthetic population data set. Needs to
+            contain 'county' and 'age_group_rki' as columns.
+        empirical_infections (pandas.DataFrame): The index must contain 'date', 'county'
+            and 'age_group_rki'. Must contain a column 'upscaled_newly_infected'.
+        overall_share_known_cases (pd.Series): Series with date index that contains the
+            aggregated share of known cases over time.
         group_share_known_cases (pandas.Series): Series with age_groups in the index.
             The values are interpreted as share of known cases for each age group.
         group_weights (pandas.Series): Series with sizes or weights of age groups.
-        overall_share_known_cases (pd.Series): Series with date index that contains the
-            aggregated share of known cases over time.
 
     Returns:
         initial_conditions (dict): dictionary containing the initial infections and
@@ -55,15 +52,13 @@ def create_initial_conditions(
 
     """
     seed = it.count(seed)
-    empirical_infections = load_dataset(reported_infections_path)
+    empirical_infections = empirical_infections["upscaled_newly_infected"]
     upscaled_empirical_infections = _scale_up_empirical_new_infections(
         empirical_infections=empirical_infections,
         overall_share_known_cases=overall_share_known_cases,
         group_share_known_cases=group_share_known_cases,
         group_weights=group_weights,
     )
-
-    synthetic_data = load_dataset(synthetic_data_path)[["county", "age_group_rki"]]
 
     initial_infections = create_initial_infections(
         empirical_infections=upscaled_empirical_infections,

@@ -116,37 +116,37 @@ def _get_enacted_young_educ_policies(contact_models):
     for Bavaria, mid January: https://bit.ly/3sGHZbJ). We assume this is similar
     for preschools and nurseries.
 
-    "jan_and_feb_2021":
-        Jump from ~25% to 33% between first Jan week and later.
-        source: https://bit.ly/3uGL1Pb
-        This could be a vacation effect with more parents returning to work.
+    - "jan_and_feb_2021":
+        - Jump from ~25% to 33% between first Jan week and later.
+        - source: https://bit.ly/3uGL1Pb
+        - This could be a vacation effect with more parents returning to work.
 
-    "feb_22_to_mid_march":
-        We assume nurseries and preschools open normally. This is what happened
-        for nurseries in all states with >8 mio inhabitants (BW, BY, NRW) on
-        Feb 22nd. (https://bit.ly/3uSp6Ey, https://bit.ly/3h77Cjs,
-        https://bit.ly/2O3aS3h)
+    - "feb_22_to_mid_march":
+        - We assume nurseries and preschools open normally. This is what happened
+          for nurseries in all states with >8 mio inhabitants (BW, BY, NRW) on
+          Feb 22nd. (https://bit.ly/3uSp6Ey, https://bit.ly/3h77Cjs,
+          https://bit.ly/2O3aS3h)
 
-    "mid_march_to_easter":
+    - "mid_march_to_easter":
         - NRW: preschools and nurseries are open (https://bit.ly/3nSkUBM)
         - BW: emergency care after March 17 (https://bit.ly/3useyeP)
         - BY: emergency care in counties with incidences >100 starting
           March 15 (https://bit.ly/2PRtaW0), the incidence in BY was >100 for
           most of that time frame.
 
-        => assume generous emergency care. This is errs on the side of reducing
-           contacts too much.
+            => assume generous emergency care. This is errs on the side of reducing
+               contacts too much.
 
-    "easter_until_april_25":
+    -"easter_until_april_25":
         - BY: emergency care in counties with incidences >100 (https://bit.ly/3h234eh)
           Incidence was >120 (up to 200) over the whole time
         - BW: open again (https://bit.ly/3h2g83e)
         - NRW: unchanged open (https://bit.ly/33kqof8)
 
-        => assume generous emergency care. This is errs on the side of reducing
-           contacts too much.
+            => assume generous emergency care. This is errs on the side of reducing
+               contacts too much.
 
-    "after_april_24" (last updated 2021-05-06):
+    - "after_april_24" (last updated 2021-05-06):
         - Bundesnotbremse -> emergency care when incidence >165
         - BY (Stand 2021-05-06, https://bit.ly/3xQfJa4): emergency care
           above incidence of 100. State-wide incidence was >130 until May 6.
@@ -155,8 +155,8 @@ def _get_enacted_young_educ_policies(contact_models):
         - NRW: preschools and nurseries open with incidences <165. State-wide
           incidence dropped below 165 on May 2.
 
-        => assume generous emergency care. This is errs on the side of reducing
-           contacts too much.
+            => assume generous emergency care. This is errs on the side of reducing
+               contacts too much.
 
     """
     strict_emergency_care_kwargs = {
@@ -242,14 +242,14 @@ def _get_enacted_school_policies(contact_models):
 
     - "jan_and_feb_2021":
         In the second half of January, approx. 1 / 3 of children below secondary
-        level were in emergency care
+        level were in emergency care.
 
-        sources:
+        Sources:
 
-        - https://bit.ly/3uGL1Pb
-        - https://bit.ly/2PErr5T
-        - Berlin: <40% (https://bit.ly/304R5ml)
-        - Niedersachsen: 38% (https://bit.ly/2PtPdSb)
+            - https://bit.ly/3uGL1Pb
+            - https://bit.ly/2PErr5T
+            - Berlin: <40% (https://bit.ly/304R5ml)
+            - Niedersachsen: 38% (https://bit.ly/2PtPdSb)
 
         In addition, many states opened graduating classes. We open them at the
         federal level in A / B schooling on Jan 16th. This abstracts from variety:
@@ -260,8 +260,8 @@ def _get_enacted_school_policies(contact_models):
 
         sources:
 
-        - https://taz.de/Schulen-in-Coronazeiten/!5753515/
-        - https://tinyurl.com/2jfm4tp8
+            - https://taz.de/Schulen-in-Coronazeiten/!5753515/
+            - https://tinyurl.com/2jfm4tp8
 
     - "feb_22_to_mid_march":
         Schools open for primary students
@@ -270,10 +270,10 @@ def _get_enacted_school_policies(contact_models):
             >0.66 for primary students).
 
             Summary of actual policies of states with >=8 mio inhabitants:
-                BW: Primary schools open Feb 22nd. Graduating classes attend.
-                BY: Primary schools open Feb 22nd. Graduating classes attend.
-                NRW: Primary schools and graduating classes start Feb 22nd,
-                     A/B or full depending on local incidecne (https://bit.ly/3uSp6Ey)
+                - BW: Primary schools open Feb 22nd. Graduating classes attend.
+                - BY: Primary schools open Feb 22nd. Graduating classes attend.
+                - NRW: Primary schools and graduating classes start Feb 22nd,
+                  A/B or full depending on local incidecne (https://bit.ly/3uSp6Ey)
 
     - "mid_march_to_easter":
         - BY:
@@ -281,11 +281,13 @@ def _get_enacted_school_policies(contact_models):
             - <50 incidence: normal schooling
             - 50-100 incidence: A/B schooling
             - >100 incidence: distance for all except graduation classes
+
         - BW:
             - source: https://km-bw.de/Coronavirus (accessed: March 25th)
             - primaries and 5th, 6th grade open normally since 15/3
             - graduating classes open since 22/2
             - rest continues distance learning
+
         - NRW:
             - source: https://bit.ly/3f9O4Kp (WDR)
             - A/B schooling since March 15th
@@ -304,12 +306,14 @@ def _get_enacted_school_policies(contact_models):
            - source: https://bit.ly/32ABEUr, https://bit.ly/3u6Dcld
            - A/B schooling for graduating classes + 4th grade
            - closures >200 incidence
+
         - BY:
             - source: https://bit.ly/2QmRNu0, https://bit.ly/32FlgBQ (2021-04-22)
             - incidence <100: A/B for everyone
             - incidence >100: 4th grade and graduating classes in A/B schooling.
               emergency care for rest.
             - mean incidence >130 and increasing over the whole time
+
         - NRW:
             ⁻ sources: https://bit.ly/3nxGZWb
             - only graduating classes, not in  A/B mode
@@ -330,6 +334,8 @@ def _get_enacted_school_policies(contact_models):
             - incidence >100: 4th grade and graduating classes in A/B schooling.
               emergency care for rest.
             - incidences >100 in most counties!
+            - after May 10, primaries are allowed in A/B schooling in incidences
+              <165 (https://bit.ly/3vQNO8e)
         - NRW:
             - sources: https://bit.ly/2QHWChG, https://bit.ly/3gPraZu,
               https://bit.ly/32Zq1q8, https://bit.ly/3nzNhEx
@@ -341,7 +347,7 @@ def _get_enacted_school_policies(contact_models):
         and graduating classes.
 
     """
-    strict_emergency_care_kwargs = _get_school_options_for_strict_emergency_care()
+    strict_emergency_care_kwargs = get_school_options_for_strict_emergency_care()
     generous_emergency_care_kwargs = (
         _get_school_options_for_emergency_care_with_graduating_classes_having_a_b_schooling()  # noqa: E501
     )
@@ -466,10 +472,10 @@ def _get_school_options_for_a_b_schooling_for_primary_and_graduating_classes():
     (>0.9 for secondary students <13 and >0.66 for primary students).
 
     Summary of actual policies of states with >=8 mio inhabitants:
-        BW: primary schools open Feb 22nd. Graduating classes attend.
-        BY: primary schools open Feb 22nd. Graduating classes attend.
-        NRW: Primaries and graduating classes start Feb 22nd, A/B or full
-             depending on local incidence
+        - BW: primary schools open Feb 22nd. Graduating classes attend.
+        - BY: primary schools open Feb 22nd. Graduating classes attend.
+        - NRW: Primaries and graduating classes start Feb 22nd, A/B or full
+          depending on local incidence
 
     Sources:
         - https://www.mdr.de/brisant/corona-schule-geoeffnet-100.html
@@ -539,7 +545,7 @@ def _get_school_options_for_emergency_care_with_graduating_classes_having_a_b_sc
     return educ_options
 
 
-def _get_school_options_for_strict_emergency_care():
+def get_school_options_for_strict_emergency_care():
     primary_emergency_query = "(educ_contact_priority > 0.75 & age < 10)"
     secondary_emergency_query = "(educ_contact_priority > 0.95 & age >= 10)"
     always_attend_query = f"{primary_emergency_query} | {secondary_emergency_query}"
