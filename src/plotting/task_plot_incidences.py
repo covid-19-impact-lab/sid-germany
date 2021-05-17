@@ -6,12 +6,14 @@ from src.config import BLD
 from src.plotting.plotting import plot_incidences
 from src.plotting.plotting import PY_DEPENDENCIES
 from src.policies.policy_tools import filter_dictionary
-from src.simulation.task_process_simulation_outputs import (
-    create_path_for_weekly_outcome_of_scenario,
+from src.simulation.shared import (
+    create_path_to_weekly_outcome_of_scenario,
 )
-from src.simulation.task_process_simulation_outputs import get_available_scenarios
+from src.simulation.shared import get_available_scenarios
+from src.simulation.shared import get_named_scenarios
 from src.simulation.task_run_simulation import FAST_FLAG
-from src.simulation.task_run_simulation import NAMED_SCENARIOS
+
+NAMED_SCENARIOS = get_named_scenarios()
 
 
 PLOTS = {
@@ -75,8 +77,8 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
         for comparison_name, to_compare in plots.items():
             to_compare = available_scenarios.intersection(to_compare)
             depends_on = {
-                scenario_name: create_path_for_weekly_outcome_of_scenario(
-                    scenario_name, fast_flag, outcome, None
+                scenario_name: create_path_to_weekly_outcome_of_scenario(
+                    name=scenario_name, outcome=outcome, groupby=None
                 )
                 for scenario_name in to_compare
             }
