@@ -3,9 +3,11 @@ from sid import get_simulate_func
 
 from src.config import FAST_FLAG
 from src.simulation.load_params import load_params
+from src.simulation.load_simulation_inputs import (
+    create_parametrization_from_named_scenarios,
+)
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
-from src.simulation.load_simulation_inputs import named_scenarios_to_parametrization
 
 
 SPRING_START = "2021-02-15"
@@ -159,7 +161,7 @@ NAMED_SCENARIOS = {
     },
 }
 
-SCENARIOS = named_scenarios_to_parametrization(NAMED_SCENARIOS, FAST_FLAG)
+SCENARIOS = create_parametrization_from_named_scenarios(NAMED_SCENARIOS, FAST_FLAG)
 
 
 @pytask.mark.depends_on(DEPENDENCIES)

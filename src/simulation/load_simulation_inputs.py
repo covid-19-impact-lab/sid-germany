@@ -259,7 +259,7 @@ def get_simulation_dependencies(debug):
     return out
 
 
-def named_scenarios_to_parametrization(named_scenarios, fast_flag):
+def create_parametrization_from_named_scenarios(named_scenarios, fast_flag):
     """Convert named scenarios to parametrization.
 
     Each named scenario is duplicated with different seeds to capture the uncertainty in
