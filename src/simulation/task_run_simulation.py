@@ -135,7 +135,7 @@ NAMED_SCENARIOS = {
     },
     "summer_reduced_test_demand": {
         "sim_input_scenario": "baseline",
-        "params_scenario": "reduce_rapid_test_demand_after_summer_scenario_start",
+        "params_scenario": "reduce_rapid_test_demand_after_summer_scenario_start_by_half",  # noqa: E501
         "n_seeds": n_main_scenario_seeds,
         **summer_dates,
     },

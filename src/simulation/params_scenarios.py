@@ -4,38 +4,44 @@ import pandas as pd
 
 from src.config import SUMMER_SCENARIO_START
 from src.testing.shared import get_piecewise_linear_interpolation
+from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
 
 
-def reduce_rapid_test_demand_after_summer_scenario_start(params):
-    """Reduce rapid tests of households and workers.
+def reduce_rapid_test_demand_after_summer_scenario_start_by_half(params):
+    """Reduce rapid tests of households and workers by half.
 
     Since only the offer share of workers' rapid tests is time variant we change the
     offer parameters rather than the demand even though the more intuitive
-    interpretation would likely be that workers demand less tests.
-
-    The share of workers being offered twice weekly tests is 0.7 in May.
-    The share of household members seeking a rapid test after a symptom or positive test
-    event was 0.4 before the estimation. This needs to be updated afterwards.
+    interpretation would be that workers demand less tests.
 
     """
     change_date = pd.Timestamp(SUMMER_SCENARIO_START)
 
-    new_hh_val = 0.25
-    warnings.warn(
-        "The demand reduction for tests after household events must be updated "
-        "after the estimation."
-    )
-    new_work_offer_share = 0.35
+    hh_loc = ("rapid_test_demand", "hh_member_demand")
+    work_offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        old_hh_val = get_piecewise_linear_interpolation_for_one_day(
+            change_date, params.loc[hh_loc]
+        )
+        old_work_offer_share = get_piecewise_linear_interpolation_for_one_day(
+            change_date, params.loc[work_offer_loc]
+        )
+
+    new_hh_val = 0.5 * old_hh_val
+    new_work_offer_share = 0.5 * old_work_offer_share
 
     params = _change_date_params_after_date(
         params=params,
-        loc=("rapid_test_demand", "hh_member_demand"),
+        loc=hh_loc,
         change_date=change_date,
         new_val=new_hh_val,
     )
     params = _change_date_params_after_date(
         params=params,
-        loc=("rapid_test_demand", "share_workers_receiving_offer"),
+        loc=work_offer_loc,
         change_date=change_date,
         new_val=new_work_offer_share,
     )
