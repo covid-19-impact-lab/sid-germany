@@ -44,7 +44,7 @@ def find_people_to_vaccinate(
     if not (vaccination_shares < 0.05).all():
         warnings.warn(
             "The vaccination shares imply that >=5% of people get vaccinated per day.",
-            "If this was intended, simply ignore the warning."
+            "If this was intended, simply ignore the warning.",
         )
 
     cutoffs = vaccination_shares.sort_index().cumsum()
