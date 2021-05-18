@@ -13,14 +13,28 @@ from src.calculate_moments import calculate_period_outcome_sim
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
 from src.manfred.shared import hash_array
+from src.simulation.load_simulation_inputs import load_simulation_inputs
 
 
-def get_parallelizable_msm_criterion(simulate_kwargs, prefix):
+def get_parallelizable_msm_criterion(
+    prefix,
+    fall_start_date,
+    fall_end_date,
+    spring_start_date,
+    spring_end_date,
+    mode,
+    debug,
+):
     """Get a parallelizable msm criterion function."""
     pmsm = functools.partial(
         _build_and_evaluate_msm_func,
-        simulate_kwargs=simulate_kwargs,
         prefix=prefix,
+        fall_start_date=fall_start_date,
+        fall_end_date=fall_end_date,
+        spring_start_date=spring_start_date,
+        spring_end_date=spring_end_date,
+        mode=mode,
+        debug=debug,
     )
     return pmsm
 
@@ -41,13 +55,75 @@ def get_index_bundles(params):
     return out
 
 
-def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
+def _build_and_evaluate_msm_func(
+    params,
+    seed,
+    prefix,
+    fall_start_date,
+    fall_end_date,
+    spring_start_date,
+    spring_end_date,
+    mode,
+    debug,
+):
+    """ """
+    share_known_case_path = BLD / "exploration" / "share_known_cases.pkl"
+    if mode in ["fall", "combined"]:
+        res_fall = _build_and_evaluate_msm_func_one_season(
+            params=params,
+            seed=seed,
+            prefix=prefix,
+            start_date=fall_start_date,
+            end_date=fall_end_date,
+            debug=debug,
+        )
+    if mode in ["spring", "combined"]:
+        res_spring = _build_and_evaluate_msm_func_one_season(
+            params=params,
+            seed=seed + 84587,
+            prefix=prefix,
+            start_date=spring_start_date,
+            end_date=spring_end_date,
+            debug=debug,
+            share_known_case_path=share_known_case_path,
+        )
+    if mode == "fall":
+        res = res_fall
+    elif mode == "spring":
+        res = res_spring
+    else:
+        res = _combine_results(res_fall, res_spring)
+
+    return res
+
+
+def _combine_results(res0, res1):
+    raise NotImplementedError()
+    return [res0, res1]
+
+
+def _build_and_evaluate_msm_func_one_season(
+    params,
+    seed,
+    prefix,
+    start_date,
+    end_date,
+    debug,
+    group_share_known_case_path=None,
+):
     """Build and evaluate a msm criterion function.
 
     Building the criterion function freshly for each run is necessary for it to be
     parallelizable.
 
     """
+    simulate_kwargs = load_simulation_inputs(
+        "baseline",
+        start_date=start_date,
+        end_date=end_date,
+        group_share_known_case_path=group_share_known_case_path,
+        debug=debug,
+    )
     params_hash = hash_array(params["value"].to_numpy())
     path = BLD / "exploration" / f"{prefix}_{params_hash}_{os.getpid()}"
 

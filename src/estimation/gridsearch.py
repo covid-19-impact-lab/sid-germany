@@ -26,6 +26,7 @@ def run_1d_gridsearch(func, params, loc, gridspec, n_seeds, n_cores):
         arguments=arguments,
         n_cores=n_cores,
         unpack_symbol="**",
+        error_handling="raise",
     )
     reshaped_results = _reshape_flat_list_2d(results, (n_points, len(seeds)))
 
@@ -95,6 +96,7 @@ def run_2d_gridsearch(
         arguments=arguments,
         n_cores=n_cores,
         unpack_symbol="**",
+        error_handling="raise",
     )
 
     reshaped_results = _reshape_flat_list_2d(results, (mask.sum(), n_seeds))
