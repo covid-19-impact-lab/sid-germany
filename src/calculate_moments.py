@@ -1,7 +1,7 @@
 import dask.dataframe as dd
 import numpy as np
 import pandas as pd
-
+from pandas.api.types import is_categorical_dtype
 
 DEFAULT_WINDOW = 7
 DEFAULT_TAKE_LOGS = True
@@ -54,7 +54,7 @@ def calculate_weekly_incidences_from_results(
     weekly_incidences.columns = range(len(results))
     assert not weekly_incidences.index.duplicated().any()
     if groupby is not None:
-        assert weekly_incidences.index.get_level_values(groupby).dtype == "category"
+        assert is_categorical_dtype(weekly_incidences.index.get_level_values(groupby))
     return weekly_incidences
 
 
