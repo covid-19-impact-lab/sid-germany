@@ -1,9 +1,11 @@
 import pandas as pd
 import pytask
 
-from src.simulation.shared import create_path_to_initial_group_share_known_cases
-from src.simulation.shared import create_path_to_share_known_cases_of_scenario
-from src.simulation.shared import get_named_scenarios
+from src.simulation.scenario_config import (
+    create_path_to_initial_group_share_known_cases,
+)
+from src.simulation.scenario_config import create_path_to_share_known_cases_of_scenario
+from src.simulation.scenario_config import get_named_scenarios
 
 
 def _create_parametrization():

@@ -6,10 +6,10 @@ import pytask
 from src.config import SUMMER_SCENARIO_START
 from src.plotting.plotting import plot_share_known_cases
 from src.plotting.plotting import PY_DEPENDENCIES
-from src.simulation.shared import create_path_to_share_known_cases_of_scenario
-from src.simulation.shared import create_path_to_share_known_cases_plot
-from src.simulation.shared import get_available_scenarios
-from src.simulation.shared import get_named_scenarios
+from src.simulation.scenario_config import create_path_to_share_known_cases_of_scenario
+from src.simulation.scenario_config import create_path_to_share_known_cases_plot
+from src.simulation.scenario_config import get_available_scenarios
+from src.simulation.scenario_config import get_named_scenarios
 
 
 def _create_parametrization():

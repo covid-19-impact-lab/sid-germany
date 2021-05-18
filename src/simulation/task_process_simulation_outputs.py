@@ -4,11 +4,11 @@ import pytask
 
 from src.calculate_moments import calculate_weekly_incidences_from_results
 from src.config import SRC
-from src.simulation.shared import create_path_to_last_states_of_simulation
-from src.simulation.shared import create_path_to_share_known_cases_of_scenario
-from src.simulation.shared import create_path_to_weekly_outcome_of_scenario
-from src.simulation.shared import get_available_scenarios
-from src.simulation.shared import get_named_scenarios
+from src.simulation.scenario_config import create_path_to_last_states_of_simulation
+from src.simulation.scenario_config import create_path_to_share_known_cases_of_scenario
+from src.simulation.scenario_config import create_path_to_weekly_outcome_of_scenario
+from src.simulation.scenario_config import get_available_scenarios
+from src.simulation.scenario_config import get_named_scenarios
 
 OUTCOMES = [
     "newly_infected",

@@ -7,9 +7,11 @@ from src.policies.policy_tools import combine_dictionaries
 from src.simulation.load_params import load_params
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
-from src.simulation.shared import create_path_to_initial_group_share_known_cases
-from src.simulation.shared import create_path_to_last_states_of_simulation
-from src.simulation.shared import get_named_scenarios
+from src.simulation.scenario_config import (
+    create_path_to_initial_group_share_known_cases,
+)
+from src.simulation.scenario_config import create_path_to_last_states_of_simulation
+from src.simulation.scenario_config import get_named_scenarios
 
 
 def _create_simulation_parametrization():

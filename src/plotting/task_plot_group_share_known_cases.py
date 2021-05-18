@@ -11,8 +11,10 @@ from src.create_initial_states.create_initial_conditions import (
     create_group_specific_share_known_cases,
 )
 from src.plotting.plotting import style_plot
-from src.simulation.shared import create_path_to_initial_group_share_known_cases
-from src.simulation.shared import SPRING_START
+from src.simulation.scenario_config import (
+    create_path_to_initial_group_share_known_cases,
+)
+from src.simulation.scenario_config import SPRING_START
 from src.testing.shared import get_piecewise_linear_interpolation
 
 
@@ -25,7 +27,7 @@ from src.testing.shared import get_piecewise_linear_interpolation
         "create_initial_conditions": SRC
         / "create_initial_states"
         / "create_initial_conditions.py",
-        "simulation_shared": SRC / "simulation" / "shared.py",
+        "simulation_shared": SRC / "simulation" / "scenario_config.py",
         "plotting": SRC / "plotting" / "plotting.py",
         "params": BLD / "params.pkl",
     }
