@@ -137,7 +137,9 @@ def _scale_up_empirical_new_infections(
     if (stacked_group_share_known_cases > 1).any():
         stacked_group_share_known_cases = stacked_group_share_known_cases.clip(0, 0.95)
         warnings.warn(
-            "The group specific share known cases is > 1 for some date and group.",
+            "The group specific share known cases is > 1 for some date and group. ",
+            "If this happened with debug states you can simply ignore it. If it happened ",
+            "With full states, you should investigate it."
             UserWarning,
         )
 
