@@ -134,12 +134,13 @@ def _scale_up_empirical_new_infections(
     stacked_group_share_known_cases = group_share_known_cases_df.stack()
     stacked_group_share_known_cases.name = "group_share_known_cases"
 
-    if (stacked_group_share_known_cases > 1).any():
+    if (stacked_group_share_known_cases > 0.95).any():
         stacked_group_share_known_cases = stacked_group_share_known_cases.clip(0, 0.95)
         warnings.warn(
-            "The group specific share known cases is > 1 for some date and group. ",
-            "If this happened with debug states you can simply ignore it. If it happened ",
-            "With full states, you should investigate it."
+            "The group specific share known cases is > 0.95 for some date and group. "
+            "If this happened with debug states you can simply ignore it. If it "
+            "happened with full states, you should investigate it. The group's share "
+            "known cases has been clipped to 0.95.",
             UserWarning,
         )
 
