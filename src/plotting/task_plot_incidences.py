@@ -6,33 +6,35 @@ from src.config import BLD
 from src.plotting.plotting import plot_incidences
 from src.plotting.plotting import PY_DEPENDENCIES
 from src.policies.policy_tools import filter_dictionary
-from src.simulation.task_process_simulation_outputs import (
-    create_path_for_weekly_outcome_of_scenario,
+from src.simulation.scenario_config import (
+    create_path_to_weekly_outcome_of_scenario,
 )
-from src.simulation.task_process_simulation_outputs import get_available_scenarios
+from src.simulation.scenario_config import get_available_scenarios
+from src.simulation.scenario_config import get_named_scenarios
 from src.simulation.task_run_simulation import FAST_FLAG
-from src.simulation.task_run_simulation import NAMED_SCENARIOS
+
+NAMED_SCENARIOS = get_named_scenarios()
 
 
 PLOTS = {
     "fall": ["fall_baseline"],
-    "effect_of_vaccines": ["spring_baseline", "spring_without_vaccines"],
+    "effect_of_vaccines": ["summer_baseline", "spring_without_vaccines"],
     "effect_of_rapid_tests": [
-        "spring_baseline",
+        "summer_baseline",
         "spring_without_rapid_tests_at_schools",
         "spring_without_rapid_tests_at_work",
         "spring_without_rapid_tests",
         "spring_with_obligatory_work_rapid_tests",
     ],
     "vaccines_vs_rapid_tests": [
-        "spring_baseline",
+        "summer_baseline",
         "spring_without_vaccines",
         # maybe replace the rapid test scenario with a different one.
         "spring_without_rapid_tests",
         "spring_with_more_vaccines",
     ],
     "rapid_tests_vs_school_closures": [
-        "spring_baseline",
+        "summer_baseline",
         "spring_emergency_care_after_easter_no_school_rapid_tests",
         "spring_educ_open_after_easter",
         "spring_educ_open_after_easter_educ_tests_every_other_day",
@@ -75,8 +77,8 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
         for comparison_name, to_compare in plots.items():
             to_compare = available_scenarios.intersection(to_compare)
             depends_on = {
-                scenario_name: create_path_for_weekly_outcome_of_scenario(
-                    scenario_name, fast_flag, outcome, None
+                scenario_name: create_path_to_weekly_outcome_of_scenario(
+                    name=scenario_name, outcome=outcome, groupby=None
                 )
                 for scenario_name in to_compare
             }
@@ -114,7 +116,7 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
         incidences=dfs,
         title=title,
         name_to_label={name: name.replace("_", " ") for name in dfs},
-        rki=outcome,
+        rki=outcome == "new_known_case",
         plot_scenario_start="summer" in comparison_name,
     )
     plt.savefig(produces, dpi=200, transparent=False, facecolor="w")

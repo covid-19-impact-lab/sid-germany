@@ -1,5 +1,5 @@
+import warnings
 from functools import partial
-from pathlib import Path
 
 import pandas as pd
 
@@ -13,12 +13,15 @@ from src.policies.policy_tools import combine_dictionaries
 from src.simulation import scenario_simulation_inputs
 from src.simulation.calculate_susceptibility import calculate_susceptibility
 from src.simulation.seasonality import seasonality_model
+from src.testing.shared import get_piecewise_linear_interpolation
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import demand_test
 from src.testing.testing_models import process_tests
 
 
-def load_simulation_inputs(scenario, start_date, end_date, debug):
+def load_simulation_inputs(
+    scenario, start_date, end_date, debug, group_share_known_case_path
+):
     """Load the simulation inputs.
 
     Does **not** include: params, path, seed.
@@ -113,14 +116,31 @@ def load_simulation_inputs(scenario, start_date, end_date, debug):
     virus_shares = pd.read_pickle(paths["virus_shares"])
     rki_infections = pd.read_pickle(paths["rki"])
 
+    group_weights = pd.read_pickle(paths["rki_age_groups"])["weight"]
+    if group_share_known_case_path is not None:
+        group_share_known_cases = pd.read_pickle(group_share_known_case_path)
+    else:
+        group_share_known_cases = None
+
+    params = pd.read_pickle(paths["params"])
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        params_slice = params.loc[("share_known_cases", "share_known_cases")]
+    overall_share_known_cases = get_piecewise_linear_interpolation(params_slice)
+
     initial_conditions = create_initial_conditions(
         start=init_start,
         end=init_end,
         seed=3930,
         reporting_delay=5,
-        virus_shares=virus_shares,
         synthetic_data=initial_states[["county", "age_group_rki"]],
         empirical_infections=rki_infections,
+        virus_shares=virus_shares,
+        overall_share_known_cases=overall_share_known_cases,
+        group_share_known_cases=group_share_known_cases,
+        group_weights=group_weights,
     )
 
     seasonality_factor_model = partial(seasonality_model, contact_models=contact_models)
@@ -236,42 +256,8 @@ def get_simulation_dependencies(debug):
         / "scenario_simulation_inputs.py",
         "params_scenarios": SRC / "simulation" / "params_scenarios.py",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
+        "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
         "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
     }
 
     return out
-
-
-def named_scenarios_to_parametrization(named_scenarios, fast_flag):
-    """Convert named scenarios to parametrization.
-
-    Each named scenario is duplicated with different seeds to capture the uncertainty in
-    the simulation..
-
-    """
-    scenarios = []
-    for name, specs in named_scenarios.items():
-        for seed in range(specs["n_seeds"]):
-            produces = create_path_to_last_states_of_simulation(fast_flag, name, seed)
-            scaled_seed = 500 + 100_000 * seed
-            spec_tuple = (
-                specs["sim_input_scenario"],
-                specs["params_scenario"],
-                specs["start_date"],
-                specs["end_date"],
-                produces,
-                scaled_seed,
-            )
-            scenarios.append(spec_tuple)
-
-    return scenarios
-
-
-def create_path_to_last_states_of_simulation(fast_flag, name, seed):
-    return Path(
-        BLD
-        / "simulations"
-        / f"{fast_flag}_{name}_{seed}"
-        / "last_states"
-        / "last_states.parquet"
-    )

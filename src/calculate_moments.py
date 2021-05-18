@@ -1,7 +1,9 @@
+import warnings
+
 import dask.dataframe as dd
 import numpy as np
 import pandas as pd
-
+from pandas.api.types import is_categorical_dtype
 
 DEFAULT_WINDOW = 7
 DEFAULT_TAKE_LOGS = True
@@ -50,10 +52,18 @@ def calculate_weekly_incidences_from_results(
         expanded = weekly_smoothed.reindex(full_index).fillna(0)
         weekly_incidences.append(expanded)
 
-    weekly_incidences = pd.concat(weekly_incidences, axis=1)
-    weekly_incidences.columns = range(len(results))
-    assert not weekly_incidences.index.duplicated().any()
-    return weekly_incidences
+    df = pd.concat(weekly_incidences, axis=1)
+    df.columns = range(len(results))
+    assert not df.index.duplicated().any()
+    if groupby is not None:
+        if not is_categorical_dtype(df.index.levels[1]):
+            warnings.warn(
+                f"\n{outcome} with {groupby} did not have a categorical dtype on the "
+                "second index level. To avoid problems all groupby indices are "
+                "converted to str. This needs to be investigated.\n\n"
+            )
+        df.index = df.index.set_levels(df.index.levels[1].astype(str), level=1)
+    return df
 
 
 def smoothed_outcome_per_hundred_thousand_sim(

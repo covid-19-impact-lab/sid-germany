@@ -1,33 +1,26 @@
 import pandas as pd
 import pytask
 
-from src.config import BLD
-from src.config import FAST_FLAG
-from src.simulation.task_process_simulation_outputs import (
-    create_path_for_share_known_cases_of_scenario,
+from src.simulation.scenario_config import (
+    create_path_to_initial_group_share_known_cases,
 )
-from src.simulation.task_run_simulation import NAMED_SCENARIOS
+from src.simulation.scenario_config import create_path_to_share_known_cases_of_scenario
+from src.simulation.scenario_config import get_named_scenarios
 
 
-def create_initial_group_share_known_cases_path(name, fast_flag, date):
-    file_name = f"{fast_flag}_{name}_for_{date.date()}.pkl"
-    return BLD / "simulations" / "share_known_case_prediction" / file_name
-
-
-def create_parametrization(named_scenarios, fast_flag):
+def _create_parametrization():
+    named_scenarios = get_named_scenarios()
     parametrization = []
     for name, spec in named_scenarios.items():
         if "baseline" in name:
-            depends_on = create_path_for_share_known_cases_of_scenario(name, fast_flag)
+            depends_on = create_path_to_share_known_cases_of_scenario(name)
             date = pd.Timestamp(spec["end_date"])
-            produces = create_initial_group_share_known_cases_path(
-                name, fast_flag, date
-            )
+            produces = create_path_to_initial_group_share_known_cases(name, date)
             parametrization.append((depends_on, date, produces))
     return "depends_on, date, produces", parametrization
 
 
-@pytask.mark.parametrize(*create_parametrization(NAMED_SCENARIOS, FAST_FLAG))
+@pytask.mark.parametrize(*_create_parametrization())
 def task_create_initial_group_share_known_cases(depends_on, date, produces):
     share_known_cases = pd.read_pickle(depends_on)
     share_known_cases = share_known_cases["mean"]
