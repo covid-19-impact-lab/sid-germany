@@ -37,7 +37,7 @@ def test_find_people_to_vaccinate_no_refusers(params):
     expected = pd.Series([True] + [False] * 5)
 
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
+        warnings.filterwarnings("ignore", category=UserWarning)
 
         res = find_people_to_vaccinate(
             receives_vaccine=None,
@@ -71,7 +71,7 @@ def test_find_people_to_vaccinate_with_refusers(params):
     expected = pd.Series([True, True] + [False] * 4)
 
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
+        warnings.filterwarnings("ignore", category=UserWarning)
 
         res = find_people_to_vaccinate(
             receives_vaccine=None,
@@ -102,7 +102,7 @@ def test_find_people_to_vaccinate_start_date(params):
     expected = pd.Series([True, False, True, True, False, False])
 
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
+        warnings.filterwarnings("ignore", category=UserWarning)
 
         res = find_people_to_vaccinate(
             receives_vaccine=None,
