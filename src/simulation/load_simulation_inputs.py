@@ -20,7 +20,11 @@ from src.testing.testing_models import process_tests
 
 
 def load_simulation_inputs(
-    scenario, start_date, end_date, debug, group_share_known_case_path
+    scenario,
+    start_date,
+    end_date,
+    debug,
+    group_share_known_case_path=None,
 ):
     """Load the simulation inputs.
 

@@ -232,10 +232,11 @@ def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
 
     weights = {
         "infections_by_age_group": infections_by_age_weights,
+        # lower weight because not a primary target
         "aggregated_deaths": 0.1,
         "infections_by_state": infections_by_state_weights,
-        # extremely low weight because not in logs
-        "aggregated_infections": 1e-8,
+        # lower weight because not in logs
+        "aggregated_infections": 0.5,
     }
 
     weight_mat = get_diag_weighting_matrix(
