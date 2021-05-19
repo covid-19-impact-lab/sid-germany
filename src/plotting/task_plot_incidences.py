@@ -18,13 +18,17 @@ NAMED_SCENARIOS = get_named_scenarios()
 
 PLOTS = {
     "fall": ["fall_baseline"],
-    "effect_of_vaccines": ["summer_baseline", "spring_without_vaccines"],
+    "effect_of_vaccines": [
+        "summer_baseline",
+        "spring_without_vaccines",
+        "spring_with_more_vaccines",
+    ],
     "effect_of_rapid_tests": [
         "summer_baseline",
-        "spring_without_rapid_tests_at_schools",
-        "spring_without_rapid_tests_at_work",
+        "spring_without_school_rapid_tests",
+        "spring_without_work_rapid_tests",
         "spring_without_rapid_tests",
-        "spring_with_obligatory_work_rapid_tests",
+        "spring_with_mandatory_work_rapid_tests",
     ],
     "vaccines_vs_rapid_tests": [
         "summer_baseline",
@@ -37,8 +41,8 @@ PLOTS = {
         "summer_baseline",
         "spring_emergency_care_after_easter_no_school_rapid_tests",
         "spring_educ_open_after_easter",
-        "spring_educ_open_after_easter_educ_tests_every_other_day",
-        "spring_educ_open_after_easter_educ_tests_every_day",
+        "spring_open_educ_after_easter_with_tests_every_other_day",
+        "spring_open_educ_after_easter_with_daily_tests",
     ],
     "summer": [
         "summer_baseline",
@@ -108,14 +112,14 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.startswith("py_"), depends_on)
 
-    df_dict = {name: pd.read_pickle(path) for name, path in depends_on.items()}
+    dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
     nice_name = comparison_name.replace("_", " ").title()
     title = f"{outcome.replace('_', ' ').title()} in {nice_name}"
 
-    name_to_label = _create_nice_labels(df_dict)
+    name_to_label = _create_nice_labels(dfs)
 
     fig, ax = plot_incidences(
-        incidences=df_dict,
+        incidences=dfs,
         title=title,
         name_to_label=name_to_label,
         rki=outcome == "new_known_case",
@@ -125,12 +129,12 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
     plt.close()
 
 
-def _create_nice_labels(df_dict):
+def _create_nice_labels(dfs):
     name_to_label = {}
     replacements = [("fall", ""), ("spring", ""), ("summer", ""), ("_", " ")]
-    for name in df_dict:
+    for name in dfs:
         nice_name = name
         for old, new in replacements:
             nice_name = nice_name.replace(old, new)
-        name_to_label[name] = nice_name.title()
+        name_to_label[name] = nice_name
     return name_to_label

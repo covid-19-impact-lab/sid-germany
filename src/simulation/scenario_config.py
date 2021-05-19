@@ -56,8 +56,8 @@ def get_named_scenarios():
     """
     if FAST_FLAG == "debug":
         n_baseline_seeds = 2
-        n_main_scenario_seeds = 0
-        n_side_scenario_seeds = 0
+        n_main_scenario_seeds = 2
+        n_side_scenario_seeds = 2
     elif FAST_FLAG == "verify":  # use 27 cores -> 2 rounds
         n_baseline_seeds = 10  # 2x
         n_main_scenario_seeds = 3  # 4x
