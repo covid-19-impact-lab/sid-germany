@@ -127,9 +127,11 @@ def _plot_simulated_and_empirical_moment(simulated, empirical, ax=None):
     dates = simulated.index
 
     for run in simulated:
-        sns.lineplot(x=dates, y=simulated[run], ax=ax, color=sim_color, alpha=0.15)
+        plot_line_with_gaps(
+            x=dates, y=simulated[run], ax=ax, color=sim_color, alpha=0.15
+        )
 
-    sns.lineplot(
+    plot_line_with_gaps(
         x=dates,
         y=simulated.mean(axis=1),
         ax=ax,
@@ -138,7 +140,7 @@ def _plot_simulated_and_empirical_moment(simulated, empirical, ax=None):
         label="simulated",
     )
 
-    sns.lineplot(
+    plot_line_with_gaps(
         x=empirical.index,
         y=empirical,
         ax=ax,
@@ -226,3 +228,24 @@ def _aggregate_models_over_domain(df):
     )
 
     return df
+
+
+def plot_line_with_gaps(x, y, ax, **kwargs):
+    """ "Lineplot that does skips where there are no observations."""
+    kwargs = kwargs.copy()
+
+    skip_points = x[pd.Series(x).diff() > pd.Timedelta(days=1)].tolist()
+    skip_points.append(x.max())
+
+    start_loc = 0
+    for end in skip_points:
+        end_loc = x.get_loc(end)
+        current_x = x[start_loc : end_loc - 1]
+        current_y = y[start_loc : end_loc - 1]
+        ax = sns.lineplot(x=current_x, y=current_y, ax=ax, **kwargs)
+
+        start_loc = end_loc
+        if "label" in kwargs.keys():
+            kwargs["label"] = None
+
+    return ax
