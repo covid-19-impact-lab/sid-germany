@@ -59,6 +59,7 @@ def _create_calculate_share_known_cases_of_scenarios_parametrization():
     return "depends_on, produces", parametrization
 
 
+@pytask.mark.memory_intensive
 @pytask.mark.depends_on({"calculate_weekly_incidences": SRC / "calculate_moments.py"})
 @pytask.mark.parametrize(*_create_create_weekly_incidence_parametrization(OUTCOMES))
 def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produces):
