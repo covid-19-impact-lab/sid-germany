@@ -55,7 +55,7 @@ def get_named_scenarios():
 
     """
     if FAST_FLAG == "debug":
-        n_baseline_seeds = 1
+        n_baseline_seeds = 2
         n_main_scenario_seeds = 0
         n_side_scenario_seeds = 0
     elif FAST_FLAG == "verify":  # use 27 cores -> 2 rounds
@@ -110,13 +110,13 @@ def get_named_scenarios():
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
-        "spring_without_rapid_tests_at_schools": {
+        "spring_without_school_rapid_tests": {
             "sim_input_scenario": "baseline",
             "params_scenario": "no_rapid_tests_at_schools",
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
-        "spring_without_rapid_tests_at_work": {
+        "spring_without_work_rapid_tests": {
             "sim_input_scenario": "baseline",
             "params_scenario": "no_rapid_tests_at_work",
             "n_seeds": n_side_scenario_seeds,
@@ -132,7 +132,7 @@ def get_named_scenarios():
         # it ensures that 70% of workers get regularly tested. Given that the share of
         # workers accepting a rapid test from their employer is time invariant this also
         # means that before Easter there is already a lot more testing going on.
-        "spring_with_obligatory_work_rapid_tests": {
+        "spring_with_mandatory_work_rapid_tests": {
             "sim_input_scenario": "baseline",
             "params_scenario": "obligatory_rapid_tests_for_employees",
             "n_seeds": n_side_scenario_seeds,
@@ -155,13 +155,13 @@ def get_named_scenarios():
             "n_seeds": n_main_scenario_seeds,
             **spring_dates,
         },
-        "spring_educ_open_after_easter_educ_tests_every_other_day": {
+        "spring_open_educ_after_easter_with_tests_every_other_day": {
             "sim_input_scenario": "open_all_educ_after_easter",
             "params_scenario": "rapid_tests_at_school_every_other_day_after_april_5",
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
-        "spring_educ_open_after_easter_educ_tests_every_day": {
+        "spring_open_educ_after_easter_with_daily_tests": {
             "sim_input_scenario": "open_all_educ_after_easter",
             "params_scenario": "rapid_tests_at_school_every_day_after_april_5",
             "n_seeds": n_side_scenario_seeds,

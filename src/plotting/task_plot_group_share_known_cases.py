@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 import seaborn as sns
+import sid
 
 from src.config import BLD
 from src.config import SRC
@@ -58,7 +59,11 @@ def task_plot_group_specific_share_known_cases(depends_on, produces):
         .reset_index()
     )
 
-    fig, ax = plt.subplots(figsize=(16, 4))
+    n_groups = to_plot["age_group_rki"].nunique()
+    colors = sid.get_colors("ordered", n_groups)
+    sns.set_palette(colors)
+
+    fig, ax = plt.subplots(figsize=(10, 4))
     sns.lineplot(data=to_plot, x="date", y=0, hue="age_group_rki")
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
