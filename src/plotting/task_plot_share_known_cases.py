@@ -27,8 +27,11 @@ def _create_parametrization():
     return "depends_on, title, produces", parametrization
 
 
+_SIGNATURE, _PARAMETRIZATION = _create_parametrization()
+
+
 @pytask.mark.depends_on(PY_DEPENDENCIES)
-@pytask.mark.parametrize(*_create_parametrization())
+@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_plot_share_known_cases_per_scenario(depends_on, title, produces):
     share_known_cases = pd.read_pickle(depends_on[0])
     fig, ax = plot_share_known_cases(share_known_cases, title)

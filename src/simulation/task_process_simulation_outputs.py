@@ -40,7 +40,7 @@ def _create_create_weekly_incidence_parametrization(outcomes):
     return "depends_on, outcome, groupby, produces", parametrization
 
 
-def _create_calculate_share_known_cases_of_scenarios_parametrization():
+def _create_scenario_share_known_cases_parametrization():
     """Create the parametrization for the share known cases."""
     named_scenarios = get_named_scenarios()
     available_scenarios = get_available_scenarios(named_scenarios)
@@ -59,9 +59,12 @@ def _create_calculate_share_known_cases_of_scenarios_parametrization():
     return "depends_on, produces", parametrization
 
 
+_SIGNATURE, _PARAMETRIZATION = _create_create_weekly_incidence_parametrization(OUTCOMES)
+
+
 @pytask.mark.memory_intensive
 @pytask.mark.depends_on({"calculate_weekly_incidences": SRC / "calculate_moments.py"})
-@pytask.mark.parametrize(*_create_create_weekly_incidence_parametrization(OUTCOMES))
+@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produces):
     ddfs = {
         seed: dd.read_parquet(depends_on[seed].parent.parent.joinpath("time_series"))
@@ -75,9 +78,10 @@ def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produc
     weekly_outcomes.to_pickle(produces)
 
 
-@pytask.mark.parametrize(
-    *_create_calculate_share_known_cases_of_scenarios_parametrization()
-)
+_SIGNATURE, _PARAMETRIZATION = _create_scenario_share_known_cases_parametrization()
+
+
+@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_share_known_cases(depends_on, produces):
     knows_currently_infected = pd.read_pickle(depends_on["knows_currently_infected"])
     currently_infected = pd.read_pickle(depends_on["currently_infected"])

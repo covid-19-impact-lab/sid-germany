@@ -58,7 +58,10 @@ def _create_simulation_parametrization():
     return signature, scenarios
 
 
-@pytask.mark.parametrize(*_create_simulation_parametrization())
+_SIGNATURE, _PARAMETRIZATION = _create_simulation_parametrization()
+
+
+@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_simulate_scenario(
     depends_on,
     sim_input_scenario,

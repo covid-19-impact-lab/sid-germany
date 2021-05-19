@@ -20,7 +20,10 @@ def _create_parametrization():
     return "depends_on, date, produces", parametrization
 
 
-@pytask.mark.parametrize(*_create_parametrization())
+_SIGNATURE, _PARAMETRIZATION = _create_parametrization()
+
+
+@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_initial_group_share_known_cases(depends_on, date, produces):
     share_known_cases = pd.read_pickle(depends_on)
     share_known_cases = share_known_cases["mean"]
