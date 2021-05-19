@@ -168,6 +168,7 @@ def _build_and_evaluate_msm_func_one_season(
 
     additional_outputs = {
         "infection_channels": _aggregate_infection_channels,
+        "share_known_cases": _calculate_share_known_cases,
     }
 
     msm_func = get_msm_func(
@@ -217,6 +218,16 @@ def _get_period_outputs_for_simulate():
             outcome="new_known_case",
         ),
         "infection_channels": prepare_data_for_infection_rates_by_contact_models,
+        "currently_infected_by_age_group": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="currently_infected",
+            groupby="age_group_rki",
+        ),
+        "knows_currently_infected_by_age_group": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="knows_currently_infected",
+            groupby="age_group_rki",
+        ),
     }
     return additional_outputs
 
@@ -254,6 +265,24 @@ def _get_calc_moments():
         ),
     }
     return calc_moments
+
+
+def _calculate_share_known_cases(sim_out):
+    currently_infected = aggregate_and_smooth_period_outcome_sim(
+        simulate_result=sim_out,
+        outcome="currently_infected_by_age_group",
+        groupby="age_group_rki",
+        take_logs=False,
+    )
+    knows_currently_infected = aggregate_and_smooth_period_outcome_sim(
+        simulate_result=sim_out,
+        outcome="knows_currently_infected_by_age_group",
+        groupby="age_group_rki",
+        take_logs=False,
+    )
+
+    share_known = knows_currently_infected / currently_infected
+    return share_known
 
 
 def _get_empirical_moments(df, age_group_sizes, state_sizes):
