@@ -67,7 +67,8 @@ def _build_and_evaluate_msm_func(
     debug,
 ):
     """ """
-    share_known_case_path = BLD / "exploration" / "share_known_cases.pkl"
+    params_hash = hash_array(params["value"].to_numpy())
+    share_known_path = BLD / "exploration" / f"share_known_{params_hash}_{seed}.pkl"
     if mode in ["fall", "combined"]:
         res_fall = _build_and_evaluate_msm_func_one_season(
             params=params,
@@ -77,6 +78,7 @@ def _build_and_evaluate_msm_func(
             end_date=fall_end_date,
             debug=debug,
         )
+        res_fall["share_known_cases"].to_pickle(share_known_path)
     if mode in ["spring", "combined"]:
         res_spring = _build_and_evaluate_msm_func_one_season(
             params=params,
@@ -85,21 +87,38 @@ def _build_and_evaluate_msm_func(
             start_date=spring_start_date,
             end_date=spring_end_date,
             debug=debug,
-            share_known_case_path=share_known_case_path,
+            group_share_known_case_path=share_known_path,
         )
     if mode == "fall":
         res = res_fall
     elif mode == "spring":
         res = res_spring
     else:
-        res = _combine_results(res_fall, res_spring)
+        fall_length = fall_end_date - fall_start_date
+        spring_length = spring_end_date - spring_start_date
+        weight = fall_length / (fall_length + spring_length)
+        res = _combine_results(res_fall, res_spring, weight)
 
     return res
 
 
-def _combine_results(res0, res1):
-    raise NotImplementedError()
-    return [res0, res1]
+def _combine_results(res0, res1, weight):
+    combined = {}
+    for key in res0:
+        if key == "value":
+            combined[key] = weight * res0[key] + (1 - weight) * res1[key]
+        elif key in ["empirical_moments", "simulated_moments"]:
+            combined[key] = _concatenate_pd_objects_from_dicts(res0[key], res1[key])
+        else:
+            combined[key] = pd.concat([res0[key], res1[key]])
+    return combined
+
+
+def _concatenate_pd_objects_from_dicts(d1, d2):
+    combined = {}
+    for key in d1:
+        combined[key] = pd.concat([d1[key], d2[key]])
+    return combined
 
 
 def _build_and_evaluate_msm_func_one_season(
@@ -281,8 +300,11 @@ def _calculate_share_known_cases(sim_out):
         take_logs=False,
     )
 
-    share_known = knows_currently_infected / currently_infected
-    return share_known
+    share_known = (knows_currently_infected / currently_infected).unstack()
+    end_date = share_known.index.max()
+    avg_share_known = share_known[end_date - pd.Timedelta(days=28) :].mean()
+
+    return avg_share_known
 
 
 def _get_empirical_moments(df, age_group_sizes, state_sizes):

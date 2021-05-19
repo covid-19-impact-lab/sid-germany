@@ -144,6 +144,16 @@ def _scale_up_empirical_new_infections(
             UserWarning,
         )
 
+    if (stacked_group_share_known_cases < 0.05).any():
+        stacked_group_share_known_cases = stacked_group_share_known_cases.clip(0.05, 1)
+        warnings.warn(
+            "The group specific share known cases is < 0.05 for some date and group. "
+            "If this happened with debug states you can simply ignore it. If it "
+            "happened with full states, you should investigate it. The group's share "
+            "known cases has been clipped to 0.05.",
+            UserWarning,
+        )
+
     merged = pd.merge(
         empirical_infections.reset_index(),
         right=stacked_group_share_known_cases.reset_index(),

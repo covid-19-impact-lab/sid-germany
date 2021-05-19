@@ -44,11 +44,15 @@ def run_1d_gridsearch(func, params, loc, gridspec, n_seeds, n_cores):
     else:
         order = 3
 
-    fig = sns.regplot(
+    fig, ax = plt.subplots(figsize=(5, 4))
+    sns.regplot(
         x=np.repeat(grid, len(seeds)),
         y=[res["value"] for res in results],
         order=order,
+        ax=ax,
     )
+
+    plt.close()
 
     return reshaped_results, grid, best_index, fig
 
