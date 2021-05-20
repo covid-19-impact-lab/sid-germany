@@ -146,8 +146,11 @@ def _get_enacted_young_educ_policies(contact_models):
             => assume generous emergency care. This is errs on the side of reducing
                contacts too much.
 
-    - "after_april_24" (last updated 2021-05-06):
-        - Bundesnotbremse -> emergency care when incidence >165
+    - "end_april_until_pentecoast" (last updated 2021-05-20):
+        - Bundesnotbremse
+            - emergency care when incidence > 165.
+            - A/B schooling when the incidence is > 100.
+            - exceptions for graduating classes possible
         - BY (Stand 2021-05-06, https://bit.ly/3xQfJa4): emergency care
           above incidence of 100. State-wide incidence was >130 until May 6.
         - BW (https://bit.ly/3xNNxEF): preschools and nurseries open with
@@ -199,7 +202,7 @@ def _get_enacted_young_educ_policies(contact_models):
             generous_emergency_care_kwargs,
         ),
         (
-            "after_april_24",
+            "end_april_until_pentecoast",
             VERY_LATE,
             apply_emergency_care_policies,
             generous_emergency_care_kwargs,

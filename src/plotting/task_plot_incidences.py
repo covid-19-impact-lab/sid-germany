@@ -166,5 +166,5 @@ def _create_nice_labels(dfs):
         nice_name = name
         for old, new in replacements:
             nice_name = nice_name.replace(old, new)
-        name_to_label[name] = nice_name
+        name_to_label[name] = nice_name.lstrip("\n")
     return name_to_label
