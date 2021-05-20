@@ -39,7 +39,7 @@ PLOTS = {
     ],
     "rapid_tests_vs_school_closures": [
         "summer_baseline",
-        "spring_emergency_care_after_easter_no_school_rapid_tests",
+        "spring_emergency_care_after_easter_without_school_rapid_tests",
         "spring_educ_open_after_easter",
         "spring_open_educ_after_easter_with_tests_every_other_day",
         "spring_open_educ_after_easter_with_daily_tests",
@@ -113,6 +113,7 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
     depends_on = filter_dictionary(lambda x: not x.startswith("py_"), depends_on)
 
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
+    dfs = _shorten_dfs_to_the_shortest(dfs)
     nice_name = comparison_name.replace("_", " ").title()
     title = f"{outcome.replace('_', ' ').title()} in {nice_name}"
 
@@ -129,9 +130,38 @@ def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
     plt.close()
 
 
+def _shorten_dfs_to_the_shortest(dfs):
+    """Shorten all incidence DataFrames to the time frame of the shortest.
+
+    Args:
+        dfs (dict): keys are the names of the scenarios, values are the incidence
+            DataFrames.
+
+    Returns:
+        shortened (dict): keys are the names of the scenarios, values are the shortened
+            DataFrames.
+
+    """
+    shortened = {}
+
+    start_date = max([df.index.min() for df in dfs.values()])
+    end_date = min([df.index.max() for df in dfs.values()])
+
+    for name, df in dfs.items():
+        shortened[name] = df.loc[start_date:end_date].copy(deep=True)
+
+    return shortened
+
+
 def _create_nice_labels(dfs):
     name_to_label = {}
-    replacements = [("fall", ""), ("spring", ""), ("summer", ""), ("_", " ")]
+    replacements = [
+        ("_", " "),
+        (" with", "\n with"),
+        ("fall", ""),
+        ("spring", ""),
+        ("summer", ""),
+    ]
     for name in dfs:
         nice_name = name
         for old, new in replacements:
