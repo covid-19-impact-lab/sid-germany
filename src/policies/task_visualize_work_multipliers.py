@@ -15,8 +15,6 @@ plt.rcParams.update(
     }
 )
 
-sns.set_palette(get_colors("categorical", 12))
-
 
 @pytask.mark.depends_on(
     {
@@ -37,6 +35,7 @@ sns.set_palette(get_colors("categorical", 12))
 def task_visualize_work_multipliers(depends_on, produces):
     hygiene_score = pd.read_csv(depends_on["hygiene"], parse_dates=["date"])
     work_multiplier = pd.read_csv(depends_on["work"], parse_dates=["date"])
+    sns.set_palette(get_colors("categorical", 12))
 
     fig, ax = _plot_time_series(
         data=hygiene_score,
@@ -86,6 +85,7 @@ def task_visualize_work_multipliers(depends_on, produces):
         facecolor="w",
     )
     plt.close()
+    sns.color_palette()
 
 
 def _visualize_reductions_by_state(df):

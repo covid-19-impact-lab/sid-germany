@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
+import sid
 
 from src.config import BLD
 from src.plotting.plotting import plot_incidences
@@ -121,9 +122,15 @@ def task_create_plots_comparing_scenarios(
 
     name_to_label = _create_nice_labels(dfs)
 
+    colors = sid.get_colors("categorical", len(dfs))
+    # 3rd entry is not well distinguishable from the first
+    if len(colors) >= 3:
+        colors[2] = "#2E8B57"  # seagreen
+
     fig, ax = plot_incidences(
         incidences=dfs,
         title=title,
+        colors=colors,
         name_to_label=name_to_label,
         rki=outcome == "new_known_case",
         plot_scenario_start="summer" in comparison_name,

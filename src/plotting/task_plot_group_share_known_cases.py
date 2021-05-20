@@ -68,3 +68,5 @@ def task_plot_group_specific_share_known_cases(depends_on, produces):
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     fig.savefig(produces)
+    plt.close()
+    sns.color_palette()

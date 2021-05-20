@@ -63,6 +63,7 @@ def plot_incidences(
     incidences,
     title,
     name_to_label,
+    colors,
     n_single_runs: Optional[int] = None,
     rki=False,
     plot_scenario_start=False,
@@ -83,10 +84,6 @@ def plot_incidences(
         fig, ax
 
     """
-    colors = sid.get_colors("categorical", len(incidences))
-    # 3rd entry is not well distinguishable from the first
-    if len(colors) >= 3:
-        colors[2] = "#2E8B57"  # seagreen
     fig, ax = plt.subplots(figsize=(6, 4))
     for name, color in zip(incidences, colors):
         df = incidences[name]
@@ -180,6 +177,9 @@ def plot_share_known_cases(share_known_cases, title):
     )
 
     fig.tight_layout()
+
+    # undo side effect on color palette
+    sns.color_palette()
     return fig, ax
 
 
