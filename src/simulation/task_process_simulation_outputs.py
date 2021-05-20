@@ -88,4 +88,5 @@ def task_create_share_known_cases(depends_on, produces):
     share_known_cases = knows_currently_infected / currently_infected
     share_known_cases["mean"] = share_known_cases.mean(axis=1)
     assert not share_known_cases.index.duplicated().any()
+    assert share_known_cases.notnull().all().all()
     share_known_cases.to_pickle(produces)

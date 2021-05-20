@@ -108,7 +108,9 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization(
 
 @pytask.mark.depends_on(PY_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
-def task_plot_weekly_outcomes(depends_on, comparison_name, outcome, produces):
+def task_create_plots_comparing_scenarios(
+    depends_on, comparison_name, outcome, produces
+):
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.startswith("py_"), depends_on)
 
