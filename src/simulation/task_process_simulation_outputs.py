@@ -22,7 +22,7 @@ def _create_create_weekly_incidence_parametrization(outcomes):
     named_scenarios = get_named_scenarios()
     parametrization = []
     for outcome in outcomes:
-        for groupby in [None, "age_group_rki"]:
+        for groupby in [None, "age_group_rki", "state"]:
             for name, specs in named_scenarios.items():
                 dependencies = {
                     seed: create_path_to_last_states_of_simulation(name, seed)
