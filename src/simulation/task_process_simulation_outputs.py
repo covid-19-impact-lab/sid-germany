@@ -81,6 +81,7 @@ def task_create_weekly_outcome_for_scenario(depends_on, outcome, groupby, produc
 _SIGNATURE, _PARAMETRIZATION = _create_scenario_share_known_cases_parametrization()
 
 
+@pytask.mark.after_memory_intensive
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_share_known_cases(depends_on, produces):
     knows_currently_infected = pd.read_pickle(depends_on["knows_currently_infected"])
