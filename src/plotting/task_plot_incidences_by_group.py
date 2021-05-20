@@ -8,6 +8,8 @@ import pytask
 import seaborn as sns
 import sid
 
+from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
+from src.config import BLD
 from src.plotting.plotting import plot_incidences
 from src.plotting.plotting import PY_DEPENDENCIES
 from src.simulation.scenario_config import create_path_to_group_incidence_plot
@@ -26,20 +28,26 @@ def create_parametrization():
 
     parametrization = []
     for scenario, outcome, groupby in product(available_scenarios, outcomes, groupbys):
-        depends_on = create_path_to_weekly_outcome_of_scenario(
-            name=scenario, outcome=outcome, groupby=groupby
-        )
+        depends_on = {
+            "simulated": create_path_to_weekly_outcome_of_scenario(
+                name=scenario, outcome=outcome, groupby=groupby
+            ),
+            "group_sizes_age_groups": (
+                BLD / "data" / "population_structure" / "age_groups_rki.pkl"
+            ),
+            "group_sizes_states": (
+                BLD / "data" / "population_structure" / "federal_states.parquet"
+            ),
+        }
+        if outcome == "new_known_case":
+            depends_on["rki"] = BLD / "data" / "processed_time_series" / "rki.pkl"
+
         produces = create_path_to_group_incidence_plot(
             name=scenario, outcome=outcome, groupby=groupby
         )
-        parametrization.append(
-            (
-                depends_on,
-                produces,
-            )
-        )
+        parametrization.append((depends_on, produces, groupby))
 
-    return "depends_on, produces", parametrization
+    return "depends_on, produces, groupby", parametrization
 
 
 _SIGNATURE, _PARAMETRIZATION = create_parametrization()
@@ -48,20 +56,39 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization()
 @pytask.mark.after_memory_intensive
 @pytask.mark.depends_on(PY_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
-def task_plot_age_group_incidences_in_one_scenario(depends_on, produces):
-    incidences = pd.read_pickle(depends_on[0])
+def task_plot_age_group_incidences_in_one_scenario(depends_on, produces, groupby):
+    incidences = pd.read_pickle(depends_on["simulated"])
     incidences = incidences.swaplevel()
 
-    group_type = incidences.index.levels[0].name.replace("_", " ")
-    title = f"Incidences by {group_type}" + " in {group}"
+    if "rki" in depends_on:
+        if groupby == "age_group_rki":
+            group_sizes = pd.read_pickle(depends_on["group_sizes_age_groups"])["n"]
+        elif groupby == "state":
+            state_info = pd.read_parquet(depends_on["group_sizes_states"])
+            group_sizes = state_info.set_index("name")["population"]
 
-    fig, ax = _plot_group_incidence(incidences, title)
+        rki_data = pd.read_pickle(depends_on["rki"])
+        rki = smoothed_outcome_per_hundred_thousand_rki(
+            df=rki_data,
+            outcome="newly_infected",
+            groupby=groupby,
+            group_sizes=group_sizes,
+            take_logs=False,
+        )
+
+    else:
+        rki = None
+
+    title = f"Incidences by {groupby.replace('_', ' ')} in " + "{group}"
+    fig, ax = _plot_group_incidence(incidences, title, rki)
+
     fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
     plt.close()
 
 
-def _plot_group_incidence(incidences, title):
+def _plot_group_incidence(incidences, title, rki):
     groups = incidences.index.levels[0].unique()
+    dates = incidences.index.levels[1].unique()
 
     if len(groups) < 12:
         colors = sid.get_colors("ordered", len(groups))
@@ -82,4 +109,15 @@ def _plot_group_incidence(incidences, title):
             fig=fig,
             ax=ax,
         )
+
+        if rki is not None:
+            rki_data = rki.loc[dates, group].reset_index()
+            sns.lineplot(
+                x=rki_data["date"],
+                y=rki_data[0],
+                ax=ax,
+                color="k",
+                label="official case numbers",
+            )
+
     return fig, ax
