@@ -41,6 +41,11 @@ def create_path_to_share_known_cases_plot(name, groupby):
     return BLD / "figures" / "share_known_cases" / fig_name
 
 
+def create_path_to_group_incidence_plot(name, outcome, groupby):
+    fig_name = f"{FAST_FLAG}_{outcome}_{name}.png"
+    return BLD / "figures" / "incidences_by_group" / groupby / fig_name
+
+
 # =============================================================================
 
 

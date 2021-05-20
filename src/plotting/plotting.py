@@ -67,6 +67,8 @@ def plot_incidences(
     n_single_runs: Optional[int] = None,
     rki=False,
     plot_scenario_start=False,
+    fig=None,
+    ax=None,
 ):
     """Plot incidences.
 
@@ -84,7 +86,8 @@ def plot_incidences(
         fig, ax
 
     """
-    fig, ax = plt.subplots(figsize=(6, 4))
+    if fig is None and ax is None:
+        fig, ax = plt.subplots(figsize=(6, 4))
     for name, color in zip(incidences, colors):
         df = incidences[name]
         dates = df.index
