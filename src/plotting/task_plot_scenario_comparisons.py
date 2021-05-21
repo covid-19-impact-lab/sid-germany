@@ -107,7 +107,6 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization(
 )
 
 
-@pytask.mark.after_memory_intensive
 @pytask.mark.depends_on(PY_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_plots_comparing_scenarios(
