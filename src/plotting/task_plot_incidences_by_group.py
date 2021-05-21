@@ -68,12 +68,15 @@ def task_plot_age_group_incidences_in_one_scenario(depends_on, produces, groupby
             group_sizes = state_info.set_index("name")["population"]
 
         rki_data = pd.read_pickle(depends_on["rki"])
-        rki = smoothed_outcome_per_hundred_thousand_rki(
-            df=rki_data,
-            outcome="newly_infected",
-            groupby=groupby,
-            group_sizes=group_sizes,
-            take_logs=False,
+        rki = (
+            smoothed_outcome_per_hundred_thousand_rki(
+                df=rki_data,
+                outcome="newly_infected",
+                groupby=groupby,
+                group_sizes=group_sizes,
+                take_logs=False,
+            )
+            * 7
         )
 
     else:
@@ -103,7 +106,7 @@ def _plot_group_incidence(incidences, title, rki):
             incidences={group: incidences.loc[group]},
             title=title.format(group=group),
             colors=colors,
-            name_to_label={},
+            name_to_label={group: "simulated"},
             rki=False,
             plot_scenario_start=False,
             fig=fig,
