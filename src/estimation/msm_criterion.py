@@ -277,10 +277,15 @@ def _get_calc_moments():
             groupby="state",
             take_logs=True,
         ),
-        "aggregated_infections": functools.partial(
+        "aggregated_infections_not_log": functools.partial(
             aggregate_and_smooth_period_outcome_sim,
             outcome="aggregated_infections",
             take_logs=False,
+        ),
+        "aggregated_infections": functools.partial(
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="aggregated_infections",
+            take_logs=True,
         ),
     }
     return calc_moments
@@ -329,10 +334,15 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes):
             group_sizes=state_sizes,
             take_logs=True,
         ),
-        "aggregated_infections": smoothed_outcome_per_hundred_thousand_rki(
+        "aggregated_infections_not_log": smoothed_outcome_per_hundred_thousand_rki(
             df=df,
             outcome="newly_infected",
             take_logs=False,
+        ),
+        "aggregated_infections": smoothed_outcome_per_hundred_thousand_rki(
+            df=df,
+            outcome="newly_infected",
+            take_logs=True,
         ),
     }
     return empirical_moments
@@ -362,8 +372,10 @@ def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
         # lower weight because not a primary target
         "aggregated_deaths": 0.1,
         "infections_by_state": infections_by_state_weights,
-        # lower weight because not in logs
-        "aggregated_infections": 0.5,
+        # not used for estimation because not in logs
+        "aggregated_infections_not_log": 1e-10,
+        # strong weight because very important
+        "aggregated_infections": 2
     }
 
     weight_mat = get_diag_weighting_matrix(

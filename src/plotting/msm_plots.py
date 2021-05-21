@@ -163,7 +163,7 @@ def _sort_age_groups(age_groups):
     return sorted(age_groups, key=lambda x: int(x.split("-")[0]))
 
 
-def plot_infection_channels(results, aggregate=False):
+def plot_infection_channels(results, aggregate=False, unit="incidence"):
     """Plot average infection channels over several runs.
 
     It is assumed that the entries in results only differ by their random seed.
@@ -194,7 +194,7 @@ def plot_infection_channels(results, aggregate=False):
     if aggregate:
         channels = _aggregate_models_over_domain(channels)
 
-    plot = plot_infection_rates_by_contact_models(channels)
+    plot = plot_infection_rates_by_contact_models(channels, unit=unit)
     return plot
 
 

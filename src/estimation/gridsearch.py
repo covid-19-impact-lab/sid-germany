@@ -118,11 +118,11 @@ def run_2d_gridsearch(
     fig, ax = plt.subplots(figsize=(6, 5))
 
     df = pd.DataFrame(
-        data=filled_z,
+        data=filled_z.round(1),
         index=map(lambda x: str(x.round(3)), grid_x),
         columns=map(lambda x: str(x.round(3)), grid_y),
     )
-    sns.heatmap(df, ax=ax, cmap="YlOrBr")
+    sns.heatmap(df, ax=ax, cmap="YlOrBr", annot=True)
 
     fig.tight_layout()
 
