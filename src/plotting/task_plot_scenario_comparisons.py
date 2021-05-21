@@ -117,9 +117,8 @@ def task_create_plots_comparing_scenarios(
 
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
     dfs = _shorten_dfs_to_the_shortest(dfs)
-    nice_name = comparison_name.replace("_", " ").title()
-    title = f"{outcome.replace('_', ' ').title()} in {nice_name}"
 
+    title = _create_title(comparison_name, outcome)
     name_to_label = _create_nice_labels(dfs)
 
     colors = sid.get_colors("categorical", len(dfs))
@@ -160,6 +159,16 @@ def _shorten_dfs_to_the_shortest(dfs):
         shortened[name] = df.loc[start_date:end_date].copy(deep=True)
 
     return shortened
+
+
+def _create_title(comparison_name, outcome):
+    nice_name = comparison_name.replace("_", " ").title()
+    if outcome == "new_known_case":
+        title_outcome = "Observed New Cases"
+    elif outcome == "newly_infected":
+        title_outcome = "Total New Cases"
+    title = f"{title_outcome} in {nice_name}"
+    return title
 
 
 def _create_nice_labels(dfs):
