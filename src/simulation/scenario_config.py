@@ -4,14 +4,9 @@ from src.config import FAST_FLAG
 SPRING_START = "2021-02-15"
 
 
-def create_path_to_last_states_of_simulation(name, seed):
-    path = (
-        BLD
-        / "simulations"
-        / f"{FAST_FLAG}_{name}_{seed}"
-        / "last_states"
-        / "last_states.parquet"
-    )
+def create_path_to_period_outputs_of_simulation(name, seed):
+    """Return the path to the simulation results with the period outcomes."""
+    path = BLD / "simulations" / "period_outputs" / f"{FAST_FLAG}_{name}_{seed}.pkl"
     return path
 
 
@@ -25,12 +20,8 @@ def create_path_to_share_known_cases_of_scenario(name):
     return BLD / "simulations" / "share_known_cases" / file_name
 
 
-def create_path_to_weekly_outcome_of_scenario(name, outcome, groupby):
-    if groupby is None:
-        file_name = f"{FAST_FLAG}_{name}_{outcome}.pkl"
-    else:
-        file_name = f"{FAST_FLAG}_{name}_{outcome}_by_{groupby}.pkl"
-    return BLD / "simulations" / "incidences" / file_name
+def create_path_to_weekly_outcome_of_scenario(name, entry):
+    return BLD / "simulations" / "incidences" / f"{FAST_FLAG}_{name}_{entry}.pkl"
 
 
 def create_path_to_share_known_cases_plot(name, groupby):

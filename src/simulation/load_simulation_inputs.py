@@ -3,6 +3,7 @@ from functools import partial
 
 import pandas as pd
 
+from src.calculate_moments import calculate_period_outcome_sim
 from src.config import BLD
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
@@ -20,7 +21,12 @@ from src.testing.testing_models import process_tests
 
 
 def load_simulation_inputs(
-    scenario, start_date, end_date, debug, group_share_known_case_path
+    scenario,
+    start_date,
+    end_date,
+    debug,
+    group_share_known_case_path,
+    period_outputs=False,
 ):
     """Load the simulation inputs.
 
@@ -29,6 +35,15 @@ def load_simulation_inputs(
     Args:
         scenario (str): string specifying the scenario. A function with the
             same name must exist in src.simulation.scenario_simulation_inputs.
+        start_date (str): date on which the simulation starts. Data must be available
+            for at least a month before the start date for the burn in period.
+        end_date (str): date on which the simulation ends.
+        debug (bool): Whether to use the debug or the full initial states.
+        group_share_known_case_path (pathlib.Path, str or None): if not None, the group
+            share known cases are loaded from this path and used for the creation of the
+            initial conditions.
+        period_outputs (bool, optional): whether to use period_outputs instead of saving
+            the time series. Default is False.
 
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
@@ -45,6 +60,9 @@ def load_simulation_inputs(
             - testing_demand_models
             - testing_allocation_models
             - testing_processing_models
+            - period_outputs
+            - return_last_states
+            - return_time_series
 
             - contact_policies
             - vaccination_models
@@ -156,6 +174,11 @@ def load_simulation_inputs(
         "knows_currently_infected": _knows_currently_infected,
     }
 
+    if period_outputs:
+        period_outputs = create_period_outputs()
+        return_last_states = False
+        return_time_series = False
+
     fixed_inputs = {
         "initial_states": initial_states,
         "contact_models": contact_models,
@@ -170,6 +193,9 @@ def load_simulation_inputs(
         "virus_strains": ["base_strain", "b117"],
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
+        "period_outputs": period_outputs,
+        "return_last_states": return_last_states,
+        "return_time_series": return_time_series,
     }
 
     scenario_func = getattr(scenario_simulation_inputs, scenario)
@@ -261,3 +287,26 @@ def get_simulation_dependencies(debug):
     }
 
     return out
+
+
+def create_period_outputs():
+    outcomes = [
+        "newly_infected",
+        "new_known_case",
+        "currently_infected",
+        "knows_currently_infected",
+    ]
+    groupbys = ["state", "age_group_rki", None]
+
+    period_outputs = {}
+
+    for outcome in outcomes:
+        for groupby in groupbys:
+            gb_str = f"_by_{groupby}" if groupby is not None else ""
+            period_outputs[f"{outcome}{gb_str}"] = partial(
+                calculate_period_outcome_sim,
+                outcome=outcome,
+                groupby=groupby,
+            )
+
+    return period_outputs

@@ -30,7 +30,7 @@ def create_parametrization():
     for scenario, outcome, groupby in product(available_scenarios, outcomes, groupbys):
         depends_on = {
             "simulated": create_path_to_weekly_outcome_of_scenario(
-                name=scenario, outcome=outcome, groupby=groupby
+                name=scenario, entry=f"{outcome}_by_{groupby}"
             ),
             "group_sizes_age_groups": (
                 BLD / "data" / "population_structure" / "age_groups_rki.pkl"
