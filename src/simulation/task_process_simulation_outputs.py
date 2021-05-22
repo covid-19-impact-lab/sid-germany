@@ -44,8 +44,11 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
         weekly_outcomes = pd.DataFrame()
         groupby = None if len(outcome_and_groupby) == 1 else outcome_and_groupby[1]
         for seed, res in results.items():
-            weekly_outcomes[seed] = aggregate_and_smooth_period_outcome_sim(
-                res, outcome=entry, groupby=groupby, take_logs=False
+            weekly_outcomes[seed] = (
+                aggregate_and_smooth_period_outcome_sim(
+                    res, outcome=entry, groupby=groupby, take_logs=False
+                )
+                * 7
             )
         weekly_outcomes.to_pickle(path)
 
