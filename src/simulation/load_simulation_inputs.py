@@ -5,6 +5,7 @@ import pandas as pd
 
 from src.calculate_moments import calculate_period_outcome_sim
 from src.config import BLD
+from src.config import SID_DEPENDENCIES
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (
@@ -178,6 +179,10 @@ def load_simulation_inputs(
         period_outputs = create_period_outputs()
         return_last_states = False
         return_time_series = False
+    else:
+        period_outputs = None
+        return_last_states = True
+        return_time_series = True
 
     fixed_inputs = {
         "initial_states": initial_states,
@@ -215,24 +220,6 @@ def get_simulation_dependencies(debug):
 
     Returns:
         paths (dict): Dictionary with the dependencies for the simulation.
-
-            The dictionary has the following entries:
-                - initial_states
-                - output_of_check_initial_states
-                - contact_models
-                - contact_policies
-                - testing
-                - initial_conditions
-                - initial_infections
-                - initial_immunity
-                - susceptibility_factor_model
-                - virus_shares
-                - vaccination_models
-                - vaccination_shares
-                - rapid_test_models
-                - rapid_test_reaction_models
-                - seasonality_factor_model
-                - params
 
     """
     if debug:
@@ -284,7 +271,16 @@ def get_simulation_dependencies(debug):
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
         "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
         "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
+        "load_params": SRC / "simulation" / "load_params.py",
+        "calculate_moments": SRC / "simulation" / "calculate_moments.py",
+        # not strictly necessary because changes to scenario_config would change the
+        # parametrization but for safety put it here
+        "scenario_config": SRC / "simulation" / "scenario_config.py",
+        "testing_shared": SRC / "testing" / "shared.py",
+        "policy_tools": SRC / "policies" / "policy_tools.py",
     }
+    for path in SID_DEPENDENCIES:
+        out[f"sid_{path.name}"] = path
 
     return out
 
