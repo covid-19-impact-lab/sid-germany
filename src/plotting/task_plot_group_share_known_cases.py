@@ -31,6 +31,8 @@ from src.testing.shared import get_piecewise_linear_interpolation
         "simulation_shared": SRC / "simulation" / "scenario_config.py",
         "plotting": SRC / "plotting" / "plotting.py",
         "params": BLD / "params.pkl",
+        "config": SRC / "config.py",
+        "testing_shared": SRC / "testing" / "shared.py",
     }
 )
 @pytask.mark.produces(BLD / "figures" / "share_known_cases_prediction.png")

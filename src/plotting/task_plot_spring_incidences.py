@@ -5,13 +5,20 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
+from src.config import SRC
 from src.plotting.plotting import style_plot
 
 
-@pytask.mark.depends_on(BLD / "data" / "processed_time_series" / "rki.pkl")
+@pytask.mark.depends_on(
+    {
+        "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
+        "config": SRC / "config.py",
+        "plotting": SRC / "plotting" / "plotting.py",
+    }
+)
 @pytask.mark.produces(BLD / "data" / "processed_time_series" / "spring_incidences.png")
 def task_plot_spring_incidences(depends_on, produces):
-    rki = pd.read_pickle(depends_on)
+    rki = pd.read_pickle(depends_on["rki"])
     rki_n_cases = rki.groupby("date")["newly_infected"].sum()
     rki_incidence = rki_n_cases * 100_000 / POPULATION_GERMANY
     smoothed_incidence = rki_incidence.rolling(7, center=True).sum()

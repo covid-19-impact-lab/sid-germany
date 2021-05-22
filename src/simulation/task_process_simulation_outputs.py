@@ -11,6 +11,14 @@ from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
 
 
+_MODULE_DEPENDENCIES = {
+    "calculate_weekly_incidences": SRC / "calculate_moments.py",
+    "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
+    "scenario_config": SRC / "simulation" / "scenario_config.py",
+    "config": SRC / "config.py",
+}
+
+
 def _create_create_weekly_incidence_parametrization():
     named_scenarios = get_named_scenarios()
     parametrization = []
@@ -26,6 +34,7 @@ def _create_create_weekly_incidence_parametrization():
                 entry: create_path_to_weekly_outcome_of_scenario(name, entry)
                 for entry in period_output_keys
             }
+
             parametrization.append((depends_on, produces))
 
     return "depends_on, produces", parametrization
@@ -34,7 +43,7 @@ def _create_create_weekly_incidence_parametrization():
 _SIGNATURE, _PARAMETRIZATION = _create_create_weekly_incidence_parametrization()
 
 
-@pytask.mark.depends_on({"calculate_weekly_incidences": SRC / "calculate_moments.py"})
+@pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_weekly_outcome_for_scenario(depends_on, produces):
     seed_keys = [seed for seed in depends_on if isinstance(seed, int)]
@@ -73,6 +82,7 @@ def _create_scenario_share_known_cases_parametrization():
 _SIGNATURE, _PARAMETRIZATION = _create_scenario_share_known_cases_parametrization()
 
 
+@pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_share_known_cases(depends_on, produces):
     knows_currently_infected = pd.read_pickle(depends_on["knows_currently_infected"])

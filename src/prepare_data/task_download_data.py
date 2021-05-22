@@ -7,6 +7,7 @@ import yaml
 from tqdm import tqdm
 
 from src.config import BLD
+from src.config import SRC
 
 PARAMETRIZED_DOWNLOADS = [
     (
@@ -147,6 +148,11 @@ def download_file(url: str, path: str):
         _downloader(path, url, response)
 
 
+@pytask.mark.depends_on(
+    {
+        "config": SRC / "config.py",
+    }
+)
 @pytask.mark.parametrize("url, produces", PARAMETRIZED_DOWNLOADS)
 def task_download_file(url, produces):
     download_file(url, produces)

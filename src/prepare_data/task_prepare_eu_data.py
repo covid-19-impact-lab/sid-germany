@@ -10,11 +10,17 @@ from src.config import SRC
 
 
 @pytask.mark.depends_on(
-    SRC / "original_data" / "population_structure" / "eu_age_structure.tsv.gz"
+    {
+        "data": SRC
+        / "original_data"
+        / "population_structure"
+        / "eu_age_structure.tsv.gz",
+        "config": SRC / "config.py",
+    }
 )
 @pytask.mark.produces(BLD / "data" / "population_structure" / "eu_age_structure.pkl")
 def task_eu_age_distribution(depends_on, produces):
-    age_data_path = Path(depends_on)
+    age_data_path = Path(depends_on["data"])
     with gzip.open(age_data_path, "rb") as f:
         data = pd.read_csv(f, sep=",|\t", engine="python")
 

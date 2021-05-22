@@ -34,6 +34,8 @@ MOSSONG_OUT = BLD / "data" / "mossong_2008"
         / "data"
         / "population_structure"
         / "eu_hh_size_shares.pkl",
+        "shared.py": SRC / "shared.py",
+        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(
@@ -44,7 +46,11 @@ MOSSONG_OUT = BLD / "data" / "mossong_2008"
     }
 )
 def task_prepare_mossong_data(depends_on, produces):
-    datasets = {key: load_dataset(val) for key, val in depends_on.items()}
+    datasets = {
+        key: load_dataset(val)
+        for key, val in depends_on.items()
+        if not key.endswith(".py")
+    }
 
     # clean data
     hh = _prepare_hh_data(datasets["hh_common"], datasets["hh_extra"])

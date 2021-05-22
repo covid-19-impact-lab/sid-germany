@@ -228,6 +228,7 @@ def get_simulation_dependencies(debug):
         initial_states_path = BLD / "data" / "initial_states.parquet"
 
     out = {
+        **SID_DEPENDENCIES,
         "initial_states": initial_states_path,
         # to ensure that the checks on the initial states run before the
         # simulations we add the output of task_check_initial_states here
@@ -272,15 +273,14 @@ def get_simulation_dependencies(debug):
         "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
         "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
         "load_params": SRC / "simulation" / "load_params.py",
-        "calculate_moments": SRC / "simulation" / "calculate_moments.py",
+        "calculate_moments": SRC / "calculate_moments.py",
         # not strictly necessary because changes to scenario_config would change the
         # parametrization but for safety put it here
         "scenario_config": SRC / "simulation" / "scenario_config.py",
         "testing_shared": SRC / "testing" / "shared.py",
         "policy_tools": SRC / "policies" / "policy_tools.py",
+        "src_config": SRC / "config.py",
     }
-    for path in SID_DEPENDENCIES:
-        out[f"sid_{path.name}"] = path
 
     return out
 

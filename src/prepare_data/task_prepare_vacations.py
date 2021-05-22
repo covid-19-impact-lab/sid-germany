@@ -48,7 +48,13 @@ def _convert_to_params_format(df):
     return params
 
 
-@pytask.mark.depends_on(SRC / "original_data" / "vacations" / "vacations_2020.xlsx")
+@pytask.mark.depends_on(
+    {
+        "data": SRC / "original_data" / "vacations" / "vacations_2020.xlsx",
+        "shared": SRC / "shared.py",
+        "config": SRC / "config.py",
+    }
+)
 @pytask.mark.produces(BLD / "data" / "vacations.pkl")
 def task_prepare_vacations(depends_on, produces):
     """Prepare data on vacations in Germany such that they can be added to params.
@@ -58,7 +64,7 @@ def task_prepare_vacations(depends_on, produces):
     column in params in a numeric format.
 
     """
-    df = _prepare_vacations(depends_on)
+    df = _prepare_vacations(depends_on["data"])
     params = _convert_to_params_format(df)
     # Convert dates to epochs, so that the "value" can stay numeric.
     params["value"] = from_timestamps_to_epochs(params["value"])

@@ -2,14 +2,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 import seaborn as sns
-from estimagic.visualization.colors import get_colors
+from sid import get_colors
 
 from src.config import BLD
+from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.testing.shared import convert_weekly_to_daily
-from src.testing.shared import (
-    get_date_from_year_and_week,
-)
+from src.testing.shared import get_date_from_year_and_week
 
 plt.rcParams.update(
     {
@@ -23,7 +22,14 @@ plt.rcParams.update(
 OUT_PATH = BLD / "data" / "testing"
 
 
-@pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "test_distribution.xlsx")
+@pytask.mark.depends_on(
+    {
+        "data": BLD / "data" / "raw_time_series" / "test_distribution.xlsx",
+        "config": SRC / "config.py",
+        "plotting": SRC / "plotting" / "plotting.py",
+        "testing_shared": SRC / "testing" / "shared.py",
+    }
+)
 @pytask.mark.produces(
     {
         "data": OUT_PATH / "characteristics_of_the_tested.csv",
@@ -36,7 +42,7 @@ OUT_PATH = BLD / "data" / "testing"
     }
 )
 def task_prepare_characteristics_of_the_tested(depends_on, produces):
-    df = pd.read_excel(depends_on, sheet_name="Klinische_Aspekte", header=1)
+    df = pd.read_excel(depends_on["data"], sheet_name="Klinische_Aspekte", header=1)
 
     df = _clean_data(df)
     df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[])

@@ -10,14 +10,21 @@ import sid
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
+from src.config import SRC
 from src.plotting.plotting import plot_incidences
-from src.plotting.plotting import PY_DEPENDENCIES
 from src.simulation.scenario_config import create_path_to_group_incidence_plot
 from src.simulation.scenario_config import (
     create_path_to_weekly_outcome_of_scenario,
 )
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
+
+_DEPENDENCIES = {
+    "calculate_moments": SRC / "calculate_moments.py",
+    "config": SRC / "config.py",
+    "plotting": SRC / "plotting" / "plotting.py",
+    "scenario_config": SRC / "simulation" / "scenario_config.py",
+}
 
 
 def create_parametrization():
@@ -53,7 +60,7 @@ def create_parametrization():
 _SIGNATURE, _PARAMETRIZATION = create_parametrization()
 
 
-@pytask.mark.depends_on(PY_DEPENDENCIES)
+@pytask.mark.depends_on(_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_plot_age_group_incidences_in_one_scenario(depends_on, produces, groupby):
     incidences = pd.read_pickle(depends_on["simulated"])

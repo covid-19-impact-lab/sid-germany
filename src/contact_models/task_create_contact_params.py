@@ -8,6 +8,7 @@ import seaborn as sns
 from estimagic import minimize
 
 from src.config import BLD
+from src.config import SRC
 
 
 def _create_parametrization():
@@ -84,7 +85,12 @@ def _create_parametrization():
 PARAMETRIZATION = _create_parametrization()
 
 
-@pytask.mark.depends_on(BLD / "data" / "mossong_2008" / "contact_data.pkl")
+@pytask.mark.depends_on(
+    {
+        "data": BLD / "data" / "mossong_2008" / "contact_data.pkl",
+        "config": SRC / "config.py",
+    }
+)
 @pytask.mark.parametrize("specs, produces", PARAMETRIZATION)
 def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
     name = produces[0].stem.replace("_", " ").title()
@@ -95,7 +101,7 @@ def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
         "Work Recurrent Daily": 1285,
     }
     max_contacts = specs.pop("max_contacts")
-    contacts = pd.read_pickle(depends_on)
+    contacts = pd.read_pickle(depends_on["data"])
 
     n_contacts = _create_n_contacts(contacts, **specs)
     empirical_distribution = n_contacts.value_counts().sort_index()

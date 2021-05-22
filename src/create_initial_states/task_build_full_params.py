@@ -3,33 +3,37 @@ import pytask
 from sid import load_epidemiological_parameters
 
 from src.config import BLD
+from src.config import SID_DEPENDENCIES
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 
+_DEPENDENCIES = {
+    **SID_DEPENDENCIES,
+    "dist_other_non_recurrent": BLD
+    / "contact_models"
+    / "empirical_distributions"
+    / "other_non_recurrent.pkl",
+    "dist_work_non_recurrent": BLD
+    / "contact_models"
+    / "empirical_distributions"
+    / "work_non_recurrent.pkl",
+    "assort_other_non_recurrent": BLD
+    / "contact_models"
+    / "age_assort_params"
+    / "other_non_recurrent.pkl",
+    "assort_work_non_recurrent": BLD
+    / "contact_models"
+    / "age_assort_params"
+    / "work_non_recurrent.pkl",
+    "vacations": BLD / "data" / "vacations.pkl",
+    "infection_probs": SRC / "simulation" / "infection_probs.pkl",
+    "susceptibility": SRC / "original_data" / "susceptibility.csv",
+    "config": SRC / "config.py",
+    "contact_models": SRC / "contact_models" / "get_contact_models.py",
+}
 
-@pytask.mark.depends_on(
-    {
-        "dist_other_non_recurrent": BLD
-        / "contact_models"
-        / "empirical_distributions"
-        / "other_non_recurrent.pkl",
-        "dist_work_non_recurrent": BLD
-        / "contact_models"
-        / "empirical_distributions"
-        / "work_non_recurrent.pkl",
-        "assort_other_non_recurrent": BLD
-        / "contact_models"
-        / "age_assort_params"
-        / "other_non_recurrent.pkl",
-        "assort_work_non_recurrent": BLD
-        / "contact_models"
-        / "age_assort_params"
-        / "work_non_recurrent.pkl",
-        "vacations": BLD / "data" / "vacations.pkl",
-        "infection_probs": SRC / "simulation" / "infection_probs.pkl",
-        "susceptibility": SRC / "original_data" / "susceptibility.csv",
-    }
-)
+
+@pytask.mark.depends_on(_DEPENDENCIES)
 @pytask.mark.produces(BLD / "params.pkl")
 def task_create_full_params(depends_on, produces):
     epi_params = load_epidemiological_parameters()

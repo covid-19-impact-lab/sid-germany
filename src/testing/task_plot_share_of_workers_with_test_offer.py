@@ -6,16 +6,24 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
+from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.testing.shared import get_piecewise_linear_interpolation
 
 
-@pytask.mark.depends_on(BLD / "params.pkl")
+@pytask.mark.depends_on(
+    {
+        "params": BLD / "params.pkl",
+        "config": SRC / "config.py",
+        "plotting": SRC / "plotting" / "plotting.py",
+        "pwl_func": SRC / "testing" / "shared.py",
+    }
+)
 @pytask.mark.produces(
     BLD / "data" / "testing" / "share_of_workers_with_rapid_test_offer_at_work.png"
 )
 def task_plot_share_of_workers_receiving_test_offer(depends_on, produces):
-    params = pd.read_pickle(depends_on)
+    params = pd.read_pickle(depends_on["params"])
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."

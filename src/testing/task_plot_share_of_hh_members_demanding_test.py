@@ -7,6 +7,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
+from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.testing.shared import get_piecewise_linear_interpolation
 
@@ -15,6 +16,9 @@ from src.testing.shared import get_piecewise_linear_interpolation
     {
         "params": BLD / "params.pkl",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
+        "config": SRC / "config.py",
+        "plotting": SRC / "plotting" / "plotting.py",
+        "testing_shared": SRC / "testing" / "shared.py",
     }
 )
 @pytask.mark.produces(

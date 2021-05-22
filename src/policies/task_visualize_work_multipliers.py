@@ -5,6 +5,7 @@ import seaborn as sns
 from sid.colors import get_colors
 
 from src.config import BLD
+from src.config import SRC
 from src.plotting.plotting import style_plot
 
 plt.rcParams.update(
@@ -20,6 +21,8 @@ plt.rcParams.update(
     {
         "hygiene": BLD / "policies" / "hygiene_score.csv",
         "work": BLD / "policies" / "work_multiplier.csv",
+        "plotting": SRC / "plotting" / "plotting.py",
+        "config": SRC / "config.py",
     }
 )
 @pytask.mark.produces(

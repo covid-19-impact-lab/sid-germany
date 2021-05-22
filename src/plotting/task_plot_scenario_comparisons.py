@@ -4,15 +4,20 @@ import pytask
 import sid
 
 from src.config import BLD
+from src.config import FAST_FLAG
+from src.config import SRC
 from src.plotting.plotting import plot_incidences
-from src.plotting.plotting import PY_DEPENDENCIES
 from src.policies.policy_tools import filter_dictionary
-from src.simulation.scenario_config import (
-    create_path_to_weekly_outcome_of_scenario,
-)
+from src.simulation.scenario_config import create_path_to_weekly_outcome_of_scenario
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
-from src.simulation.task_run_simulation import FAST_FLAG
+
+_MODULE_DEPENDENCIES = {
+    "config.py": SRC / "config.py",
+    "plotting.py": SRC / "plotting" / "plotting.py",
+    "policy_tools.py": SRC / "policies" / "policy_tools.py",
+    "scenario_config.py": SRC / "simulation" / "scenario_config.py",
+}
 
 NAMED_SCENARIOS = get_named_scenarios()
 
@@ -107,13 +112,11 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization(
 )
 
 
-@pytask.mark.depends_on(PY_DEPENDENCIES)
+@pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
-def task_create_plots_comparing_scenarios(
-    depends_on, comparison_name, outcome, produces
-):
+def task_plot_scenario_comparison(depends_on, comparison_name, outcome, produces):
     # drop py file dependencies
-    depends_on = filter_dictionary(lambda x: not x.startswith("py_"), depends_on)
+    depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
 
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
     dfs = _shorten_dfs_to_the_shortest(dfs)

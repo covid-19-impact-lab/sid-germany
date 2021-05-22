@@ -10,14 +10,7 @@ import sid
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
-from src.config import SRC
 from src.config import SUMMER_SCENARIO_START
-
-
-PY_DEPENDENCIES = {
-    "py_config": SRC / "config.py",
-    "py_plot_incidences": SRC / "plotting" / "plotting.py",
-}
 
 
 plt.rcParams.update(

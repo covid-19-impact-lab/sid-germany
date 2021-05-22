@@ -4,8 +4,15 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
+from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.simulation.seasonality import create_seasonality_series
+
+_MODULE_DEPENDENCIES = {
+    "config": SRC / "config.py",
+    "plotting": SRC / "plotting" / "plotting.py",
+    "seasonality": SRC / "simulation" / "seasonality.py",
+}
 
 plt.rcParams.update(
     {
@@ -16,6 +23,7 @@ plt.rcParams.update(
 )
 
 
+@pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.produces(BLD / "policies" / "seasonality.png")
 def task_plot_seasonality(produces):
     dates = pd.date_range("2020-01-01", "2021-06-01")
