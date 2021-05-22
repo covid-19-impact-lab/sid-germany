@@ -112,6 +112,7 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization(
 )
 
 
+@pytask.mark.skip
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_plot_scenario_comparison(depends_on, comparison_name, outcome, produces):
