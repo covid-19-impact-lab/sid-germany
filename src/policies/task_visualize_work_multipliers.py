@@ -21,8 +21,8 @@ plt.rcParams.update(
     {
         "hygiene": BLD / "policies" / "hygiene_score.csv",
         "work": BLD / "policies" / "work_multiplier.csv",
-        "plotting": SRC / "plotting" / "plotting.py",
-        "config": SRC / "config.py",
+        "plotting.py": SRC / "plotting" / "plotting.py",
+        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(

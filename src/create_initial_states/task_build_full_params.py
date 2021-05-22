@@ -28,8 +28,8 @@ _DEPENDENCIES = {
     "vacations": BLD / "data" / "vacations.pkl",
     "infection_probs": SRC / "simulation" / "infection_probs.pkl",
     "susceptibility": SRC / "original_data" / "susceptibility.csv",
-    "config": SRC / "config.py",
-    "contact_models": SRC / "contact_models" / "get_contact_models.py",
+    "config.py": SRC / "config.py",
+    "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
 }
 
 

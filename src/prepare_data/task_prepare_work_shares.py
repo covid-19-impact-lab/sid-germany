@@ -41,7 +41,7 @@ def interval_age_group(x):
         / "original_data"
         / "population_structure"
         / "share_working_by_gender_2018.csv",
-        "config": SRC / "config.py",
+        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(BLD / "data" / "population_structure" / "working_shares.pkl")

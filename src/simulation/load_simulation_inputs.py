@@ -236,50 +236,50 @@ def get_simulation_dependencies(debug):
         "output_of_check_initial_states": BLD
         / "data"
         / "comparison_of_age_group_distributions.png",
-        "contact_models": SRC / "contact_models" / "get_contact_models.py",
-        "contact_policies": SRC / "policies" / "enacted_policies.py",
-        "testing": SRC / "testing" / "testing_models.py",
+        "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
+        "contact_policies.py": SRC / "policies" / "enacted_policies.py",
+        "testing_models.py": SRC / "testing" / "testing_models.py",
         "share_of_tests_for_symptomatics_series": BLD
         / "data"
         / "testing"
         / "share_of_tests_for_symptomatics_series.pkl",
-        "initial_conditions": SRC
+        "initial_conditions.py": SRC
         / "create_initial_states"
         / "create_initial_conditions.py",
-        "initial_infections": SRC
+        "initial_infections.py": SRC
         / "create_initial_states"
         / "create_initial_infections.py",
-        "initial_immunity": SRC
+        "initial_immunity.py": SRC
         / "create_initial_states"
         / "create_initial_immunity.py",
-        "susceptibility_factor_model": SRC
+        "susceptibility_factor_model.py": SRC
         / "simulation"
         / "calculate_susceptibility.py",
         "virus_shares": BLD / "data" / "virus_strains" / "virus_shares_dict.pkl",
-        "vaccination_models": SRC / "policies" / "find_people_to_vaccinate.py",
+        "find_people_to_vaccinate.py": SRC / "policies" / "find_people_to_vaccinate.py",
         "vaccination_shares": BLD
         / "data"
         / "vaccinations"
         / "vaccination_shares_extended.pkl",
-        "rapid_test_models": SRC / "testing" / "rapid_tests.py",
-        "rapid_test_reaction_models": SRC / "testing" / "rapid_test_reactions.py",
-        "seasonality_factor_model": SRC / "simulation" / "seasonality.py",
+        "rapid_tests.py": SRC / "testing" / "rapid_tests.py",
+        "rapid_test_reactions.py": SRC / "testing" / "rapid_test_reactions.py",
+        "seasonality.py": SRC / "simulation" / "seasonality.py",
         "params": BLD / "params.pkl",
-        "scenario_simulation_inputs": SRC
+        "scenario_simulation_inputs.py": SRC
         / "simulation"
         / "scenario_simulation_inputs.py",
-        "params_scenarios": SRC / "simulation" / "params_scenarios.py",
+        "params_scenarios.py": SRC / "simulation" / "params_scenarios.py",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
         "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
-        "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
-        "load_params": SRC / "simulation" / "load_params.py",
-        "calculate_moments": SRC / "calculate_moments.py",
+        "load_simulation_inputs.py": SRC / "simulation" / "load_simulation_inputs.py",
+        "load_params.py": SRC / "simulation" / "load_params.py",
+        "calculate_moments.py": SRC / "calculate_moments.py",
         # not strictly necessary because changes to scenario_config would change the
         # parametrization but for safety put it here
-        "scenario_config": SRC / "simulation" / "scenario_config.py",
-        "testing_shared": SRC / "testing" / "shared.py",
-        "policy_tools": SRC / "policies" / "policy_tools.py",
-        "src_config": SRC / "config.py",
+        "scenario_config.py": SRC / "simulation" / "scenario_config.py",
+        "testing_shared.py": SRC / "testing" / "shared.py",
+        "policy_tools.py": SRC / "policies" / "policy_tools.py",
+        "config.py": SRC / "config.py",
     }
 
     return out

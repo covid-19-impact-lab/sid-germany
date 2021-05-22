@@ -51,8 +51,8 @@ def _convert_to_params_format(df):
 @pytask.mark.depends_on(
     {
         "data": SRC / "original_data" / "vacations" / "vacations_2020.xlsx",
-        "shared": SRC / "shared.py",
-        "config": SRC / "config.py",
+        "shared.py": SRC / "shared.py",
+        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(BLD / "data" / "vacations.pkl")

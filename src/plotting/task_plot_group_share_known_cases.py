@@ -25,14 +25,14 @@ from src.testing.shared import get_piecewise_linear_interpolation
             "fall_baseline", pd.Timestamp("2020-12-23")
         ),
         "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
-        "create_initial_conditions": SRC
+        "params": BLD / "params.pkl",
+        "create_initial_conditions.py": SRC
         / "create_initial_states"
         / "create_initial_conditions.py",
-        "simulation_shared": SRC / "simulation" / "scenario_config.py",
-        "plotting": SRC / "plotting" / "plotting.py",
-        "params": BLD / "params.pkl",
-        "config": SRC / "config.py",
-        "testing_shared": SRC / "testing" / "shared.py",
+        "scenario_config.py": SRC / "simulation" / "scenario_config.py",
+        "plotting.py": SRC / "plotting" / "plotting.py",
+        "config.py": SRC / "config.py",
+        "testing_shared.py": SRC / "testing" / "shared.py",
     }
 )
 @pytask.mark.produces(BLD / "figures" / "share_known_cases_prediction.png")

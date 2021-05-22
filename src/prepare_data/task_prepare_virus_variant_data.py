@@ -22,8 +22,8 @@ STRAIN_FILES = {
     {
         "rki": SRC / "original_data" / "virus_strains_rki.csv",
         "cologne": SRC / "original_data" / "virus_strains_cologne.csv",
-        "testing_shared": SRC / "testing" / "shared.py",
-        "config": SRC / "config.py",
+        "testing_shared.py": SRC / "testing" / "shared.py",
+        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(STRAIN_FILES)

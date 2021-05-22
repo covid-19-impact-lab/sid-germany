@@ -150,7 +150,7 @@ def download_file(url: str, path: str):
 
 @pytask.mark.depends_on(
     {
-        "config": SRC / "config.py",
+        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.parametrize("url, produces", PARAMETRIZED_DOWNLOADS)

@@ -9,9 +9,9 @@ from src.plotting.plotting import style_plot
 from src.simulation.seasonality import create_seasonality_series
 
 _MODULE_DEPENDENCIES = {
-    "config": SRC / "config.py",
-    "plotting": SRC / "plotting" / "plotting.py",
-    "seasonality": SRC / "simulation" / "seasonality.py",
+    "config.py": SRC / "config.py",
+    "plotting.py": SRC / "plotting" / "plotting.py",
+    "seasonality.py": SRC / "simulation" / "seasonality.py",
 }
 
 plt.rcParams.update(

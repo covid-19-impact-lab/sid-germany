@@ -26,8 +26,8 @@ from src.shared import create_age_groups_rki
 _DEPENDENCIES = {
     # py files
     "sid_shared": Path(sid.__path__[0]) / "shared.py",
-    "shared": SRC / "shared.py",
-    "config": SRC / "config.py",
+    "shared.py": SRC / "shared.py",
+    "config.py": SRC / "config.py",
     "create_contact_model_group_ids": SRC
     / "create_initial_states"
     / "create_contact_model_group_ids.py",

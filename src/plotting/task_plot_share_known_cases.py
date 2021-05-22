@@ -12,9 +12,9 @@ from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
 
 _MODULE_DEPENDENCIES = {
-    "config": SRC / "config.py",
-    "plotting": SRC / "plotting" / "plotting.py",
-    "scenario_config": SRC / "simulation" / "scenario_config.py",
+    "config.py": SRC / "config.py",
+    "plotting.py": SRC / "plotting" / "plotting.py",
+    "scenario_config.py": SRC / "simulation" / "scenario_config.py",
 }
 
 

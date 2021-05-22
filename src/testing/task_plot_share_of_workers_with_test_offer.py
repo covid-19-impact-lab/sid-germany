@@ -14,9 +14,9 @@ from src.testing.shared import get_piecewise_linear_interpolation
 @pytask.mark.depends_on(
     {
         "params": BLD / "params.pkl",
-        "config": SRC / "config.py",
-        "plotting": SRC / "plotting" / "plotting.py",
-        "pwl_func": SRC / "testing" / "shared.py",
+        "config.py": SRC / "config.py",
+        "plotting.py": SRC / "plotting" / "plotting.py",
+        "shared.py": SRC / "testing" / "shared.py",
     }
 )
 @pytask.mark.produces(

@@ -88,7 +88,7 @@ PARAMETRIZATION = _create_parametrization()
 @pytask.mark.depends_on(
     {
         "data": BLD / "data" / "mossong_2008" / "contact_data.pkl",
-        "config": SRC / "config.py",
+        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.parametrize("specs, produces", PARAMETRIZATION)

@@ -9,8 +9,8 @@ from src.simulation.scenario_config import create_path_to_share_known_cases_of_s
 from src.simulation.scenario_config import get_named_scenarios
 
 _MODULE_DEPENDENCIES = {
-    "scenario_config": SRC / "simulation" / "scenario_config.py",
-    "config": SRC / "config.py",
+    "scenario_config.py": SRC / "simulation" / "scenario_config.py",
+    "config.py": SRC / "config.py",
 }
 
 

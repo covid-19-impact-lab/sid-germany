@@ -12,10 +12,10 @@ from src.simulation.scenario_config import get_named_scenarios
 
 
 _MODULE_DEPENDENCIES = {
-    "calculate_weekly_incidences": SRC / "calculate_moments.py",
-    "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
-    "scenario_config": SRC / "simulation" / "scenario_config.py",
-    "config": SRC / "config.py",
+    "calculate_moments.py": SRC / "calculate_moments.py",
+    "load_simulation_inputs.py": SRC / "simulation" / "load_simulation_inputs.py",
+    "scenario_config.py": SRC / "simulation" / "scenario_config.py",
+    "config.py": SRC / "config.py",
 }
 
 

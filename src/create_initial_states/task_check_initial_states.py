@@ -34,7 +34,7 @@ from src.config import SRC
         / "age_groups.parquet",
         "vacations": BLD / "data" / "vacations.pkl",
         "work_multiplier": BLD / "policies" / "work_multiplier.csv",
-        "config": SRC / "config.py",
+        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(BLD / "data" / "comparison_of_age_group_distributions.png")
