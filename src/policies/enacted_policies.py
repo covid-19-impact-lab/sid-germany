@@ -146,20 +146,12 @@ def _get_enacted_young_educ_policies(contact_models):
             => assume generous emergency care. This is errs on the side of reducing
                contacts too much.
 
-    - "end_april_until_pentecoast" (last updated 2021-05-20):
-        - Bundesnotbremse
-            - emergency care when incidence > 165.
-            - A/B schooling when the incidence is > 100.
-            - exceptions for graduating classes possible
-        - BY (Stand 2021-05-06, https://bit.ly/3xQfJa4): emergency care
-          above incidence of 100. State-wide incidence was >130 until May 6.
-        - BW (https://bit.ly/3xNNxEF): preschools and nurseries open with
-          incidences <165. State-wide incidence was 180 on May 6.
-        - NRW: preschools and nurseries open with incidences <165. State-wide
-          incidence dropped below 165 on May 2.
+    - "end_april_until_pentecoast" (last updated 2021-05-22):
+        - BY (https://bit.ly/3oF6Go3): normal until 165. emergency care above.
 
-            => assume generous emergency care. This is errs on the side of reducing
-               contacts too much.
+            Over the time frame the share of counties above 165 drops from 48% to 4%.
+
+            => assume preschools and nurseries are open normally.
 
     """
     strict_emergency_care_kwargs = {
@@ -204,8 +196,8 @@ def _get_enacted_young_educ_policies(contact_models):
         (
             "end_april_until_pentecoast",
             VERY_LATE,
-            apply_emergency_care_policies,
-            generous_emergency_care_kwargs,
+            reduce_educ_models,
+            HYGIENE_MULTIPLIER,
         ),
     ]
 
@@ -324,7 +316,7 @@ def _get_enacted_school_policies(contact_models):
         => We summarize this as a return to graduating classes in A/B plus
         generous emergceny care (i.e. same as 2nd half of January).
 
-    - "summer_educ_policies":
+    - "may2021":
         Starting April 26th the Bundesnotbremse is in place. That means when counties
         have a >165 incidence schools only offer classes to graduating classes and
         emergency care. (https://bit.ly/3aUd2KC)
@@ -332,7 +324,7 @@ def _get_enacted_school_policies(contact_models):
         - BW: federal guidelines apply (https://bit.ly/3t7AIBJ,
           https://bit.ly/3aR4yUM)
         - BY:
-            - source: https://bit.ly/2RgmsJm (accessed 2021-04-30)
+            - source: https://bit.ly/2RgmsJm (accessed April 30), https://bit.ly/3wEaCsj
             - incidence <100: A/B for everyone
             - incidence >100: 4th grade and graduating classes in A/B schooling.
               emergency care for rest.
@@ -341,13 +333,30 @@ def _get_enacted_school_policies(contact_models):
               <165 (https://bit.ly/3vQNO8e)
         - NRW:
             - sources: https://bit.ly/2QHWChG, https://bit.ly/3gPraZu,
-              https://bit.ly/32Zq1q8, https://bit.ly/3nzNhEx
+              https://bit.ly/32Zq1q8, https://bit.ly/3nzNhEx, https://bit.ly/3vc4mYk
             - A/B schooling when incidences <165 b/c of Bundesnotbremse
 
-        As cases are falling in that time frame (on May 6 ~75% of counties
-        were below the 165 threshold, we take the more optimistic scenario that
-        schools have A/B schooling for everyone plus emergency care
-        and graduating classes.
+        => Simplified, one could say we have A/B < 165 and emergency care >165.
+           The share of the population in counties with >165 incidence falls from 50%
+           to 2.5% between April 25th and May 15th. We assume A/B for everyone.
+
+    - "june2021": (last updated May 22nd)
+        This period goes until the 20th of June where BW changes its policies.
+
+        - BW: normal <50, A/B above primary from 50-100, A/B from 100-165
+          (source: https://bit.ly/3hYtbDt).
+        - BY: normal <50, A/B from 50 to 165 (https://bit.ly/2T6uupf).
+        - NRW: normal <100, A/B when btw. 100 and 165 (https://bit.ly/2SbmD9v).
+
+            => A/B for everyone. With this we err on the side of restricting contacts
+               too much.
+
+    - "summer": (last updated May 22nd)
+        - BW: normal <100, A/B from 100 to 165 (source: https://bit.ly/3hYtbDt).
+        - BY: normal <50, A/B from 50 to 165 (https://bit.ly/2T6uupf).
+        - NRW: normal <100, A/B from 100 ot 165 (https://bit.ly/2SbmD9v).
+
+            => normal
 
     """
     strict_emergency_care_kwargs = get_school_options_for_strict_emergency_care()
@@ -395,11 +404,18 @@ def _get_enacted_school_policies(contact_models):
             generous_emergency_care_kwargs,
         ),
         (
-            "summer_educ_policies_2021",
-            VERY_LATE,
+            "may2021",
+            "2021-05-31",
             apply_mixed_educ_policies,
             mid_march_to_easter_policy_kwargs,
         ),
+        (
+            "june2021",
+            "2021-06-20",
+            apply_mixed_educ_policies,
+            mid_march_to_easter_policy_kwargs,
+        ),
+        ("summer", VERY_LATE, reduce_educ_models, HYGIENE_MULTIPLIER),
     ]
     start_date = VERY_EARLY
     to_combine = []
