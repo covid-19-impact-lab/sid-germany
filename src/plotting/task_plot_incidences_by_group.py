@@ -92,19 +92,15 @@ def _plot_group_incidence(incidences, title, rki):
     groups = incidences.index.levels[0].unique()
     dates = incidences.index.levels[1].unique()
 
-    if len(groups) < 12:
-        colors = sid.get_colors("ordered", len(groups))
-    else:
-        colors = sns.color_palette("tab20b")[: len(groups)]
-
     n_rows = int(np.ceil(len(groups) / 2))
     fig, axes = plt.subplots(figsize=(12, n_rows * 3), nrows=n_rows, ncols=2)
     axes = axes.flatten()
+    sid_blue = sid.get_colors("categorical", 5)[0]
     for group, ax in zip(groups, axes):
         plot_incidences(
             incidences={group: incidences.loc[group]},
             title=title.format(group=group),
-            colors=colors,
+            colors=[sid_blue],
             name_to_label={group: "simulated"},
             rki=False,
             plot_scenario_start=False,

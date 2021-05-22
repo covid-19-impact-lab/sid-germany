@@ -321,8 +321,7 @@ def _get_enacted_school_policies(contact_models):
         have a >165 incidence schools only offer classes to graduating classes and
         emergency care. (https://bit.ly/3aUd2KC)
 
-        - BW: federal guidelines apply (https://bit.ly/3t7AIBJ,
-          https://bit.ly/3aR4yUM)
+        - BW: federal guidelines apply (https://bit.ly/3t7AIBJ, https://bit.ly/3aR4yUM)
         - BY:
             - source: https://bit.ly/2RgmsJm (accessed April 30), https://bit.ly/3wEaCsj
             - incidence <100: A/B for everyone

@@ -16,17 +16,17 @@ def _create_create_weekly_incidence_parametrization():
     parametrization = []
     period_output_keys = create_period_outputs().keys()
     for name, specs in named_scenarios.items():
-        dependencies = {
-            seed: create_path_to_period_outputs_of_simulation(name, seed)
-            for seed in range(specs["n_seeds"])
-        }
+        depends_on = {}
+        for seed in range(specs["n_seeds"]):
+            depends_on[seed] = create_path_to_period_outputs_of_simulation(name, seed)
+
         # this handles the case of 0 seeds, i.e. skipped scenarios
-        if dependencies:
+        if depends_on:
             produces = {
                 entry: create_path_to_weekly_outcome_of_scenario(name, entry)
                 for entry in period_output_keys
             }
-            parametrization.append((dependencies, produces))
+            parametrization.append((depends_on, produces))
 
     return "depends_on, produces", parametrization
 
@@ -41,8 +41,8 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
     results = {str(seed): pd.read_pickle(depends_on[seed]) for seed in seed_keys}
     for entry, path in produces.items():
         outcome_and_groupby = entry.split("_by_")
-        weekly_outcomes = pd.DataFrame()
         groupby = None if len(outcome_and_groupby) == 1 else outcome_and_groupby[1]
+        weekly_outcomes = pd.DataFrame()
         for seed, res in results.items():
             weekly_outcomes[seed] = (
                 aggregate_and_smooth_period_outcome_sim(
@@ -60,12 +60,11 @@ def _create_scenario_share_known_cases_parametrization():
     parametrization = []
 
     for scenario_name in available_scenarios:
-        depends_on = {
-            outcome: create_path_to_weekly_outcome_of_scenario(
+        depends_on = {}
+        for outcome in ["currently_infected", "knows_currently_infected"]:
+            depends_on[outcome] = create_path_to_weekly_outcome_of_scenario(
                 scenario_name, f"{outcome}_by_age_group_rki"
             )
-            for outcome in ["currently_infected", "knows_currently_infected"]
-        }
         produces = create_path_to_share_known_cases_of_scenario(scenario_name)
         parametrization.append((depends_on, produces))
     return "depends_on, produces", parametrization

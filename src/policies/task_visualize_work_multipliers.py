@@ -85,6 +85,7 @@ def task_visualize_work_multipliers(depends_on, produces):
         facecolor="w",
     )
     plt.close()
+    # Undo side effect of sns.set_palette above.
     sns.color_palette()
 
 
