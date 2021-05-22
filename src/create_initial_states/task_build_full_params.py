@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import pandas as pd
 import pytask
-from sid import load_epidemiological_parameters
+import sid
 
 from src.config import BLD
 from src.config import SID_DEPENDENCIES
@@ -30,13 +32,16 @@ _DEPENDENCIES = {
     "susceptibility": SRC / "original_data" / "susceptibility.csv",
     "config.py": SRC / "config.py",
     "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
+    "covid_epi_params": Path(sid.__file__)
+    .parent.joinpath("covid_epi_params.csv")
+    .resolve(),
 }
 
 
 @pytask.mark.depends_on(_DEPENDENCIES)
 @pytask.mark.produces(BLD / "params.pkl")
 def task_create_full_params(depends_on, produces):
-    epi_params = load_epidemiological_parameters()
+    epi_params = sid.load_epidemiological_parameters()
     vacations = pd.read_pickle(depends_on["vacations"])
     infection_probs = pd.read_pickle(depends_on["infection_probs"])
     susceptibility = pd.read_csv(
