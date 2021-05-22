@@ -64,7 +64,7 @@ of scenario names which are combined to create the collection.
 AVAILABLE_SCENARIOS = get_available_scenarios(NAMED_SCENARIOS)
 
 plotted_scenarios = {x for scenarios in PLOTS.values() for x in scenarios}
-assert AVAILABLE_SCENARIOS.issubset(
+assert set(AVAILABLE_SCENARIOS).issubset(
     plotted_scenarios
 ), "The following scenarios do not appear in any plots: " + "\n\t".join(
     AVAILABLE_SCENARIOS.difference(plotted_scenarios)
@@ -80,7 +80,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
     parametrization = []
     for outcome in outcomes:
         for comparison_name, to_compare in plots.items():
-            to_compare = available_scenarios.intersection(to_compare)
+            to_compare = sorted(set(available_scenarios).intersection(to_compare))
             depends_on = {
                 scenario_name: create_path_to_weekly_outcome_of_scenario(
                     name=scenario_name, entry=outcome

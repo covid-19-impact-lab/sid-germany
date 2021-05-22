@@ -199,7 +199,7 @@ def get_named_scenarios():
 
 
 def get_available_scenarios(named_scenarios):
-    available_scenarios = {
+    available_scenarios = sorted(
         name for name, spec in named_scenarios.items() if spec["n_seeds"] > 0
-    }
+    )
     return available_scenarios
