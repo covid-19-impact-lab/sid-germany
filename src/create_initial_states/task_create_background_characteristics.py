@@ -1,7 +1,10 @@
 """Create a synthetic population that is representative of Germany."""
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytask
+import sid
 from sid.shared import factorize_assortative_variables
 
 from src.config import BLD
@@ -20,40 +23,50 @@ from src.prepare_data.task_prepare_rki_data import TRANSLATE_STATES
 from src.shared import create_age_groups
 from src.shared import create_age_groups_rki
 
+_DEPENDENCIES = {
+    # py files
+    "sid_shared": Path(sid.__path__[0]) / "shared.py",
+    "shared.py": SRC / "shared.py",
+    "config.py": SRC / "config.py",
+    "create_contact_model_group_ids": SRC
+    / "create_initial_states"
+    / "create_contact_model_group_ids.py",
+    "add_weekly_ids": SRC / "create_initial_states" / "add_weekly_ids.py",
+    "make_educ_group_columns": SRC
+    / "create_initial_states"
+    / "make_educ_group_columns.py",
+    "create_vaccination_priority": SRC
+    / "create_initial_states"
+    / "create_vaccination_priority.py",
+    "translations": SRC / "prepare_data" / "task_prepare_rki_data.py",
+    #
+    # data
+    "hh_data": SRC
+    / "original_data"
+    / "population_structure"
+    / "microcensus2010_cf.dta",
+    "county_probabilities": BLD / "data" / "population_structure" / "counties.parquet",
+    "work_daily_dist": BLD
+    / "contact_models"
+    / "empirical_distributions"
+    / "work_recurrent_daily.pkl",
+    "work_weekly_dist": BLD
+    / "contact_models"
+    / "empirical_distributions"
+    / "work_recurrent_weekly.pkl",
+    "other_daily_dist": BLD
+    / "contact_models"
+    / "empirical_distributions"
+    / "other_recurrent_daily.pkl",
+    "other_weekly_dist": BLD
+    / "contact_models"
+    / "empirical_distributions"
+    / "other_recurrent_weekly.pkl",
+    "params": BLD / "params.pkl",
+}
 
-@pytask.mark.depends_on(
-    {
-        "py1": SRC / "create_initial_states" / "create_contact_model_group_ids.py",
-        "py2": SRC / "create_initial_states" / "add_weekly_ids.py",
-        "py3": SRC / "create_initial_states" / "make_educ_group_columns.py",
-        "py4": SRC / "create_initial_states" / "create_vaccination_priority.py",
-        "hh_data": SRC
-        / "original_data"
-        / "population_structure"
-        / "microcensus2010_cf.dta",
-        "county_probabilities": BLD
-        / "data"
-        / "population_structure"
-        / "counties.parquet",
-        "work_daily_dist": BLD
-        / "contact_models"
-        / "empirical_distributions"
-        / "work_recurrent_daily.pkl",
-        "work_weekly_dist": BLD
-        / "contact_models"
-        / "empirical_distributions"
-        / "work_recurrent_weekly.pkl",
-        "other_daily_dist": BLD
-        / "contact_models"
-        / "empirical_distributions"
-        / "other_recurrent_daily.pkl",
-        "other_weekly_dist": BLD
-        / "contact_models"
-        / "empirical_distributions"
-        / "other_recurrent_weekly.pkl",
-        "params": BLD / "params.pkl",
-    }
-)
+
+@pytask.mark.depends_on(_DEPENDENCIES)
 @pytask.mark.produces(
     {
         N_HOUSEHOLDS: BLD / "data" / "initial_states.parquet",

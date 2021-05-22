@@ -10,14 +10,7 @@ import sid
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
-from src.config import SRC
 from src.config import SUMMER_SCENARIO_START
-
-
-PY_DEPENDENCIES = {
-    "py_config": SRC / "config.py",
-    "py_plot_incidences": SRC / "plotting" / "plotting.py",
-}
 
 
 plt.rcParams.update(
@@ -63,9 +56,12 @@ def plot_incidences(
     incidences,
     title,
     name_to_label,
+    colors,
     n_single_runs: Optional[int] = None,
     rki=False,
     plot_scenario_start=False,
+    fig=None,
+    ax=None,
 ):
     """Plot incidences.
 
@@ -83,11 +79,8 @@ def plot_incidences(
         fig, ax
 
     """
-    colors = sid.get_colors("categorical", len(incidences))
-    # 3rd entry is not well distinguishable from the first
-    if len(colors) >= 3:
-        colors[2] = "#2E8B57"  # seagreen
-    fig, ax = plt.subplots(figsize=(6, 4))
+    if fig is None and ax is None:
+        fig, ax = plt.subplots(figsize=(6, 4))
     for name, color in zip(incidences, colors):
         df = incidences[name]
         dates = df.index
@@ -180,6 +173,9 @@ def plot_share_known_cases(share_known_cases, title):
     )
 
     fig.tight_layout()
+
+    # undo side effect on color palette
+    sns.color_palette()
     return fig, ax
 
 

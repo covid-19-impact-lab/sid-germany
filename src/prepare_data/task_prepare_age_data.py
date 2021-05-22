@@ -7,7 +7,11 @@ from src.shared import create_age_groups_rki
 
 
 @pytask.mark.depends_on(
-    SRC / "original_data" / "population_structure" / "altersjahre.csv"
+    {
+        "data": SRC / "original_data" / "population_structure" / "altersjahre.csv",
+        "shared.py": SRC / "shared.py",
+        "config.py": SRC / "config.py",
+    }
 )
 @pytask.mark.produces(
     [
@@ -17,9 +21,9 @@ from src.shared import create_age_groups_rki
 )
 def task_prepare_age_data_de(depends_on, produces):
     raw = (
-        pd.read_csv(depends_on, sep=";", skiprows=6, skipfooter=5, engine="python")[
-            "31.12.2018"
-        ]
+        pd.read_csv(
+            depends_on["data"], sep=";", skiprows=6, skipfooter=5, engine="python"
+        )["31.12.2018"]
         .reset_index(name="n")
         .rename(columns={"index": "age"})
     )

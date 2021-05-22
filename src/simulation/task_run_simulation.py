@@ -10,7 +10,7 @@ from src.simulation.load_simulation_inputs import load_simulation_inputs
 from src.simulation.scenario_config import (
     create_path_to_initial_group_share_known_cases,
 )
-from src.simulation.scenario_config import create_path_to_last_states_of_simulation
+from src.simulation.scenario_config import create_path_to_period_outputs_of_simulation
 from src.simulation.scenario_config import get_named_scenarios
 
 
@@ -35,7 +35,7 @@ def _create_simulation_parametrization():
         else:
             group_share_dependencies = {}
         for seed in range(specs["n_seeds"]):
-            produces = create_path_to_last_states_of_simulation(name, seed)
+            produces = create_path_to_period_outputs_of_simulation(name, seed)
             scaled_seed = 500 + 100_000 * seed
             depends_on = combine_dictionaries(
                 [common_dependencies, group_share_dependencies]
@@ -58,7 +58,10 @@ def _create_simulation_parametrization():
     return signature, scenarios
 
 
-@pytask.mark.parametrize(*_create_simulation_parametrization())
+_SIGNATURE, _PARAMETRIZATION = _create_simulation_parametrization()
+
+
+@pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_simulate_scenario(
     depends_on,
     sim_input_scenario,
@@ -75,11 +78,12 @@ def task_simulate_scenario(
         end_date=end_date,
         debug=FAST_FLAG == "debug",
         group_share_known_case_path=group_share_known_case_path,
+        period_outputs=True,
     )
     params = load_params(params_scenario)
-    path = produces.parent.parent
 
     simulate = get_simulate_func(
-        params=params, path=path, seed=seed, **simulation_kwargs
+        params=params, path=None, seed=seed, **simulation_kwargs
     )
-    simulate(params)
+    res = simulate(params)
+    pd.to_pickle(res, produces)

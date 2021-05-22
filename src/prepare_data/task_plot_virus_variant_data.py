@@ -5,10 +5,17 @@ import seaborn as sns
 from sid import get_colors
 
 from src.config import BLD
+from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.prepare_data.task_prepare_virus_variant_data import STRAIN_FILES
 
+_MODULE_DEPENDENCIES = {
+    "plotting.py": SRC / "plotting" / "plotting.py",
+    "config.py": SRC / "config.py",
+}
 
+
+@pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.depends_on(STRAIN_FILES)
 @pytask.mark.produces(
     BLD / "data" / "virus_strains" / "figures" / "averaged_strain_shares.png"

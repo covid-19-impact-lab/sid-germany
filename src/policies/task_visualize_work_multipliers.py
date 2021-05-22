@@ -5,6 +5,7 @@ import seaborn as sns
 from sid.colors import get_colors
 
 from src.config import BLD
+from src.config import SRC
 from src.plotting.plotting import style_plot
 
 plt.rcParams.update(
@@ -15,13 +16,13 @@ plt.rcParams.update(
     }
 )
 
-sns.set_palette(get_colors("categorical", 12))
-
 
 @pytask.mark.depends_on(
     {
         "hygiene": BLD / "policies" / "hygiene_score.csv",
         "work": BLD / "policies" / "work_multiplier.csv",
+        "plotting.py": SRC / "plotting" / "plotting.py",
+        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(
@@ -37,6 +38,7 @@ sns.set_palette(get_colors("categorical", 12))
 def task_visualize_work_multipliers(depends_on, produces):
     hygiene_score = pd.read_csv(depends_on["hygiene"], parse_dates=["date"])
     work_multiplier = pd.read_csv(depends_on["work"], parse_dates=["date"])
+    sns.set_palette(get_colors("categorical", 12))
 
     fig, ax = _plot_time_series(
         data=hygiene_score,
@@ -86,6 +88,8 @@ def task_visualize_work_multipliers(depends_on, produces):
         facecolor="w",
     )
     plt.close()
+    # Undo side effect of sns.set_palette above.
+    sns.color_palette()
 
 
 def _visualize_reductions_by_state(df):

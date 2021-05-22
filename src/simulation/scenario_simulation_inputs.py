@@ -261,11 +261,11 @@ def vaccinations_after_easter_as_on_strongest_week_day(paths, fixed_inputs):
 def _get_vaccination_model_with_new_value_after_date(
     vaccination_shares, init_start, change_date, new_val, model_name
 ):
-    vaccination_shares = vaccination_shares.copy(deep=True)
-    vaccination_shares[change_date:] = new_val
+    new_vaccination_shares = vaccination_shares.copy(deep=True)
+    new_vaccination_shares[change_date:] = new_val
     vaccination_func = partial(
         find_people_to_vaccinate,
-        vaccination_shares=vaccination_shares,
+        vaccination_shares=new_vaccination_shares,
         init_start=init_start,
     )
     vaccination_models = {model_name: {"model": vaccination_func}}

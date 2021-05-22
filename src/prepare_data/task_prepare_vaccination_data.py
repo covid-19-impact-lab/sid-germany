@@ -7,6 +7,7 @@ from sid.colors import get_colors
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
+from src.config import SRC
 from src.plotting.plotting import style_plot
 
 
@@ -21,7 +22,13 @@ plt.rcParams.update(
 OUT_PATH = BLD / "data" / "vaccinations"
 
 
-@pytask.mark.depends_on(BLD / "data" / "raw_time_series" / "vaccinations.xlsx")
+@pytask.mark.depends_on(
+    {
+        "data": BLD / "data" / "raw_time_series" / "vaccinations.xlsx",
+        "plotting.py": SRC / "plotting" / "plotting.py",
+        "config.py": SRC / "config.py",
+    }
+)
 @pytask.mark.produces(
     {
         "vaccination_shares_raw": OUT_PATH / "vaccination_shares_raw.pkl",
@@ -32,7 +39,7 @@ OUT_PATH = BLD / "data" / "vaccinations"
     }
 )
 def task_prepare_vaccination_data(depends_on, produces):
-    df = pd.read_excel(depends_on, sheet_name="Impfungen_proTag")
+    df = pd.read_excel(depends_on["data"], sheet_name="Impfungen_proTag")
     df = _clean_vaccination_data(df)
     # this is for comparing with newspaper sites
     fig, ax = _plot_series(df["share_with_first_dose"], "Share with 1st Dose")
