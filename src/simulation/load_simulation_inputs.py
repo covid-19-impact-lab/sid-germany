@@ -3,7 +3,9 @@ from functools import partial
 
 import pandas as pd
 
+from src.calculate_moments import calculate_period_outcome_sim
 from src.config import BLD
+from src.config import SID_DEPENDENCIES
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (
@@ -20,7 +22,12 @@ from src.testing.testing_models import process_tests
 
 
 def load_simulation_inputs(
-    scenario, start_date, end_date, debug, group_share_known_case_path
+    scenario,
+    start_date,
+    end_date,
+    debug,
+    group_share_known_case_path,
+    period_outputs=False,
 ):
     """Load the simulation inputs.
 
@@ -29,6 +36,15 @@ def load_simulation_inputs(
     Args:
         scenario (str): string specifying the scenario. A function with the
             same name must exist in src.simulation.scenario_simulation_inputs.
+        start_date (str): date on which the simulation starts. Data must be available
+            for at least a month before the start date for the burn in period.
+        end_date (str): date on which the simulation ends.
+        debug (bool): Whether to use the debug or the full initial states.
+        group_share_known_case_path (pathlib.Path, str or None): if not None, the group
+            share known cases are loaded from this path and used for the creation of the
+            initial conditions.
+        period_outputs (bool, optional): whether to use period_outputs instead of saving
+            the time series. Default is False.
 
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
@@ -45,6 +61,9 @@ def load_simulation_inputs(
             - testing_demand_models
             - testing_allocation_models
             - testing_processing_models
+            - period_outputs
+            - return_last_states
+            - return_time_series
 
             - contact_policies
             - vaccination_models
@@ -156,6 +175,15 @@ def load_simulation_inputs(
         "knows_currently_infected": _knows_currently_infected,
     }
 
+    if period_outputs:
+        period_outputs = create_period_outputs()
+        return_last_states = False
+        return_time_series = False
+    else:
+        period_outputs = None
+        return_last_states = True
+        return_time_series = True
+
     fixed_inputs = {
         "initial_states": initial_states,
         "contact_models": contact_models,
@@ -170,6 +198,9 @@ def load_simulation_inputs(
         "virus_strains": ["base_strain", "b117"],
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
+        "period_outputs": period_outputs,
+        "return_last_states": return_last_states,
+        "return_time_series": return_time_series,
     }
 
     scenario_func = getattr(scenario_simulation_inputs, scenario)
@@ -190,24 +221,6 @@ def get_simulation_dependencies(debug):
     Returns:
         paths (dict): Dictionary with the dependencies for the simulation.
 
-            The dictionary has the following entries:
-                - initial_states
-                - output_of_check_initial_states
-                - contact_models
-                - contact_policies
-                - testing
-                - initial_conditions
-                - initial_infections
-                - initial_immunity
-                - susceptibility_factor_model
-                - virus_shares
-                - vaccination_models
-                - vaccination_shares
-                - rapid_test_models
-                - rapid_test_reaction_models
-                - seasonality_factor_model
-                - params
-
     """
     if debug:
         initial_states_path = BLD / "data" / "debug_initial_states.parquet"
@@ -215,6 +228,7 @@ def get_simulation_dependencies(debug):
         initial_states_path = BLD / "data" / "initial_states.parquet"
 
     out = {
+        **SID_DEPENDENCIES,
         "initial_states": initial_states_path,
         # to ensure that the checks on the initial states run before the
         # simulations we add the output of task_check_initial_states here
@@ -222,42 +236,73 @@ def get_simulation_dependencies(debug):
         "output_of_check_initial_states": BLD
         / "data"
         / "comparison_of_age_group_distributions.png",
-        "contact_models": SRC / "contact_models" / "get_contact_models.py",
-        "contact_policies": SRC / "policies" / "enacted_policies.py",
-        "testing": SRC / "testing" / "testing_models.py",
+        "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
+        "contact_policies.py": SRC / "policies" / "enacted_policies.py",
+        "testing_models.py": SRC / "testing" / "testing_models.py",
         "share_of_tests_for_symptomatics_series": BLD
         / "data"
         / "testing"
         / "share_of_tests_for_symptomatics_series.pkl",
-        "initial_conditions": SRC
+        "initial_conditions.py": SRC
         / "create_initial_states"
         / "create_initial_conditions.py",
-        "initial_infections": SRC
+        "initial_infections.py": SRC
         / "create_initial_states"
         / "create_initial_infections.py",
-        "initial_immunity": SRC
+        "initial_immunity.py": SRC
         / "create_initial_states"
         / "create_initial_immunity.py",
-        "susceptibility_factor_model": SRC
+        "susceptibility_factor_model.py": SRC
         / "simulation"
         / "calculate_susceptibility.py",
         "virus_shares": BLD / "data" / "virus_strains" / "virus_shares_dict.pkl",
-        "vaccination_models": SRC / "policies" / "find_people_to_vaccinate.py",
+        "find_people_to_vaccinate.py": SRC / "policies" / "find_people_to_vaccinate.py",
         "vaccination_shares": BLD
         / "data"
         / "vaccinations"
         / "vaccination_shares_extended.pkl",
-        "rapid_test_models": SRC / "testing" / "rapid_tests.py",
-        "rapid_test_reaction_models": SRC / "testing" / "rapid_test_reactions.py",
-        "seasonality_factor_model": SRC / "simulation" / "seasonality.py",
+        "rapid_tests.py": SRC / "testing" / "rapid_tests.py",
+        "rapid_test_reactions.py": SRC / "testing" / "rapid_test_reactions.py",
+        "seasonality.py": SRC / "simulation" / "seasonality.py",
         "params": BLD / "params.pkl",
-        "scenario_simulation_inputs": SRC
+        "scenario_simulation_inputs.py": SRC
         / "simulation"
         / "scenario_simulation_inputs.py",
-        "params_scenarios": SRC / "simulation" / "params_scenarios.py",
+        "params_scenarios.py": SRC / "simulation" / "params_scenarios.py",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
         "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
-        "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
+        "load_simulation_inputs.py": SRC / "simulation" / "load_simulation_inputs.py",
+        "load_params.py": SRC / "simulation" / "load_params.py",
+        "calculate_moments.py": SRC / "calculate_moments.py",
+        # not strictly necessary because changes to scenario_config would change the
+        # parametrization but for safety put it here
+        "scenario_config.py": SRC / "simulation" / "scenario_config.py",
+        "testing_shared.py": SRC / "testing" / "shared.py",
+        "policy_tools.py": SRC / "policies" / "policy_tools.py",
+        "config.py": SRC / "config.py",
     }
 
     return out
+
+
+def create_period_outputs():
+    outcomes = [
+        "newly_infected",
+        "new_known_case",
+        "currently_infected",
+        "knows_currently_infected",
+    ]
+    groupbys = ["state", "age_group_rki", None]
+
+    period_outputs = {}
+
+    for outcome in outcomes:
+        for groupby in groupbys:
+            gb_str = f"_by_{groupby}" if groupby is not None else ""
+            period_outputs[f"{outcome}{gb_str}"] = partial(
+                calculate_period_outcome_sim,
+                outcome=outcome,
+                groupby=groupby,
+            )
+
+    return period_outputs

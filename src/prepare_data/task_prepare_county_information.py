@@ -85,6 +85,8 @@ def _prepare_counties(df, states):
     [
         SRC / "original_data" / "population_structure" / "population.csv",
         SRC / "original_data" / "population_structure" / "population_berlin.csv",
+        SRC / "prepare_data" / "task_prepare_rki_data.py",
+        SRC / "config.py",
     ]
 )
 @pytask.mark.produces(

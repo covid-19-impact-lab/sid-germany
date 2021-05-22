@@ -4,14 +4,9 @@ from src.config import FAST_FLAG
 SPRING_START = "2021-02-15"
 
 
-def create_path_to_last_states_of_simulation(name, seed):
-    path = (
-        BLD
-        / "simulations"
-        / f"{FAST_FLAG}_{name}_{seed}"
-        / "last_states"
-        / "last_states.parquet"
-    )
+def create_path_to_period_outputs_of_simulation(name, seed):
+    """Return the path to the simulation results with the period outcomes."""
+    path = BLD / "simulations" / "period_outputs" / f"{FAST_FLAG}_{name}_{seed}.pkl"
     return path
 
 
@@ -25,12 +20,8 @@ def create_path_to_share_known_cases_of_scenario(name):
     return BLD / "simulations" / "share_known_cases" / file_name
 
 
-def create_path_to_weekly_outcome_of_scenario(name, outcome, groupby):
-    if groupby is None:
-        file_name = f"{FAST_FLAG}_{name}_{outcome}.pkl"
-    else:
-        file_name = f"{FAST_FLAG}_{name}_{outcome}_by_{groupby}.pkl"
-    return BLD / "simulations" / "incidences" / file_name
+def create_path_to_weekly_outcome_of_scenario(name, entry):
+    return BLD / "simulations" / "incidences" / f"{FAST_FLAG}_{name}_{entry}.pkl"
 
 
 def create_path_to_share_known_cases_plot(name, groupby):
@@ -39,6 +30,11 @@ def create_path_to_share_known_cases_plot(name, groupby):
     else:
         fig_name = f"{FAST_FLAG}_{name}.png"
     return BLD / "figures" / "share_known_cases" / fig_name
+
+
+def create_path_to_group_incidence_plot(name, outcome, groupby):
+    fig_name = f"{FAST_FLAG}_{outcome}_{name}.png"
+    return BLD / "figures" / "incidences_by_group" / groupby / fig_name
 
 
 # =============================================================================
@@ -110,13 +106,13 @@ def get_named_scenarios():
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
-        "spring_without_rapid_tests_at_schools": {
+        "spring_without_school_rapid_tests": {
             "sim_input_scenario": "baseline",
             "params_scenario": "no_rapid_tests_at_schools",
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
-        "spring_without_rapid_tests_at_work": {
+        "spring_without_work_rapid_tests": {
             "sim_input_scenario": "baseline",
             "params_scenario": "no_rapid_tests_at_work",
             "n_seeds": n_side_scenario_seeds,
@@ -132,14 +128,14 @@ def get_named_scenarios():
         # it ensures that 70% of workers get regularly tested. Given that the share of
         # workers accepting a rapid test from their employer is time invariant this also
         # means that before Easter there is already a lot more testing going on.
-        "spring_with_obligatory_work_rapid_tests": {
+        "spring_with_mandatory_work_rapid_tests": {
             "sim_input_scenario": "baseline",
             "params_scenario": "obligatory_rapid_tests_for_employees",
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
         # Rapid Tests vs School Closures
-        "spring_emergency_care_after_easter_no_school_rapid_tests": {
+        "spring_emergency_care_after_easter_without_school_rapid_tests": {
             "sim_input_scenario": "only_strict_emergency_care_after_april_5",
             "params_scenario": "no_rapid_tests_at_schools",
             "n_seeds": n_side_scenario_seeds,
@@ -155,13 +151,13 @@ def get_named_scenarios():
             "n_seeds": n_main_scenario_seeds,
             **spring_dates,
         },
-        "spring_educ_open_after_easter_educ_tests_every_other_day": {
+        "spring_open_educ_after_easter_with_tests_every_other_day": {
             "sim_input_scenario": "open_all_educ_after_easter",
             "params_scenario": "rapid_tests_at_school_every_other_day_after_april_5",
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
-        "spring_educ_open_after_easter_educ_tests_every_day": {
+        "spring_open_educ_after_easter_with_daily_tests": {
             "sim_input_scenario": "open_all_educ_after_easter",
             "params_scenario": "rapid_tests_at_school_every_day_after_april_5",
             "n_seeds": n_side_scenario_seeds,
@@ -203,7 +199,7 @@ def get_named_scenarios():
 
 
 def get_available_scenarios(named_scenarios):
-    available_scenarios = {
+    available_scenarios = sorted(
         name for name, spec in named_scenarios.items() if spec["n_seeds"] > 0
-    }
+    )
     return available_scenarios

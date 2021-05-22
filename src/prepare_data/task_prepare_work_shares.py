@@ -36,9 +36,15 @@ def interval_age_group(x):
 
 
 @pytask.mark.depends_on(
-    SRC / "original_data" / "population_structure" / "share_working_by_gender_2018.csv"
+    {
+        "data": SRC
+        / "original_data"
+        / "population_structure"
+        / "share_working_by_gender_2018.csv",
+        "config.py": SRC / "config.py",
+    }
 )
 @pytask.mark.produces(BLD / "data" / "population_structure" / "working_shares.pkl")
 def task_prepare_work_shares(depends_on, produces):
-    work_by_age_and_gender = clean_work_shares(depends_on)
+    work_by_age_and_gender = clean_work_shares(depends_on["data"])
     work_by_age_and_gender.to_pickle(produces)

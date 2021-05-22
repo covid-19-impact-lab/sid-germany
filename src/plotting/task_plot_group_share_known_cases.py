@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 import seaborn as sns
+import sid
 
 from src.config import BLD
 from src.config import SRC
@@ -24,12 +25,14 @@ from src.testing.shared import get_piecewise_linear_interpolation
             "fall_baseline", pd.Timestamp("2020-12-23")
         ),
         "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
-        "create_initial_conditions": SRC
+        "params": BLD / "params.pkl",
+        "create_initial_conditions.py": SRC
         / "create_initial_states"
         / "create_initial_conditions.py",
-        "simulation_shared": SRC / "simulation" / "scenario_config.py",
-        "plotting": SRC / "plotting" / "plotting.py",
-        "params": BLD / "params.pkl",
+        "scenario_config.py": SRC / "simulation" / "scenario_config.py",
+        "plotting.py": SRC / "plotting" / "plotting.py",
+        "config.py": SRC / "config.py",
+        "testing_shared.py": SRC / "testing" / "shared.py",
     }
 )
 @pytask.mark.produces(BLD / "figures" / "share_known_cases_prediction.png")
@@ -58,8 +61,14 @@ def task_plot_group_specific_share_known_cases(depends_on, produces):
         .reset_index()
     )
 
-    fig, ax = plt.subplots(figsize=(16, 4))
+    n_groups = to_plot["age_group_rki"].nunique()
+    colors = sid.get_colors("ordered", n_groups)
+    sns.set_palette(colors)
+
+    fig, ax = plt.subplots(figsize=(10, 4))
     sns.lineplot(data=to_plot, x="date", y=0, hue="age_group_rki")
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     fig.savefig(produces)
+    plt.close()
+    sns.color_palette()
