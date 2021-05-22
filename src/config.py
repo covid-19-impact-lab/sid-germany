@@ -2,6 +2,9 @@ import warnings
 from pathlib import Path
 
 import pandas as pd
+import sid
+
+SID_DEPENDENCIES = [x for x in Path(sid.__path__[0]).iterdir() if x.suffix == ".py"]
 
 SUMMER_SCENARIO_START = "2021-05-17"
 
