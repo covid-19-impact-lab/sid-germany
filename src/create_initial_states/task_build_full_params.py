@@ -94,7 +94,7 @@ def task_create_full_params(depends_on, produces):
 
     # source: https://bit.ly/3gHlcKd (section 3.5, 2021-03-09, accessed 2021-04-28)
     loc = ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test")
-    params.loc[loc, "value"] = 0.4
+    params.loc[loc, "value"] = 0.82
 
     params = _add_work_rapid_test_params(params)
     params = _add_educ_rapid_test_fade_in_params(params)
@@ -324,12 +324,12 @@ def _add_hh_rapid_test_fade_in_params(params):
     loc = ("rapid_test_demand", "hh_member_demand")
     params.loc[(*loc, "2020-01-01"), "value"] = 0
     params.loc[(*loc, "2021-03-10"), "value"] = 0
-    params.loc[(*loc, "2021-03-25"), "value"] = 0.1
+    params.loc[(*loc, "2021-03-25"), "value"] = 0.2
     params.loc[(*loc, "2021-04-05"), "value"] = 0.3
-    params.loc[(*loc, "2021-05-01"), "value"] = 0.4
-    params.loc[(*loc, "2021-05-15"), "value"] = 0.5
-    params.loc[(*loc, "2021-06-01"), "value"] = 0.75
-    params.loc[(*loc, "2025-12-31"), "value"] = 0.75
+    params.loc[(*loc, "2021-05-01"), "value"] = 0.5
+    params.loc[(*loc, "2021-05-15"), "value"] = 0.6
+    params.loc[(*loc, "2021-06-01"), "value"] = 0.6
+    params.loc[(*loc, "2025-12-31"), "value"] = 0.6
 
     return params
 

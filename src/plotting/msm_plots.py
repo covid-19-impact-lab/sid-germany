@@ -40,7 +40,7 @@ def plot_estimation_moment(results, name):
         n_groups = len(groups)
 
         n_rows = int(np.ceil(n_groups / 2))
-        fig, axes = plt.subplots(figsize=(9, n_rows * 4), nrows=n_rows, ncols=2)
+        fig, axes = plt.subplots(figsize=(13.5, n_rows * 6), nrows=n_rows, ncols=2)
         axes = axes.flatten()
         for group, ax in zip(groups, axes):
             _plot_simulated_and_empirical_moment(
@@ -51,7 +51,7 @@ def plot_estimation_moment(results, name):
             ax.set_title(f"{group_name}: {group}")
     else:
         simulated, empirical = _extract_aggregated_moment(results, name)
-        fig, ax = plt.subplots(figsize=(4.5, 4))
+        fig, ax = plt.subplots(figsize=(10, 8))
         axes = [ax]
         _plot_simulated_and_empirical_moment(
             simulated=simulated, empirical=empirical, ax=ax
