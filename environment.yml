@@ -16,7 +16,7 @@ dependencies:
   - black
   - dask
   - estimagic>=0.1.2
-  - fastparquet<0.5
+  - fastparquet != 0.6.1
   - jupyterlab
   - holoviews
   - nodejs
