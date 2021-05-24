@@ -375,7 +375,7 @@ def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
         # not used for estimation because not in logs
         "aggregated_infections_not_log": 1e-10,
         # strong weight because very important
-        "aggregated_infections": 2.5
+        "aggregated_infections": 2.5,
     }
 
     weight_mat = get_diag_weighting_matrix(

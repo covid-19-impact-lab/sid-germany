@@ -190,7 +190,7 @@ def load_simulation_inputs(
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
     }
-    
+
     if period_outputs:
         fixed_inputs["period_outputs"] = create_period_outputs()
         fixed_inputs["return_last_states"] = False
