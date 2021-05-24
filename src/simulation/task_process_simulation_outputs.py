@@ -82,7 +82,6 @@ def _create_scenario_share_known_cases_parametrization():
 _SIGNATURE, _PARAMETRIZATION = _create_scenario_share_known_cases_parametrization()
 
 
-@pytask.mark.skip
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_share_known_cases(depends_on, produces):

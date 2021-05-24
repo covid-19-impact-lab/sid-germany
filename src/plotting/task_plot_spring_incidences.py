@@ -9,7 +9,6 @@ from src.config import SRC
 from src.plotting.plotting import style_plot
 
 
-@pytask.mark.skip
 @pytask.mark.depends_on(
     {
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",

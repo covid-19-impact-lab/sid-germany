@@ -59,9 +59,9 @@ def get_named_scenarios():
         n_main_scenario_seeds = 3  # 4x
         n_side_scenario_seeds = 1  # 11
     elif FAST_FLAG == "full":
-        n_baseline_seeds = 20
-        n_main_scenario_seeds = 20
-        n_side_scenario_seeds = 20
+        n_baseline_seeds = 15
+        n_main_scenario_seeds = 15
+        n_side_scenario_seeds = 15
     else:
         raise ValueError(
             f"Unknown FAST_FLAG {FAST_FLAG}."

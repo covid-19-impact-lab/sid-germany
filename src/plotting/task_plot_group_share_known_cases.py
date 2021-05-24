@@ -19,7 +19,6 @@ from src.simulation.scenario_config import SPRING_START
 from src.testing.shared import get_piecewise_linear_interpolation
 
 
-@pytask.mark.skip
 @pytask.mark.depends_on(
     {
         "group_share_known_cases": create_path_to_initial_group_share_known_cases(

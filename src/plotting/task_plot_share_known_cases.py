@@ -36,7 +36,6 @@ def _create_parametrization():
 _SIGNATURE, _PARAMETRIZATION = _create_parametrization()
 
 
-@pytask.mark.skip
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_plot_share_known_cases_per_scenario(depends_on, title, produces):
