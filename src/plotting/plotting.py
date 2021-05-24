@@ -11,6 +11,7 @@ import sid
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
 from src.config import SUMMER_SCENARIO_START
+from src.simulation.scenario_config import get_named_scenarios
 
 
 plt.rcParams.update(
@@ -20,6 +21,47 @@ plt.rcParams.update(
         "legend.frameon": False,
     }
 )
+
+
+def create_scenario_to_color():
+    """Create the dictionary mapping scenario names to colors.
+
+    Baseline scenarios get the typical sid blue. Vaccines scenarios get other blues.
+    Rapid test scenarios get purple-red tones.
+    School scenarios get the warm part of the ordered color map.
+
+    """
+    scenario_to_color = {
+        "fall_baseline": "#547482",
+        "summer_baseline": "#547482",
+        # vaccines
+        "spring_without_vaccines": "steelblue",
+        "spring_with_more_vaccines": "dodgerblue",
+        # rapid tests
+        "spring_without_rapid_tests": "#5d4042",
+        "spring_without_work_rapid_tests": "#a98286",
+        "spring_without_school_rapid_tests": "#e0b1a3",
+        "spring_with_mandatory_work_rapid_tests": "#b3563b",
+        # school scenarios
+        "spring_emergency_care_after_easter_without_school_rapid_tests": "#F1B05D",
+        "spring_educ_open_after_easter_without_tests": "#3C2030",
+        "spring_educ_open_after_easter_with_normal_tests": "#6c4a4d",
+        "spring_open_educ_after_easter_with_tests_every_other_day": "#c87259",
+        "spring_open_educ_after_easter_with_daily_tests": "#EE8445",
+        # summer scenarios
+        "summer_reduced_test_demand": "#3C2030",
+        "summer_strict_home_office": "darkcyan",
+        "summer_more_rapid_tests_at_work": "firebrick",
+        "summer_optimistic_vaccinations": "dodgerblue",
+        "summer_educ_open": "#6c4a4d",
+    }
+
+    all_scenarios = get_named_scenarios().keys()
+    color_missing = [x for x in all_scenarios if x not in scenario_to_color.keys()]
+    assert len(color_missing) == 0, "Some scenarios have no color: " + "\n\t".join(
+        color_missing
+    )
+    return scenario_to_color
 
 
 def calculate_virus_strain_shares(results):
@@ -56,7 +98,6 @@ def plot_incidences(
     incidences,
     title,
     name_to_label,
-    colors,
     n_single_runs: Optional[int] = None,
     rki=False,
     plot_scenario_start=False,
@@ -80,9 +121,13 @@ def plot_incidences(
 
     """
     if fig is None and ax is None:
-        fig, ax = plt.subplots(figsize=(6, 4))
-    for name, color in zip(incidences, colors):
-        df = incidences[name]
+        if len(incidences) <= 4:
+            fig, ax = plt.subplots(figsize=(6, 4))
+        else:
+            fig, ax = plt.subplots(figsize=(6, 6))
+    colors = create_scenario_to_color()
+    for name, df in incidences.items():
+        color = colors[name]
         dates = df.index
         sns.lineplot(
             x=dates,
@@ -101,7 +146,7 @@ def plot_incidences(
                 ax=ax,
                 color=color,
                 linewidth=0.5,
-                alpha=0.2,
+                alpha=0.1,
             )
     if rki:
         rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")

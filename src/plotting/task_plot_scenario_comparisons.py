@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
-import sid
 
 from src.config import BLD
 from src.config import FAST_FLAG
@@ -22,56 +21,81 @@ NAMED_SCENARIOS = get_named_scenarios()
 
 
 PLOTS = {
-    "fall": ["fall_baseline"],
-    "effect_of_vaccines": [
-        "summer_baseline",
-        "spring_without_vaccines",
-        "spring_with_more_vaccines",
-    ],
-    "effect_of_rapid_tests": [
-        "summer_baseline",
-        "spring_without_school_rapid_tests",
-        "spring_without_work_rapid_tests",
-        "spring_without_rapid_tests",
-        "spring_with_mandatory_work_rapid_tests",
-    ],
-    "vaccines_vs_rapid_tests": [
-        "summer_baseline",
-        "spring_without_vaccines",
-        # maybe replace the rapid test scenario with a different one.
-        "spring_without_rapid_tests",
-        "spring_with_more_vaccines",
-    ],
-    "rapid_tests_vs_school_closures": [
-        "summer_baseline",
-        "spring_emergency_care_after_easter_without_school_rapid_tests",
-        "spring_educ_open_after_easter",
-        "spring_open_educ_after_easter_with_tests_every_other_day",
-        "spring_open_educ_after_easter_with_daily_tests",
-    ],
-    "summer": [
-        "summer_baseline",
-        "summer_educ_open",
-        "summer_reduced_test_demand",
-        "summer_strict_home_office",
-        "summer_optimistic_vaccinations",
-        "summer_more_rapid_tests_at_work",
-    ],
+    "fall": {
+        "title": "{outcome} in Fall",
+        "scenarios": ["fall_baseline"],
+        "scenario_start": None,
+    },
+    "effect_of_vaccines": {
+        "title": "{outcome} in Different Vaccine Scenarios",
+        "scenarios": [
+            "summer_baseline",
+            "spring_without_vaccines",
+            "spring_with_more_vaccines",
+        ],
+        "scenario_start": [pd.Timestamp("2021-02-15"), pd.Timestamp("2021-04-06")],
+    },
+    "effect_of_rapid_tests": {
+        "title": "{outcome} in Different Rapid Test Scenarios",
+        "scenarios": [
+            "summer_baseline",
+            "spring_without_rapid_tests",
+            "spring_without_work_rapid_tests",
+            "spring_without_school_rapid_tests",
+            "spring_with_mandatory_work_rapid_tests",
+        ],
+    },
+    "vaccines_vs_rapid_tests": {
+        "title": "The Effect of Vaccines on {outcome} Compared to Rapid Tests",
+        "scenarios": [
+            "summer_baseline",
+            # vaccines
+            "spring_without_vaccines",
+            "spring_with_more_vaccines",
+            # rapid tests
+            "spring_without_rapid_tests",
+            "spring_with_mandatory_work_rapid_tests",
+        ],
+    },
+    "school_scenarios": {
+        "title": "{outcome} in Different School Scenarios",
+        "scenarios": [
+            "summer_baseline",
+            "spring_emergency_care_after_easter_without_school_rapid_tests",
+            # different test scenarios
+            "spring_educ_open_after_easter_without_tests",
+            "spring_educ_open_after_easter_with_normal_tests",
+            "spring_open_educ_after_easter_with_tests_every_other_day",
+            "spring_open_educ_after_easter_with_daily_tests",
+        ],
+    },
+    "summer": {
+        "title": "Summer Prediction for {outcome}",
+        "scenarios": [
+            "summer_baseline",
+            "summer_educ_open",
+            "summer_reduced_test_demand",
+            "summer_strict_home_office",
+            "summer_optimistic_vaccinations",
+            "summer_more_rapid_tests_at_work",
+        ],
+    },
 }
-"""Dict[str, List[str]]: A dictionary containing the plots to create.
+"""Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
 
-Each key in the dictionary is a name for a collection of scenarios. The values are lists
-of scenario names which are combined to create the collection.
+Each key in the dictionary is a name for a collection of scenarios. The values are
+dictionaries with the title and the lists of scenario names which are combined to
+create the collection.
 
 """
 
 AVAILABLE_SCENARIOS = get_available_scenarios(NAMED_SCENARIOS)
 
-plotted_scenarios = {x for scenarios in PLOTS.values() for x in scenarios}
+plotted_scenarios = {x for spec in PLOTS.values() for x in spec["scenarios"]}
 assert set(AVAILABLE_SCENARIOS).issubset(
     plotted_scenarios
 ), "The following scenarios do not appear in any plots: " + "\n\t".join(
-    AVAILABLE_SCENARIOS.difference(plotted_scenarios)
+    list(set(AVAILABLE_SCENARIOS).difference(plotted_scenarios))
 )
 
 
@@ -83,8 +107,11 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
     available_scenarios = get_available_scenarios(named_scenarios)
     parametrization = []
     for outcome in outcomes:
-        for comparison_name, to_compare in plots.items():
-            to_compare = sorted(set(available_scenarios).intersection(to_compare))
+        for comparison_name, plot_info in plots.items():
+            title = plot_info["title"]
+            to_compare = sorted(
+                set(available_scenarios).intersection(plot_info["scenarios"])
+            )
             depends_on = {
                 scenario_name: create_path_to_weekly_outcome_of_scenario(
                     name=scenario_name, entry=outcome
@@ -101,9 +128,11 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
             )
             # only create a plot if at least one scenario had a seed.
             if depends_on:
-                parametrization.append((depends_on, comparison_name, outcome, produces))
+                parametrization.append(
+                    (depends_on, comparison_name, outcome, title, produces)
+                )
 
-    return "depends_on, comparison_name, outcome, produces", parametrization
+    return "depends_on, comparison_name, outcome, title, produces", parametrization
 
 
 _SIGNATURE, _PARAMETRIZATION = create_parametrization(
@@ -113,25 +142,21 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization(
 
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
-def task_plot_scenario_comparison(depends_on, comparison_name, outcome, produces):
+def task_plot_scenario_comparison(
+    depends_on, comparison_name, outcome, title, produces
+):
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
 
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
     dfs = _shorten_dfs_to_the_shortest(dfs)
 
-    title = _create_title(comparison_name, outcome)
+    title = _create_title(title, outcome)
     name_to_label = _create_nice_labels(dfs)
-
-    colors = sid.get_colors("categorical", len(dfs))
-    # 3rd entry is not well distinguishable from the first
-    if len(colors) >= 3:
-        colors[2] = "#2E8B57"  # seagreen
 
     fig, ax = plot_incidences(
         incidences=dfs,
         title=title,
-        colors=colors,
         name_to_label=name_to_label,
         rki=outcome == "new_known_case",
         plot_scenario_start="summer" in comparison_name,
@@ -163,13 +188,12 @@ def _shorten_dfs_to_the_shortest(dfs):
     return shortened
 
 
-def _create_title(comparison_name, outcome):
-    nice_name = comparison_name.replace("_", " ").title()
+def _create_title(title, outcome):
     if outcome == "new_known_case":
         title_outcome = "Observed New Cases"
     elif outcome == "newly_infected":
         title_outcome = "Total New Cases"
-    title = f"{title_outcome} in {nice_name}"
+    title = title.format(outcome=title_outcome)
     return title
 
 
