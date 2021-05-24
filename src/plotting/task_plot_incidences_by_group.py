@@ -21,7 +21,6 @@ from src.simulation.scenario_config import get_named_scenarios
 
 _DEPENDENCIES = {
     "calculate_moments.py": SRC / "calculate_moments.py",
-    "config.py": SRC / "config.py",
     "plotting.py": SRC / "plotting" / "plotting.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
 }

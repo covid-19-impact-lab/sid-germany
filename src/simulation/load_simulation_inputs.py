@@ -272,7 +272,6 @@ def get_simulation_dependencies(debug):
         "scenario_config.py": SRC / "simulation" / "scenario_config.py",
         "testing_shared.py": SRC / "testing" / "shared.py",
         "policy_tools.py": SRC / "policies" / "policy_tools.py",
-        "config.py": SRC / "config.py",
     }
 
     return out

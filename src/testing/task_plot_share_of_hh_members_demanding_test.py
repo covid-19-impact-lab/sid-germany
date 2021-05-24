@@ -16,7 +16,6 @@ from src.testing.shared import get_piecewise_linear_interpolation
     {
         "params": BLD / "params.pkl",
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
-        "config.py": SRC / "config.py",
         "plotting.py": SRC / "plotting" / "plotting.py",
         "testing_shared.py": SRC / "testing" / "shared.py",
     }

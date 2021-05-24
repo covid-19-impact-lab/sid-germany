@@ -6,7 +6,6 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
-from src.config import SRC
 
 
 @pytask.mark.depends_on(
@@ -34,7 +33,6 @@ from src.config import SRC
         / "age_groups.parquet",
         "vacations": BLD / "data" / "vacations.pkl",
         "work_multiplier": BLD / "policies" / "work_multiplier.csv",
-        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(BLD / "data" / "comparison_of_age_group_distributions.png")

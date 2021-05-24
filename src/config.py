@@ -1,3 +1,9 @@
+"""The global config file.
+
+BE CAREFUL WHEN CHANGING THINGS HERE BECAUSE THIS FILE IS NOT A DIRECT DEPENDENCY OF ANY
+TASK.
+
+"""
 import warnings
 from pathlib import Path
 

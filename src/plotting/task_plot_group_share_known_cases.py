@@ -31,7 +31,6 @@ from src.testing.shared import get_piecewise_linear_interpolation
         / "create_initial_conditions.py",
         "scenario_config.py": SRC / "simulation" / "scenario_config.py",
         "plotting.py": SRC / "plotting" / "plotting.py",
-        "config.py": SRC / "config.py",
         "testing_shared.py": SRC / "testing" / "shared.py",
     }
 )

@@ -22,7 +22,6 @@ from src.testing.shared import get_piecewise_linear_interpolation
         / "testing"
         / "detected_and_undetected_infections_new.csv",
         "params": BLD / "params.pkl",
-        "config.py": SRC / "config.py",
         "plotting.py": SRC / "plotting" / "plotting.py",
         "testing_shared.py": SRC / "testing" / "shared.py",
     }
