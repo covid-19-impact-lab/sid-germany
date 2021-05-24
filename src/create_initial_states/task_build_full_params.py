@@ -5,12 +5,12 @@ import pytask
 import sid
 
 from src.config import BLD
-from src.config import SID_DEPENDENCIES
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 
+EPI_PARAMS_PATH = Path(sid.__file__).parent.joinpath("covid_epi_params.csv").resolve()
+
 _DEPENDENCIES = {
-    **SID_DEPENDENCIES,
     "dist_other_non_recurrent": BLD
     / "contact_models"
     / "empirical_distributions"
@@ -32,9 +32,7 @@ _DEPENDENCIES = {
     "susceptibility": SRC / "original_data" / "susceptibility.csv",
     "config.py": SRC / "config.py",
     "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
-    "covid_epi_params": Path(sid.__file__)
-    .parent.joinpath("covid_epi_params.csv")
-    .resolve(),
+    "covid_epi_params": EPI_PARAMS_PATH,
 }
 
 
@@ -98,6 +96,7 @@ def task_create_full_params(depends_on, produces):
     params.loc[("vaccinations", "share_refuser", "share_refuser"), "value"] = 0.15
 
     # source: https://bit.ly/3gHlcKd (section 3.5, 2021-03-09, accessed 2021-04-28)
+    # 82% say they would get a PCR test after a positive rapid test
     loc = ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test")
     params.loc[loc, "value"] = 0.82
 
@@ -263,7 +262,7 @@ def _add_educ_rapid_test_fade_in_params(params):
               (https://bit.ly/3gMGJB4)
             - Niedersachsen had one test week before Easter (https://bit.ly/3gOOC96)
 
-            => assume 90% of teachers and 30% of students do rapid tests
+            => assume 90% of teachers and 40% of students do rapid tests
 
         - After Easter (2021-04-07):
             - NRW: tests are mandatory for all
