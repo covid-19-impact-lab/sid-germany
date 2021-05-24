@@ -155,8 +155,8 @@ def _shorten_dfs_to_the_shortest(dfs):
     """
     shortened = {}
 
-    start_date = max([df.index.min() for df in dfs.values()])
-    end_date = min([df.index.max() for df in dfs.values()])
+    start_date = max(df.index.min() for df in dfs.values())
+    end_date = min(df.index.max() for df in dfs.values())
 
     for name, df in dfs.items():
         shortened[name] = df.loc[start_date:end_date].copy(deep=True)
