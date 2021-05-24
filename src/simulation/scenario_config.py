@@ -1,7 +1,7 @@
 from src.config import BLD
 from src.config import FAST_FLAG
 
-SPRING_START = "2021-02-15"
+SPRING_START = "2021-02-10"
 
 
 def create_path_to_period_outputs_of_simulation(name, seed):
@@ -55,8 +55,8 @@ def get_named_scenarios():
         n_main_scenario_seeds = 0
         n_side_scenario_seeds = 0
     elif FAST_FLAG == "verify":  # use 27 cores -> 2 rounds
-        n_baseline_seeds = 10  # 2x
-        n_main_scenario_seeds = 3  # 4x
+        n_baseline_seeds = 1  # 2x
+        n_main_scenario_seeds = 1  # 4x
         n_side_scenario_seeds = 1  # 11
     elif FAST_FLAG == "full":
         n_baseline_seeds = 15
@@ -70,12 +70,12 @@ def get_named_scenarios():
 
     spring_dates = {
         "start_date": SPRING_START,
-        "end_date": "2021-05-16" if FAST_FLAG != "debug" else "2021-05-01",
+        "end_date": "2021-05-31" if FAST_FLAG != "debug" else "2021-05-01",
     }
 
     summer_dates = {
         "start_date": SPRING_START,
-        "end_date": "2021-07-01" if FAST_FLAG != "debug" else "2021-06-01",
+        "end_date": "2021-06-30" if FAST_FLAG != "debug" else "2021-06-01",
     }
 
     named_scenarios = {
@@ -167,13 +167,13 @@ def get_named_scenarios():
         "summer_educ_open": {
             "sim_input_scenario": "open_all_educ_after_summer_scenario_start",
             "params_scenario": "baseline",
-            "n_seeds": n_main_scenario_seeds,
+            "n_seeds": 0,
             **summer_dates,
         },
         "summer_reduced_test_demand": {
             "sim_input_scenario": "baseline",
             "params_scenario": "reduce_rapid_test_demand_after_summer_scenario_start_by_half",  # noqa: E501
-            "n_seeds": n_main_scenario_seeds,
+            "n_seeds": 0,
             **summer_dates,
         },
         "summer_strict_home_office": {
@@ -185,13 +185,13 @@ def get_named_scenarios():
         "summer_more_rapid_tests_at_work": {
             "sim_input_scenario": "baseline",
             "params_scenario": "rapid_test_with_90pct_compliance_after_summer_scenario_start",  # noqa: E501
-            "n_seeds": n_side_scenario_seeds,
+            "n_seeds": 0,
             **summer_dates,
         },
         "summer_optimistic_vaccinations": {
             "sim_input_scenario": "vaccinations_after_summer_scenario_start_as_on_strongest_week_day",  # noqa: E501
             "params_scenario": "baseline",
-            "n_seeds": n_side_scenario_seeds,
+            "n_seeds": 0,
             **summer_dates,
         },
     }
