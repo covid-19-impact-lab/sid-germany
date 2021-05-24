@@ -11,7 +11,7 @@ for path in Path(sid.__path__[0]).iterdir():
 
 SUMMER_SCENARIO_START = "2021-05-17"
 
-FAST_FLAG = "verify"
+FAST_FLAG = "full"
 """One of 'debug', 'verify', 'full'.
 
 If 'debug' only the debug initial states are used and only one run of every scenario

@@ -59,9 +59,9 @@ def get_named_scenarios():
         n_main_scenario_seeds = 1  # 4x
         n_side_scenario_seeds = 1  # 11
     elif FAST_FLAG == "full":
-        n_baseline_seeds = 15
-        n_main_scenario_seeds = 15
-        n_side_scenario_seeds = 15
+        n_baseline_seeds = 10
+        n_main_scenario_seeds = 10
+        n_side_scenario_seeds = 10
     else:
         raise ValueError(
             f"Unknown FAST_FLAG {FAST_FLAG}."
@@ -75,7 +75,7 @@ def get_named_scenarios():
 
     summer_dates = {
         "start_date": SPRING_START,
-        "end_date": "2021-06-30" if FAST_FLAG != "debug" else "2021-06-01",
+        "end_date": "2021-05-31" if FAST_FLAG != "debug" else "2021-06-01",
     }
 
     named_scenarios = {
