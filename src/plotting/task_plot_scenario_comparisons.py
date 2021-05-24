@@ -45,7 +45,8 @@ PLOTS = {
     "rapid_tests_vs_school_closures": [
         "summer_baseline",
         "spring_emergency_care_after_easter_without_school_rapid_tests",
-        "spring_educ_open_after_easter",
+        "spring_educ_open_after_easter_with_normal_tests",
+        "spring_educ_open_after_easter_without_tests",
         "spring_open_educ_after_easter_with_tests_every_other_day",
         "spring_open_educ_after_easter_with_daily_tests",
     ],
@@ -71,7 +72,7 @@ plotted_scenarios = {x for scenarios in PLOTS.values() for x in scenarios}
 assert set(AVAILABLE_SCENARIOS).issubset(
     plotted_scenarios
 ), "The following scenarios do not appear in any plots: " + "\n\t".join(
-    AVAILABLE_SCENARIOS.difference(plotted_scenarios)
+    list(set(AVAILABLE_SCENARIOS).difference(plotted_scenarios))
 )
 
 
