@@ -191,17 +191,17 @@ def _add_vacation_model_distribution_params(params):
     params = params.copy(deep=True)
     loc = ("additional_other_vacation_contact", "probability")
     # 2020
-    params.loc[(*loc, "Winterferien"), "value"] = 0.3
-    params.loc[(*loc, "Osterferien"), "value"] = 0.3
-    params.loc[(*loc, "Pfingstferien"), "value"] = 0.3
-    params.loc[(*loc, "Sommerferien"), "value"] = 0.3
-    params.loc[(*loc, "Herbstferien"), "value"] = 0.3
-    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.3
+    params.loc[(*loc, "Winterferien"), "value"] = 0.5
+    params.loc[(*loc, "Osterferien"), "value"] = 0.5
+    params.loc[(*loc, "Pfingstferien"), "value"] = 0.5
+    params.loc[(*loc, "Sommerferien"), "value"] = 0.5
+    params.loc[(*loc, "Herbstferien"), "value"] = 0.5
+    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.5
     # 2021
-    params.loc[(*loc, "Winterferien2021"), "value"] = 0.3
-    params.loc[(*loc, "Osterferien2021"), "value"] = 0.3
-    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.3
-    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.3
+    params.loc[(*loc, "Winterferien2021"), "value"] = 0.5
+    params.loc[(*loc, "Osterferien2021"), "value"] = 0.5
+    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.5
+    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.5
     return params
 
 
