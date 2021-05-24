@@ -26,6 +26,7 @@ def run_1d_gridsearch(func, params, loc, gridspec, n_seeds, n_cores):
         arguments=arguments,
         n_cores=n_cores,
         unpack_symbol="**",
+        error_handling="raise",
     )
     reshaped_results = _reshape_flat_list_2d(results, (n_points, len(seeds)))
 
@@ -43,11 +44,15 @@ def run_1d_gridsearch(func, params, loc, gridspec, n_seeds, n_cores):
     else:
         order = 3
 
-    fig = sns.regplot(
+    fig, ax = plt.subplots(figsize=(5, 4))
+    sns.regplot(
         x=np.repeat(grid, len(seeds)),
         y=[res["value"] for res in results],
         order=order,
+        ax=ax,
     )
+
+    plt.close()
 
     return reshaped_results, grid, best_index, fig
 
@@ -95,6 +100,7 @@ def run_2d_gridsearch(
         arguments=arguments,
         n_cores=n_cores,
         unpack_symbol="**",
+        error_handling="raise",
     )
 
     reshaped_results = _reshape_flat_list_2d(results, (mask.sum(), n_seeds))
@@ -112,11 +118,11 @@ def run_2d_gridsearch(
     fig, ax = plt.subplots(figsize=(6, 5))
 
     df = pd.DataFrame(
-        data=filled_z,
+        data=filled_z.round(1),
         index=map(lambda x: str(x.round(3)), grid_x),
         columns=map(lambda x: str(x.round(3)), grid_y),
     )
-    sns.heatmap(df, ax=ax, cmap="YlOrBr")
+    sns.heatmap(df, ax=ax, cmap="YlOrBr", annot=True)
 
     fig.tight_layout()
 

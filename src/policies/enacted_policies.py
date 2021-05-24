@@ -10,7 +10,7 @@ from src.policies.domain_level_policy_blocks import reduce_other_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
 from src.policies.policy_tools import combine_dictionaries
 
-HYGIENE_MULTIPLIER = 0.7
+HYGIENE_MULTIPLIER = 0.66
 """Hygiene multiplier for educ and work models. Is in effect from November 2020 on."""
 
 
@@ -75,15 +75,13 @@ def _get_enacted_other_policies(contact_models):
     """
     specs = [
         ("pre_fall_vacation", "2020-10-01", 0.7),
-        ("fall_vacation", "2020-10-23", 0.8),
-        ("post_fall_vacation", "2020-11-01", 0.65),
-        ("november_lockdown_light", "2020-12-23", 0.5),
-        ("until_christmas", "2020-12-23", 0.45),
-        ("christmas_vacation", "2021-01-10", 0.45),
-        ("hard_lockdown", "2021-02-28", 0.40),
-        ("before_easter", "2021-04-01", 0.6),
-        ("easter_holidays", "2021-04-05", 0.6),
-        ("after_easter", VERY_LATE, 0.5),
+        ("fall_vacation", "2020-10-20", 0.9),
+        ("post_fall_vacation", "2020-11-01", 0.75),
+        ("lockdown_light", "2020-12-23", 0.525),
+        ("christmas_vacation", "2021-01-10", 0.6),
+        ("hard_lockdown", "2021-03-15", 0.5),
+        ("easter_holidays", "2021-04-05", 0.45),
+        ("after_easter", VERY_LATE, 0.45),
     ]
 
     start_date = VERY_EARLY

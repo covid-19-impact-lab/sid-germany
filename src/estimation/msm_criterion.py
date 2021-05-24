@@ -13,14 +13,28 @@ from src.calculate_moments import calculate_period_outcome_sim
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
 from src.manfred.shared import hash_array
+from src.simulation.load_simulation_inputs import load_simulation_inputs
 
 
-def get_parallelizable_msm_criterion(simulate_kwargs, prefix):
+def get_parallelizable_msm_criterion(
+    prefix,
+    fall_start_date,
+    fall_end_date,
+    spring_start_date,
+    spring_end_date,
+    mode,
+    debug,
+):
     """Get a parallelizable msm criterion function."""
     pmsm = functools.partial(
         _build_and_evaluate_msm_func,
-        simulate_kwargs=simulate_kwargs,
         prefix=prefix,
+        fall_start_date=fall_start_date,
+        fall_end_date=fall_end_date,
+        spring_start_date=spring_start_date,
+        spring_end_date=spring_end_date,
+        mode=mode,
+        debug=debug,
     )
     return pmsm
 
@@ -41,13 +55,94 @@ def get_index_bundles(params):
     return out
 
 
-def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
+def _build_and_evaluate_msm_func(
+    params,
+    seed,
+    prefix,
+    fall_start_date,
+    fall_end_date,
+    spring_start_date,
+    spring_end_date,
+    mode,
+    debug,
+):
+    """ """
+    params_hash = hash_array(params["value"].to_numpy())
+    share_known_path = BLD / "exploration" / f"share_known_{params_hash}_{seed}.pkl"
+    if mode in ["fall", "combined"]:
+        res_fall = _build_and_evaluate_msm_func_one_season(
+            params=params,
+            seed=seed,
+            prefix=prefix,
+            start_date=fall_start_date,
+            end_date=fall_end_date,
+            debug=debug,
+        )
+        res_fall["share_known_cases"].to_pickle(share_known_path)
+    if mode in ["spring", "combined"]:
+        res_spring = _build_and_evaluate_msm_func_one_season(
+            params=params,
+            seed=seed + 84587,
+            prefix=prefix,
+            start_date=spring_start_date,
+            end_date=spring_end_date,
+            debug=debug,
+            group_share_known_case_path=share_known_path,
+        )
+    if mode == "fall":
+        res = res_fall
+    elif mode == "spring":
+        res = res_spring
+    else:
+        fall_length = fall_end_date - fall_start_date
+        spring_length = spring_end_date - spring_start_date
+        weight = fall_length / (fall_length + spring_length)
+        res = _combine_results(res_fall, res_spring, weight)
+
+    return res
+
+
+def _combine_results(res0, res1, weight):
+    combined = {}
+    for key in res0:
+        if key == "value":
+            combined[key] = weight * res0[key] + (1 - weight) * res1[key]
+        elif key in ["empirical_moments", "simulated_moments"]:
+            combined[key] = _concatenate_pd_objects_from_dicts(res0[key], res1[key])
+        else:
+            combined[key] = pd.concat([res0[key], res1[key]])
+    return combined
+
+
+def _concatenate_pd_objects_from_dicts(d1, d2):
+    combined = {}
+    for key in d1:
+        combined[key] = pd.concat([d1[key], d2[key]])
+    return combined
+
+
+def _build_and_evaluate_msm_func_one_season(
+    params,
+    seed,
+    prefix,
+    start_date,
+    end_date,
+    debug,
+    group_share_known_case_path=None,
+):
     """Build and evaluate a msm criterion function.
 
     Building the criterion function freshly for each run is necessary for it to be
     parallelizable.
 
     """
+    simulate_kwargs = load_simulation_inputs(
+        "baseline",
+        start_date=start_date,
+        end_date=end_date,
+        group_share_known_case_path=group_share_known_case_path,
+        debug=debug,
+    )
     params_hash = hash_array(params["value"].to_numpy())
     path = BLD / "exploration" / f"{prefix}_{params_hash}_{os.getpid()}"
 
@@ -92,6 +187,7 @@ def _build_and_evaluate_msm_func(params, seed, prefix, simulate_kwargs):
 
     additional_outputs = {
         "infection_channels": _aggregate_infection_channels,
+        "share_known_cases": _calculate_share_known_cases,
     }
 
     msm_func = get_msm_func(
@@ -141,6 +237,16 @@ def _get_period_outputs_for_simulate():
             outcome="new_known_case",
         ),
         "infection_channels": prepare_data_for_infection_rates_by_contact_models,
+        "currently_infected_by_age_group": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="currently_infected",
+            groupby="age_group_rki",
+        ),
+        "knows_currently_infected_by_age_group": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="knows_currently_infected",
+            groupby="age_group_rki",
+        ),
     }
     return additional_outputs
 
@@ -171,13 +277,39 @@ def _get_calc_moments():
             groupby="state",
             take_logs=True,
         ),
-        "aggregated_infections": functools.partial(
+        "aggregated_infections_not_log": functools.partial(
             aggregate_and_smooth_period_outcome_sim,
             outcome="aggregated_infections",
             take_logs=False,
         ),
+        "aggregated_infections": functools.partial(
+            aggregate_and_smooth_period_outcome_sim,
+            outcome="aggregated_infections",
+            take_logs=True,
+        ),
     }
     return calc_moments
+
+
+def _calculate_share_known_cases(sim_out):
+    currently_infected = aggregate_and_smooth_period_outcome_sim(
+        simulate_result=sim_out,
+        outcome="currently_infected_by_age_group",
+        groupby="age_group_rki",
+        take_logs=False,
+    )
+    knows_currently_infected = aggregate_and_smooth_period_outcome_sim(
+        simulate_result=sim_out,
+        outcome="knows_currently_infected_by_age_group",
+        groupby="age_group_rki",
+        take_logs=False,
+    )
+
+    share_known = (knows_currently_infected / currently_infected).unstack()
+    end_date = share_known.index.max()
+    avg_share_known = share_known[end_date - pd.Timedelta(days=28) :].mean()
+
+    return avg_share_known
 
 
 def _get_empirical_moments(df, age_group_sizes, state_sizes):
@@ -202,10 +334,15 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes):
             group_sizes=state_sizes,
             take_logs=True,
         ),
-        "aggregated_infections": smoothed_outcome_per_hundred_thousand_rki(
+        "aggregated_infections_not_log": smoothed_outcome_per_hundred_thousand_rki(
             df=df,
             outcome="newly_infected",
             take_logs=False,
+        ),
+        "aggregated_infections": smoothed_outcome_per_hundred_thousand_rki(
+            df=df,
+            outcome="newly_infected",
+            take_logs=True,
         ),
     }
     return empirical_moments
@@ -232,10 +369,13 @@ def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
 
     weights = {
         "infections_by_age_group": infections_by_age_weights,
+        # lower weight because not a primary target
         "aggregated_deaths": 0.1,
         "infections_by_state": infections_by_state_weights,
-        # extremely low weight because not in logs
-        "aggregated_infections": 1e-8,
+        # not used for estimation because not in logs
+        "aggregated_infections_not_log": 1e-10,
+        # strong weight because very important
+        "aggregated_infections": 2.5,
     }
 
     weight_mat = get_diag_weighting_matrix(

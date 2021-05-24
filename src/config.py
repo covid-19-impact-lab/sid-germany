@@ -7,7 +7,7 @@ import sid
 SID_DEPENDENCIES = {}
 for path in Path(sid.__path__[0]).iterdir():
     if path.suffix == ".py":
-        SID_DEPENDENCIES[f"sid_{path.name}"] = path
+        SID_DEPENDENCIES[f"sid_{path.name}"] = path.resolve()
 
 SUMMER_SCENARIO_START = "2021-05-17"
 
