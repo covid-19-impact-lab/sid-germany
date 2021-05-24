@@ -23,14 +23,11 @@ def _create_simulation_parametrization():
     """
     named_scenarios = get_named_scenarios()
     common_dependencies = get_simulation_dependencies(debug=FAST_FLAG == "debug")
-    fall_end_date = pd.Timestamp(named_scenarios["fall_baseline"]["end_date"])
 
     scenarios = []
     for name, specs in named_scenarios.items():
         if pd.Timestamp(specs["start_date"]) > pd.Timestamp("2020-11-01"):
-            skc_path = create_path_to_initial_group_share_known_cases(
-                "fall_baseline", fall_end_date
-            )
+            skc_path = create_path_to_initial_group_share_known_cases("fall_baseline")
             group_share_dependencies = {"group_share_known_case_path": skc_path}
         else:
             group_share_dependencies = {}
