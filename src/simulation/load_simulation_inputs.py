@@ -190,11 +190,11 @@ def load_simulation_inputs(
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
     }
-    
+
     if period_outputs:
         fixed_inputs["period_outputs"] = create_period_outputs()
-        fixed_inputs["return_last_states"] = False,
-        fixed_inputs["return_time_series"] = False 
+        fixed_inputs["return_last_states"] = (False,)
+        fixed_inputs["return_time_series"] = False
 
     scenario_func = getattr(scenario_simulation_inputs, scenario)
     scenario_inputs = scenario_func(paths, fixed_inputs)
