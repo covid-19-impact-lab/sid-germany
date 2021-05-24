@@ -10,8 +10,8 @@ def create_path_to_period_outputs_of_simulation(name, seed):
     return path
 
 
-def create_path_to_initial_group_share_known_cases(name, date):
-    file_name = f"{FAST_FLAG}_{name}_for_{date.date()}.pkl"
+def create_path_to_initial_group_share_known_cases(name):
+    file_name = f"{FAST_FLAG}_{name}.pkl"
     return BLD / "simulations" / "share_known_case_prediction" / file_name
 
 
@@ -145,9 +145,15 @@ def get_named_scenarios():
         # large enough to allow the same fraction of individuals that should be tested
         # is actually tested. After Easter that was 95% for educ workers and 75% for
         # school pupils and increases from there to 1 for pupils.
-        "spring_educ_open_after_easter": {
+        "spring_educ_open_after_easter_with_normal_tests": {
             "sim_input_scenario": "open_all_educ_after_easter",
             "params_scenario": "baseline",
+            "n_seeds": n_main_scenario_seeds,
+            **spring_dates,
+        },
+        "spring_educ_open_after_easter_without_tests": {
+            "sim_input_scenario": "open_all_educ_after_easter",
+            "params_scenario": "no_rapid_tests_at_schools",
             "n_seeds": n_main_scenario_seeds,
             **spring_dates,
         },
