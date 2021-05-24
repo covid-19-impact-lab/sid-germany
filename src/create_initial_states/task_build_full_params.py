@@ -1,14 +1,16 @@
+from pathlib import Path
+
 import pandas as pd
 import pytask
-from sid import load_epidemiological_parameters
+import sid
 
 from src.config import BLD
-from src.config import SID_DEPENDENCIES
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 
+EPI_PARAMS_PATH = Path(sid.__file__).parent.joinpath("covid_epi_params.csv").resolve()
+
 _DEPENDENCIES = {
-    **SID_DEPENDENCIES,
     "dist_other_non_recurrent": BLD
     / "contact_models"
     / "empirical_distributions"
@@ -30,13 +32,14 @@ _DEPENDENCIES = {
     "susceptibility": SRC / "original_data" / "susceptibility.csv",
     "config.py": SRC / "config.py",
     "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
+    "covid_epi_params": EPI_PARAMS_PATH,
 }
 
 
 @pytask.mark.depends_on(_DEPENDENCIES)
 @pytask.mark.produces(BLD / "params.pkl")
 def task_create_full_params(depends_on, produces):
-    epi_params = load_epidemiological_parameters()
+    epi_params = sid.load_epidemiological_parameters()
     vacations = pd.read_pickle(depends_on["vacations"])
     infection_probs = pd.read_pickle(depends_on["infection_probs"])
     susceptibility = pd.read_csv(
@@ -93,8 +96,9 @@ def task_create_full_params(depends_on, produces):
     params.loc[("vaccinations", "share_refuser", "share_refuser"), "value"] = 0.15
 
     # source: https://bit.ly/3gHlcKd (section 3.5, 2021-03-09, accessed 2021-04-28)
+    # 82% say they would get a PCR test after a positive rapid test
     loc = ("test_demand", "shares", "share_w_positive_rapid_test_requesting_test")
-    params.loc[loc, "value"] = 0.4
+    params.loc[loc, "value"] = 0.82
 
     params = _add_work_rapid_test_params(params)
     params = _add_educ_rapid_test_fade_in_params(params)
@@ -186,17 +190,17 @@ def _add_vacation_model_distribution_params(params):
     params = params.copy(deep=True)
     loc = ("additional_other_vacation_contact", "probability")
     # 2020
-    params.loc[(*loc, "Winterferien"), "value"] = 0.3
-    params.loc[(*loc, "Osterferien"), "value"] = 0.3
-    params.loc[(*loc, "Pfingstferien"), "value"] = 0.3
-    params.loc[(*loc, "Sommerferien"), "value"] = 0.3
-    params.loc[(*loc, "Herbstferien"), "value"] = 0.3
-    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.3
+    params.loc[(*loc, "Winterferien"), "value"] = 0.5
+    params.loc[(*loc, "Osterferien"), "value"] = 0.5
+    params.loc[(*loc, "Pfingstferien"), "value"] = 0.5
+    params.loc[(*loc, "Sommerferien"), "value"] = 0.5
+    params.loc[(*loc, "Herbstferien"), "value"] = 0.5
+    params.loc[(*loc, "Weihnachtsferien"), "value"] = 0.5
     # 2021
-    params.loc[(*loc, "Winterferien2021"), "value"] = 0.3
-    params.loc[(*loc, "Osterferien2021"), "value"] = 0.3
-    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.3
-    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.3
+    params.loc[(*loc, "Winterferien2021"), "value"] = 0.5
+    params.loc[(*loc, "Osterferien2021"), "value"] = 0.5
+    params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.5
+    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.5
     return params
 
 
@@ -229,11 +233,11 @@ def _add_work_rapid_test_params(params):
     offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
     params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
     params.loc[(*offer_loc, "2021-01-01"), "value"] = 0.0
-    params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.2
+    params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.23
     params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
-    params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
-    params.loc[(*offer_loc, "2025-12-13"), "value"] = 0.7
+    params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.80
+    params.loc[(*offer_loc, "2025-12-13"), "value"] = 0.80
     return params
 
 
@@ -258,7 +262,7 @@ def _add_educ_rapid_test_fade_in_params(params):
               (https://bit.ly/3gMGJB4)
             - Niedersachsen had one test week before Easter (https://bit.ly/3gOOC96)
 
-            => assume 90% of teachers and 30% of students do rapid tests
+            => assume 90% of teachers and 40% of students do rapid tests
 
         - After Easter (2021-04-07):
             - NRW: tests are mandatory for all
@@ -290,8 +294,9 @@ def _add_educ_rapid_test_fade_in_params(params):
 
     loc = ("rapid_test_demand", "student_shares")
     params.loc[(*loc, "2020-01-01"), "value"] = 0.0
-    params.loc[(*loc, "2021-01-01"), "value"] = 0.0
-    params.loc[(*loc, "2021-03-22"), "value"] = 0.3
+    params.loc[(*loc, "2021-02-01"), "value"] = 0.0
+    params.loc[(*loc, "2021-03-01"), "value"] = 0.1
+    params.loc[(*loc, "2021-03-22"), "value"] = 0.4
     params.loc[(*loc, "2021-04-07"), "value"] = 0.75
     params.loc[(*loc, "2021-04-19"), "value"] = 0.95
     params.loc[(*loc, "2021-06-01"), "value"] = 1.0
@@ -323,13 +328,11 @@ def _add_hh_rapid_test_fade_in_params(params):
     params = params.copy(deep=True)
     loc = ("rapid_test_demand", "hh_member_demand")
     params.loc[(*loc, "2020-01-01"), "value"] = 0
-    params.loc[(*loc, "2021-03-10"), "value"] = 0
-    params.loc[(*loc, "2021-03-25"), "value"] = 0.1
-    params.loc[(*loc, "2021-04-05"), "value"] = 0.3
-    params.loc[(*loc, "2021-05-01"), "value"] = 0.4
-    params.loc[(*loc, "2021-05-15"), "value"] = 0.5
-    params.loc[(*loc, "2021-06-01"), "value"] = 0.75
-    params.loc[(*loc, "2025-12-31"), "value"] = 0.75
+    params.loc[(*loc, "2021-02-01"), "value"] = 0
+    params.loc[(*loc, "2021-03-10"), "value"] = 0.1
+    params.loc[(*loc, "2021-05-15"), "value"] = 0.6
+    params.loc[(*loc, "2021-05-30"), "value"] = 0.7
+    params.loc[(*loc, "2025-12-31"), "value"] = 0.7
 
     return params
 
@@ -371,10 +374,14 @@ def _build_share_known_cases_params():
             "2020-03-17": 0.2,
             "2020-06-10": 0.2,
             "2020-07-05": 0.46,
-            "2020-08-15": 0.56,
-            "2020-09-01": 0.56,
-            "2020-11-05": 0.36,
-            "2020-12-24": 0.31,
+            "2020-08-20": 0.60,
+            "2020-09-28": 0.60,
+            "2020-10-28": 0.36,
+            "2020-11-04": 0.36,
+            "2020-11-14": 0.39,
+            "2020-11-17": 0.39,
+            "2020-12-01": 0.31,
+            "2020-12-24": 0.3,
             "2020-12-25": 0.2,
             # free parameters
             "2021-01-01": 0.2,

@@ -26,7 +26,7 @@ def load_simulation_inputs(
     start_date,
     end_date,
     debug,
-    group_share_known_case_path,
+    group_share_known_case_path=None,
     period_outputs=False,
 ):
     """Load the simulation inputs.
@@ -175,15 +175,6 @@ def load_simulation_inputs(
         "knows_currently_infected": _knows_currently_infected,
     }
 
-    if period_outputs:
-        period_outputs = create_period_outputs()
-        return_last_states = False
-        return_time_series = False
-    else:
-        period_outputs = None
-        return_last_states = True
-        return_time_series = True
-
     fixed_inputs = {
         "initial_states": initial_states,
         "contact_models": contact_models,
@@ -198,10 +189,12 @@ def load_simulation_inputs(
         "virus_strains": ["base_strain", "b117"],
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
-        "period_outputs": period_outputs,
-        "return_last_states": return_last_states,
-        "return_time_series": return_time_series,
     }
+
+    if period_outputs:
+        fixed_inputs["period_outputs"] = create_period_outputs()
+        fixed_inputs["return_last_states"] = False
+        fixed_inputs["return_time_series"] = False
 
     scenario_func = getattr(scenario_simulation_inputs, scenario)
     scenario_inputs = scenario_func(paths, fixed_inputs)

@@ -40,7 +40,7 @@ def plot_estimation_moment(results, name):
         n_groups = len(groups)
 
         n_rows = int(np.ceil(n_groups / 2))
-        fig, axes = plt.subplots(figsize=(9, n_rows * 2), nrows=n_rows, ncols=2)
+        fig, axes = plt.subplots(figsize=(13.5, n_rows * 6), nrows=n_rows, ncols=2)
         axes = axes.flatten()
         for group, ax in zip(groups, axes):
             _plot_simulated_and_empirical_moment(
@@ -51,7 +51,7 @@ def plot_estimation_moment(results, name):
             ax.set_title(f"{group_name}: {group}")
     else:
         simulated, empirical = _extract_aggregated_moment(results, name)
-        fig, ax = plt.subplots(figsize=(4.5, 2))
+        fig, ax = plt.subplots(figsize=(10, 8))
         axes = [ax]
         _plot_simulated_and_empirical_moment(
             simulated=simulated, empirical=empirical, ax=ax
@@ -127,9 +127,11 @@ def _plot_simulated_and_empirical_moment(simulated, empirical, ax=None):
     dates = simulated.index
 
     for run in simulated:
-        sns.lineplot(x=dates, y=simulated[run], ax=ax, color=sim_color, alpha=0.15)
+        plot_line_with_gaps(
+            x=dates, y=simulated[run], ax=ax, color=sim_color, alpha=0.15
+        )
 
-    sns.lineplot(
+    plot_line_with_gaps(
         x=dates,
         y=simulated.mean(axis=1),
         ax=ax,
@@ -138,7 +140,7 @@ def _plot_simulated_and_empirical_moment(simulated, empirical, ax=None):
         label="simulated",
     )
 
-    sns.lineplot(
+    plot_line_with_gaps(
         x=empirical.index,
         y=empirical,
         ax=ax,
@@ -161,7 +163,7 @@ def _sort_age_groups(age_groups):
     return sorted(age_groups, key=lambda x: int(x.split("-")[0]))
 
 
-def plot_infection_channels(results, aggregate=False):
+def plot_infection_channels(results, aggregate=False, unit="incidence"):
     """Plot average infection channels over several runs.
 
     It is assumed that the entries in results only differ by their random seed.
@@ -192,7 +194,7 @@ def plot_infection_channels(results, aggregate=False):
     if aggregate:
         channels = _aggregate_models_over_domain(channels)
 
-    plot = plot_infection_rates_by_contact_models(channels)
+    plot = plot_infection_rates_by_contact_models(channels, unit=unit)
     return plot
 
 
@@ -226,3 +228,24 @@ def _aggregate_models_over_domain(df):
     )
 
     return df
+
+
+def plot_line_with_gaps(x, y, ax, **kwargs):
+    """ "Lineplot that does skips where there are no observations."""
+    kwargs = kwargs.copy()
+
+    skip_points = x[pd.Series(x).diff() > pd.Timedelta(days=1)].tolist()
+    skip_points.append(x.max())
+
+    start_loc = 0
+    for end in skip_points:
+        end_loc = x.get_loc(end)
+        current_x = x[start_loc : end_loc - 1]
+        current_y = y[start_loc : end_loc - 1]
+        ax = sns.lineplot(x=current_x, y=current_y, ax=ax, **kwargs)
+
+        start_loc = end_loc
+        if "label" in kwargs.keys():
+            kwargs["label"] = None
+
+    return ax

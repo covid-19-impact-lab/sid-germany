@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -152,11 +154,22 @@ def _draw_bools_by_group(synthetic_data, group_by, probabilities):
         ).astype(int)
         remaining_indices = set(indices)
         for col, n_cases in cases.items():
-            chosen = np.random.choice(
-                list(remaining_indices), size=n_cases, replace=False
-            )
-            res.loc[chosen, col] = True
-            remaining_indices = remaining_indices - set(chosen)
+            if len(remaining_indices) > 0:
+                if n_cases > 0:
+                    chosen = np.random.choice(
+                        list(remaining_indices),
+                        size=min(n_cases, len(remaining_indices)),
+                        replace=False,
+                    )
+                    res.loc[chosen, col] = True
+                    remaining_indices = remaining_indices - set(chosen)
+            else:
+                warnings.warn(
+                    f"Every member of group {group} has been infected during the "
+                    "burn in phase. If this happened with debug states, you can ignore "
+                    "it, else you should investigate your estimates for the share of "
+                    "known cases."
+                )
 
     return res
 
