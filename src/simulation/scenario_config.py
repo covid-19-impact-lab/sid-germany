@@ -55,13 +55,13 @@ def get_named_scenarios():
         n_main_scenario_seeds = 0
         n_side_scenario_seeds = 0
     elif FAST_FLAG == "verify":  # use 27 cores -> 2 rounds
-        n_baseline_seeds = 1  # 2x
-        n_main_scenario_seeds = 1  # 4x
+        n_baseline_seeds = 4  # 2x
+        n_main_scenario_seeds = 2  # 4x
         n_side_scenario_seeds = 1  # 11
     elif FAST_FLAG == "full":
-        n_baseline_seeds = 10
-        n_main_scenario_seeds = 10
-        n_side_scenario_seeds = 10
+        n_baseline_seeds = 25
+        n_main_scenario_seeds = 25
+        n_side_scenario_seeds = 25
     else:
         raise ValueError(
             f"Unknown FAST_FLAG {FAST_FLAG}."
