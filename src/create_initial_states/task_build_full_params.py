@@ -229,11 +229,11 @@ def _add_work_rapid_test_params(params):
     offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
     params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
     params.loc[(*offer_loc, "2021-01-01"), "value"] = 0.0
-    params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.2
+    params.loc[(*offer_loc, "2021-03-17"), "value"] = 0.23
     params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
-    params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.7
-    params.loc[(*offer_loc, "2025-12-13"), "value"] = 0.7
+    params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.80
+    params.loc[(*offer_loc, "2025-12-13"), "value"] = 0.80
     return params
 
 
@@ -290,8 +290,9 @@ def _add_educ_rapid_test_fade_in_params(params):
 
     loc = ("rapid_test_demand", "student_shares")
     params.loc[(*loc, "2020-01-01"), "value"] = 0.0
-    params.loc[(*loc, "2021-01-01"), "value"] = 0.0
-    params.loc[(*loc, "2021-03-22"), "value"] = 0.3
+    params.loc[(*loc, "2021-02-01"), "value"] = 0.0
+    params.loc[(*loc, "2021-03-01"), "value"] = 0.1
+    params.loc[(*loc, "2021-03-22"), "value"] = 0.4
     params.loc[(*loc, "2021-04-07"), "value"] = 0.75
     params.loc[(*loc, "2021-04-19"), "value"] = 0.95
     params.loc[(*loc, "2021-06-01"), "value"] = 1.0
@@ -323,13 +324,11 @@ def _add_hh_rapid_test_fade_in_params(params):
     params = params.copy(deep=True)
     loc = ("rapid_test_demand", "hh_member_demand")
     params.loc[(*loc, "2020-01-01"), "value"] = 0
-    params.loc[(*loc, "2021-03-10"), "value"] = 0
-    params.loc[(*loc, "2021-03-25"), "value"] = 0.2
-    params.loc[(*loc, "2021-04-05"), "value"] = 0.3
-    params.loc[(*loc, "2021-05-01"), "value"] = 0.5
+    params.loc[(*loc, "2021-02-01"), "value"] = 0
+    params.loc[(*loc, "2021-03-10"), "value"] = 0.1
     params.loc[(*loc, "2021-05-15"), "value"] = 0.6
-    params.loc[(*loc, "2021-06-01"), "value"] = 0.6
-    params.loc[(*loc, "2025-12-31"), "value"] = 0.6
+    params.loc[(*loc, "2021-05-30"), "value"] = 0.7
+    params.loc[(*loc, "2025-12-31"), "value"] = 0.7
 
     return params
 
