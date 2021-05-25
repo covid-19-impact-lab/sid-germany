@@ -186,6 +186,13 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
     return scenario_inputs
 
 
+def no_rapid_tests_and_no_vaccinations_after_feb_15(paths, fixed_inputs):
+    out = no_vaccinations_after_feb_15(paths, fixed_inputs)
+    out["rapid_test_models"] = None
+    out["rapid_test_reaction_models"] = None
+    return out
+
+
 def vaccinations_after_summer_scenario_start_as_on_strongest_week_day(
     paths, fixed_inputs
 ):

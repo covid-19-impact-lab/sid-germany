@@ -124,6 +124,12 @@ def get_named_scenarios():
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
+        "spring_without_rapid_tests_and_no_vaccinations": {
+            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_15",
+            "params_scenario": "baseline",
+            "n_seeds": n_side_scenario_seeds,
+            **spring_dates,
+        },
         # Note this scenario does still assume that only 70% of employers comply, i.e.
         # it ensures that 70% of workers get regularly tested. Given that the share of
         # workers accepting a rapid test from their employer is time invariant this also

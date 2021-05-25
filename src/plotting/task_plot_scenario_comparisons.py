@@ -63,6 +63,8 @@ PLOTS = {
             # rapid tests
             "spring_without_rapid_tests",
             "spring_with_mandatory_work_rapid_tests",
+            # neither nor
+            "spring_without_rapid_tests_and_no_vaccinations",
         ],
         "scenario_starts": None,
         "colors": None,
