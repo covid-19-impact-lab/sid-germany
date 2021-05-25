@@ -19,14 +19,26 @@ _MODULE_DEPENDENCIES = {
 
 NAMED_SCENARIOS = get_named_scenarios()
 
-SID_BLUE = "#547482"
+AFTER_EASTER = pd.Timestamp("2021-04-06")
+
+# Colors
+BLUE = "#4e79a7"
+ORANGE = "#f28e2b"
+RED = "#e15759"
+TEAL = "#76b7b2"
+GREEN = "#59a14f"
+YELLOW = "#edc948"
+PURPLE = "#b07aa1"
+BROWN = "#9c755f"
+
 
 PLOTS = {
     "fall": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
         "scenario_starts": None,
-        "colors": [SID_BLUE],
+        "colors": [BLUE],
+        "plot_start": None,
     },
     "effect_of_rapid_tests": {
         "title": "Decomposing the Effect of Rapid Tests on {outcome}",
@@ -36,8 +48,9 @@ PLOTS = {
             "spring_without_work_rapid_tests",
             "spring_without_school_rapid_tests",
         ],
+        "colors": [BLUE, BROWN, RED, ORANGE],
         "scenario_starts": None,
-        "colors": None,
+        "plot_start": None,
     },
     "explaining_the_decline": {
         "title": "Explaining the Puzzling Decline in {outcome}",
@@ -51,17 +64,19 @@ PLOTS = {
         ],
         "scenario_starts": None,
         "colors": None,
+        "plot_start": None,
     },
     "school_scenarios": {
         "title": "The Effect of Schools on {outcome}",
         "scenarios": [
-            "spring_baseline",
             "spring_educ_open_after_easter_without_tests",
             "spring_educ_open_after_easter_with_normal_tests",
+            "spring_baseline",
             "spring_emergency_care_after_easter_without_school_rapid_tests",
         ],
         "scenario_starts": None,
-        "colors": None,
+        "colors": [RED, YELLOW, BLUE, GREEN],
+        "plot_start": AFTER_EASTER,
     },
     "vaccine_scenarios": {
         "title": "Effect of Different Vaccination Scenarios on {outcome}",
@@ -70,12 +85,9 @@ PLOTS = {
             "spring_vaccinate_1_pct_per_day_after_easter",
             "spring_without_vaccines",
         ],
-        "scenario_starts": (
-            [
-                (pd.Timestamp("2021-04-06"), "start of increased vaccinations"),
-            ]
-        ),
-        "colors": None,
+        "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
+        "colors": [BLUE, GREEN, RED],
+        "plot_start": None,
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
@@ -139,12 +151,13 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         title,
                         colors,
                         plot_info["scenario_starts"],
+                        plot_info["plot_start"],
                         produces,
                     )
                 )
 
     return (
-        "depends_on, outcome, title, colors, scenario_starts, produces",
+        "depends_on, outcome, title, colors, scenario_starts, plot_start, produces",
         parametrization,
     )
 
@@ -157,13 +170,13 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization(
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_plot_scenario_comparison(
-    depends_on, outcome, title, colors, scenario_starts, produces
+    depends_on, outcome, title, colors, scenario_starts, plot_start, produces
 ):
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
 
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
-    dfs = _shorten_dfs_to_the_shortest(dfs)
+    dfs = _shorten_dfs(dfs, plot_start)
 
     title = _create_title(title, outcome)
     name_to_label = _create_nice_labels(dfs)
@@ -180,12 +193,16 @@ def task_plot_scenario_comparison(
     plt.close()
 
 
-def _shorten_dfs_to_the_shortest(dfs):
-    """Shorten all incidence DataFrames to the time frame of the shortest.
+def _shorten_dfs(dfs, plot_start):
+    """Shorten all incidence DataFrames.
+
+    All DataFrames are shortened to the shortest. In addition, if plot_start is given
+    all DataFrames start at or after plot_start.
 
     Args:
         dfs (dict): keys are the names of the scenarios, values are the incidence
             DataFrames.
+        plot_start (pd.Timestamp or None): earliest allowed start date for the plot
 
     Returns:
         shortened (dict): keys are the names of the scenarios, values are the shortened
@@ -195,6 +212,8 @@ def _shorten_dfs_to_the_shortest(dfs):
     shortened = {}
 
     start_date = max(df.index.min() for df in dfs.values())
+    if plot_start is not None:
+        start_date = max(plot_start, start_date)
     end_date = min(df.index.max() for df in dfs.values())
 
     for name, df in dfs.items():
