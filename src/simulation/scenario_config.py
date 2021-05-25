@@ -54,10 +54,10 @@ def get_named_scenarios():
         n_baseline_seeds = 1
         n_main_scenario_seeds = 0
         n_side_scenario_seeds = 0
-    elif FAST_FLAG == "verify":  # use 27 cores -> 2 rounds
-        n_baseline_seeds = 4  # 2x
-        n_main_scenario_seeds = 2  # 4x
-        n_side_scenario_seeds = 1  # 11
+    elif FAST_FLAG == "verify":
+        n_baseline_seeds = 4
+        n_main_scenario_seeds = 2
+        n_side_scenario_seeds = 1
     elif FAST_FLAG == "full":
         n_baseline_seeds = 25
         n_main_scenario_seeds = 25
@@ -101,8 +101,8 @@ def get_named_scenarios():
             "n_seeds": n_main_scenario_seeds,
             **spring_dates,
         },
-        "spring_with_more_vaccines": {
-            "sim_input_scenario": "vaccinations_after_easter_as_on_strongest_week_day",
+        "spring_vaccinate_1_pct_per_day_after_easter": {
+            "sim_input_scenario": "vaccinate_1_pct_per_day_after_easter",
             "params_scenario": "baseline",
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,

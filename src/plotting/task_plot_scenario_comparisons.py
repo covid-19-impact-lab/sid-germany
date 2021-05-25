@@ -49,12 +49,9 @@ PLOTS = {
             "spring_without_seasonality",
             "spring_without_rapid_tests_without_vaccinations_without_seasonality",
         ],
-        "scenario_starts": [
-            (pd.Timestamp("2021-04-06"), "start of increased vaccinations"),
-        ],
+        "scenario_starts": None,
         "colors": None,
     },
-    # --------------------------------------------------------------
     "school_scenarios": {
         "title": "The Effect of Schools on {outcome}",
         "scenarios": [
@@ -64,6 +61,20 @@ PLOTS = {
             "spring_emergency_care_after_easter_without_school_rapid_tests",
         ],
         "scenario_starts": None,
+        "colors": None,
+    },
+    "vaccine_scenarios": {
+        "title": "Effect of Different Vaccination Scenarios on {outcome}",
+        "scenarios": [
+            "baseline",
+            "spring_vaccinate_1_pct_per_day_after_easter",
+            "spring_without_vaccines",
+        ],
+        "scenario_starts": (
+            [
+                (pd.Timestamp("2021-04-06"), "start of increased vaccinations"),
+            ]
+        ),
         "colors": None,
     },
 }
