@@ -79,7 +79,7 @@ def _get_enacted_other_policies(contact_models):
         ("post_fall_vacation", "2020-11-01", 0.75),
         ("lockdown_light", "2020-12-23", 0.525),
         ("christmas_vacation", "2021-01-10", 0.6),
-        ("hard_lockdown", "2021-03-15", 0.5),
+        ("hard_lockdown", "2021-03-15", 0.475),
         ("easter_holidays", "2021-04-05", 0.45),
         ("after_easter", VERY_LATE, 0.45),
     ]
