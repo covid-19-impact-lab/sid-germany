@@ -66,7 +66,7 @@ PLOTS = {
     "vaccine_scenarios": {
         "title": "Effect of Different Vaccination Scenarios on {outcome}",
         "scenarios": [
-            "baseline",
+            "spring_baseline",
             "spring_vaccinate_1_pct_per_day_after_easter",
             "spring_without_vaccines",
         ],
