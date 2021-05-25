@@ -28,70 +28,40 @@ PLOTS = {
         "scenario_starts": None,
         "colors": [SID_BLUE],
     },
-    "effect_of_vaccines": {
-        "title": "{outcome} in Different Vaccine Scenarios",
-        "scenarios": [
-            "summer_baseline",
-            "spring_without_vaccines",
-            "spring_with_more_vaccines",
-        ],
-        "scenario_starts": [
-            (pd.Timestamp("2021-02-15"), "vaccine stop"),
-            (pd.Timestamp("2021-04-06"), "start increased vaccinations"),
-        ],
-        "colors": [SID_BLUE, "steelblue", "dodgerblue"],
-    },
     "effect_of_rapid_tests": {
-        "title": "{outcome} in Different Rapid Test Scenarios",
+        "title": "Decomposing the Effect of Rapid Tests on {outcome}",
         "scenarios": [
-            "summer_baseline",
+            "spring_baseline",
             "spring_without_rapid_tests",
             "spring_without_work_rapid_tests",
             "spring_without_school_rapid_tests",
-            "spring_with_mandatory_work_rapid_tests",
         ],
         "scenario_starts": None,
         "colors": None,
     },
-    "vaccines_vs_rapid_tests": {
-        "title": "The Effect of Vaccines on {outcome} Compared to Rapid Tests",
+    "explaining_the_decline": {
+        "title": "Explaining the Puzzling Decline in {outcome}",
         "scenarios": [
-            "summer_baseline",
-            # vaccines
+            "spring_baseline",
             "spring_without_vaccines",
-            "spring_with_more_vaccines",
-            # rapid tests
             "spring_without_rapid_tests",
-            "spring_with_mandatory_work_rapid_tests",
-            # neither nor
             "spring_without_rapid_tests_and_no_vaccinations",
+            # "spring_without_seasonality",
         ],
-        "scenario_starts": None,
+        "scenario_starts": [
+            (pd.Timestamp("2021-02-10"), "vaccine stop"),
+            (pd.Timestamp("2021-04-06"), "start of increased vaccinations"),
+        ],
         "colors": None,
     },
+    # --------------------------------------------------------------
     "school_scenarios": {
-        "title": "{outcome} in Different School Scenarios",
+        "title": "The Effect of Schools on {outcome}",
         "scenarios": [
-            "summer_baseline",
-            "spring_emergency_care_after_easter_without_school_rapid_tests",
-            # different test scenarios
+            "spring_baseline",
             "spring_educ_open_after_easter_without_tests",
             "spring_educ_open_after_easter_with_normal_tests",
-            "spring_open_educ_after_easter_with_tests_every_other_day",
-            "spring_open_educ_after_easter_with_daily_tests",
-        ],
-        "scenario_starts": None,
-        "colors": None,
-    },
-    "summer": {
-        "title": "Summer Prediction for {outcome}",
-        "scenarios": [
-            "summer_baseline",
-            "summer_educ_open",
-            "summer_reduced_test_demand",
-            "summer_strict_home_office",
-            "summer_optimistic_vaccinations",
-            "summer_more_rapid_tests_at_work",
+            "spring_emergency_care_after_easter_without_school_rapid_tests",
         ],
         "scenario_starts": None,
         "colors": None,

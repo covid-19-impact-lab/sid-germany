@@ -33,7 +33,7 @@ def create_path_to_share_known_cases_plot(name, groupby):
 
 
 def create_path_to_group_incidence_plot(name, outcome, groupby):
-    fig_name = f"{FAST_FLAG}_{outcome}_{name}.png"
+    fig_name = f"{FAST_FLAG}_{name}_{outcome}.png"
     return BLD / "figures" / "incidences_by_group" / groupby / fig_name
 
 
@@ -73,11 +73,6 @@ def get_named_scenarios():
         "end_date": "2021-05-31" if FAST_FLAG != "debug" else "2021-05-01",
     }
 
-    summer_dates = {
-        "start_date": SPRING_START,
-        "end_date": "2021-05-31" if FAST_FLAG != "debug" else "2021-06-01",
-    }
-
     named_scenarios = {
         # Baseline Scenarios
         "fall_baseline": {
@@ -87,11 +82,11 @@ def get_named_scenarios():
             "end_date": "2020-12-23",
             "n_seeds": n_baseline_seeds,
         },
-        "summer_baseline": {
+        "spring_baseline": {
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
             "n_seeds": n_baseline_seeds,
-            **summer_dates,
+            **spring_dates,
         },
         # Policy Scenarios
         "spring_without_vaccines": {
@@ -130,16 +125,6 @@ def get_named_scenarios():
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
-        # Note this scenario does still assume that only 70% of employers comply, i.e.
-        # it ensures that 70% of workers get regularly tested. Given that the share of
-        # workers accepting a rapid test from their employer is time invariant this also
-        # means that before Easter there is already a lot more testing going on.
-        "spring_with_mandatory_work_rapid_tests": {
-            "sim_input_scenario": "baseline",
-            "params_scenario": "obligatory_rapid_tests_for_employees",
-            "n_seeds": n_side_scenario_seeds,
-            **spring_dates,
-        },
         # Rapid Tests vs School Closures
         "spring_emergency_care_after_easter_without_school_rapid_tests": {
             "sim_input_scenario": "only_strict_emergency_care_after_april_5",
@@ -162,49 +147,6 @@ def get_named_scenarios():
             "params_scenario": "no_rapid_tests_at_schools",
             "n_seeds": n_main_scenario_seeds,
             **spring_dates,
-        },
-        "spring_open_educ_after_easter_with_tests_every_other_day": {
-            "sim_input_scenario": "open_all_educ_after_easter",
-            "params_scenario": "rapid_tests_at_school_every_other_day_after_april_5",
-            "n_seeds": n_side_scenario_seeds,
-            **spring_dates,
-        },
-        "spring_open_educ_after_easter_with_daily_tests": {
-            "sim_input_scenario": "open_all_educ_after_easter",
-            "params_scenario": "rapid_tests_at_school_every_day_after_april_5",
-            "n_seeds": n_side_scenario_seeds,
-            **spring_dates,
-        },
-        # Summer Scenarios
-        "summer_educ_open": {
-            "sim_input_scenario": "open_all_educ_after_summer_scenario_start",
-            "params_scenario": "baseline",
-            "n_seeds": 0,
-            **summer_dates,
-        },
-        "summer_reduced_test_demand": {
-            "sim_input_scenario": "baseline",
-            "params_scenario": "reduce_rapid_test_demand_after_summer_scenario_start_by_half",  # noqa: E501
-            "n_seeds": 0,
-            **summer_dates,
-        },
-        "summer_strict_home_office": {
-            "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
-            "params_scenario": "baseline",
-            "n_seeds": 0,
-            **summer_dates,
-        },
-        "summer_more_rapid_tests_at_work": {
-            "sim_input_scenario": "baseline",
-            "params_scenario": "rapid_test_with_90pct_compliance_after_summer_scenario_start",  # noqa: E501
-            "n_seeds": 0,
-            **summer_dates,
-        },
-        "summer_optimistic_vaccinations": {
-            "sim_input_scenario": "vaccinations_after_summer_scenario_start_as_on_strongest_week_day",  # noqa: E501
-            "params_scenario": "baseline",
-            "n_seeds": 0,
-            **summer_dates,
         },
     }
     return named_scenarios
