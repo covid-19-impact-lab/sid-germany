@@ -31,9 +31,10 @@ def create_scenario_to_color():
     School scenarios get the warm part of the ordered color map.
 
     """
+    sid_blue = "#547482"
     scenario_to_color = {
-        "fall_baseline": "#547482",
-        "summer_baseline": "#547482",
+        "fall_baseline": sid_blue,
+        "summer_baseline": sid_blue,
         # vaccines
         "spring_without_vaccines": "steelblue",
         "spring_with_more_vaccines": "dodgerblue",
@@ -46,7 +47,7 @@ def create_scenario_to_color():
         "spring_emergency_care_after_easter_without_school_rapid_tests": "#F1B05D",
         "spring_educ_open_after_easter_without_tests": "#3C2030",
         "spring_educ_open_after_easter_with_normal_tests": "#6c4a4d",
-        "spring_open_educ_after_easter_with_tests_every_other_day": "#c87259",
+        # "spring_open_educ_after_easter_with_tests_every_other_day": "#c87259",
         "spring_open_educ_after_easter_with_daily_tests": "#EE8445",
         # summer scenarios
         "summer_reduced_test_demand": "#3C2030",
@@ -54,6 +55,23 @@ def create_scenario_to_color():
         "summer_more_rapid_tests_at_work": "firebrick",
         "summer_optimistic_vaccinations": "dodgerblue",
         "summer_educ_open": "#6c4a4d",
+        # age groups
+        "0-4": "#C89D64",
+        "5-14": "#F1B05D",
+        "15-34": "#EE8445",
+        "35-59": "#c87259",
+        "60-79": "#6c4a4d",
+        "80-100": "#3C2030",
+        # states
+        "Bavaria": sid_blue,
+        "Baden-Württemberg": sid_blue,
+        "Saxony": sid_blue,
+        "Saxony-Anhalt": sid_blue,
+        "Thuringia": sid_blue,
+        "North Rhine-Westphalia": sid_blue,
+        "Rhineland-Paatinate": sid_blue,
+        "Hessen": sid_blue,
+        "Lower Saxony": sid_blue,
     }
 
     all_scenarios = get_named_scenarios().keys()
@@ -125,9 +143,19 @@ def plot_incidences(
             fig, ax = plt.subplots(figsize=(6, 4))
         else:
             fig, ax = plt.subplots(figsize=(6, 6))
-    colors = create_scenario_to_color()
-    for name, df in incidences.items():
-        color = colors[name]
+    # scenario_to_color = create_scenario_to_color()
+    colors = [
+        "#4e79a7",
+        "#f28e2b",
+        "#e15759",
+        "#76b7b2",
+        "#59a14f",
+        "#edc948",
+        "#b07aa1",
+        "#9c755f",
+    ]
+    for (name, df), color in zip(incidences.items(), colors):
+        # color = colors[name]
         dates = df.index
         sns.lineplot(
             x=dates,
