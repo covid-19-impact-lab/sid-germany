@@ -137,6 +137,12 @@ def get_named_scenarios():
             "n_seeds": n_main_scenario_seeds,
             **spring_dates,
         },
+        "spring_start_all_rapid_tests_after_easter": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "start_all_rapid_tests_after_easter",
+            "n_seeds": 2,
+            **spring_dates,
+        },
         # Rapid Tests vs School Closures
         "spring_emergency_care_after_easter_without_school_rapid_tests": {
             "sim_input_scenario": "only_strict_emergency_care_after_april_5",

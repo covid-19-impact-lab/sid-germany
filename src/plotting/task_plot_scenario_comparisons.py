@@ -89,6 +89,17 @@ PLOTS = {
         "colors": [BLUE, GREEN, RED],
         "plot_start": None,
     },
+    "illustrate_rapid_tests": {
+        "title": "Illustrate the effect of rapid tests on {outcome}",
+        "scenarios": [
+            "spring_baseline",
+            "spring_without_rapid_tests",
+            "spring_start_all_rapid_tests_after_easter",
+        ],
+        "scenario_starts": ([(AFTER_EASTER, "Easter")]),
+        "colors": [BLUE, PURPLE, RED],
+        "plot_start": None,
+    },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
 
