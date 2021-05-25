@@ -10,8 +10,6 @@ import sid
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
-from src.config import SUMMER_SCENARIO_START
-from src.simulation.scenario_config import get_named_scenarios
 
 
 plt.rcParams.update(
@@ -21,65 +19,6 @@ plt.rcParams.update(
         "legend.frameon": False,
     }
 )
-
-
-def create_scenario_to_color():
-    """Create the dictionary mapping scenario names to colors.
-
-    Baseline scenarios get the typical sid blue. Vaccines scenarios get other blues.
-    Rapid test scenarios get purple-red tones.
-    School scenarios get the warm part of the ordered color map.
-
-    """
-    sid_blue = "#547482"
-    scenario_to_color = {
-        "fall_baseline": sid_blue,
-        "summer_baseline": sid_blue,
-        # vaccines
-        "spring_without_vaccines": "steelblue",
-        "spring_with_more_vaccines": "dodgerblue",
-        # rapid tests
-        "spring_without_rapid_tests": "#5d4042",
-        "spring_without_work_rapid_tests": "#a98286",
-        "spring_without_school_rapid_tests": "#e0b1a3",
-        "spring_with_mandatory_work_rapid_tests": "#b3563b",
-        # school scenarios
-        "spring_emergency_care_after_easter_without_school_rapid_tests": "#F1B05D",
-        "spring_educ_open_after_easter_without_tests": "#3C2030",
-        "spring_educ_open_after_easter_with_normal_tests": "#6c4a4d",
-        # "spring_open_educ_after_easter_with_tests_every_other_day": "#c87259",
-        "spring_open_educ_after_easter_with_daily_tests": "#EE8445",
-        # summer scenarios
-        "summer_reduced_test_demand": "#3C2030",
-        "summer_strict_home_office": "darkcyan",
-        "summer_more_rapid_tests_at_work": "firebrick",
-        "summer_optimistic_vaccinations": "dodgerblue",
-        "summer_educ_open": "#6c4a4d",
-        # age groups
-        "0-4": "#C89D64",
-        "5-14": "#F1B05D",
-        "15-34": "#EE8445",
-        "35-59": "#c87259",
-        "60-79": "#6c4a4d",
-        "80-100": "#3C2030",
-        # states
-        "Bavaria": sid_blue,
-        "Baden-Württemberg": sid_blue,
-        "Saxony": sid_blue,
-        "Saxony-Anhalt": sid_blue,
-        "Thuringia": sid_blue,
-        "North Rhine-Westphalia": sid_blue,
-        "Rhineland-Paatinate": sid_blue,
-        "Hessen": sid_blue,
-        "Lower Saxony": sid_blue,
-    }
-
-    all_scenarios = get_named_scenarios().keys()
-    color_missing = [x for x in all_scenarios if x not in scenario_to_color.keys()]
-    assert len(color_missing) == 0, "Some scenarios have no color: " + "\n\t".join(
-        color_missing
-    )
-    return scenario_to_color
 
 
 def calculate_virus_strain_shares(results):
@@ -116,9 +55,10 @@ def plot_incidences(
     incidences,
     title,
     name_to_label,
+    colors,
     n_single_runs: Optional[int] = None,
     rki=False,
-    plot_scenario_start=False,
+    scenario_starts=None,
     fig=None,
     ax=None,
 ):
@@ -132,7 +72,7 @@ def plot_incidences(
             visualize to show statistical uncertainty. Passing ``None`` will plot all
             runs.
         rki (bool): Whether to plot the rki data.
-        plot_scenario_start (bool): whether to plot the scenario_start
+        scenario_start (list, optional): the scenario start points
 
     Returns:
         fig, ax
@@ -143,19 +83,19 @@ def plot_incidences(
             fig, ax = plt.subplots(figsize=(6, 4))
         else:
             fig, ax = plt.subplots(figsize=(6, 6))
-    # scenario_to_color = create_scenario_to_color()
-    colors = [
-        "#4e79a7",
-        "#f28e2b",
-        "#e15759",
-        "#76b7b2",
-        "#59a14f",
-        "#edc948",
-        "#b07aa1",
-        "#9c755f",
-    ]
+
+    if colors is None:
+        colors = [
+            "#4e79a7",
+            "#f28e2b",
+            "#e15759",
+            "#76b7b2",
+            "#59a14f",
+            "#edc948",
+            "#b07aa1",
+            "#9c755f",
+        ]
     for (name, df), color in zip(incidences.items(), colors):
-        # color = colors[name]
         dates = df.index
         sns.lineplot(
             x=dates,
@@ -197,12 +137,16 @@ def plot_incidences(
         sns.lineplot(
             x=weekly_smoothed.index, y=weekly_smoothed, ax=ax, color="k", label=label
         )
-    if plot_scenario_start:
-        ax.axvline(
-            pd.Timestamp(SUMMER_SCENARIO_START),
-            label="scenario start",
-            color="darkgrey",
-        )
+    if scenario_starts is not None:
+        if isinstance(scenario_starts, (str, pd.Timestamp)):
+            scenario_starts = [(scenario_starts, "scenario start")]
+
+        for date, label in scenario_starts:
+            ax.axvline(
+                pd.Timestamp(date),
+                label=label,
+                color="darkgrey",
+            )
 
     fig, ax = style_plot(fig, ax)
     ax.set_ylabel("smoothed weekly incidence")

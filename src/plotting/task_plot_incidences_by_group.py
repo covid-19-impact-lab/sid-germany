@@ -100,13 +100,27 @@ def _plot_group_incidence(incidences, title, rki):
     n_rows = int(np.ceil(len(groups) / 2))
     fig, axes = plt.subplots(figsize=(12, n_rows * 3), nrows=n_rows, ncols=2)
     axes = axes.flatten()
+
+    if "0-4" in groups:
+        colors = [
+            "#C89D64",
+            "#F1B05D",
+            "#EE8445",
+            "#c87259",
+            "#6c4a4d",
+            "#3C2030",
+        ]
+    else:
+        colors = ["#C89D64"] * len(groups)
+
     for group, ax in zip(groups, axes):
         plot_incidences(
             incidences={group: incidences.loc[group]},
             title=title.format(group=group),
             name_to_label={group: "simulated"},
             rki=False,
-            plot_scenario_start=False,
+            colors=colors,
+            scenario_starts=None,
             fig=fig,
             ax=ax,
         )

@@ -19,12 +19,14 @@ _MODULE_DEPENDENCIES = {
 
 NAMED_SCENARIOS = get_named_scenarios()
 
+SID_BLUE = "#547482"
 
 PLOTS = {
     "fall": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
-        "scenario_start": None,
+        "scenario_starts": None,
+        "colors": [SID_BLUE],
     },
     "effect_of_vaccines": {
         "title": "{outcome} in Different Vaccine Scenarios",
@@ -33,7 +35,11 @@ PLOTS = {
             "spring_without_vaccines",
             "spring_with_more_vaccines",
         ],
-        "scenario_start": [pd.Timestamp("2021-02-15"), pd.Timestamp("2021-04-06")],
+        "scenario_starts": [
+            (pd.Timestamp("2021-02-15"), "vaccine stop"),
+            (pd.Timestamp("2021-04-06"), "start increased vaccinations"),
+        ],
+        "colors": [SID_BLUE, "steelblue", "dodgerblue"],
     },
     "effect_of_rapid_tests": {
         "title": "{outcome} in Different Rapid Test Scenarios",
@@ -44,6 +50,8 @@ PLOTS = {
             "spring_without_school_rapid_tests",
             "spring_with_mandatory_work_rapid_tests",
         ],
+        "scenario_starts": None,
+        "colors": None,
     },
     "vaccines_vs_rapid_tests": {
         "title": "The Effect of Vaccines on {outcome} Compared to Rapid Tests",
@@ -56,6 +64,8 @@ PLOTS = {
             "spring_without_rapid_tests",
             "spring_with_mandatory_work_rapid_tests",
         ],
+        "scenario_starts": None,
+        "colors": None,
     },
     "school_scenarios": {
         "title": "{outcome} in Different School Scenarios",
@@ -68,6 +78,8 @@ PLOTS = {
             "spring_open_educ_after_easter_with_tests_every_other_day",
             "spring_open_educ_after_easter_with_daily_tests",
         ],
+        "scenario_starts": None,
+        "colors": None,
     },
     "summer": {
         "title": "Summer Prediction for {outcome}",
@@ -79,6 +91,8 @@ PLOTS = {
             "summer_optimistic_vaccinations",
             "summer_more_rapid_tests_at_work",
         ],
+        "scenario_starts": None,
+        "colors": None,
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
@@ -129,10 +143,20 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
             # only create a plot if at least one scenario had a seed.
             if depends_on:
                 parametrization.append(
-                    (depends_on, comparison_name, outcome, title, produces)
+                    (
+                        depends_on,
+                        outcome,
+                        title,
+                        plot_info["colors"],
+                        plot_info["scenario_starts"],
+                        produces,
+                    )
                 )
 
-    return "depends_on, comparison_name, outcome, title, produces", parametrization
+    return (
+        "depends_on, outcome, title, colors, scenario_starts, produces",
+        parametrization,
+    )
 
 
 _SIGNATURE, _PARAMETRIZATION = create_parametrization(
@@ -143,7 +167,7 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization(
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_plot_scenario_comparison(
-    depends_on, comparison_name, outcome, title, produces
+    depends_on, outcome, title, colors, scenario_starts, produces
 ):
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
@@ -159,7 +183,8 @@ def task_plot_scenario_comparison(
         title=title,
         name_to_label=name_to_label,
         rki=outcome == "new_known_case",
-        plot_scenario_start="summer" in comparison_name,
+        colors=colors,
+        scenario_starts=scenario_starts,
     )
     plt.savefig(produces, dpi=200, transparent=False, facecolor="w")
     plt.close()
