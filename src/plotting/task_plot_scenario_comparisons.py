@@ -46,10 +46,10 @@ PLOTS = {
             "spring_without_vaccines",
             "spring_without_rapid_tests",
             "spring_without_rapid_tests_and_no_vaccinations",
-            # "spring_without_seasonality",
+            "spring_without_seasonality",
+            "spring_without_rapid_tests_without_vaccinations_without_seasonality",
         ],
         "scenario_starts": [
-            (pd.Timestamp("2021-02-10"), "vaccine stop"),
             (pd.Timestamp("2021-04-06"), "start of increased vaccinations"),
         ],
         "colors": None,
@@ -95,14 +95,21 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
     for outcome in outcomes:
         for comparison_name, plot_info in plots.items():
             title = plot_info["title"]
-            to_compare = sorted(
-                set(available_scenarios).intersection(plot_info["scenarios"])
-            )
+
+            # need to keep the right colors
+            scenarios = []
+            colors = [] if plot_info["colors"] is not None else None
+            for i, name in enumerate(plot_info["scenarios"]):
+                if name in available_scenarios:
+                    scenarios.append(name)
+                    if colors is not None:
+                        colors.append(plot_info["colors"][i])
+
             depends_on = {
                 scenario_name: create_path_to_weekly_outcome_of_scenario(
                     name=scenario_name, entry=outcome
                 )
-                for scenario_name in to_compare
+                for scenario_name in scenarios
             }
 
             missing_scenarios = set(depends_on) - set(named_scenarios)
@@ -119,7 +126,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         depends_on,
                         outcome,
                         title,
-                        plot_info["colors"],
+                        colors,
                         plot_info["scenario_starts"],
                         produces,
                     )

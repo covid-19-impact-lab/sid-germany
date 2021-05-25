@@ -89,8 +89,14 @@ def get_named_scenarios():
             **spring_dates,
         },
         # Policy Scenarios
+        "spring_without_seasonality": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_seasonality",
+            "n_seeds": n_side_scenario_seeds,
+            **spring_dates,
+        },
         "spring_without_vaccines": {
-            "sim_input_scenario": "no_vaccinations_after_feb_15",
+            "sim_input_scenario": "no_vaccinations_after_feb_10",
             "params_scenario": "baseline",
             "n_seeds": n_main_scenario_seeds,
             **spring_dates,
@@ -120,9 +126,15 @@ def get_named_scenarios():
             **spring_dates,
         },
         "spring_without_rapid_tests_and_no_vaccinations": {
-            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_15",
+            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
             "params_scenario": "baseline",
             "n_seeds": n_side_scenario_seeds,
+            **spring_dates,
+        },
+        "spring_without_rapid_tests_without_vaccinations_without_seasonality": {
+            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
+            "params_scenario": "no_seasonality",
+            "n_seeds": n_main_scenario_seeds,
             **spring_dates,
         },
         # Rapid Tests vs School Closures

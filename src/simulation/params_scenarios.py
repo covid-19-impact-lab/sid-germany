@@ -172,3 +172,16 @@ def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
         params=params, change_date=change_date, new_val=new_val, loc=loc
     )
     return params
+
+
+def no_seasonality(params):
+    """Set the seasonality to 1 everywhere.
+
+    This induces a jump in the seasonality compared to scenarios with seasonality almost
+    everywhere.
+
+    """
+    params = params.copy(deep=True)
+    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.0
+    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.0
+    return params
