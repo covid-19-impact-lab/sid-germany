@@ -55,8 +55,8 @@ def find_people_to_vaccinate(
 
     lower_candidate = cutoffs[date - pd.Timedelta(days=1)]
     upper_candidate = cutoffs[date]
-    lower = min(lower_candidate, no_vaccination_share)
-    upper = min(upper_candidate, no_vaccination_share)
+    lower = min(lower_candidate, 1 - no_vaccination_share)
+    upper = min(upper_candidate, 1 - no_vaccination_share)
 
     to_vaccinate = (lower <= states["vaccination_rank"]) & (
         states["vaccination_rank"] < upper

@@ -283,6 +283,7 @@ def create_period_outputs():
         "new_known_case",
         "currently_infected",
         "knows_currently_infected",
+        "ever_vaccinated",
     ]
     groupbys = ["state", "age_group_rki", None]
 

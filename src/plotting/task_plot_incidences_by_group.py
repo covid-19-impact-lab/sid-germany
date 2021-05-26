@@ -2,18 +2,16 @@
 from itertools import product
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import pytask
-import seaborn as sns
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
 from src.config import SRC
-from src.plotting.plotting import plot_incidences
+from src.plotting.plotting import plot_group_time_series
 from src.simulation.scenario_config import create_path_to_group_incidence_plot
 from src.simulation.scenario_config import (
-    create_path_to_weekly_outcome_of_scenario,
+    create_path_to_scenario_outcome_time_series,
 )
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
@@ -34,7 +32,7 @@ def create_parametrization():
     parametrization = []
     for scenario, outcome, groupby in product(available_scenarios, outcomes, groupbys):
         depends_on = {
-            "simulated": create_path_to_weekly_outcome_of_scenario(
+            "simulated": create_path_to_scenario_outcome_time_series(
                 name=scenario, entry=f"{outcome}_by_{groupby}"
             ),
             "group_sizes_age_groups": (
@@ -62,7 +60,6 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization()
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_plot_age_group_incidences_in_one_scenario(depends_on, produces, groupby):
     incidences = pd.read_pickle(depends_on["simulated"])
-    incidences = incidences.swaplevel()
 
     if "rki" in depends_on:
         if groupby == "age_group_rki":
@@ -87,52 +84,7 @@ def task_plot_age_group_incidences_in_one_scenario(depends_on, produces, groupby
         rki = None
 
     title = f"Incidences by {groupby.replace('_', ' ')} in " + "{group}"
-    fig, ax = _plot_group_incidence(incidences, title, rki)
+    fig, ax = plot_group_time_series(incidences, title, rki)
 
     fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
     plt.close()
-
-
-def _plot_group_incidence(incidences, title, rki):
-    groups = incidences.index.levels[0].unique()
-    dates = incidences.index.levels[1].unique()
-
-    n_rows = int(np.ceil(len(groups) / 2))
-    fig, axes = plt.subplots(figsize=(12, n_rows * 3), nrows=n_rows, ncols=2)
-    axes = axes.flatten()
-
-    if "0-4" in groups:
-        colors = [
-            "#C89D64",
-            "#F1B05D",
-            "#EE8445",
-            "#c87259",
-            "#6c4a4d",
-            "#3C2030",
-        ]
-    else:
-        colors = ["#C89D64"] * len(groups)
-
-    for group, ax in zip(groups, axes):
-        plot_incidences(
-            incidences={group: incidences.loc[group]},
-            title=title.format(group=group),
-            name_to_label={group: "simulated"},
-            rki=False,
-            colors=colors,
-            scenario_starts=None,
-            fig=fig,
-            ax=ax,
-        )
-
-        if rki is not None:
-            rki_data = rki.loc[dates, group].reset_index()
-            sns.lineplot(
-                x=rki_data["date"],
-                y=rki_data[0],
-                ax=ax,
-                color="k",
-                label="official case numbers",
-            )
-
-    return fig, ax

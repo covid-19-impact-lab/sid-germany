@@ -21,6 +21,7 @@ from src.policies.domain_level_policy_blocks import apply_emergency_care_policie
 from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
 from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
+from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.enacted_policies import get_enacted_policies
 from src.policies.enacted_policies import get_school_options_for_strict_emergency_care
 from src.policies.enacted_policies import HYGIENE_MULTIPLIER
@@ -137,6 +138,40 @@ def only_strict_emergency_care_after_april_5(paths, fixed_inputs):
     new_policies = combine_dictionaries(
         [stays_same, keep, new_young_educ_policies, new_school_policies]
     )
+    new_policies = shorten_policies(new_policies, start_date, end_date)
+
+    out = {
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+        "contact_policies": new_policies,
+    }
+    return out
+
+
+def close_educ_after_april_5(paths, fixed_inputs):
+    start_date = fixed_inputs["duration"]["start"]
+    end_date = fixed_inputs["duration"]["end"]
+    contact_models = fixed_inputs["contact_models"]
+    enacted_policies = get_enacted_policies(contact_models)
+
+    # day after easter monday as the split date belongs to the 2nd dictionary
+    after_easter = "2021-04-06"
+    stays_same, to_change = split_policies(enacted_policies, split_date=after_easter)
+    keep = remove_educ_policies(to_change)
+
+    block_info = {
+        "prefix": "educ_closed_after_april_5",
+        "start_date": after_easter,
+        "end_date": VERY_LATE,
+    }
+    new_educ_policies = shut_down_educ_models(
+        contact_models=contact_models, block_info=block_info, educ_type="all"
+    )
+
+    new_policies = combine_dictionaries([stays_same, keep, new_educ_policies])
     new_policies = shorten_policies(new_policies, start_date, end_date)
 
     out = {

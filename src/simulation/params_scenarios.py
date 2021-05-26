@@ -26,8 +26,8 @@ def start_all_rapid_tests_after_easter(params):
             new = new.drop(("rapid_test_demand", subcat))
 
             new.loc[("rapid_test_demand", subcat, "2020-01-01"), "value"] = 0.0
-            new.loc[("rapid_test_demand", subcat, "2021-05-05"), "value"] = 0.0
-            new.loc[("rapid_test_demand", subcat, "2021-05-06"), "value"] = max_val
+            new.loc[("rapid_test_demand", subcat, "2021-04-05"), "value"] = 0.0
+            new.loc[("rapid_test_demand", subcat, "2021-04-06"), "value"] = max_val
             new.loc[("rapid_test_demand", subcat, "2025-12-31"), "value"] = max_val
 
     return new

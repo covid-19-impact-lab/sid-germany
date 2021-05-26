@@ -20,8 +20,12 @@ def create_path_to_share_known_cases_of_scenario(name):
     return BLD / "simulations" / "share_known_cases" / file_name
 
 
-def create_path_to_weekly_outcome_of_scenario(name, entry):
-    return BLD / "simulations" / "incidences" / f"{FAST_FLAG}_{name}_{entry}.pkl"
+def create_path_to_scenario_outcome_time_series(name, entry):
+    if "ever_vaccinated" in entry:
+        name = f"{FAST_FLAG}_{name}_{entry}_share.pkl"
+    else:
+        name = f"{FAST_FLAG}_{name}_{entry}_weekly_incidence.pkl"
+    return BLD / "simulations" / "time_series" / name
 
 
 def create_path_to_share_known_cases_plot(name, groupby):
@@ -140,12 +144,12 @@ def get_named_scenarios():
         "spring_start_all_rapid_tests_after_easter": {
             "sim_input_scenario": "baseline",
             "params_scenario": "start_all_rapid_tests_after_easter",
-            "n_seeds": 2,
+            "n_seeds": n_side_scenario_seeds,
             **spring_dates,
         },
         # Rapid Tests vs School Closures
-        "spring_emergency_care_after_easter_without_school_rapid_tests": {
-            "sim_input_scenario": "only_strict_emergency_care_after_april_5",
+        "spring_close_educ_after_easter_without_educ_rapid_tests": {
+            "sim_input_scenario": "close_educ_after_april_5",
             "params_scenario": "no_rapid_tests_at_schools",
             "n_seeds": n_side_scenario_seeds,
             **spring_dates,

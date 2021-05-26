@@ -213,6 +213,62 @@ def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
     return fig, ax
 
 
+def plot_group_time_series(df, title, rki=None):
+    """Plot a time series by group with more than one run.
+
+    Args:
+        df (pandas.DataFrame): index levels are dates and group identifiers.
+            There is one column for each simulation run.
+        title (str): the title of the plot
+        rki (pandas.Series, optional): Series with the RKI data. Must have the same
+            index as df.
+
+    """
+    df = df.swaplevel().copy(deep=True)
+    groups = df.index.levels[0].unique()
+    dates = df.index.levels[1].unique()
+
+    n_rows = int(np.ceil(len(groups) / 2))
+    fig, axes = plt.subplots(figsize=(12, n_rows * 3), nrows=n_rows, ncols=2)
+    axes = axes.flatten()
+
+    if "0-4" in groups:
+        colors = [
+            "#C89D64",
+            "#F1B05D",
+            "#EE8445",
+            "#c87259",
+            "#6c4a4d",
+            "#3C2030",
+        ]
+    else:
+        colors = ["#C89D64"] * len(groups)
+
+    for group, ax in zip(groups, axes):
+        plot_incidences(
+            incidences={group: df.loc[group]},
+            title=title.format(group=group),
+            name_to_label={group: "simulated"},
+            rki=False,
+            colors=colors,
+            scenario_starts=None,
+            fig=fig,
+            ax=ax,
+        )
+
+        if rki is not None:
+            rki_data = rki.loc[dates, group].reset_index()
+            sns.lineplot(
+                x=rki_data["date"],
+                y=rki_data[0],
+                ax=ax,
+                color="k",
+                label="official case numbers",
+            )
+
+    return fig, axes
+
+
 def style_plot(fig, axes):
     if not isinstance(axes, np.ndarray):
         axes = [axes]
@@ -233,3 +289,63 @@ def format_date_axis(ax):
     ax.xaxis.set_minor_locator(dt.DayLocator())
     ax.xaxis.set_minor_formatter(ticker.NullFormatter())
     return ax
+
+
+def shorten_dfs(dfs, plot_start=None):
+    """Shorten all incidence DataFrames.
+
+    All DataFrames are shortened to the shortest. In addition, if plot_start is given
+    all DataFrames start at or after plot_start.
+
+    Args:
+        dfs (dict): keys are the names of the scenarios, values are the incidence
+            DataFrames.
+        plot_start (pd.Timestamp or None): earliest allowed start date for the plot
+
+    Returns:
+        shortened (dict): keys are the names of the scenarios, values are the shortened
+            DataFrames.
+
+    """
+    shortened = {}
+
+    start_date = max(df.index.min() for df in dfs.values())
+    if plot_start is not None:
+        start_date = max(plot_start, start_date)
+    end_date = min(df.index.max() for df in dfs.values())
+
+    for name, df in dfs.items():
+        shortened[name] = df.loc[start_date:end_date].copy(deep=True)
+
+    return shortened
+
+
+def create_nice_labels(names):
+    name_to_label = {}
+    for name in names:
+        name_to_label[name] = make_name_nice(name)
+    return name_to_label
+
+
+def make_name_nice(name):
+    """Make a scenario name nice.
+
+    Args:
+        name (str): name of the scenario
+
+    Returns:
+        nice_name (str): nice name of the scenario
+
+    """
+    replacements = [
+        ("_", " "),
+        (" with", "\n with"),
+        ("fall", ""),
+        ("spring", ""),
+        ("summer", ""),
+    ]
+    nice_name = name
+    for old, new in replacements:
+        nice_name = nice_name.replace(old, new)
+    nice_name = nice_name.lstrip("\n")
+    return nice_name
