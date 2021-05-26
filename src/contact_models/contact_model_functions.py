@@ -173,23 +173,19 @@ def meet_hh_members(states, params, seed):  # noqa: U100
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
 
-    """
-    date = get_date(states)
-    if date in pd.date_range("2020-12-24", "2020-12-26"):
-        meet_hh = pd.Series(0, index=states.index)
-    else:
-        meet_hh = states["hh_model_group_id"] != -1
-        for params_entry, condition in [
-            ("symptomatic_multiplier", states["symptomatic"]),
-            ("positive_test_multiplier", states["knows_currently_infected"]),
-        ]:
-            meet_hh = reduce_contacts_on_condition(
-                meet_hh,
-                states,
-                params.loc[(params_entry, params_entry), "value"],
-                condition,
-                is_recurrent=True,
-            )
+    """    
+    meet_hh = states["hh_model_group_id"] != -1
+    for params_entry, condition in [
+        ("symptomatic_multiplier", states["symptomatic"]),
+        ("positive_test_multiplier", states["knows_currently_infected"]),
+    ]:
+        meet_hh = reduce_contacts_on_condition(
+            meet_hh,
+            states,
+            params.loc[(params_entry, params_entry), "value"],
+            condition,
+            is_recurrent=True,
+        )
     return meet_hh
 
 

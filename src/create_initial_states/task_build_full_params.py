@@ -106,8 +106,8 @@ def task_create_full_params(depends_on, produces):
     params = _add_rapid_test_reaction_params(params)
 
     # seasonality parameter
-    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.15
-    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.25
+    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.2
+    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.3
 
     params = _convert_index_to_int_where_possible(params)
     assert params["value"].notnull().all(), "Params contains NaNs."
@@ -376,19 +376,20 @@ def _build_share_known_cases_params():
             "2020-07-05": 0.46,
             "2020-08-20": 0.60,
             "2020-09-28": 0.60,
-            "2020-10-28": 0.36,
-            "2020-11-04": 0.36,
-            "2020-11-14": 0.39,
-            "2020-11-17": 0.39,
-            "2020-12-01": 0.31,
-            "2020-12-24": 0.3,
-            "2020-12-25": 0.2,
+            "2020-10-28": 0.38,
+            # "2020-11-04": 0.36,
+            # "2020-11-14": 0.39,
+            # "2020-11-17": 0.39,
+            "2020-11-28": 0.31,
+            "2020-12-22": 0.31,
+            "2020-12-25": 0.22,
             # free parameters
-            "2021-01-01": 0.2,
-            "2021-01-30": 0.31,
+            "2021-01-01": 0.22,
+            "2021-01-02": 0.27,
+            "2021-01-10": 0.31,
             "2021-03-28": 0.31,
-            "2021-04-02": 0.2,
-            "2021-04-07": 0.2,
+            "2021-04-02": 0.22,
+            "2021-04-07": 0.22,
             "2021-04-13": 0.31,
             "2021-08-15": 0.31,
         },
