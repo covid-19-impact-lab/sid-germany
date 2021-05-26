@@ -5,7 +5,9 @@ import pytask
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.config import SRC
+from src.plotting.plotting import create_nice_labels
 from src.plotting.plotting import plot_incidences
+from src.plotting.plotting import shorten_dfs
 from src.policies.policy_tools import filter_dictionary
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_available_scenarios
@@ -200,10 +202,10 @@ def task_plot_scenario_comparison(
     depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
 
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
-    dfs = _shorten_dfs(dfs, plot_start)
+    dfs = shorten_dfs(dfs, plot_start)
 
     title = _create_title(title, outcome)
-    name_to_label = _create_nice_labels(dfs)
+    name_to_label = create_nice_labels(dfs)
 
     fig, ax = plot_incidences(
         incidences=dfs,
@@ -217,35 +219,6 @@ def task_plot_scenario_comparison(
     plt.close()
 
 
-def _shorten_dfs(dfs, plot_start):
-    """Shorten all incidence DataFrames.
-
-    All DataFrames are shortened to the shortest. In addition, if plot_start is given
-    all DataFrames start at or after plot_start.
-
-    Args:
-        dfs (dict): keys are the names of the scenarios, values are the incidence
-            DataFrames.
-        plot_start (pd.Timestamp or None): earliest allowed start date for the plot
-
-    Returns:
-        shortened (dict): keys are the names of the scenarios, values are the shortened
-            DataFrames.
-
-    """
-    shortened = {}
-
-    start_date = max(df.index.min() for df in dfs.values())
-    if plot_start is not None:
-        start_date = max(plot_start, start_date)
-    end_date = min(df.index.max() for df in dfs.values())
-
-    for name, df in dfs.items():
-        shortened[name] = df.loc[start_date:end_date].copy(deep=True)
-
-    return shortened
-
-
 def _create_title(title, outcome):
     if outcome == "new_known_case":
         title_outcome = "Observed New Cases"
@@ -253,20 +226,3 @@ def _create_title(title, outcome):
         title_outcome = "Total New Cases"
     title = title.format(outcome=title_outcome)
     return title
-
-
-def _create_nice_labels(dfs):
-    name_to_label = {}
-    replacements = [
-        ("_", " "),
-        (" with", "\n with"),
-        ("fall", ""),
-        ("spring", ""),
-        ("summer", ""),
-    ]
-    for name in dfs:
-        nice_name = name
-        for old, new in replacements:
-            nice_name = nice_name.replace(old, new)
-        name_to_label[name] = nice_name.lstrip("\n")
-    return name_to_label

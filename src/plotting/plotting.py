@@ -233,3 +233,49 @@ def format_date_axis(ax):
     ax.xaxis.set_minor_locator(dt.DayLocator())
     ax.xaxis.set_minor_formatter(ticker.NullFormatter())
     return ax
+
+
+def shorten_dfs(dfs, plot_start=None):
+    """Shorten all incidence DataFrames.
+
+    All DataFrames are shortened to the shortest. In addition, if plot_start is given
+    all DataFrames start at or after plot_start.
+
+    Args:
+        dfs (dict): keys are the names of the scenarios, values are the incidence
+            DataFrames.
+        plot_start (pd.Timestamp or None): earliest allowed start date for the plot
+
+    Returns:
+        shortened (dict): keys are the names of the scenarios, values are the shortened
+            DataFrames.
+
+    """
+    shortened = {}
+
+    start_date = max(df.index.min() for df in dfs.values())
+    if plot_start is not None:
+        start_date = max(plot_start, start_date)
+    end_date = min(df.index.max() for df in dfs.values())
+
+    for name, df in dfs.items():
+        shortened[name] = df.loc[start_date:end_date].copy(deep=True)
+
+    return shortened
+
+
+def create_nice_labels(dfs):
+    name_to_label = {}
+    replacements = [
+        ("_", " "),
+        (" with", "\n with"),
+        ("fall", ""),
+        ("spring", ""),
+        ("summer", ""),
+    ]
+    for name in dfs:
+        nice_name = name
+        for old, new in replacements:
+            nice_name = nice_name.replace(old, new)
+        name_to_label[name] = nice_name.lstrip("\n")
+    return name_to_label
