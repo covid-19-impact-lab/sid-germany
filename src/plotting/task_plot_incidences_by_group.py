@@ -13,7 +13,7 @@ from src.config import SRC
 from src.plotting.plotting import plot_incidences
 from src.simulation.scenario_config import create_path_to_group_incidence_plot
 from src.simulation.scenario_config import (
-    create_path_to_weekly_outcome_of_scenario,
+    create_path_to_scenario_outcome_time_series,
 )
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
@@ -34,7 +34,7 @@ def create_parametrization():
     parametrization = []
     for scenario, outcome, groupby in product(available_scenarios, outcomes, groupbys):
         depends_on = {
-            "simulated": create_path_to_weekly_outcome_of_scenario(
+            "simulated": create_path_to_scenario_outcome_time_series(
                 name=scenario, entry=f"{outcome}_by_{groupby}"
             ),
             "group_sizes_age_groups": (

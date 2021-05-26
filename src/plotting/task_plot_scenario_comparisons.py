@@ -7,7 +7,7 @@ from src.config import FAST_FLAG
 from src.config import SRC
 from src.plotting.plotting import plot_incidences
 from src.policies.policy_tools import filter_dictionary
-from src.simulation.scenario_config import create_path_to_weekly_outcome_of_scenario
+from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
 
@@ -153,7 +153,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         colors.append(plot_info["colors"][i])
 
             depends_on = {
-                scenario_name: create_path_to_weekly_outcome_of_scenario(
+                scenario_name: create_path_to_scenario_outcome_time_series(
                     name=scenario_name, entry=outcome
                 )
                 for scenario_name in scenarios

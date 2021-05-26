@@ -20,8 +20,12 @@ def create_path_to_share_known_cases_of_scenario(name):
     return BLD / "simulations" / "share_known_cases" / file_name
 
 
-def create_path_to_weekly_outcome_of_scenario(name, entry):
-    return BLD / "simulations" / "incidences" / f"{FAST_FLAG}_{name}_{entry}.pkl"
+def create_path_to_scenario_outcome_time_series(name, entry):
+    if "ever_vaccinated" in entry:
+        name = f"{FAST_FLAG}_{name}_{entry}_share.pkl"
+    else:
+        name = f"{FAST_FLAG}_{name}_{entry}_weekly_incidence.pkl"
+    return BLD / "simulations" / "time_series" / name
 
 
 def create_path_to_share_known_cases_plot(name, groupby):
