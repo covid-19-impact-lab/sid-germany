@@ -6,6 +6,8 @@ import seaborn as sns
 from src.config import BLD
 from src.config import SRC
 from src.plotting.plotting import create_nice_labels
+from src.plotting.plotting import make_name_nice
+from src.plotting.plotting import plot_group_time_series
 from src.plotting.plotting import plot_incidences
 from src.plotting.plotting import shorten_dfs
 from src.policies.policy_tools import combine_dictionaries
@@ -77,8 +79,36 @@ def task_plot_overall_vaccination_shares_across_scenarios(depends_on, produces):
     sns.lineplot(
         x=actual_vacc_shares.index,
         y=actual_vacc_shares,
-        label="Actual Share of Vaccinated People",
+        label="actual share of vaccinated people",
+        ax=ax,
     )
+    ax.set_ylabel("share of vaccinated individuals")
 
     plt.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    plt.close()
+
+
+_PARAMETRIZATION = []
+for name in VACCINATION_SCENARIOS:
+    dep = {
+        "simulated": create_path_to_scenario_outcome_time_series(
+            name, "ever_vaccinated_by_age_group_rki"
+        ),
+    }
+    produces = BLD / "figures" / "vaccinations" / f"{name}.png"
+    _PARAMETRIZATION.append((name, dep, produces))
+
+
+@pytask.mark.depends_on(_JOINT_DEPENDENCIES)
+@pytask.mark.parametrize("name, depends_on, produces", _PARAMETRIZATION)
+def task_plot_groupby_vaccination_shares(name, depends_on, produces):
+    vaccination_shares = pd.read_pickle(depends_on["simulated"])
+
+    nice_name = make_name_nice(name)
+    title = "Share of Vaccinated People by Age Group {group} in " + nice_name.title()
+    fig, axes = plot_group_time_series(df=vaccination_shares, title=title, rki=None)
+    for ax in axes:
+        ax.set_ylabel("share of vaccinated individuals")
+
+    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
     plt.close()

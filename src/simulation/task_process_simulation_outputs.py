@@ -63,6 +63,11 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
                 out[seed] = daily_incidence * 7
             else:
                 # daily share who are vaccinated already
+                if groupby is not None:
+                    dates = daily_incidence.index.levels[0].unique()
+                    groups = daily_incidence.index.levels[1].unique()
+                    full_index = pd.MultiIndex.from_product([dates, groups])
+                    daily_incidence = daily_incidence.reindex(full_index).fillna(0)
                 out[seed] = daily_incidence / 100_000
         out.to_pickle(path)
 
