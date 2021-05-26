@@ -12,7 +12,7 @@ def params():
         [("vaccinations", "share_refuser", "share_refuser")]
     )
     params = pd.DataFrame(
-        data=1.0,
+        data=0.0,
         index=index,
         columns=["value"],
     )
@@ -56,10 +56,15 @@ def test_find_people_to_vaccinate_with_refusers(params):
     states["vaccination_rank"] = [0.35, 0.45, 0.25, 0.15, 0.85, 0.55]
     states["date"] = pd.Timestamp("2021-02-03")
 
-    params["value"] = [0.5]
+    params["value"] = [0.3]
 
     vaccination_shares = pd.Series(
-        [0.1, 0.2, 0.5],  # 0.3 to 0.8 should get vaccinated
+        # 0.3 to 0.9 should get vaccinated, b/c of refusers only 0.3 to 0.7
+        [
+            0.1,
+            0.2,
+            0.6,
+        ],
         index=[
             pd.Timestamp("2021-02-01"),
             pd.Timestamp("2021-02-02"),
@@ -67,8 +72,8 @@ def test_find_people_to_vaccinate_with_refusers(params):
         ],
     )
     # 0.15 and 0.25 are already vaccinated
-    # 0.35 and 0.45 get vaccinated. 0.55 belongs to the refusers.
-    expected = pd.Series([True, True] + [False] * 4)
+    # 0.35, 0.45, 0.55 get vaccinated. 0.85 belongs to the refusers.
+    expected = pd.Series([True, True, False, False, False, True])
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
