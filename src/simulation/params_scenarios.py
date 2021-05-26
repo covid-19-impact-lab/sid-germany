@@ -7,6 +7,32 @@ from src.testing.shared import get_piecewise_linear_interpolation
 from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
 
 
+def start_all_rapid_tests_after_easter(params):
+    """Start all rapid tests with full force after Easter instead of fading them in."""
+    to_replace = [
+        "share_workers_receiving_offer",
+        "educ_worker_shares",
+        "student_shares",
+        "hh_member_demand",
+    ]
+    new = params.copy(deep=True)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        for subcat in to_replace:
+            max_val = params.loc[("rapid_test_demand", subcat), "value"].max()
+            new = new.drop(("rapid_test_demand", subcat))
+
+            new.loc[("rapid_test_demand", subcat, "2020-01-01"), "value"] = 0.0
+            new.loc[("rapid_test_demand", subcat, "2021-05-05"), "value"] = 0.0
+            new.loc[("rapid_test_demand", subcat, "2021-05-06"), "value"] = max_val
+            new.loc[("rapid_test_demand", subcat, "2025-12-31"), "value"] = max_val
+
+    return new
+
+
 def reduce_rapid_test_demand_after_summer_scenario_start_by_half(params):
     """Reduce rapid tests of households and workers by half.
 
@@ -171,4 +197,17 @@ def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
     params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params, change_date=change_date, new_val=new_val, loc=loc
     )
+    return params
+
+
+def no_seasonality(params):
+    """Set the seasonality to 1 everywhere.
+
+    This induces a jump in the seasonality compared to scenarios with seasonality almost
+    everywhere.
+
+    """
+    params = params.copy(deep=True)
+    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.0
+    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.0
     return params

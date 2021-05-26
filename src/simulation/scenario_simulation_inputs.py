@@ -163,7 +163,7 @@ def no_rapid_tests(paths, fixed_inputs):
     return out
 
 
-def no_vaccinations_after_feb_15(paths, fixed_inputs):
+def no_vaccinations_after_feb_10(paths, fixed_inputs):
     start_date = fixed_inputs["duration"]["start"]
     init_start = start_date - pd.Timedelta(31, unit="D")
 
@@ -171,9 +171,9 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
     vaccination_models = _get_vaccination_model_with_new_value_after_date(
         vaccination_shares,
         init_start,
-        change_date="2021-02-15",
+        change_date="2021-02-10",
         new_val=0,
-        model_name="only_vaccinate_until_feb_15",
+        model_name="only_vaccinate_until_feb_10",
     )
     scenario_inputs = {
         "vaccination_models": vaccination_models,
@@ -184,6 +184,13 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
         ),
     }
     return scenario_inputs
+
+
+def no_rapid_tests_and_no_vaccinations_after_feb_10(paths, fixed_inputs):
+    out = no_vaccinations_after_feb_10(paths, fixed_inputs)
+    out["rapid_test_models"] = None
+    out["rapid_test_reaction_models"] = None
+    return out
 
 
 def vaccinations_after_summer_scenario_start_as_on_strongest_week_day(
@@ -246,6 +253,36 @@ def vaccinations_after_easter_as_on_strongest_week_day(paths, fixed_inputs):
         change_date="2021-04-06",  # Tuesday after Easter Monday
         new_val=max(vacc_shares.values()),
         model_name="highest_vacc_share_after_easter",
+    )
+    scenario_inputs = {
+        "vaccination_models": vaccination_models,
+        "contact_policies": _baseline_policies(fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return scenario_inputs
+
+
+def vaccinate_1_pct_per_day_after_easter(paths, fixed_inputs):
+    """Increase the vaccination rate to 1% per day.
+
+    There were 3 days on which this many people were vaccinated before May 26.
+
+    This abstracts from possible constraints on the amount of available doses.
+
+    """
+    start_date = fixed_inputs["duration"]["start"]
+    init_start = start_date - pd.Timedelta(31, unit="D")
+
+    vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
+    vaccination_models = _get_vaccination_model_with_new_value_after_date(
+        vaccination_shares,
+        init_start,
+        change_date="2021-04-06",  # Tuesday after Easter Monday
+        new_val=0.01,
+        model_name="vaccinate_1_pct_per_day_after_easter",
     )
     scenario_inputs = {
         "vaccination_models": vaccination_models,

@@ -27,7 +27,6 @@ _DEPENDENCIES = {
     # py files
     "sid_shared.py": Path(sid.__file__).parent.resolve() / "shared.py",
     "shared.py": SRC / "shared.py",
-    "config.py": SRC / "config.py",
     "create_contact_model_group_ids": SRC
     / "create_initial_states"
     / "create_contact_model_group_ids.py",

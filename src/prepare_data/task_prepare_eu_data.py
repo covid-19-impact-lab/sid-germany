@@ -15,7 +15,6 @@ from src.config import SRC
         / "original_data"
         / "population_structure"
         / "eu_age_structure.tsv.gz",
-        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(BLD / "data" / "population_structure" / "eu_age_structure.pkl")

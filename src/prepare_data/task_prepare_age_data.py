@@ -10,7 +10,6 @@ from src.shared import create_age_groups_rki
     {
         "data": SRC / "original_data" / "population_structure" / "altersjahre.csv",
         "shared.py": SRC / "shared.py",
-        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(

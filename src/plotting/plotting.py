@@ -6,11 +6,9 @@ import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import sid
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
-from src.config import SUMMER_SCENARIO_START
 
 
 plt.rcParams.update(
@@ -59,7 +57,7 @@ def plot_incidences(
     colors,
     n_single_runs: Optional[int] = None,
     rki=False,
-    plot_scenario_start=False,
+    scenario_starts=None,
     fig=None,
     ax=None,
 ):
@@ -73,16 +71,30 @@ def plot_incidences(
             visualize to show statistical uncertainty. Passing ``None`` will plot all
             runs.
         rki (bool): Whether to plot the rki data.
-        plot_scenario_start (bool): whether to plot the scenario_start
+        scenario_start (list, optional): the scenario start points
 
     Returns:
         fig, ax
 
     """
     if fig is None and ax is None:
-        fig, ax = plt.subplots(figsize=(6, 4))
-    for name, color in zip(incidences, colors):
-        df = incidences[name]
+        if len(incidences) <= 4:
+            fig, ax = plt.subplots(figsize=(6, 4))
+        else:
+            fig, ax = plt.subplots(figsize=(6, 6))
+
+    if colors is None:
+        colors = [
+            "#4e79a7",
+            "#f28e2b",
+            "#e15759",
+            "#76b7b2",
+            "#59a14f",
+            "#edc948",
+            "#b07aa1",
+            "#9c755f",
+        ]
+    for (name, df), color in zip(incidences.items(), colors):
         dates = df.index
         sns.lineplot(
             x=dates,
@@ -101,7 +113,7 @@ def plot_incidences(
                 ax=ax,
                 color=color,
                 linewidth=0.5,
-                alpha=0.2,
+                alpha=0.1,
             )
     if rki:
         rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
@@ -124,12 +136,16 @@ def plot_incidences(
         sns.lineplot(
             x=weekly_smoothed.index, y=weekly_smoothed, ax=ax, color="k", label=label
         )
-    if plot_scenario_start:
-        ax.axvline(
-            pd.Timestamp(SUMMER_SCENARIO_START),
-            label="scenario start",
-            color="darkgrey",
-        )
+    if scenario_starts is not None:
+        if isinstance(scenario_starts, (str, pd.Timestamp)):
+            scenario_starts = [(scenario_starts, "scenario start")]
+
+        for date, label in scenario_starts:
+            ax.axvline(
+                pd.Timestamp(date),
+                label=label,
+                color="darkgrey",
+            )
 
     fig, ax = style_plot(fig, ax)
     ax.set_ylabel("smoothed weekly incidence")
@@ -140,37 +156,55 @@ def plot_incidences(
     return fig, ax
 
 
-def plot_share_known_cases(share_known_cases, title):
-    n_groups = share_known_cases.index.get_level_values("age_group_rki").nunique()
-    colors = sid.get_colors("ordered", n_groups)
+def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
+    colors = [
+        "#4e79a7",  # blue
+        "#76b7b2",  # light blue
+        "#edc948",  # yellow
+        "#f28e2b",  # orange
+        "#e15759",  # red
+        "#b07aa1",  # purple
+    ]
     sns.set_palette(colors)
     fig, ax = plt.subplots(figsize=(10, 5))
 
-    for col in share_known_cases:
-        alpha = 0.6 if col == "mean" else 0.2
-        linewidth = 2.5 if col == "mean" else 1
+    if plot_single_runs:
+        for col in share_known_cases:
+            alpha = 0.6 if col == "mean" else 0.2
+            linewidth = 2.5 if col == "mean" else 1
+            sns.lineplot(
+                data=share_known_cases.reset_index(),
+                x="date",
+                y=col,
+                hue="age_group_rki",
+                linewidth=linewidth,
+                alpha=alpha,
+            )
+
+        handles, labels = ax.get_legend_handles_labels()
+        # Reduce legend to have each age group only once and move it to below the plot
+        x, y, width, height = 0.0, -0.3, 1, 0.2
+        n_groups = share_known_cases.index.get_level_values("age_group_rki").nunique()
+        ax.legend(
+            handles[:n_groups],
+            labels[:n_groups],
+            loc="upper center",
+            bbox_to_anchor=(x, y, width, height),
+            ncol=n_groups,
+        )
+
+    else:
         sns.lineplot(
             data=share_known_cases.reset_index(),
             x="date",
-            y=col,
+            y="mean",
             hue="age_group_rki",
-            linewidth=linewidth,
-            alpha=alpha,
+            linewidth=2.5,
+            alpha=0.6,
         )
 
     fig, ax = style_plot(fig, ax)
     ax.set_title(title)
-
-    # Reduce the legend to have each age group only once and move it to below the plot
-    x, y, width, height = 0.0, -0.3, 1, 0.2
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(
-        handles[:n_groups],
-        labels[:n_groups],
-        loc="upper center",
-        bbox_to_anchor=(x, y, width, height),
-        ncol=n_groups,
-    )
 
     fig.tight_layout()
 

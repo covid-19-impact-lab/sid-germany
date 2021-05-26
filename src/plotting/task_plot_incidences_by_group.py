@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import pytask
 import seaborn as sns
-import sid
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
@@ -21,7 +20,6 @@ from src.simulation.scenario_config import get_named_scenarios
 
 _DEPENDENCIES = {
     "calculate_moments.py": SRC / "calculate_moments.py",
-    "config.py": SRC / "config.py",
     "plotting.py": SRC / "plotting" / "plotting.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
 }
@@ -102,15 +100,27 @@ def _plot_group_incidence(incidences, title, rki):
     n_rows = int(np.ceil(len(groups) / 2))
     fig, axes = plt.subplots(figsize=(12, n_rows * 3), nrows=n_rows, ncols=2)
     axes = axes.flatten()
-    sid_blue = sid.get_colors("categorical", 5)[0]
+
+    if "0-4" in groups:
+        colors = [
+            "#C89D64",
+            "#F1B05D",
+            "#EE8445",
+            "#c87259",
+            "#6c4a4d",
+            "#3C2030",
+        ]
+    else:
+        colors = ["#C89D64"] * len(groups)
+
     for group, ax in zip(groups, axes):
         plot_incidences(
             incidences={group: incidences.loc[group]},
             title=title.format(group=group),
-            colors=[sid_blue],
             name_to_label={group: "simulated"},
             rki=False,
-            plot_scenario_start=False,
+            colors=colors,
+            scenario_starts=None,
             fig=fig,
             ax=ax,
         )

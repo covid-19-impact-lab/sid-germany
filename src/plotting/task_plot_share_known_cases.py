@@ -4,7 +4,6 @@ import pandas as pd
 import pytask
 
 from src.config import SRC
-from src.config import SUMMER_SCENARIO_START
 from src.plotting.plotting import plot_share_known_cases
 from src.simulation.scenario_config import create_path_to_share_known_cases_of_scenario
 from src.simulation.scenario_config import create_path_to_share_known_cases_plot
@@ -12,7 +11,6 @@ from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
 
 _MODULE_DEPENDENCIES = {
-    "config.py": SRC / "config.py",
     "plotting.py": SRC / "plotting" / "plotting.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
 }
@@ -41,12 +39,5 @@ _SIGNATURE, _PARAMETRIZATION = _create_parametrization()
 def task_plot_share_known_cases_per_scenario(depends_on, title, produces):
     share_known_cases = pd.read_pickle(depends_on[0])
     fig, ax = plot_share_known_cases(share_known_cases, title)
-    if "summer" in title.lower():
-        ax.axvline(
-            pd.Timestamp(SUMMER_SCENARIO_START),
-            label="scenario start",
-            color="darkgrey",
-        )
-
     fig.savefig(produces)
     plt.close()

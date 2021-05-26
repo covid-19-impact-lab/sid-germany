@@ -26,7 +26,6 @@ OUT_PATH = BLD / "data" / "vaccinations"
     {
         "data": BLD / "data" / "raw_time_series" / "vaccinations.xlsx",
         "plotting.py": SRC / "plotting" / "plotting.py",
-        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(

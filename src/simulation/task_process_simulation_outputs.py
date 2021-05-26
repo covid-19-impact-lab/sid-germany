@@ -15,7 +15,6 @@ _MODULE_DEPENDENCIES = {
     "calculate_moments.py": SRC / "calculate_moments.py",
     "load_simulation_inputs.py": SRC / "simulation" / "load_simulation_inputs.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
-    "config.py": SRC / "config.py",
 }
 
 
