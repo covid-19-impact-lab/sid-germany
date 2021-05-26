@@ -83,10 +83,14 @@ def rapid_test_demand(
     )
 
     hh_demand = _calculate_hh_member_rapid_test_demand(
-        states=states, hh_member_demand_share=hh_member_demand_share
+        states=states, demand_share=hh_member_demand_share
     )
 
-    rapid_test_demand = work_demand | educ_demand | hh_demand
+    sym_without_pcr_demand = _calculate_own_symptom_rapid_test_demand(
+        states=states, demand_share=hh_member_demand_share
+    )
+
+    rapid_test_demand = work_demand | educ_demand | hh_demand | sym_without_pcr_demand
 
     return rapid_test_demand
 
@@ -178,22 +182,41 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     return work_rapid_test_demand
 
 
-def _calculate_hh_member_rapid_test_demand(states, hh_member_demand_share):
+def _calculate_hh_member_rapid_test_demand(states, demand_share):
     """Calculate demand by household members of positive tested and fresh symptomatics.
 
     Args:
         states (pandas.DataFrame): sid states DataFrame
-        hh_member_demand_share (float): share of household members that request
+        demand_share (float): share of household members that request
             a rapid test in response to an event in their household. Individuals
-            with a quarantine compliance above 1 - hh_member_demand_share request
+            with a quarantine compliance above 1 - demand_share request
             a rapid test.
 
     """
     had_event_in_hh = _determine_if_hh_had_event(states)
-    would_request_test = states["quarantine_compliance"] >= (1 - hh_member_demand_share)
+    would_request_test = states["quarantine_compliance"] >= (1 - demand_share)
     not_tested_within_3_days = states["cd_received_rapid_test"] < -3
     hh_demand = had_event_in_hh & would_request_test & not_tested_within_3_days
     return hh_demand
+
+
+def _calculate_own_symptom_rapid_test_demand(states, demand_share):
+    """Calculate the demand by symptomatic individuals who have no PCR test scheduled.
+
+    We assume that there is no difference in the propensity to take a rapid test
+    irrespective of whether it's own symptoms or symptoms in a household member.
+
+    """
+    complier = states["quarantine_compliance"] >= (1 - demand_share)
+    without_pcr_test = states["cd_received_test_result_true"] < -4
+    fresh_symptomatic = states["cd_symptoms_true"].between(-2, 0)
+    no_rapid_test_since_symptoms = (
+        states["cd_received_rapid_test"] < states["cd_symptoms_true"]
+    )
+    own_symptom_demand = (
+        complier & without_pcr_test & fresh_symptomatic & no_rapid_test_since_symptoms
+    )
+    return own_symptom_demand
 
 
 def _determine_if_hh_had_event(states):
