@@ -74,7 +74,7 @@ PLOTS = {
             "spring_baseline",
             "spring_emergency_care_after_easter_without_school_rapid_tests",
         ],
-        "scenario_starts": None,
+        "scenario_starts": [(AFTER_EASTER, "Easter")],
         "colors": [RED, YELLOW, BLUE, GREEN],
         "plot_start": AFTER_EASTER,
     },

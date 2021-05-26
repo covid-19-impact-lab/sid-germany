@@ -282,7 +282,7 @@ def vaccinate_1_pct_per_day_after_easter(paths, fixed_inputs):
         init_start,
         change_date="2021-04-06",  # Tuesday after Easter Monday
         new_val=0.01,
-        model_name="highest_vacc_share_after_easter",
+        model_name="vaccinate_1_pct_per_day_after_easter",
     )
     scenario_inputs = {
         "vaccination_models": vaccination_models,
