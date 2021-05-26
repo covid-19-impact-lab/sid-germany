@@ -35,7 +35,6 @@ MOSSONG_OUT = BLD / "data" / "mossong_2008"
         / "population_structure"
         / "eu_hh_size_shares.pkl",
         "shared.py": SRC / "shared.py",
-        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(

@@ -5,8 +5,8 @@ from src.calculate_moments import aggregate_and_smooth_period_outcome_sim
 from src.config import SRC
 from src.simulation.load_simulation_inputs import create_period_outputs
 from src.simulation.scenario_config import create_path_to_period_outputs_of_simulation
+from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import create_path_to_share_known_cases_of_scenario
-from src.simulation.scenario_config import create_path_to_weekly_outcome_of_scenario
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
 
@@ -15,7 +15,6 @@ _MODULE_DEPENDENCIES = {
     "calculate_moments.py": SRC / "calculate_moments.py",
     "load_simulation_inputs.py": SRC / "simulation" / "load_simulation_inputs.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
-    "config.py": SRC / "config.py",
 }
 
 
@@ -31,7 +30,7 @@ def _create_create_weekly_incidence_parametrization():
         # this handles the case of 0 seeds, i.e. skipped scenarios
         if depends_on:
             produces = {
-                entry: create_path_to_weekly_outcome_of_scenario(name, entry)
+                entry: create_path_to_scenario_outcome_time_series(name, entry)
                 for entry in period_output_keys
             }
 
@@ -50,16 +49,27 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
     results = {str(seed): pd.read_pickle(depends_on[seed]) for seed in seed_keys}
     for entry, path in produces.items():
         outcome_and_groupby = entry.split("_by_")
-        groupby = None if len(outcome_and_groupby) == 1 else outcome_and_groupby[1]
-        weekly_outcomes = pd.DataFrame()
+        if len(outcome_and_groupby) == 1:
+            outcome, groupby = outcome_and_groupby[0], None
+        else:
+            outcome, groupby = outcome_and_groupby
+        out = pd.DataFrame()
         for seed, res in results.items():
-            weekly_outcomes[seed] = (
-                aggregate_and_smooth_period_outcome_sim(
-                    res, outcome=entry, groupby=groupby, take_logs=False
-                )
-                * 7
+            daily_incidence = aggregate_and_smooth_period_outcome_sim(
+                res, outcome=entry, groupby=groupby, take_logs=False
             )
-        weekly_outcomes.to_pickle(path)
+            if outcome != "ever_vaccinated":
+                # weekly incidence
+                out[seed] = daily_incidence * 7
+            else:
+                # daily share who are vaccinated already
+                if groupby is not None:
+                    dates = daily_incidence.index.levels[0].unique()
+                    groups = daily_incidence.index.levels[1].unique()
+                    full_index = pd.MultiIndex.from_product([dates, groups])
+                    daily_incidence = daily_incidence.reindex(full_index).fillna(0)
+                out[seed] = daily_incidence / 100_000
+        out.to_pickle(path)
 
 
 def _create_scenario_share_known_cases_parametrization():
@@ -71,7 +81,7 @@ def _create_scenario_share_known_cases_parametrization():
     for scenario_name in available_scenarios:
         depends_on = {}
         for outcome in ["currently_infected", "knows_currently_infected"]:
-            depends_on[outcome] = create_path_to_weekly_outcome_of_scenario(
+            depends_on[outcome] = create_path_to_scenario_outcome_time_series(
                 scenario_name, f"{outcome}_by_age_group_rki"
             )
         produces = create_path_to_share_known_cases_of_scenario(scenario_name)

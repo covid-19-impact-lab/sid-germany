@@ -25,7 +25,6 @@ OUT_PATH = BLD / "data" / "testing"
 @pytask.mark.depends_on(
     {
         "data": BLD / "data" / "raw_time_series" / "test_distribution.xlsx",
-        "config.py": SRC / "config.py",
         "plotting.py": SRC / "plotting" / "plotting.py",
         "testing_shared.py": SRC / "testing" / "shared.py",
     }

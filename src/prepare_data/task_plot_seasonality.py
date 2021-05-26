@@ -9,7 +9,6 @@ from src.plotting.plotting import style_plot
 from src.simulation.seasonality import create_seasonality_series
 
 _MODULE_DEPENDENCIES = {
-    "config.py": SRC / "config.py",
     "plotting.py": SRC / "plotting" / "plotting.py",
     "seasonality.py": SRC / "simulation" / "seasonality.py",
 }

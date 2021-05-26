@@ -22,7 +22,6 @@ from src.config import SRC
     {
         "mobility_data": BLD / "data" / "raw_time_series" / "google_mobility.zip",
         "hygiene_data": SRC / "original_data" / "cosmo_hygiene_2021-01-28.csv",
-        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.produces(

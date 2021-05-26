@@ -2,7 +2,7 @@ from pandas.api.types import is_bool_dtype
 
 
 def rapid_test_reactions(states, contacts, params, seed):  # noqa: U100
-    """Make people react to a positive rapid tests"""
+    """Make people react to a positive rapid tests by reducing their contacts."""
     contacts = contacts.copy(deep=True)
 
     # we assume that if you haven't received PCR confirmation within 7 days

@@ -8,7 +8,6 @@ import seaborn as sns
 from estimagic import minimize
 
 from src.config import BLD
-from src.config import SRC
 
 
 def _create_parametrization():
@@ -88,7 +87,6 @@ PARAMETRIZATION = _create_parametrization()
 @pytask.mark.depends_on(
     {
         "data": BLD / "data" / "mossong_2008" / "contact_data.pkl",
-        "config.py": SRC / "config.py",
     }
 )
 @pytask.mark.parametrize("specs, produces", PARAMETRIZATION)

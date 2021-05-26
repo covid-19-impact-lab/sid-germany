@@ -1,13 +1,16 @@
+"""The global config file.
+
+CAREFUL: THIS FILE IS NOT SPECIFIED AS THE DEPENDENCY OF ANY TASK BECAUSE OTHERWISE
+CHANGING THE FAST FLAG WOULD ALWAYS TRIGGER A RERUN OF EVERY TASK.
+IF YOU CHANGE ANYTHING ELSE HERE MAKE SURE TO DO A DISTCLEAN AFTERWARDS OR CAREFULLY
+REMOVE EVERYTHING THAT IMPORTS THE VARIABLE YOU CHANGED.
+
+"""
 import warnings
 from pathlib import Path
 
 import pandas as pd
 import sid
-
-SID_DEPENDENCIES = {}
-for path in Path(sid.__path__[0]).iterdir():
-    if path.suffix == ".py":
-        SID_DEPENDENCIES[f"sid_{path.name}"] = path.resolve()
 
 SUMMER_SCENARIO_START = "2021-05-17"
 
@@ -24,6 +27,12 @@ This means there 30 simulation runs overall.
 If 'full' 20 seeds are used for each scenario.
 
 """
+
+SID_DEPENDENCIES = {}
+for path in Path(sid.__path__[0]).iterdir():
+    if path.suffix == ".py":
+        SID_DEPENDENCIES[f"sid_{path.name}"] = path.resolve()
+
 
 try:
     import pyarrow  # noqa: F401

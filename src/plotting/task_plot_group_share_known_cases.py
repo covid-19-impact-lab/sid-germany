@@ -22,7 +22,7 @@ from src.testing.shared import get_piecewise_linear_interpolation
 @pytask.mark.depends_on(
     {
         "group_share_known_cases": create_path_to_initial_group_share_known_cases(
-            "fall_baseline", pd.Timestamp("2020-12-23")
+            "fall_baseline"
         ),
         "rki_age_groups": BLD / "data" / "population_structure" / "age_groups_rki.pkl",
         "params": BLD / "params.pkl",
@@ -31,7 +31,6 @@ from src.testing.shared import get_piecewise_linear_interpolation
         / "create_initial_conditions.py",
         "scenario_config.py": SRC / "simulation" / "scenario_config.py",
         "plotting.py": SRC / "plotting" / "plotting.py",
-        "config.py": SRC / "config.py",
         "testing_shared.py": SRC / "testing" / "shared.py",
     }
 )

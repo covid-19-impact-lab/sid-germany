@@ -21,6 +21,7 @@ from src.policies.domain_level_policy_blocks import apply_emergency_care_policie
 from src.policies.domain_level_policy_blocks import apply_mixed_educ_policies
 from src.policies.domain_level_policy_blocks import reduce_educ_models
 from src.policies.domain_level_policy_blocks import reduce_work_models
+from src.policies.domain_level_policy_blocks import shut_down_educ_models
 from src.policies.enacted_policies import get_enacted_policies
 from src.policies.enacted_policies import get_school_options_for_strict_emergency_care
 from src.policies.enacted_policies import HYGIENE_MULTIPLIER
@@ -150,6 +151,40 @@ def only_strict_emergency_care_after_april_5(paths, fixed_inputs):
     return out
 
 
+def close_educ_after_april_5(paths, fixed_inputs):
+    start_date = fixed_inputs["duration"]["start"]
+    end_date = fixed_inputs["duration"]["end"]
+    contact_models = fixed_inputs["contact_models"]
+    enacted_policies = get_enacted_policies(contact_models)
+
+    # day after easter monday as the split date belongs to the 2nd dictionary
+    after_easter = "2021-04-06"
+    stays_same, to_change = split_policies(enacted_policies, split_date=after_easter)
+    keep = remove_educ_policies(to_change)
+
+    block_info = {
+        "prefix": "educ_closed_after_april_5",
+        "start_date": after_easter,
+        "end_date": VERY_LATE,
+    }
+    new_educ_policies = shut_down_educ_models(
+        contact_models=contact_models, block_info=block_info, educ_type="all"
+    )
+
+    new_policies = combine_dictionaries([stays_same, keep, new_educ_policies])
+    new_policies = shorten_policies(new_policies, start_date, end_date)
+
+    out = {
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+        "contact_policies": new_policies,
+    }
+    return out
+
+
 # ================================================================================
 
 
@@ -163,7 +198,7 @@ def no_rapid_tests(paths, fixed_inputs):
     return out
 
 
-def no_vaccinations_after_feb_15(paths, fixed_inputs):
+def no_vaccinations_after_feb_10(paths, fixed_inputs):
     start_date = fixed_inputs["duration"]["start"]
     init_start = start_date - pd.Timedelta(31, unit="D")
 
@@ -171,9 +206,9 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
     vaccination_models = _get_vaccination_model_with_new_value_after_date(
         vaccination_shares,
         init_start,
-        change_date="2021-02-15",
+        change_date="2021-02-10",
         new_val=0,
-        model_name="only_vaccinate_until_feb_15",
+        model_name="only_vaccinate_until_feb_10",
     )
     scenario_inputs = {
         "vaccination_models": vaccination_models,
@@ -184,6 +219,13 @@ def no_vaccinations_after_feb_15(paths, fixed_inputs):
         ),
     }
     return scenario_inputs
+
+
+def no_rapid_tests_and_no_vaccinations_after_feb_10(paths, fixed_inputs):
+    out = no_vaccinations_after_feb_10(paths, fixed_inputs)
+    out["rapid_test_models"] = None
+    out["rapid_test_reaction_models"] = None
+    return out
 
 
 def vaccinations_after_summer_scenario_start_as_on_strongest_week_day(
@@ -246,6 +288,36 @@ def vaccinations_after_easter_as_on_strongest_week_day(paths, fixed_inputs):
         change_date="2021-04-06",  # Tuesday after Easter Monday
         new_val=max(vacc_shares.values()),
         model_name="highest_vacc_share_after_easter",
+    )
+    scenario_inputs = {
+        "vaccination_models": vaccination_models,
+        "contact_policies": _baseline_policies(fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return scenario_inputs
+
+
+def vaccinate_1_pct_per_day_after_easter(paths, fixed_inputs):
+    """Increase the vaccination rate to 1% per day.
+
+    There were 3 days on which this many people were vaccinated before May 26.
+
+    This abstracts from possible constraints on the amount of available doses.
+
+    """
+    start_date = fixed_inputs["duration"]["start"]
+    init_start = start_date - pd.Timedelta(31, unit="D")
+
+    vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
+    vaccination_models = _get_vaccination_model_with_new_value_after_date(
+        vaccination_shares,
+        init_start,
+        change_date="2021-04-06",  # Tuesday after Easter Monday
+        new_val=0.01,
+        model_name="vaccinate_1_pct_per_day_after_easter",
     )
     scenario_inputs = {
         "vaccination_models": vaccination_models,

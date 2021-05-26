@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from src.testing.rapid_tests import _calculate_educ_rapid_test_demand
+from src.testing.rapid_tests import _calculate_own_symptom_rapid_test_demand
 from src.testing.rapid_tests import _calculate_work_rapid_test_demand
 from src.testing.rapid_tests import _determine_if_hh_had_event
 from src.testing.rapid_tests import _get_eligible_educ_participants
@@ -201,4 +202,25 @@ def test_determine_if_hh_had_event():
     )
     res = _determine_if_hh_had_event(full)
     expected = pd.concat([expected, expected2, expected3, expected4])
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_calculate_own_symptom_rapid_test_demand():
+    states = pd.DataFrame(
+        columns=[
+            "cd_symptoms_true",
+            "quarantine_compliance",
+            "cd_received_test_result_true",
+            "cd_received_rapid_test",
+        ],
+        data=[
+            [-10, 0.9, -99, -99],  # not symptomatic
+            [-2, 0.05, -99, -99],  # refuser
+            [-1, 0.9, 2, -99],  # pending PCR test
+            [-2, 0.9, -99, -1],  # tested since symptoms
+            [0, 0.9, -99, -5],  # demands test
+        ],
+    )
+    expected = pd.Series([False, False, False, False, True])
+    res = _calculate_own_symptom_rapid_test_demand(states=states, demand_share=0.5)
     pd.testing.assert_series_equal(res, expected)
