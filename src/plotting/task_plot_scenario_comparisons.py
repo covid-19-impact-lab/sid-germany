@@ -65,6 +65,19 @@ PLOTS = {
         "colors": None,
         "plot_start": None,
     },
+    "one_off_and_combined": {
+        "title": "The Effect of Each Channel on {outcome} Separately",
+        "scenarios": [
+            "spring_baseline",
+            "spring_without_rapid_tests_without_vaccinations_without_seasonality",
+            "spring_without_seasonality",
+            "spring_without_vaccines",
+            "spring_without_rapid_tests",
+        ],
+        "scenario_starts": None,
+        "colors": None,
+        "plot_start": None,
+    },
     # Variable Plots
     "school_scenarios": {
         "title": "The Effect of Schools on {outcome}",
