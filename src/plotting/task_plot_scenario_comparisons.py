@@ -33,6 +33,7 @@ BROWN = "#9c755f"
 
 
 PLOTS = {
+    # Fixed Plots
     "fall": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
@@ -56,16 +57,15 @@ PLOTS = {
         "title": "Explaining the Puzzling Decline in {outcome}",
         "scenarios": [
             "spring_baseline",
-            "spring_without_vaccines",
             "spring_without_rapid_tests",
             "spring_without_rapid_tests_and_no_vaccinations",
-            "spring_without_seasonality",
             "spring_without_rapid_tests_without_vaccinations_without_seasonality",
         ],
         "scenario_starts": None,
         "colors": None,
         "plot_start": None,
     },
+    # Variable Plots
     "school_scenarios": {
         "title": "The Effect of Schools on {outcome}",
         "scenarios": [
