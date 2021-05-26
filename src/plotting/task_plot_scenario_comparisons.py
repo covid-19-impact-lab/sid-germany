@@ -85,7 +85,7 @@ PLOTS = {
             "spring_educ_open_after_easter_without_tests",
             "spring_educ_open_after_easter_with_normal_tests",
             "spring_baseline",
-            "spring_emergency_care_after_easter_without_school_rapid_tests",
+            "spring_close_educ_after_easter_without_educ_rapid_tests",
         ],
         "scenario_starts": [(AFTER_EASTER, "Easter")],
         "colors": [RED, YELLOW, BLUE, GREEN],
