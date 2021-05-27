@@ -173,7 +173,7 @@ def meet_hh_members(states, params, seed):  # noqa: U100
             subcategory and name. has a "value" column that contains the probabilities
             to the number of possible columns in the "name" index level.
 
-    """    
+    """
     meet_hh = states["hh_model_group_id"] != -1
     for params_entry, condition in [
         ("symptomatic_multiplier", states["symptomatic"]),

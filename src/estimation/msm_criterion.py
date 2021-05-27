@@ -2,6 +2,7 @@ import functools
 import os
 import shutil
 
+import numpy as np
 import pandas as pd
 from sid import get_msm_func
 from sid import get_simulate_func
@@ -20,6 +21,8 @@ def get_parallelizable_msm_criterion(
     prefix,
     fall_start_date,
     fall_end_date,
+    winter_start_date,
+    winter_end_date,
     spring_start_date,
     spring_end_date,
     mode,
@@ -31,6 +34,8 @@ def get_parallelizable_msm_criterion(
         prefix=prefix,
         fall_start_date=fall_start_date,
         fall_end_date=fall_end_date,
+        winter_start_date=winter_start_date,
+        winter_end_date=winter_end_date,
         spring_start_date=spring_start_date,
         spring_end_date=spring_end_date,
         mode=mode,
@@ -61,6 +66,8 @@ def _build_and_evaluate_msm_func(
     prefix,
     fall_start_date,
     fall_end_date,
+    winter_start_date,
+    winter_end_date,
     spring_start_date,
     spring_end_date,
     mode,
@@ -68,7 +75,8 @@ def _build_and_evaluate_msm_func(
 ):
     """ """
     params_hash = hash_array(params["value"].to_numpy())
-    share_known_path = BLD / "exploration" / f"share_known_{params_hash}_{seed}.pkl"
+    winter_path = BLD / "exploration" / f"winter_share_known_{params_hash}_{seed}.pkl"
+    spring_path = BLD / "exploration" / f"spring_share_known_{params_hash}_{seed}.pkl"
     if mode in ["fall", "combined"]:
         res_fall = _build_and_evaluate_msm_func_one_season(
             params=params,
@@ -78,7 +86,18 @@ def _build_and_evaluate_msm_func(
             end_date=fall_end_date,
             debug=debug,
         )
-        res_fall["share_known_cases"].to_pickle(share_known_path)
+        res_fall["share_known_cases"].to_pickle(winter_path)
+    if mode in ["winter", "combined"]:
+        res_winter = _build_and_evaluate_msm_func_one_season(
+            params=params,
+            seed=seed,
+            prefix=prefix,
+            start_date=winter_start_date,
+            end_date=winter_end_date,
+            debug=debug,
+            group_share_known_case_path=winter_path,
+        )
+        res_winter["share_known_cases"].to_pickle(spring_path)
     if mode in ["spring", "combined"]:
         res_spring = _build_and_evaluate_msm_func_one_season(
             params=params,
@@ -87,37 +106,49 @@ def _build_and_evaluate_msm_func(
             start_date=spring_start_date,
             end_date=spring_end_date,
             debug=debug,
-            group_share_known_case_path=share_known_path,
+            group_share_known_case_path=spring_path,
         )
     if mode == "fall":
         res = res_fall
+    elif mode == "winter":
+        res = res_winter
     elif mode == "spring":
         res = res_spring
     else:
-        fall_length = fall_end_date - fall_start_date
-        spring_length = spring_end_date - spring_start_date
-        weight = fall_length / (fall_length + spring_length)
-        res = _combine_results(res_fall, res_spring, weight)
+        results = [res_fall, res_winter, res_spring]
+        raw_weights = np.array(
+            [
+                (fall_end_date - fall_start_date).days,
+                (winter_end_date - winter_start_date).days,
+                (spring_end_date - spring_start_date).days,
+            ]
+        )
+        weights = raw_weights / raw_weights.sum()
+        res = _combine_results(results, weights)
 
     return res
 
 
-def _combine_results(res0, res1, weight):
+def _combine_results(results, weights):
     combined = {}
+    res0 = results[0]
     for key in res0:
         if key == "value":
-            combined[key] = weight * res0[key] + (1 - weight) * res1[key]
+            values = np.array([res["value"] for res in results])
+            combined[key] = values @ weights
         elif key in ["empirical_moments", "simulated_moments"]:
-            combined[key] = _concatenate_pd_objects_from_dicts(res0[key], res1[key])
+            combined[key] = _concatenate_pd_objects_from_dicts(
+                [res[key] for res in results]
+            )
         else:
-            combined[key] = pd.concat([res0[key], res1[key]])
+            combined[key] = pd.concat([res[key] for res in results])
     return combined
 
 
-def _concatenate_pd_objects_from_dicts(d1, d2):
+def _concatenate_pd_objects_from_dicts(dicts):
     combined = {}
-    for key in d1:
-        combined[key] = pd.concat([d1[key], d2[key]])
+    for key in dicts[0]:
+        combined[key] = pd.concat([d[key] for d in dicts])
     return combined
 
 
