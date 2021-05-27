@@ -59,9 +59,9 @@ def get_named_scenarios():
         n_main_scenario_seeds = 0
         n_side_scenario_seeds = 0
     elif FAST_FLAG == "verify":
-        n_baseline_seeds = 4
-        n_main_scenario_seeds = 2
-        n_side_scenario_seeds = 1
+        n_baseline_seeds = 3
+        n_main_scenario_seeds = 3
+        n_side_scenario_seeds = 3
     elif FAST_FLAG == "full":
         n_baseline_seeds = 25
         n_main_scenario_seeds = 25
