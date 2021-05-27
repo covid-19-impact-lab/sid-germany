@@ -39,8 +39,9 @@ PLOTS = {
     "fall": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
-        "scenario_starts": None,
+        "name_to_label": {"fall_baseline": "simulation"},
         "colors": [BLUE],
+        "scenario_starts": None,
         "plot_start": None,
     },
     "effect_of_rapid_tests": {
@@ -51,6 +52,12 @@ PLOTS = {
             "spring_without_work_rapid_tests",
             "spring_without_school_rapid_tests",
         ],
+        "name_to_label": {
+            "spring_baseline": "with all effects",
+            "spring_without_rapid_tests": "without any rapid tests",
+            "spring_without_work_rapid_tests": "without work rapid tests",
+            "spring_without_school_rapid_tests": "without school rapid tests",
+        },
         "colors": [BLUE, BROWN, RED, ORANGE],
         "scenario_starts": None,
         "plot_start": None,
@@ -61,23 +68,36 @@ PLOTS = {
             "spring_baseline",
             "spring_without_rapid_tests",
             "spring_without_rapid_tests_and_no_vaccinations",
-            "spring_without_rapid_tests_without_vaccinations_without_seasonality",
+            "spring_no_effects",
         ],
-        "scenario_starts": None,
+        "name_to_label": {
+            "spring_baseline": "with all channels",
+            "spring_without_rapid_tests": "with vaccinations and seasonality",
+            "spring_without_rapid_tests_and_no_vaccinations": "with seasonality only",
+            "spring_no_effects": "without any channel",
+        },
         "colors": None,
+        "scenario_starts": None,
         "plot_start": None,
     },
     "one_off_and_combined": {
         "title": "The Effect of Each Channel on {outcome} Separately",
         "scenarios": [
-            "spring_baseline",
-            "spring_without_rapid_tests_without_vaccinations_without_seasonality",
+            "spring_no_effects",
             "spring_without_seasonality",
             "spring_without_vaccines",
             "spring_without_rapid_tests",
+            "spring_baseline",
         ],
-        "scenario_starts": None,
+        "name_to_label": {
+            "spring_no_effects": "without any channel",
+            "spring_without_seasonality": "without seasonality",
+            "spring_without_vaccines": "without vaccines",
+            "spring_without_rapid_tests": "without rapid tests",
+            "spring_baseline": "with all channels",
+        },
         "colors": None,
+        "scenario_starts": None,
         "plot_start": None,
     },
     # Variable Plots
@@ -85,12 +105,18 @@ PLOTS = {
         "title": "The Effect of Schools on {outcome}",
         "scenarios": [
             "spring_educ_open_after_easter_without_tests",
-            "spring_educ_open_after_easter_with_normal_tests",
+            "spring_educ_open_after_easter_with_tests",
             "spring_baseline",
-            "spring_close_educ_after_easter_without_educ_rapid_tests",
+            "spring_close_educ_after_easter",
         ],
-        "scenario_starts": [(AFTER_EASTER, "Easter")],
+        "name_to_label": {
+            "spring_educ_open_after_easter_without_tests": "open schools without tests",
+            "spring_educ_open_after_easter_with_tests": "open schools with tests",
+            "spring_baseline": "current school and test policy",
+            "spring_close_educ_after_easter": "keep schools closed",
+        },
         "colors": [RED, YELLOW, BLUE, GREEN],
+        "scenario_starts": [(AFTER_EASTER, "Easter")],
         "plot_start": AFTER_EASTER,
     },
     "vaccine_scenarios": {
@@ -100,8 +126,14 @@ PLOTS = {
             "spring_vaccinate_1_pct_per_day_after_easter",
             "spring_without_vaccines",
         ],
-        "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
+        "name_to_label": {
+            "spring_baseline": "current vaccination progress",
+            "spring_vaccinate_1_pct_per_day_after_easter": "vaccinate 1 percent "
+            "of the population\n every day after Easter",
+            "spring_without_vaccines": "no vaccinations after February 10th",
+        },
         "colors": [BLUE, GREEN, RED],
+        "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
         "plot_start": None,
     },
     "illustrate_rapid_tests": {
@@ -111,8 +143,13 @@ PLOTS = {
             "spring_without_rapid_tests",
             "spring_start_all_rapid_tests_after_easter",
         ],
-        "scenario_starts": ([(AFTER_EASTER, "Easter")]),
+        "name_to_label": {
+            "spring_baseline": "calibrated rapid test scenario",
+            "spring_without_rapid_tests": "no rapid tests",
+            "spring_start_all_rapid_tests_after_easter": "start rapid tests at Easter",
+        },
         "colors": [BLUE, PURPLE, RED],
+        "scenario_starts": ([(AFTER_EASTER, "Easter")]),
         "plot_start": None,
     },
 }
@@ -176,6 +213,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         outcome,
                         title,
                         colors,
+                        plot_info["name_to_label"],
                         plot_info["scenario_starts"],
                         plot_info["plot_start"],
                         produces,
@@ -183,7 +221,8 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                 )
 
     return (
-        "depends_on, outcome, title, colors, scenario_starts, plot_start, produces",
+        "depends_on, outcome, title, colors, name_to_label, scenario_starts, "
+        "plot_start, produces",
         parametrization,
     )
 
@@ -196,7 +235,14 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization(
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_plot_scenario_comparison(
-    depends_on, outcome, title, colors, scenario_starts, plot_start, produces
+    depends_on,
+    outcome,
+    title,
+    colors,
+    name_to_label,
+    scenario_starts,
+    plot_start,
+    produces,
 ):
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
@@ -205,7 +251,10 @@ def task_plot_scenario_comparison(
     dfs = shorten_dfs(dfs, plot_start)
 
     title = _create_title(title, outcome)
-    name_to_label = create_nice_labels(dfs)
+    name_to_label = create_nice_labels(dfs) if name_to_label is None else name_to_label
+    assert (
+        name_to_label.keys() == dfs.keys()
+    ), "You did not specify a label for every scenario"
 
     fig, ax = plot_incidences(
         incidences=dfs,
