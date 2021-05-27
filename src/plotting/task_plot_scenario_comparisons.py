@@ -252,9 +252,11 @@ def task_plot_scenario_comparison(
 
     title = _create_title(title, outcome)
     name_to_label = create_nice_labels(dfs) if name_to_label is None else name_to_label
+
+    missing_labels = [x for x in dfs.keys() if x not in name_to_label]
     assert (
-        name_to_label.keys() == dfs.keys()
-    ), "You did not specify a label for every scenario"
+        len(missing_labels) == 0
+    ), f"You did not specify a label for {missing_labels}."
 
     fig, ax = plot_incidences(
         incidences=dfs,
