@@ -7,7 +7,6 @@ from sid.colors import get_colors
 
 from src.config import BLD
 from src.config import POPULATION_GERMANY
-from src.config import SRC
 from src.plotting.plotting import style_plot
 
 
@@ -25,7 +24,6 @@ OUT_PATH = BLD / "data" / "vaccinations"
 @pytask.mark.depends_on(
     {
         "data": BLD / "data" / "raw_time_series" / "vaccinations.xlsx",
-        "plotting.py": SRC / "plotting" / "plotting.py",
     }
 )
 @pytask.mark.produces(

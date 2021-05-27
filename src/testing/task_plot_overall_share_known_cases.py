@@ -34,7 +34,7 @@ from src.testing.shared import get_piecewise_linear_interpolation
         / "share_known_cases.png",
     }
 )
-def task_calculate_and_plot_share_known_cases(depends_on, produces):
+def task_plot_overall_share_known_cases(depends_on, produces):
     df_old = pd.read_csv(depends_on["old"])
     old_share_known = _calculate_share_known_cases(df_old)[:"2020-12-24"]
 
