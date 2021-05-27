@@ -18,11 +18,14 @@ from src.simulation.scenario_config import get_named_scenarios
 
 NAMED_SCENARIOS = get_named_scenarios()
 AVAILABLE_SCENARIOS = get_available_scenarios(NAMED_SCENARIOS)
-VACCINATION_SCENARIOS = [
-    name
-    for name in AVAILABLE_SCENARIOS
-    if ("vaccin" in name) or (name == "spring_baseline")
-]
+VACCINATION_SCENARIOS = sorted(
+    {
+        "spring_baseline",
+        "spring_without_vaccines",
+        "spring_vaccinate_1_pct_per_day_after_easter",
+    }.intersection(AVAILABLE_SCENARIOS)
+)
+
 
 _JOINT_DEPENDENCIES = {
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
