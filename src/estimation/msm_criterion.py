@@ -193,7 +193,6 @@ def _build_and_evaluate_msm_func_one_season(
 
     calc_moments = _get_calc_moments()
     rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
-    rki_data = rki_data.loc[sim_start:sim_end]
 
     age_group_info = pd.read_pickle(
         BLD / "data" / "population_structure" / "age_groups_rki.pkl"
@@ -208,6 +207,8 @@ def _build_and_evaluate_msm_func_one_season(
         rki_data,
         age_group_sizes=age_group_info["n"],
         state_sizes=state_sizes,
+        start_date=sim_start,
+        end_date=sim_end,
     )
 
     weight_mat = _get_weighting_matrix(
@@ -343,9 +344,9 @@ def _calculate_share_known_cases(sim_out):
     return avg_share_known
 
 
-def _get_empirical_moments(df, age_group_sizes, state_sizes):
+def _get_empirical_moments(df, age_group_sizes, state_sizes, start_date, end_date):
     """Construct the ``empirical_moments`` argument for ``get_msm_func``."""
-    empirical_moments = {
+    long_empirical_moments = {
         "infections_by_age_group": smoothed_outcome_per_hundred_thousand_rki(
             df=df,
             outcome="newly_infected",
@@ -376,6 +377,9 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes):
             take_logs=True,
         ),
     }
+    empirical_moments = {}
+    for key, moment in long_empirical_moments.items():
+        empirical_moments[key] = moment[start_date: end_date]
     return empirical_moments
 
 
