@@ -65,10 +65,10 @@ PLOTS = {
     "explaining_the_decline": {
         "title": "Explaining the Puzzling Decline in {outcome}",
         "scenarios": [
-            "spring_baseline",
-            "spring_without_rapid_tests",
-            "spring_without_rapid_tests_and_no_vaccinations",
             "spring_no_effects",
+            "spring_without_rapid_tests_and_no_vaccinations",
+            "spring_without_rapid_tests",
+            "spring_baseline",
         ],
         "name_to_label": {
             "spring_baseline": "with all channels",
@@ -129,8 +129,8 @@ PLOTS = {
         "name_to_label": {
             "spring_baseline": "current vaccination progress",
             "spring_vaccinate_1_pct_per_day_after_easter": "vaccinate 1 percent "
-            "of the population\n every day after Easter",
-            "spring_without_vaccines": "no vaccinations after February 10th",
+            "of the\npopulation every day after Easter",
+            "spring_without_vaccines": "stop vaccinations on February 10th",
         },
         "colors": [BLUE, GREEN, RED],
         "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
