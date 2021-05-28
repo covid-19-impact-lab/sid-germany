@@ -21,8 +21,6 @@ def get_parallelizable_msm_criterion(
     prefix,
     fall_start_date,
     fall_end_date,
-    winter_start_date,
-    winter_end_date,
     spring_start_date,
     spring_end_date,
     mode,
@@ -34,8 +32,6 @@ def get_parallelizable_msm_criterion(
         prefix=prefix,
         fall_start_date=fall_start_date,
         fall_end_date=fall_end_date,
-        winter_start_date=winter_start_date,
-        winter_end_date=winter_end_date,
         spring_start_date=spring_start_date,
         spring_end_date=spring_end_date,
         mode=mode,
@@ -66,8 +62,6 @@ def _build_and_evaluate_msm_func(
     prefix,
     fall_start_date,
     fall_end_date,
-    winter_start_date,
-    winter_end_date,
     spring_start_date,
     spring_end_date,
     mode,
@@ -75,8 +69,7 @@ def _build_and_evaluate_msm_func(
 ):
     """ """
     params_hash = hash_array(params["value"].to_numpy())
-    winter_path = BLD / "exploration" / f"winter_share_known_{params_hash}_{seed}.pkl"
-    spring_path = BLD / "exploration" / f"spring_share_known_{params_hash}_{seed}.pkl"
+    share_known_path = BLD / "exploration" / f"share_known_{params_hash}_{seed}.pkl"
     if mode in ["fall", "combined"]:
         res_fall = _build_and_evaluate_msm_func_one_season(
             params=params,
@@ -86,18 +79,8 @@ def _build_and_evaluate_msm_func(
             end_date=fall_end_date,
             debug=debug,
         )
-        res_fall["share_known_cases"].to_pickle(winter_path)
-    if mode in ["winter", "combined"]:
-        res_winter = _build_and_evaluate_msm_func_one_season(
-            params=params,
-            seed=seed,
-            prefix=prefix,
-            start_date=winter_start_date,
-            end_date=winter_end_date,
-            debug=debug,
-            group_share_known_case_path=winter_path,
-        )
-        res_winter["share_known_cases"].to_pickle(spring_path)
+        res_fall["share_known_cases"].to_pickle(share_known_path)
+    
     if mode in ["spring", "combined"]:
         res_spring = _build_and_evaluate_msm_func_one_season(
             params=params,
@@ -106,20 +89,17 @@ def _build_and_evaluate_msm_func(
             start_date=spring_start_date,
             end_date=spring_end_date,
             debug=debug,
-            group_share_known_case_path=spring_path,
+            group_share_known_case_path=share_known_path,
         )
     if mode == "fall":
         res = res_fall
-    elif mode == "winter":
-        res = res_winter
     elif mode == "spring":
         res = res_spring
     else:
-        results = [res_fall, res_winter, res_spring]
+        results = [res_fall, res_spring]
         raw_weights = np.array(
             [
                 (fall_end_date - fall_start_date).days,
-                (winter_end_date - winter_start_date).days,
                 (spring_end_date - spring_start_date).days,
             ]
         )
