@@ -41,9 +41,6 @@ PLOTS = {
         "scenarios": ["fall_baseline"],
         "name_to_label": {"fall_baseline": "simulation"},
         "colors": [BLUE],
-        "scenario_starts": None,
-        "plot_start": None,
-        "rki": None,
     },
     "effect_of_rapid_tests": {
         "title": "Decomposing the Effect of Rapid Tests on {outcome}",
@@ -60,9 +57,6 @@ PLOTS = {
             "spring_without_school_rapid_tests": "without school rapid tests",
         },
         "colors": [BLUE, BROWN, RED, ORANGE],
-        "scenario_starts": None,
-        "plot_start": None,
-        "rki": None,
     },
     "explaining_the_decline": {
         "title": "Explaining the Puzzling Decline in {outcome}",
@@ -79,9 +73,6 @@ PLOTS = {
             "spring_baseline": "with seasonality, vaccinations\nand rapid tests",
         },
         "colors": None,
-        "scenario_starts": None,
-        "plot_start": None,
-        "rki": None,
     },
     "one_off_and_combined": {
         "title": "The Effect of Each Channel on {outcome} Separately",
@@ -100,9 +91,6 @@ PLOTS = {
             "spring_baseline": "with all channels",
         },
         "colors": None,
-        "scenario_starts": None,
-        "plot_start": None,
-        "rki": None,
     },
     # Variable Plots
     "school_scenarios": {
@@ -120,9 +108,7 @@ PLOTS = {
             "spring_close_educ_after_easter": "keep schools closed",
         },
         "colors": [RED, YELLOW, BLUE, GREEN],
-        "scenario_starts": None,
         "plot_start": AFTER_EASTER,
-        "rki": None,
     },
     "vaccine_scenarios": {
         "title": "Effect of Different Vaccination Scenarios on {outcome}",
@@ -139,8 +125,6 @@ PLOTS = {
         },
         "colors": [BLUE, GREEN, RED],
         "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
-        "plot_start": None,
-        "rki": None,
     },
     "illustrate_rapid_tests": {
         "title": "Illustrate the effect of rapid tests on {outcome}",
@@ -156,8 +140,6 @@ PLOTS = {
         },
         "colors": [BLUE, PURPLE, RED],
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
-        "plot_start": None,
-        "rki": None,
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
@@ -220,10 +202,10 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         outcome,
                         title,
                         colors,
-                        plot_info["name_to_label"],
-                        plot_info["scenario_starts"],
-                        plot_info["plot_start"],
-                        plot_info["rki"],
+                        plot_info.get("name_to_label"),
+                        plot_info.get("scenario_starts"),
+                        plot_info.get("plot_start"),
+                        plot_info.get("rki"),
                         produces,
                     )
                 )
