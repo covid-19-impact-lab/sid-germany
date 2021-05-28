@@ -49,6 +49,9 @@ def _create_comparison_dependencies():
 _COMPARISON_DEPENDENCIES = _create_comparison_dependencies()
 
 
+@pytask.mark.skipif(
+    _COMPARISON_DEPENDENCIES, reason="No vaccination scenarios were simulated"
+)
 @pytask.mark.depends_on(_COMPARISON_DEPENDENCIES)
 @pytask.mark.produces(
     BLD / "figures" / "vaccinations" / "comparison_across_scenarios.png"
