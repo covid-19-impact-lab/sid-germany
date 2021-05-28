@@ -65,16 +65,16 @@ PLOTS = {
     "explaining_the_decline": {
         "title": "Explaining the Puzzling Decline in {outcome}",
         "scenarios": [
-            "spring_baseline",
-            "spring_without_rapid_tests",
-            "spring_without_rapid_tests_and_no_vaccinations",
             "spring_no_effects",
+            "spring_without_rapid_tests_and_no_vaccinations",
+            "spring_without_rapid_tests",
+            "spring_baseline",
         ],
         "name_to_label": {
-            "spring_baseline": "with all channels",
-            "spring_without_rapid_tests": "with vaccinations and seasonality",
+            "spring_no_effects": "pessimistic scenario",
             "spring_without_rapid_tests_and_no_vaccinations": "with seasonality only",
-            "spring_no_effects": "without any channel",
+            "spring_without_rapid_tests": "with seasonality and vaccinations",
+            "spring_baseline": "with seasonality, vaccinations\nand rapid tests",
         },
         "colors": None,
         "scenario_starts": None,
@@ -116,7 +116,7 @@ PLOTS = {
             "spring_close_educ_after_easter": "keep schools closed",
         },
         "colors": [RED, YELLOW, BLUE, GREEN],
-        "scenario_starts": [(AFTER_EASTER, "Easter")],
+        "scenario_starts": None,
         "plot_start": AFTER_EASTER,
     },
     "vaccine_scenarios": {
