@@ -43,6 +43,7 @@ PLOTS = {
         "colors": [BLUE],
         "scenario_starts": None,
         "plot_start": None,
+        "rki": None,
     },
     "effect_of_rapid_tests": {
         "title": "Decomposing the Effect of Rapid Tests on {outcome}",
@@ -61,6 +62,7 @@ PLOTS = {
         "colors": [BLUE, BROWN, RED, ORANGE],
         "scenario_starts": None,
         "plot_start": None,
+        "rki": None,
     },
     "explaining_the_decline": {
         "title": "Explaining the Puzzling Decline in {outcome}",
@@ -79,6 +81,7 @@ PLOTS = {
         "colors": None,
         "scenario_starts": None,
         "plot_start": None,
+        "rki": None,
     },
     "one_off_and_combined": {
         "title": "The Effect of Each Channel on {outcome} Separately",
@@ -99,6 +102,7 @@ PLOTS = {
         "colors": None,
         "scenario_starts": None,
         "plot_start": None,
+        "rki": None,
     },
     # Variable Plots
     "school_scenarios": {
@@ -118,6 +122,7 @@ PLOTS = {
         "colors": [RED, YELLOW, BLUE, GREEN],
         "scenario_starts": None,
         "plot_start": AFTER_EASTER,
+        "rki": None,
     },
     "vaccine_scenarios": {
         "title": "Effect of Different Vaccination Scenarios on {outcome}",
@@ -135,6 +140,7 @@ PLOTS = {
         "colors": [BLUE, GREEN, RED],
         "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
         "plot_start": None,
+        "rki": None,
     },
     "illustrate_rapid_tests": {
         "title": "Illustrate the effect of rapid tests on {outcome}",
@@ -151,6 +157,7 @@ PLOTS = {
         "colors": [BLUE, PURPLE, RED],
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
         "plot_start": None,
+        "rki": None,
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
@@ -216,13 +223,14 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         plot_info["name_to_label"],
                         plot_info["scenario_starts"],
                         plot_info["plot_start"],
+                        plot_info["rki"],
                         produces,
                     )
                 )
 
     return (
         "depends_on, outcome, title, colors, name_to_label, scenario_starts, "
-        "plot_start, produces",
+        "plot_start, rki, produces",
         parametrization,
     )
 
@@ -242,8 +250,29 @@ def task_plot_scenario_comparison(
     name_to_label,
     scenario_starts,
     plot_start,
+    rki,
     produces,
 ):
+    """Plot comparisons between the incidences of several scenarios.
+
+    Args:
+        depends_on (dict): keys contain py files and scenario names. Values are
+            paths to the dependencies.
+        outcome (str): name of the incidence to be plotted (new_known_case or
+            newly_infected).
+        title (str): custom title, will be formatted with New Observed Cases or
+            Total New Cases depending on the outcome.
+        colors (dict, optional): keys are scenario names, values are colors.
+        name_to_label (dict, optional): keys are scenario names, values are the
+            labels to be put in the legend. If None they are generated automatically
+            from the scenario names.
+        plot_start (pandas.Timestamp, optional): date on which the plot should start.
+            If None, the plot start is the simulation start.
+        rki (bool, optional): whether to plot the RKI incidences. If not given, the RKI
+            incidences are plotted if the outcome is new_known_case.
+        produces (pathlib.Path): path where to save the figure
+
+    """
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
 
@@ -262,7 +291,7 @@ def task_plot_scenario_comparison(
         incidences=dfs,
         title=title,
         name_to_label=name_to_label,
-        rki=outcome == "new_known_case",
+        rki=outcome == "new_known_case" if rki is None else rki,
         colors=colors,
         scenario_starts=scenario_starts,
     )
