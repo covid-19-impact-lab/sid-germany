@@ -84,7 +84,7 @@ def _get_enacted_other_policies(contact_models):
         ("hard_lockdown", "2021-02-15", 0.4),
         ("hard_lockdown_with_fatige", "2021-02-28", 0.45),
         ("reopening", "2021-04-20", 0.52),
-        ("decline", VERY_LATE, 0.48),
+        ("decline", VERY_LATE, 0.45),
     ]
 
     start_date = VERY_EARLY
