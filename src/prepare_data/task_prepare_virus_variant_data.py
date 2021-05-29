@@ -27,12 +27,16 @@ def task_prepare_virus_variant_data(depends_on, produces):
     rki = pd.read_csv(depends_on["rki"])
     rki = _prepare_rki_data(rki)
     rki.to_csv(produces["rki_strains"])
-    
-    zero_part = pd.Series(0., index=pd.date_range("2020-03-01", "2020-12-31"))
+
+    zero_part = pd.Series(0.0, index=pd.date_range("2020-03-01", "2020-12-31"))
     data_part = rki["share_b117"]
-    b117 = pd.concat([zero_part, data_part]).reindex(pd.date_range("2020-03-01", rki.index.max())).interpolate()
+    b117 = (
+        pd.concat([zero_part, data_part])
+        .reindex(pd.date_range("2020-03-01", rki.index.max()))
+        .interpolate()
+    )
     b117.name = "b117"
-            
+
     virus_shares = {
         "base_strain": 1 - b117,
         "b117": b117,
@@ -55,5 +59,3 @@ def _prepare_rki_data(df):
     df = df.reindex(dates).interpolate()
     df.index.name = "date"
     return df
-
-
