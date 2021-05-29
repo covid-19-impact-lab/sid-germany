@@ -231,7 +231,10 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
 
 
 _SIGNATURE, _PARAMETRIZATION = create_parametrization(
-    PLOTS, NAMED_SCENARIOS, FAST_FLAG, ["newly_infected", "new_known_case"]
+    PLOTS,
+    NAMED_SCENARIOS,
+    FAST_FLAG,
+    ["newly_infected", "new_known_case", "newly_deceased"],
 )
 
 
@@ -299,5 +302,7 @@ def _create_title(title, outcome):
         title_outcome = "Observed New Cases"
     elif outcome == "newly_infected":
         title_outcome = "Total New Cases"
+    elif outcome == "newly_deceased":
+        title_outcome = "New Deaths"
     title = title.format(outcome=title_outcome)
     return title
