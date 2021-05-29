@@ -62,7 +62,7 @@ def task_plot_overall_vaccination_shares_across_scenarios(depends_on, produces):
         for name, path in depends_on.items()
         if name in VACCINATION_SCENARIOS
     }
-    dfs = shorten_dfs(dfs)
+    dfs = shorten_dfs(dfs, rki=False)
     title = "Comparison of Vaccination Rates Across Scenarios"
 
     name_to_label = create_nice_labels(dfs)

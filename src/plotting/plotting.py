@@ -291,7 +291,7 @@ def format_date_axis(ax):
     return ax
 
 
-def shorten_dfs(dfs, plot_start=None):
+def shorten_dfs(dfs, rki, plot_start=None):
     """Shorten all incidence DataFrames.
 
     All DataFrames are shortened to the shortest. In addition, if plot_start is given
@@ -313,6 +313,9 @@ def shorten_dfs(dfs, plot_start=None):
     if plot_start is not None:
         start_date = max(plot_start, start_date)
     end_date = min(df.index.max() for df in dfs.values())
+    if rki:
+        rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
+        end_date = min(end_date, rki_data.index.get_level_values("date").max())
 
     for name, df in dfs.items():
         shortened[name] = df.loc[start_date:end_date].copy(deep=True)

@@ -261,7 +261,7 @@ def task_plot_scenario_comparison(
     depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
 
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
-    dfs = shorten_dfs(dfs, plot_start)
+    dfs = shorten_dfs(dfs, rki=rki, plot_start=plot_start)
 
     title = _create_title(title, outcome)
     name_to_label = create_nice_labels(dfs) if name_to_label is None else name_to_label
