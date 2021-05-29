@@ -43,10 +43,16 @@ BROWN = "#9c755f"
 
 PLOTS = {
     # Fixed Plots
-    "fall": {
+    "fall_fit": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
         "name_to_label": {"fall_baseline": "simulation"},
+        "colors": [BLUE],
+    },
+    "spring_fit": {
+        "title": "{outcome} in Spring",
+        "scenarios": ["spring_baseline"],
+        "name_to_label": {"spring_baseline": "simulation"},
         "colors": [BLUE],
     },
     "effect_of_rapid_tests": {
@@ -84,7 +90,7 @@ PLOTS = {
     "one_off_and_combined": {
         "title": "The Effect of Each Channel on {outcome} Separately",
         "scenarios": [
-            "spring_no_effects",
+            # "spring_no_effects",
             "spring_without_seasonality",
             "spring_without_vaccines",
             "spring_without_rapid_tests",
@@ -100,6 +106,11 @@ PLOTS = {
         "colors": None,
     },
     # Variable Plots
+    "pessimistic_scenario": {
+        "title": "Replicating the Pessimistic Scenarios of March",
+        "scenarios": ["spring_no_effects"],
+        "colors": None,
+    },
     "school_scenarios": {
         "title": "The Effect of Schools on {outcome}",
         "scenarios": SCHOOL_SCENARIOS,
