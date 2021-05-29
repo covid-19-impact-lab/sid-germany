@@ -284,6 +284,7 @@ def create_period_outputs():
         "currently_infected",
         "knows_currently_infected",
         "ever_vaccinated",
+        "newly_deceased",
     ]
     groupbys = ["state", "age_group_rki", None]
 

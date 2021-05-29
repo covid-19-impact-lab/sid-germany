@@ -58,17 +58,19 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
             daily_incidence = aggregate_and_smooth_period_outcome_sim(
                 res, outcome=entry, groupby=groupby, take_logs=False
             )
-            if outcome != "ever_vaccinated":
+            if groupby is not None:
+                # ensure that the index is complete
+                dates = daily_incidence.index.levels[0].unique()
+                groups = daily_incidence.index.levels[1].unique()
+                full_index = pd.MultiIndex.from_product([dates, groups])
+                daily_incidence = daily_incidence.reindex(full_index).fillna(0)
+
+            if outcome == "ever_vaccinated":
+                # share who are vaccinated already
+                out[seed] = daily_incidence / 100_000
+            else:
                 # weekly incidence
                 out[seed] = daily_incidence * 7
-            else:
-                # daily share who are vaccinated already
-                if groupby is not None:
-                    dates = daily_incidence.index.levels[0].unique()
-                    groups = daily_incidence.index.levels[1].unique()
-                    full_index = pd.MultiIndex.from_product([dates, groups])
-                    daily_incidence = daily_incidence.reindex(full_index).fillna(0)
-                out[seed] = daily_incidence / 100_000
         out.to_pickle(path)
 
 

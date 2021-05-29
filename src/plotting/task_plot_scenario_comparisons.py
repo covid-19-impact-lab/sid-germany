@@ -23,6 +23,13 @@ NAMED_SCENARIOS = get_named_scenarios()
 
 AFTER_EASTER = pd.Timestamp("2021-04-06")
 
+SCHOOL_SCENARIOS = [
+    "spring_educ_open_after_easter_without_tests",
+    "spring_educ_open_after_easter_with_tests",
+    "spring_baseline",
+    "spring_close_educ_after_easter",
+]
+
 # Colors
 BLUE = "#4e79a7"
 ORANGE = "#f28e2b"
@@ -36,31 +43,33 @@ BROWN = "#9c755f"
 
 PLOTS = {
     # Fixed Plots
-    "fall": {
+    "fall_fit": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
         "name_to_label": {"fall_baseline": "simulation"},
         "colors": [BLUE],
-        "scenario_starts": None,
-        "plot_start": None,
+    },
+    "spring_fit": {
+        "title": "{outcome} in Spring",
+        "scenarios": ["spring_baseline"],
+        "name_to_label": {"spring_baseline": "simulation"},
+        "colors": [BLUE],
     },
     "effect_of_rapid_tests": {
         "title": "Decomposing the Effect of Rapid Tests on {outcome}",
         "scenarios": [
-            "spring_baseline",
             "spring_without_rapid_tests",
             "spring_without_work_rapid_tests",
             "spring_without_school_rapid_tests",
+            "spring_baseline",
         ],
         "name_to_label": {
-            "spring_baseline": "with all effects",
-            "spring_without_rapid_tests": "without any rapid tests",
-            "spring_without_work_rapid_tests": "without work rapid tests",
+            "spring_without_rapid_tests": "no rapid tests",
             "spring_without_school_rapid_tests": "without school rapid tests",
+            "spring_without_work_rapid_tests": "without work rapid tests",
+            "spring_baseline": "work, school and private rapid tests",
         },
-        "colors": [BLUE, BROWN, RED, ORANGE],
-        "scenario_starts": None,
-        "plot_start": None,
+        "colors": [BROWN, RED, ORANGE, BLUE],
     },
     "explaining_the_decline": {
         "title": "Explaining the Puzzling Decline in {outcome}",
@@ -71,19 +80,17 @@ PLOTS = {
             "spring_baseline",
         ],
         "name_to_label": {
-            "spring_baseline": "with all channels",
-            "spring_without_rapid_tests": "with vaccinations and seasonality",
+            "spring_no_effects": "pessimistic scenario",
             "spring_without_rapid_tests_and_no_vaccinations": "with seasonality only",
-            "spring_no_effects": "without any channel",
+            "spring_without_rapid_tests": "with seasonality and vaccinations",
+            "spring_baseline": "with seasonality, vaccinations\nand rapid tests",
         },
         "colors": None,
-        "scenario_starts": None,
-        "plot_start": None,
     },
     "one_off_and_combined": {
         "title": "The Effect of Each Channel on {outcome} Separately",
         "scenarios": [
-            "spring_no_effects",
+            # "spring_no_effects",
             "spring_without_seasonality",
             "spring_without_vaccines",
             "spring_without_rapid_tests",
@@ -97,18 +104,16 @@ PLOTS = {
             "spring_baseline": "with all channels",
         },
         "colors": None,
-        "scenario_starts": None,
-        "plot_start": None,
     },
     # Variable Plots
+    "pessimistic_scenario": {
+        "title": "Replicating the Pessimistic Scenarios of March",
+        "scenarios": ["spring_no_effects"],
+        "colors": None,
+    },
     "school_scenarios": {
         "title": "The Effect of Schools on {outcome}",
-        "scenarios": [
-            "spring_educ_open_after_easter_without_tests",
-            "spring_educ_open_after_easter_with_tests",
-            "spring_baseline",
-            "spring_close_educ_after_easter",
-        ],
+        "scenarios": SCHOOL_SCENARIOS,
         "name_to_label": {
             "spring_educ_open_after_easter_without_tests": "open schools without tests",
             "spring_educ_open_after_easter_with_tests": "open schools with tests",
@@ -116,7 +121,6 @@ PLOTS = {
             "spring_close_educ_after_easter": "keep schools closed",
         },
         "colors": [RED, YELLOW, BLUE, GREEN],
-        "scenario_starts": [(AFTER_EASTER, "Easter")],
         "plot_start": AFTER_EASTER,
     },
     "vaccine_scenarios": {
@@ -134,10 +138,9 @@ PLOTS = {
         },
         "colors": [BLUE, GREEN, RED],
         "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
-        "plot_start": None,
     },
     "illustrate_rapid_tests": {
-        "title": "Illustrate the effect of rapid tests on {outcome}",
+        "title": "Illustrate the Effect of Rapid Tests on {outcome}",
         "scenarios": [
             "spring_baseline",
             "spring_without_rapid_tests",
@@ -150,7 +153,6 @@ PLOTS = {
         },
         "colors": [BLUE, PURPLE, RED],
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
-        "plot_start": None,
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
@@ -213,22 +215,26 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         outcome,
                         title,
                         colors,
-                        plot_info["name_to_label"],
-                        plot_info["scenario_starts"],
-                        plot_info["plot_start"],
+                        plot_info.get("name_to_label"),
+                        plot_info.get("scenario_starts"),
+                        plot_info.get("plot_start"),
+                        plot_info.get("rki"),
                         produces,
                     )
                 )
 
     return (
         "depends_on, outcome, title, colors, name_to_label, scenario_starts, "
-        "plot_start, produces",
+        "plot_start, rki, produces",
         parametrization,
     )
 
 
 _SIGNATURE, _PARAMETRIZATION = create_parametrization(
-    PLOTS, NAMED_SCENARIOS, FAST_FLAG, ["newly_infected", "new_known_case"]
+    PLOTS,
+    NAMED_SCENARIOS,
+    FAST_FLAG,
+    ["newly_infected", "new_known_case", "newly_deceased"],
 )
 
 
@@ -242,13 +248,34 @@ def task_plot_scenario_comparison(
     name_to_label,
     scenario_starts,
     plot_start,
+    rki,
     produces,
 ):
+    """Plot comparisons between the incidences of several scenarios.
+
+    Args:
+        depends_on (dict): keys contain py files and scenario names. Values are
+            paths to the dependencies.
+        outcome (str): name of the incidence to be plotted (new_known_case or
+            newly_infected).
+        title (str): custom title, will be formatted with New Observed Cases or
+            Total New Cases depending on the outcome.
+        colors (dict, optional): keys are scenario names, values are colors.
+        name_to_label (dict, optional): keys are scenario names, values are the
+            labels to be put in the legend. If None they are generated automatically
+            from the scenario names.
+        plot_start (pandas.Timestamp, optional): date on which the plot should start.
+            If None, the plot start is the simulation start.
+        rki (bool, optional): whether to plot the RKI incidences. If not given, the RKI
+            incidences are plotted if the outcome is new_known_case.
+        produces (pathlib.Path): path where to save the figure
+
+    """
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
 
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
-    dfs = shorten_dfs(dfs, plot_start)
+    dfs = shorten_dfs(dfs, rki=rki, plot_start=plot_start)
 
     title = _create_title(title, outcome)
     name_to_label = create_nice_labels(dfs) if name_to_label is None else name_to_label
@@ -262,7 +289,7 @@ def task_plot_scenario_comparison(
         incidences=dfs,
         title=title,
         name_to_label=name_to_label,
-        rki=outcome == "new_known_case",
+        rki=outcome == "new_known_case" if rki is None else rki,
         colors=colors,
         scenario_starts=scenario_starts,
     )
@@ -275,5 +302,7 @@ def _create_title(title, outcome):
         title_outcome = "Observed New Cases"
     elif outcome == "newly_infected":
         title_outcome = "Total New Cases"
+    elif outcome == "newly_deceased":
+        title_outcome = "New Deaths"
     title = title.format(outcome=title_outcome)
     return title

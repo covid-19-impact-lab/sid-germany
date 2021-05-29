@@ -60,12 +60,12 @@ def get_named_scenarios():
         n_side_scenario_seeds = 0
     elif FAST_FLAG == "verify":
         n_baseline_seeds = 3
-        n_main_scenario_seeds = 3
-        n_side_scenario_seeds = 3
+        n_main_scenario_seeds = 0
+        n_side_scenario_seeds = 0
     elif FAST_FLAG == "full":
         n_baseline_seeds = 25
-        n_main_scenario_seeds = 25
-        n_side_scenario_seeds = 25
+        n_main_scenario_seeds = 0
+        n_side_scenario_seeds = 0
     else:
         raise ValueError(
             f"Unknown FAST_FLAG {FAST_FLAG}."
@@ -126,19 +126,19 @@ def get_named_scenarios():
         "spring_without_rapid_tests": {
             "sim_input_scenario": "no_rapid_tests",
             "params_scenario": "baseline",
-            "n_seeds": n_side_scenario_seeds,
+            "n_seeds": n_baseline_seeds,
             **spring_dates,
         },
         "spring_without_rapid_tests_and_no_vaccinations": {
             "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
             "params_scenario": "baseline",
-            "n_seeds": n_side_scenario_seeds,
+            "n_seeds": n_baseline_seeds,
             **spring_dates,
         },
         "spring_no_effects": {
             "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
             "params_scenario": "no_seasonality",
-            "n_seeds": n_main_scenario_seeds,
+            "n_seeds": n_baseline_seeds,
             **spring_dates,
         },
         "spring_start_all_rapid_tests_after_easter": {
@@ -151,7 +151,7 @@ def get_named_scenarios():
         "spring_close_educ_after_easter": {
             "sim_input_scenario": "close_educ_after_april_5",
             "params_scenario": "no_rapid_tests_at_schools",
-            "n_seeds": n_side_scenario_seeds,
+            "n_seeds": n_baseline_seeds,
             **spring_dates,
         },
         # For the school opening scenarios we assume that the supply of rapid tests is
@@ -161,13 +161,13 @@ def get_named_scenarios():
         "spring_educ_open_after_easter_with_tests": {
             "sim_input_scenario": "open_all_educ_after_easter",
             "params_scenario": "baseline",
-            "n_seeds": n_main_scenario_seeds,
+            "n_seeds": n_baseline_seeds,
             **spring_dates,
         },
         "spring_educ_open_after_easter_without_tests": {
             "sim_input_scenario": "open_all_educ_after_easter",
             "params_scenario": "no_rapid_tests_at_schools",
-            "n_seeds": n_main_scenario_seeds,
+            "n_seeds": n_baseline_seeds,
             **spring_dates,
         },
     }
