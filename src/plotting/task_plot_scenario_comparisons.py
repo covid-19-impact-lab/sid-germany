@@ -23,6 +23,13 @@ NAMED_SCENARIOS = get_named_scenarios()
 
 AFTER_EASTER = pd.Timestamp("2021-04-06")
 
+SCHOOL_SCENARIOS = [
+    "spring_educ_open_after_easter_without_tests",
+    "spring_educ_open_after_easter_with_tests",
+    "spring_baseline",
+    "spring_close_educ_after_easter",
+]
+
 # Colors
 BLUE = "#4e79a7"
 ORANGE = "#f28e2b"
@@ -45,18 +52,18 @@ PLOTS = {
     "effect_of_rapid_tests": {
         "title": "Decomposing the Effect of Rapid Tests on {outcome}",
         "scenarios": [
-            "spring_baseline",
             "spring_without_rapid_tests",
             "spring_without_work_rapid_tests",
             "spring_without_school_rapid_tests",
+            "spring_baseline",
         ],
         "name_to_label": {
-            "spring_baseline": "with all effects",
-            "spring_without_rapid_tests": "without any rapid tests",
-            "spring_without_work_rapid_tests": "without work rapid tests",
+            "spring_without_rapid_tests": "no rapid tests",
             "spring_without_school_rapid_tests": "without school rapid tests",
+            "spring_without_work_rapid_tests": "without work rapid tests",
+            "spring_baseline": "work, school and private rapid tests",
         },
-        "colors": [BLUE, BROWN, RED, ORANGE],
+        "colors": [BROWN, RED, ORANGE, BLUE],
     },
     "explaining_the_decline": {
         "title": "Explaining the Puzzling Decline in {outcome}",
@@ -95,12 +102,7 @@ PLOTS = {
     # Variable Plots
     "school_scenarios": {
         "title": "The Effect of Schools on {outcome}",
-        "scenarios": [
-            "spring_educ_open_after_easter_without_tests",
-            "spring_educ_open_after_easter_with_tests",
-            "spring_baseline",
-            "spring_close_educ_after_easter",
-        ],
+        "scenarios": SCHOOL_SCENARIOS,
         "name_to_label": {
             "spring_educ_open_after_easter_without_tests": "open schools without tests",
             "spring_educ_open_after_easter_with_tests": "open schools with tests",
@@ -127,7 +129,7 @@ PLOTS = {
         "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
     },
     "illustrate_rapid_tests": {
-        "title": "Illustrate the effect of rapid tests on {outcome}",
+        "title": "Illustrate the Effect of Rapid Tests on {outcome}",
         "scenarios": [
             "spring_baseline",
             "spring_without_rapid_tests",
