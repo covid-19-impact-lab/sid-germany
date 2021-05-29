@@ -1,9 +1,5 @@
-import warnings
-
-import numpy as np
 import pandas as pd
 import pytask
-import statsmodels.formula.api as smf
 
 from src.config import BLD
 from src.config import SRC

@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 import seaborn as sns
-from sid import get_colors
 
 from src.config import BLD
 from src.config import SRC
@@ -26,8 +25,6 @@ def task_plot_virus_variant_data(depends_on, produces):
 
     our_b117 = pd.read_pickle(depends_on["virus_shares_dict"])["b117"]
 
-    title = "Share of Virus Variants Over Time"
-
     fig, ax = plt.subplots()
 
     for sr, label, style in zip(
@@ -36,5 +33,7 @@ def task_plot_virus_variant_data(depends_on, produces):
         sr = sr["2020-11-01":"2021-05-01"]
         sns.lineplot(x=sr.index, y=sr, label=label, ax=ax, linestyle=style)
 
+    fig, ax = style_plot(fig, ax)
+    ax.set_title("Share of Virus Variants Over Time")
     fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
     plt.close()
