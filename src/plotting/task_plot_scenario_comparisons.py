@@ -303,7 +303,7 @@ def task_plot_scenario_comparison(
         incidences=dfs,
         title=title,
         name_to_label=name_to_label,
-        rki=outcome == "new_known_case" if rki is None else rki,
+        rki=outcome if rki is None else rki,
         colors=colors,
         scenario_starts=scenario_starts,
     )

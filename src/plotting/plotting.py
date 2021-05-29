@@ -115,13 +115,17 @@ def plot_incidences(
                 linewidth=0.5,
                 alpha=0.1,
             )
-    if rki:
+    if rki is not False:
         rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
         rki_dates = rki_data.index.get_level_values("date")
         keep_dates = rki_dates.intersection(dates).unique().sort_values()
         cropped_rki = rki_data.loc[keep_dates]
         national_data = cropped_rki.groupby("date").sum()
-        rki_col = "newly_infected"
+
+        if rki == "new_known_case":
+            rki_col = "newly_infected"
+        else:
+            rki_col = rki
         label = "official case numbers"
 
         weekly_smoothed = (
