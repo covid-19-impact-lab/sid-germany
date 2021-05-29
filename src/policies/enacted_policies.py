@@ -83,10 +83,10 @@ def _get_enacted_other_policies(contact_models):
         ("christmas_vacation", "2021-01-06", 0.4),
         ("hard_lockdown", "2021-02-15", 0.4),
         ("hard_lockdown_with_fatige", "2021-02-28", 0.45),
-        ("first_reopening", "2021-03-08", 0.525),
-        ("second_reopending", "2021-03-21", 0.55),
-        ("easter_holidays", "2021-04-10", 0.55),
-        ("after_easter", VERY_LATE, 0.45),
+        ("first_reopening", "2021-03-08", 0.52),
+        ("second_reopending", "2021-03-21", 0.52),
+        ("easter_holidays", "2021-04-10", 0.52),
+        ("after_easter", VERY_LATE, 0.5),
     ]
 
     start_date = VERY_EARLY
