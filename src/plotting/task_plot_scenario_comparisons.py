@@ -41,6 +41,15 @@ PURPLE = "#b07aa1"
 BROWN = "#9c755f"
 
 
+OUTCOMES = [
+    "newly_infected",
+    "new_known_case",
+    "newly_deceased",
+    "r_effective",
+    "share_ever_rapid_test",
+    "share_rapid_test_in_last_week",
+]
+
 PLOTS = {
     # Fixed Plots
     "fall_fit": {
@@ -173,12 +182,14 @@ assert set(AVAILABLE_SCENARIOS).issubset(
 )
 
 
-def create_path_for_weekly_outcome_of_scenario(name, fast_flag, outcome, suffix):
-    file_name = f"{fast_flag}_{name}_{outcome}.{suffix}"
+def create_path_for_weekly_outcome_of_scenario(
+    comparison_name, fast_flag, outcome, suffix
+):
+    file_name = f"{fast_flag}_{outcome}.{suffix}"
     if suffix == "png":
-        path = BLD / "figures" / file_name
+        path = BLD / "figures" / "comparisons" / comparison_name / file_name
     elif suffix == "csv":
-        path = BLD / "tables" / file_name
+        path = BLD / "tables" / "comparisons" / comparison_name / file_name
     else:
         raise ValueError(f"Unknown suffix {suffix}. Only 'png' and 'csv' supported")
     return path
@@ -202,7 +213,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
 
             depends_on = {
                 scenario_name: create_path_to_scenario_outcome_time_series(
-                    name=scenario_name, entry=outcome
+                    scenario_name=scenario_name, entry=outcome
                 )
                 for scenario_name in scenarios
             }
@@ -246,7 +257,7 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization(
     PLOTS,
     NAMED_SCENARIOS,
     FAST_FLAG,
-    ["newly_infected", "new_known_case", "newly_deceased"],
+    OUTCOMES,
 )
 
 
@@ -298,12 +309,15 @@ def task_plot_scenario_comparison(
         len(missing_labels) == 0
     ), f"You did not specify a label for {missing_labels}."
 
+    if rki is None:
+        rki = outcome if outcome in ["new_known_case", "newly_deceased"] else False
+
     # create the plots
     fig, ax = plot_incidences(
         incidences=dfs,
         title=title,
         name_to_label=name_to_label,
-        rki=outcome if rki is None else rki,
+        rki=rki,
         colors=colors,
         scenario_starts=scenario_starts,
     )
@@ -327,5 +341,13 @@ def _create_title(title, outcome):
         title_outcome = "Total New Cases"
     elif outcome == "newly_deceased":
         title_outcome = "New Deaths"
+    elif outcome == "share_ever_rapid_test":
+        title_outcome = "Share of People who Have Ever Done a Rapid Test"
+    elif outcome == "share_rapid_test_in_last_week":
+        title_outcome = "Share of People who Have Done a Rapid Test in the Last Week"
+    elif outcome == "r_effective":
+        title_outcome = "the Effective Replication Number"
+    else:
+        title_outcome = outcome.replace("_", " ").title()
     title = title.format(outcome=title_outcome)
     return title

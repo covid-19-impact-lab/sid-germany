@@ -9,6 +9,7 @@ from src.simulation.scenario_config import create_path_to_scenario_outcome_time_
 from src.simulation.scenario_config import create_path_to_share_known_cases_of_scenario
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
+from src.simulation.scenario_config import NON_INCIDENCE_OUTCOMES
 
 
 _MODULE_DEPENDENCIES = {
@@ -18,7 +19,7 @@ _MODULE_DEPENDENCIES = {
 }
 
 
-def _create_create_weekly_incidence_parametrization():
+def _create_create_incidence_parametrization():
     named_scenarios = get_named_scenarios()
     parametrization = []
     period_output_keys = create_period_outputs().keys()
@@ -39,7 +40,7 @@ def _create_create_weekly_incidence_parametrization():
     return "depends_on, produces", parametrization
 
 
-_SIGNATURE, _PARAMETRIZATION = _create_create_weekly_incidence_parametrization()
+_SIGNATURE, _PARAMETRIZATION = _create_create_incidence_parametrization()
 
 
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
@@ -65,11 +66,11 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
                 full_index = pd.MultiIndex.from_product([dates, groups])
                 daily_incidence = daily_incidence.reindex(full_index).fillna(0)
 
-            if outcome == "ever_vaccinated":
-                # share who are vaccinated already
+            # undo scaling for non incidence outcomes
+            if outcome in NON_INCIDENCE_OUTCOMES:
                 out[seed] = daily_incidence / 100_000
+            # for incidence outcomes make incidence weekly
             else:
-                # weekly incidence
                 out[seed] = daily_incidence * 7
         out.to_pickle(path)
 

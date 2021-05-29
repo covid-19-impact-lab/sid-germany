@@ -2,6 +2,7 @@ import warnings
 from functools import partial
 
 import pandas as pd
+from sid.statistics import calculate_r_effective
 
 from src.calculate_moments import calculate_period_outcome_sim
 from src.config import BLD
@@ -278,25 +279,88 @@ def get_simulation_dependencies(debug):
 
 
 def create_period_outputs():
-    outcomes = [
-        "newly_infected",
-        "new_known_case",
-        "currently_infected",
-        "knows_currently_infected",
-        "ever_vaccinated",
-        "newly_deceased",
+    period_outputs = {}
+
+    outcomes_to_average = [
+        "newly_infected",  # 7 day incidence
+        "new_known_case",  # 7 day incidence
+        "newly_deceased",  # 7 day incidence
+        "currently_infected",  # only used for share known cases
+        "knows_currently_infected",  # only used for share known cases
+        "ever_vaccinated",  # daily share
     ]
     groupbys = ["state", "age_group_rki", None]
 
-    period_outputs = {}
-
-    for outcome in outcomes:
+    for outcome in outcomes_to_average:
         for groupby in groupbys:
             gb_str = f"_by_{groupby}" if groupby is not None else ""
-            period_outputs[f"{outcome}{gb_str}"] = partial(
+            period_outputs[outcome + gb_str] = partial(
                 calculate_period_outcome_sim,
                 outcome=outcome,
                 groupby=groupby,
             )
 
+    period_outputs["r_effective"] = calculate_r_effective
+
+    for groupby in groupbys:
+        gb_str = f"_by_{groupby}" if groupby is not None else ""
+        period_outputs["share_ever_rapid_test" + gb_str] = partial(
+            _share_ever_rapid_test, groupby=groupby
+        )
+        period_outputs["share_rapid_test_in_last_week" + gb_str] = partial(
+            _share_rapid_test_in_last_week, groupby=groupby
+        )
+
     return period_outputs
+
+
+def _share_ever_rapid_test(df, groupby):
+    sid_start_value = -9999
+    above_sid_start_value = sid_start_value + 1
+    ever_tested_share_per_group = _share_rapid_test_countdown_between(
+        df=df,
+        groupby=groupby,
+        lower=above_sid_start_value,
+        upper=0,
+        name="ever_had_a_rapid_test",
+    )
+    return ever_tested_share_per_group
+
+
+def _share_rapid_test_in_last_week(df, groupby):
+    tested_last_week = _share_rapid_test_countdown_between(
+        df=df,
+        groupby=groupby,
+        lower=-6,
+        upper=0,
+        name="last_rapid_test_in_the_last_week",
+    )
+    return tested_last_week
+
+
+def _share_rapid_test_countdown_between(df, groupby, lower, upper, name):
+    """Share by groupby with their last rapid test between lower and upper (inclusively).
+
+    Args:
+        df (pandas.DataFrame): states DataFrame
+        groupby (str or None): groupby column
+        lower (int): lower bound (individuals with this value are included)
+        upper (int): upper bound (individuals with this value are included)
+        name (str): name of the Series to be returned
+
+    """
+    if groupby is None:
+        groupby = []
+    elif isinstance(groupby, str):
+        groupby = [groupby]
+
+    within_interval = df["cd_received_rapid_test"].between(lower, upper, inclusive=True)
+    within_interval = within_interval.to_frame(name=name)
+    within_interval["date"] = df["date"]
+    if groupby:
+        within_interval[groupby] = df[groupby]
+
+    grouper = [pd.Grouper(key="date", freq="D")] + groupby
+    within_interval_share_per_group = within_interval.groupby(grouper)[name].mean()
+
+    return within_interval_share_per_group

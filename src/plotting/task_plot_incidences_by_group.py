@@ -9,6 +9,7 @@ from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
 from src.config import SRC
 from src.plotting.plotting import plot_group_time_series
+from src.simulation.load_simulation_inputs import create_period_outputs
 from src.simulation.scenario_config import create_path_to_group_incidence_plot
 from src.simulation.scenario_config import (
     create_path_to_scenario_outcome_time_series,
@@ -16,24 +17,26 @@ from src.simulation.scenario_config import (
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
 
+
 _DEPENDENCIES = {
     "calculate_moments.py": SRC / "calculate_moments.py",
     "plotting.py": SRC / "plotting" / "plotting.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
+    "outputs": SRC / "plotting" / "task_plot_scenario_comparisons.py",
 }
 
 
 def create_parametrization():
     named_scenarios = get_named_scenarios()
     available_scenarios = get_available_scenarios(named_scenarios)
-    outcomes = ["newly_infected", "new_known_case"]
-    groupbys = ["state", "age_group_rki"]
+    entries = [entry for entry in create_period_outputs().keys() if "_by_" in entry]
 
     parametrization = []
-    for scenario, outcome, groupby in product(available_scenarios, outcomes, groupbys):
+    for scenario, entry in product(available_scenarios, entries):
+        outcome, groupby = entry.split("_by_")
         depends_on = {
             "simulated": create_path_to_scenario_outcome_time_series(
-                name=scenario, entry=f"{outcome}_by_{groupby}"
+                scenario_name=scenario, entry=entry
             ),
             "group_sizes_age_groups": (
                 BLD / "data" / "population_structure" / "age_groups_rki.pkl"
@@ -42,7 +45,7 @@ def create_parametrization():
                 BLD / "data" / "population_structure" / "federal_states.parquet"
             ),
         }
-        if outcome == "new_known_case":
+        if outcome in ["new_known_case", "newly_deceased"]:
             depends_on["rki"] = BLD / "data" / "processed_time_series" / "rki.pkl"
 
         produces = create_path_to_group_incidence_plot(

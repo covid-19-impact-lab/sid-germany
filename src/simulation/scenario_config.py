@@ -4,6 +4,14 @@ from src.config import FAST_FLAG
 SPRING_START = "2021-02-10"
 
 
+NON_INCIDENCE_OUTCOMES = [
+    "ever_vaccinated",
+    "r_effective",
+    "share_ever_rapid_test",
+    "share_rapid_test_in_last_week",
+]
+
+
 def create_path_to_period_outputs_of_simulation(name, seed):
     """Return the path to the simulation results with the period outcomes."""
     path = BLD / "simulations" / "period_outputs" / f"{FAST_FLAG}_{name}_{seed}.pkl"
@@ -20,12 +28,15 @@ def create_path_to_share_known_cases_of_scenario(name):
     return BLD / "simulations" / "share_known_cases" / file_name
 
 
-def create_path_to_scenario_outcome_time_series(name, entry):
-    if "ever_vaccinated" in entry:
-        name = f"{FAST_FLAG}_{name}_{entry}_share.pkl"
+def create_path_to_scenario_outcome_time_series(scenario_name, entry):
+    weekly = not any(outcome in entry for outcome in NON_INCIDENCE_OUTCOMES)
+    if weekly:
+        file_name = f"{FAST_FLAG}_{entry}_weekly_incidence.pkl"
+    elif "ever_vaccinated" in entry:
+        file_name = f"{FAST_FLAG}_{entry}_share.pkl"
     else:
-        name = f"{FAST_FLAG}_{name}_{entry}_weekly_incidence.pkl"
-    return BLD / "simulations" / "time_series" / name
+        file_name = f"{FAST_FLAG}_{entry}.pkl"
+    return BLD / "simulations" / "time_series" / scenario_name / file_name
 
 
 def create_path_to_share_known_cases_plot(name, groupby):
