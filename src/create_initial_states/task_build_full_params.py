@@ -317,7 +317,7 @@ def _add_hh_rapid_test_fade_in_params(params):
 
     First tests to self-administer became available starting March 6.
     However, supply was very limited in the beginning (https://bit.ly/3xJCIn8).
-    
+
     According to the COSMO study (https://bit.ly/2QSFAgR, 2021-05-25) 63% would
     have been willing to take a rapid test in the round of 23rd of February 2021 and
     60% in mid December 2020 when an acquaintance would have tested positive.

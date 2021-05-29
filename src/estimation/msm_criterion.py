@@ -80,7 +80,7 @@ def _build_and_evaluate_msm_func(
             debug=debug,
         )
         res_fall["share_known_cases"].to_pickle(share_known_path)
-    
+
     if mode in ["spring", "combined"]:
         res_spring = _build_and_evaluate_msm_func_one_season(
             params=params,
@@ -324,26 +324,20 @@ def _calculate_share_known_cases(sim_out):
     avg_share_known = share_known[end_date - pd.Timedelta(days=28) :].mean()
 
     return avg_share_known
-            
-            
+
+
 def _calculate_period_virus_share(df):
     df = df[["virus_strain", "date", "newly_infected"]]
     df = df[df["newly_infected"]]
     df["b117"] = df["virus_strain"] == "b117"
-    
-    out = (
-        df.groupby([pd.Grouper(key="date", freq="D")])["b117"]
-        .mean()
-        .fillna(0)
-    )
+
+    out = df.groupby([pd.Grouper(key="date", freq="D")])["b117"].mean().fillna(0)
     return out
 
 
 def _aggregate_period_virus_share(sim_out):
     sr = pd.concat(sim_out["period_outputs"]["aggregated_b117_share"])
-    smoothed = sr.rolling(
-        window=7, min_periods=1, center=False
-    ).mean()
+    smoothed = sr.rolling(window=7, min_periods=1, center=False).mean()
     return smoothed
 
 
@@ -379,11 +373,13 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes, start_date, end_dat
             outcome="newly_infected",
             take_logs=True,
         ),
-        "aggregated_b117_share": pd.read_pickle(BLD / "data" / "virus_strains" / "virus_shares_dict.pkl")["b117"]
+        "aggregated_b117_share": pd.read_pickle(
+            BLD / "data" / "virus_strains" / "virus_shares_dict.pkl"
+        )["b117"],
     }
     empirical_moments = {}
     for key, moment in long_empirical_moments.items():
-        empirical_moments[key] = moment[start_date: end_date]
+        empirical_moments[key] = moment[start_date:end_date]
     return empirical_moments
 
 
