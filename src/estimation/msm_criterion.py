@@ -2,6 +2,7 @@ import functools
 import os
 import shutil
 
+import numpy as np
 import pandas as pd
 from sid import get_msm_func
 from sid import get_simulate_func
@@ -79,6 +80,7 @@ def _build_and_evaluate_msm_func(
             debug=debug,
         )
         res_fall["share_known_cases"].to_pickle(share_known_path)
+
     if mode in ["spring", "combined"]:
         res_spring = _build_and_evaluate_msm_func_one_season(
             params=params,
@@ -94,30 +96,39 @@ def _build_and_evaluate_msm_func(
     elif mode == "spring":
         res = res_spring
     else:
-        fall_length = fall_end_date - fall_start_date
-        spring_length = spring_end_date - spring_start_date
-        weight = fall_length / (fall_length + spring_length)
-        res = _combine_results(res_fall, res_spring, weight)
+        results = [res_fall, res_spring]
+        raw_weights = np.array(
+            [
+                (fall_end_date - fall_start_date).days,
+                (spring_end_date - spring_start_date).days,
+            ]
+        )
+        weights = raw_weights / raw_weights.sum()
+        res = _combine_results(results, weights)
 
     return res
 
 
-def _combine_results(res0, res1, weight):
+def _combine_results(results, weights):
     combined = {}
+    res0 = results[0]
     for key in res0:
         if key == "value":
-            combined[key] = weight * res0[key] + (1 - weight) * res1[key]
+            values = np.array([res["value"] for res in results])
+            combined[key] = values @ weights
         elif key in ["empirical_moments", "simulated_moments"]:
-            combined[key] = _concatenate_pd_objects_from_dicts(res0[key], res1[key])
+            combined[key] = _concatenate_pd_objects_from_dicts(
+                [res[key] for res in results]
+            )
         else:
-            combined[key] = pd.concat([res0[key], res1[key]])
+            combined[key] = pd.concat([res[key] for res in results])
     return combined
 
 
-def _concatenate_pd_objects_from_dicts(d1, d2):
+def _concatenate_pd_objects_from_dicts(dicts):
     combined = {}
-    for key in d1:
-        combined[key] = pd.concat([d1[key], d2[key]])
+    for key in dicts[0]:
+        combined[key] = pd.concat([d[key] for d in dicts])
     return combined
 
 
@@ -162,7 +173,6 @@ def _build_and_evaluate_msm_func_one_season(
 
     calc_moments = _get_calc_moments()
     rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
-    rki_data = rki_data.loc[sim_start:sim_end]
 
     age_group_info = pd.read_pickle(
         BLD / "data" / "population_structure" / "age_groups_rki.pkl"
@@ -177,6 +187,8 @@ def _build_and_evaluate_msm_func_one_season(
         rki_data,
         age_group_sizes=age_group_info["n"],
         state_sizes=state_sizes,
+        start_date=sim_start,
+        end_date=sim_end,
     )
 
     weight_mat = _get_weighting_matrix(
@@ -247,6 +259,7 @@ def _get_period_outputs_for_simulate():
             outcome="knows_currently_infected",
             groupby="age_group_rki",
         ),
+        "aggregated_b117_share": _calculate_period_virus_share,
     }
     return additional_outputs
 
@@ -287,6 +300,7 @@ def _get_calc_moments():
             outcome="aggregated_infections",
             take_logs=True,
         ),
+        "aggregated_b117_share": _aggregate_period_virus_share,
     }
     return calc_moments
 
@@ -312,9 +326,24 @@ def _calculate_share_known_cases(sim_out):
     return avg_share_known
 
 
-def _get_empirical_moments(df, age_group_sizes, state_sizes):
+def _calculate_period_virus_share(df):
+    df = df[["virus_strain", "date", "newly_infected"]]
+    df = df[df["newly_infected"]]
+    df["b117"] = df["virus_strain"] == "b117"
+
+    out = df.groupby([pd.Grouper(key="date", freq="D")])["b117"].mean().fillna(0)
+    return out
+
+
+def _aggregate_period_virus_share(sim_out):
+    sr = pd.concat(sim_out["period_outputs"]["aggregated_b117_share"])
+    smoothed = sr.rolling(window=7, min_periods=1, center=False).mean()
+    return smoothed
+
+
+def _get_empirical_moments(df, age_group_sizes, state_sizes, start_date, end_date):
     """Construct the ``empirical_moments`` argument for ``get_msm_func``."""
-    empirical_moments = {
+    long_empirical_moments = {
         "infections_by_age_group": smoothed_outcome_per_hundred_thousand_rki(
             df=df,
             outcome="newly_infected",
@@ -344,7 +373,13 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes):
             outcome="newly_infected",
             take_logs=True,
         ),
+        "aggregated_b117_share": pd.read_pickle(
+            BLD / "data" / "virus_strains" / "virus_shares_dict.pkl"
+        )["b117"],
     }
+    empirical_moments = {}
+    for key, moment in long_empirical_moments.items():
+        empirical_moments[key] = moment[start_date:end_date]
     return empirical_moments
 
 
@@ -376,6 +411,7 @@ def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
         "aggregated_infections_not_log": 1e-10,
         # strong weight because very important
         "aggregated_infections": 2.5,
+        "aggregated_b117_share": 0.1,
     }
 
     weight_mat = get_diag_weighting_matrix(

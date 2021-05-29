@@ -105,8 +105,8 @@ def task_create_full_params(depends_on, produces):
     params = _add_rapid_test_reaction_params(params)
 
     # seasonality parameter
-    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.15
-    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.25
+    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.2
+    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.3
 
     params = _convert_index_to_int_where_possible(params)
     assert params["value"].notnull().all(), "Params contains NaNs."
@@ -318,7 +318,10 @@ def _add_hh_rapid_test_fade_in_params(params):
     First tests to self-administer became available starting March 6.
     However, supply was very limited in the beginning (https://bit.ly/3xJCIn8).
 
-    All values are arbitrary.
+    According to the COSMO study (https://bit.ly/2QSFAgR, 2021-05-25) 63% would
+    have been willing to take a rapid test in the round of 23rd of February 2021 and
+    60% in mid December 2020 when an acquaintance would have tested positive.
+    For own symptoms that share was 70%.
 
     We assume that for Easter visits many people demanded tests for the first
     time and are more likely to test themselves after knowing where to get them.
@@ -327,11 +330,13 @@ def _add_hh_rapid_test_fade_in_params(params):
     params = params.copy(deep=True)
     loc = ("rapid_test_demand", "hh_member_demand")
     params.loc[(*loc, "2020-01-01"), "value"] = 0
-    params.loc[(*loc, "2021-02-01"), "value"] = 0
-    params.loc[(*loc, "2021-03-10"), "value"] = 0.1
-    params.loc[(*loc, "2021-05-15"), "value"] = 0.6
-    params.loc[(*loc, "2021-05-30"), "value"] = 0.7
-    params.loc[(*loc, "2025-12-31"), "value"] = 0.7
+    params.loc[(*loc, "2021-02-28"), "value"] = 0
+    params.loc[(*loc, "2021-03-15"), "value"] = 0.075
+    params.loc[(*loc, "2021-03-31"), "value"] = 0.2
+    params.loc[(*loc, "2021-04-05"), "value"] = 0.2
+    params.loc[(*loc, "2021-04-10"), "value"] = 0.3
+    params.loc[(*loc, "2021-06-15"), "value"] = 0.63
+    params.loc[(*loc, "2025-12-31"), "value"] = 0.63
 
     return params
 
@@ -375,17 +380,22 @@ def _build_share_known_cases_params():
             "2020-07-05": 0.46,
             "2020-08-20": 0.60,
             "2020-09-28": 0.60,
-            "2020-10-28": 0.36,
-            "2020-11-04": 0.36,
-            "2020-11-14": 0.39,
-            "2020-11-17": 0.39,
-            "2020-12-01": 0.31,
-            "2020-12-24": 0.3,
-            "2020-12-25": 0.2,
+            "2020-10-28": 0.38,
+            # "2020-11-04": 0.36,
+            # "2020-11-14": 0.39,
+            # "2020-11-17": 0.39,
+            "2020-11-28": 0.31,
+            "2020-12-22": 0.31,
+            "2020-12-24": 0.22,
             # free parameters
-            "2021-01-01": 0.2,
-            "2021-01-30": 0.31,
-            "2021-07-15": 0.31,
+            "2020-12-27": 0.22,
+            "2021-01-02": 0.28,
+            "2021-01-07": 0.31,
+            "2021-03-28": 0.31,
+            "2021-04-02": 0.22,
+            "2021-04-05": 0.22,
+            "2021-04-07": 0.31,
+            "2021-08-15": 0.31,
         },
         name="value",
     ).to_frame()
