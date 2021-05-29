@@ -173,8 +173,15 @@ assert set(AVAILABLE_SCENARIOS).issubset(
 )
 
 
-def create_path_for_figure_of_weekly_outcome_of_scenario(name, fast_flag, outcome):
-    return BLD / "figures" / f"{fast_flag}_{name}_{outcome}.png"
+def create_path_for_weekly_outcome_of_scenario(name, fast_flag, outcome, suffix):
+    file_name = f"{fast_flag}_{name}_{outcome}.{suffix}"
+    if suffix == "png":
+        path = BLD / "figures" / file_name
+    elif suffix == "csv":
+        path = BLD / "tables" / file_name
+    else:
+        raise ValueError(f"Unknown suffix {suffix}. Only 'png' and 'csv' supported")
+    return path
 
 
 def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
@@ -204,9 +211,14 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
             if missing_scenarios:
                 raise ValueError(f"Some scenarios are missing: {missing_scenarios}.")
 
-            produces = create_path_for_figure_of_weekly_outcome_of_scenario(
-                comparison_name, fast_flag, outcome
-            )
+            produces = {
+                "fig": create_path_for_weekly_outcome_of_scenario(
+                    comparison_name, fast_flag, outcome, "png"
+                ),
+                "data": create_path_for_weekly_outcome_of_scenario(
+                    comparison_name, fast_flag, outcome, "csv"
+                ),
+            }
             # only create a plot if at least one scenario had a seed.
             if depends_on:
                 parametrization.append(
@@ -274,6 +286,7 @@ def task_plot_scenario_comparison(
     # drop py file dependencies
     depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
 
+    # prepare the plot inputs
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
     dfs = shorten_dfs(dfs, rki=rki, plot_start=plot_start)
 
@@ -285,6 +298,7 @@ def task_plot_scenario_comparison(
         len(missing_labels) == 0
     ), f"You did not specify a label for {missing_labels}."
 
+    # create the plots
     fig, ax = plot_incidences(
         incidences=dfs,
         title=title,
@@ -293,8 +307,17 @@ def task_plot_scenario_comparison(
         colors=colors,
         scenario_starts=scenario_starts,
     )
-    plt.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    plt.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
     plt.close()
+
+    # save data for report write up as .csv
+    weekly_mean_values = pd.DataFrame()
+    for key, df in dfs.items():
+        mean_over_seeds = df.mean(axis=1)
+        mean_over_weeks = mean_over_seeds.groupby(pd.Grouper(freq="W")).mean()
+        weekly_mean_values[key] = mean_over_weeks.round(2)
+
+    weekly_mean_values.to_csv(produces["data"])
 
 
 def _create_title(title, outcome):
