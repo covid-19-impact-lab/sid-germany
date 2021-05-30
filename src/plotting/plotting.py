@@ -9,6 +9,7 @@ import seaborn as sns
 
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
+from src.config import SRC
 
 
 plt.rcParams.update(
@@ -56,7 +57,7 @@ def plot_incidences(
     name_to_label,
     colors,
     n_single_runs: Optional[int] = None,
-    rki=False,
+    empirical=False,
     scenario_starts=None,
     fig=None,
     ax=None,
@@ -70,7 +71,7 @@ def plot_incidences(
         n_single_runs (Optional[int]): Number of individual runs with different seeds
             visualize to show statistical uncertainty. Passing ``None`` will plot all
             runs.
-        rki (bool): Whether to plot the rki data.
+        empirical (bool): Whether to plot the empirical data.
         scenario_start (list, optional): the scenario start points
 
     Returns:
@@ -84,7 +85,7 @@ def plot_incidences(
             fig, ax = plt.subplots(figsize=(6, 6))
 
     dates = list(incidences.values())[0].index
-    if rki is not False:
+    if empirical in ["new_known_case", "newly_deceased"]:
         rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
         rki_dates = rki_data.index.get_level_values("date")
         dates = rki_dates.intersection(dates).unique().sort_values()
@@ -103,7 +104,7 @@ def plot_incidences(
     for (name, df), color in zip(incidences.items(), colors):
         sns.lineplot(
             x=dates,
-            y=df.mean(axis=1),
+            y=df.loc[dates].mean(axis=1),
             ax=ax,
             color=color,
             label=name_to_label[name] if name in name_to_label else name,
@@ -114,30 +115,84 @@ def plot_incidences(
         for run in df.columns[:n_single_runs]:
             sns.lineplot(
                 x=dates,
-                y=df[run],
+                y=df.loc[dates, run],
                 ax=ax,
                 color=color,
                 linewidth=0.5,
                 alpha=0.1,
             )
-    if rki is not False:
-        rki_data = rki_data.groupby("date").sum()
-        if rki == "new_known_case":
-            rki_col = "newly_infected"
-        else:
-            rki_col = rki
-        label = "official case numbers"
+    if empirical is not False:
+        if empirical in ["new_known_case", "newly_deceased"]:
+            rki_data = rki_data.groupby("date").sum()
+            if empirical == "new_known_case":
+                rki_col = "newly_infected"
+            else:
+                rki_col = empirical
+            label = "official case numbers"
 
-        weekly_smoothed = (
-            smoothed_outcome_per_hundred_thousand_rki(
-                df=rki_data,
-                outcome=rki_col,
-                take_logs=False,
-                window=7,
+            weekly_smoothed = (
+                smoothed_outcome_per_hundred_thousand_rki(
+                    df=rki_data,
+                    outcome=rki_col,
+                    take_logs=False,
+                    window=7,
+                )
+                * 7
             )
-            * 7
-        )
-        sns.lineplot(x=dates, y=weekly_smoothed[dates], ax=ax, color="k", label=label)
+            sns.lineplot(
+                x=dates, y=weekly_smoothed[dates], ax=ax, color="k", label=label
+            )
+        elif empirical == "ever_had_a_rapid_test":
+            cosmo_share = pd.read_csv(
+                SRC
+                / "original_data"
+                / "testing"
+                / "cosmo_share_ever_had_a_rapid_test.csv",
+                parse_dates=["date"],
+                index_col="date",
+            )
+            label = (
+                "share of Germans reporting to have ever done\n"
+                "a rapid test acc. to the COSMO data"
+            )
+            sns.lineplot(
+                x=cosmo_share.index,
+                y=cosmo_share["share_ever_had_a_rapid_test"],
+                label=label,
+                ax=ax,
+                color="k",
+            )
+        elif empirical == "last_rapid_test_in_the_last_week":
+            cosmo_share = pd.read_csv(
+                SRC
+                / "original_data"
+                / "testing"
+                / "cosmo_selftest_frequency_last_four_weeks.csv",
+                parse_dates=["date"],
+                index_col="date",
+            )
+            weekly_or_more_cols = [
+                "share_more_than_5_tests_per_week",
+                "share_5_tests_per_week",
+                "share_2-4_tests_per_week",
+                "share_weekly",
+            ]
+            cosmo_share = cosmo_share[weekly_or_more_cols].sum(axis=1)
+            label = (
+                "share of Germans reporting to have done\n"
+                "at least one self-administered rapid test per week\n"
+                "within the last four weeks acc. to the COSMO data"
+            )
+            sns.lineplot(
+                x=cosmo_share.index,
+                y=cosmo_share["share_ever_had_a_rapid_test"],
+                label=label,
+                ax=ax,
+                color="k",
+            )
+        else:
+            raise ValueError(f"No known empirical equivalent for {empirical}.")
+
     if scenario_starts is not None:
         if isinstance(scenario_starts, (str, pd.Timestamp)):
             scenario_starts = [(scenario_starts, "scenario start")]
@@ -251,7 +306,7 @@ def plot_group_time_series(df, title, rki=None):
             incidences={group: df.loc[group]},
             title=title.format(group=group),
             name_to_label={group: "simulated"},
-            rki=False,
+            empirical=False,
             colors=colors,
             scenario_starts=None,
             fig=fig,
@@ -293,7 +348,7 @@ def format_date_axis(ax):
     return ax
 
 
-def shorten_dfs(dfs, rki, plot_start=None):
+def shorten_dfs(dfs, empirical, plot_start=None):
     """Shorten all incidence DataFrames.
 
     All DataFrames are shortened to the shortest. In addition, if plot_start is given
@@ -302,6 +357,9 @@ def shorten_dfs(dfs, rki, plot_start=None):
     Args:
         dfs (dict): keys are the names of the scenarios, values are the incidence
             DataFrames.
+        empirical (str or bool): if not False and empirical is the name of an
+            outcome that is in the RKI data, reduce the DataFrames to the time
+            for which RKI data is available.
         plot_start (pd.Timestamp or None): earliest allowed start date for the plot
 
     Returns:
@@ -315,7 +373,7 @@ def shorten_dfs(dfs, rki, plot_start=None):
     if plot_start is not None:
         start_date = max(plot_start, start_date)
     end_date = min(df.index.max() for df in dfs.values())
-    if rki:
+    if empirical and empirical in ["new_known_case", "newly_deceased"]:
         rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
         end_date = min(end_date, rki_data.index.get_level_values("date").max())
 

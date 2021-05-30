@@ -71,7 +71,7 @@ def task_plot_overall_vaccination_shares_across_scenarios(depends_on, produces):
         incidences=dfs,
         title=title,
         name_to_label=name_to_label,
-        rki=False,
+        empirical=False,
         colors=None,
         scenario_starts=None,
     )

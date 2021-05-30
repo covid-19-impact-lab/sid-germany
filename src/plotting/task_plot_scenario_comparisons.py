@@ -258,14 +258,14 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         plot_info.get("name_to_label"),
                         plot_info.get("scenario_starts"),
                         plot_info.get("plot_start"),
-                        plot_info.get("rki"),
+                        plot_info.get("empirical"),
                         produces,
                     )
                 )
 
     return (
         "depends_on, outcome, title, colors, name_to_label, scenario_starts, "
-        "plot_start, rki, produces",
+        "plot_start, empirical, produces",
         parametrization,
     )
 
@@ -288,7 +288,7 @@ def task_plot_scenario_comparison(
     name_to_label,
     scenario_starts,
     plot_start,
-    rki,
+    empirical,
     produces,
 ):
     """Plot comparisons between the incidences of several scenarios.
@@ -306,8 +306,9 @@ def task_plot_scenario_comparison(
             from the scenario names.
         plot_start (pandas.Timestamp, optional): date on which the plot should start.
             If None, the plot start is the simulation start.
-        rki (bool, optional): whether to plot the RKI incidences. If not given, the RKI
-            incidences are plotted if the outcome is new_known_case.
+        empirical (bool, optional): whether to plot empirical equivalents.
+            If not given, they are plotted if an empirical analogue for the outcome is
+            available.
         produces (pathlib.Path): path where to save the figure
 
     """
@@ -316,7 +317,7 @@ def task_plot_scenario_comparison(
 
     # prepare the plot inputs
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
-    dfs = shorten_dfs(dfs, rki=rki, plot_start=plot_start)
+    dfs = shorten_dfs(dfs, empirical=empirical, plot_start=plot_start)
 
     title = _create_title(title, outcome)
     name_to_label = create_nice_labels(dfs) if name_to_label is None else name_to_label
@@ -326,15 +327,21 @@ def task_plot_scenario_comparison(
         len(missing_labels) == 0
     ), f"You did not specify a label for {missing_labels}."
 
-    if rki is None:
-        rki = outcome if outcome in ["new_known_case", "newly_deceased"] else False
+    empirical_available = [
+        "new_known_case",
+        "newly_deceased",
+        "share_ever_rapid_test",
+        "last_rapid_test_in_the_last_week",
+    ]
+    if empirical is None:
+        empirical = outcome if outcome in empirical_available else False
 
     # create the plots
     fig, ax = plot_incidences(
         incidences=dfs,
         title=title,
         name_to_label=name_to_label,
-        rki=rki,
+        empirical=empirical,
         colors=colors,
         scenario_starts=scenario_starts,
     )
