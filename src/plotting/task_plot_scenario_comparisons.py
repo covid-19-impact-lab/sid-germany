@@ -178,6 +178,7 @@ PLOTS = {
             "spring_without_rapid_tests_without_seasonality": "just vaccinations",
             "spring_without_vaccinations_without_seasonality": "just rapid tests",
         },
+        "colors": None,
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
