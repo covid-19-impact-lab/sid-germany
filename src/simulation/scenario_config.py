@@ -1,7 +1,7 @@
 from src.config import BLD
 from src.config import FAST_FLAG
 
-SPRING_START = "2021-02-10"
+SPRING_START = "2021-01-16"
 
 
 NON_INCIDENCE_OUTCOMES = [
@@ -75,8 +75,8 @@ def get_named_scenarios():
         n_side_scenario_seeds = 0
     elif FAST_FLAG == "full":
         n_baseline_seeds = 25
-        n_main_scenario_seeds = 0
-        n_side_scenario_seeds = 0
+        n_main_scenario_seeds = 25
+        n_side_scenario_seeds = 25
     else:
         raise ValueError(
             f"Unknown FAST_FLAG {FAST_FLAG}."
@@ -85,7 +85,7 @@ def get_named_scenarios():
 
     spring_dates = {
         "start_date": SPRING_START,
-        "end_date": "2021-05-31" if FAST_FLAG != "debug" else "2021-05-01",
+        "end_date": "2021-05-31" if FAST_FLAG != "debug" else "2021-04-01",
     }
 
     named_scenarios = {
@@ -93,8 +93,8 @@ def get_named_scenarios():
         "fall_baseline": {
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
-            "start_date": "2020-10-15",
-            "end_date": "2020-12-23",
+            "start_date": "2020-09-15",
+            "end_date": "2021-01-14",
             "n_seeds": n_baseline_seeds,
         },
         "spring_baseline": {
