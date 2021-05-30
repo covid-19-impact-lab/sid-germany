@@ -18,3 +18,6 @@ Probenrückstau
 
 ``detected_and_undetected_infections`` is scraped from
 https://covid19.dunkelzifferradar.de/ (last access: 2021-01-16).
+
+
+COSMO Data stem from: https://projekte.uni-erfurt.de/cosmo2020/web/topic/wissen-verhalten/80-schnelltests/#schnelltestergebnisse-und-pcr-tests

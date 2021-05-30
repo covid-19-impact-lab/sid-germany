@@ -10,7 +10,8 @@ def load_params(scenario):
     Note that many scenarios must be implemented through `load_simulation_inputs`.
 
     Args:
-        scenario (str): One of ["baseline"].
+        scenario (str): name of the function that exists in
+            src/simulation/params_scenarios.py.
 
     Returns:
         params (pandas.DataFrame): params adjusted to the scenario.

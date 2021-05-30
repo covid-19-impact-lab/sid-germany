@@ -27,3 +27,4 @@ recursive-include src *.zip
 recursive-include tests *.parquet
 recursive-include tests *.pkl
 recursive-include tests *.py
+recursive-include src *.png
