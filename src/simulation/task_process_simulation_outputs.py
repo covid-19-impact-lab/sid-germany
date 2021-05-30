@@ -19,7 +19,7 @@ _MODULE_DEPENDENCIES = {
 }
 
 
-def _create_create_incidence_parametrization():
+def _create_incidence_parametrization():
     named_scenarios = get_named_scenarios()
     parametrization = []
     period_output_keys = create_period_outputs().keys()
@@ -40,7 +40,7 @@ def _create_create_incidence_parametrization():
     return "depends_on, produces", parametrization
 
 
-_SIGNATURE, _PARAMETRIZATION = _create_create_incidence_parametrization()
+_SIGNATURE, _PARAMETRIZATION = _create_incidence_parametrization()
 
 
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)

@@ -142,53 +142,15 @@ def plot_incidences(
             sns.lineplot(
                 x=dates, y=weekly_smoothed[dates], ax=ax, color="k", label=label
             )
-        elif empirical == "share_ever_rapid_test":
-            cosmo_share = pd.read_csv(
-                SRC
-                / "original_data"
-                / "testing"
-                / "cosmo_share_ever_had_a_rapid_test.csv",
-                parse_dates=["date"],
-                index_col="date",
-            )
-            label = "share of Germans reporting to have\n" "ever done a rapid test"
-            sns.lineplot(
-                x=cosmo_share.index,
-                y=cosmo_share["share_ever_had_a_rapid_test"],
-                label=label,
-                ax=ax,
-                color="k",
-            )
-        elif empirical == "last_rapid_test_in_the_last_week":
-            cosmo_share = pd.read_csv(
-                SRC
-                / "original_data"
-                / "testing"
-                / "cosmo_selftest_frequency_last_four_weeks.csv",
-                parse_dates=["date"],
-                index_col="date",
-            )
-            weekly_or_more_cols = [
-                "share_more_than_5_tests_per_week",
-                "share_5_tests_per_week",
-                "share_2-4_tests_per_week",
-                "share_weekly",
-            ]
-            cosmo_share = cosmo_share[weekly_or_more_cols].sum(axis=1)
-            label = (
-                "share of Germans reporting to have\n"
-                "done at least one self-administered\n"
-                "rapid test per week within the last 4 weeks"
-            )
-            sns.lineplot(
-                x=cosmo_share.index,
-                y=cosmo_share["share_ever_had_a_rapid_test"],
-                label=label,
-                ax=ax,
-                color="k",
-            )
         else:
-            raise ValueError(f"No known empirical equivalent for {empirical}.")
+            cosmo_share, cosmo_label = _get_cosmo_share(empirical)
+            sns.lineplot(
+                x=cosmo_share.index,
+                y=cosmo_share,
+                label=cosmo_label,
+                ax=ax,
+                color="k",
+            )
 
     if scenario_starts is not None:
         if isinstance(scenario_starts, (str, pd.Timestamp)):
@@ -208,7 +170,7 @@ def plot_incidences(
     elif "share" in title.lower():
         ax.set_ylabel("share")
     elif "Effective" in title:
-        ax.set_ylabel("$R_{effective}$")
+        ax.set_ylabel("$R_t$")
     x, y, width, height = 0.0, -0.3, 1, 0.2
     ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=2)
     fig.tight_layout()
@@ -386,7 +348,7 @@ def shorten_dfs(dfs, empirical, plot_start=None):
     return shortened
 
 
-def create_nice_labels(names):
+def create_automatic_labels(names):
     name_to_label = {}
     for name in names:
         name_to_label[name] = make_name_nice(name)
@@ -415,3 +377,39 @@ def make_name_nice(name):
         nice_name = nice_name.replace(old, new)
     nice_name = nice_name.lstrip("\n")
     return nice_name
+
+
+def _get_cosmo_share(empirical):
+    if empirical == "share_ever_rapid_test":
+        cosmo_share = pd.read_csv(
+            SRC / "original_data" / "testing" / "cosmo_share_ever_had_a_rapid_test.csv",
+            parse_dates=["date"],
+            index_col="date",
+        )
+        label = "share of Germans reporting to have\n" "ever done a rapid test"
+        cosmo_share = cosmo_share["share_ever_had_a_rapid_test"]
+    elif empirical == "last_rapid_test_in_the_last_week":
+        cosmo_share = pd.read_csv(
+            SRC
+            / "original_data"
+            / "testing"
+            / "cosmo_selftest_frequency_last_four_weeks.csv",
+            parse_dates=["date"],
+            index_col="date",
+        )
+        weekly_or_more_cols = [
+            "share_more_than_5_tests_per_week",
+            "share_5_tests_per_week",
+            "share_2-4_tests_per_week",
+            "share_weekly",
+        ]
+        cosmo_share = cosmo_share[weekly_or_more_cols].sum(axis=1)
+        label = (
+            "share of Germans reporting to have\n"
+            "done at least one self-administered\n"
+            "rapid test per week within the last 4 weeks"
+        )
+        cosmo_share = (cosmo_share["share_ever_had_a_rapid_test"],)
+    else:
+        raise ValueError(f"No known empirical equivalent for {empirical}.")
+    return cosmo_share, label

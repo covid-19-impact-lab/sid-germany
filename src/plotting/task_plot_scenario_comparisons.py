@@ -5,7 +5,7 @@ import pytask
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.config import SRC
-from src.plotting.plotting import create_nice_labels
+from src.plotting.plotting import create_automatic_labels
 from src.plotting.plotting import plot_incidences
 from src.plotting.plotting import shorten_dfs
 from src.policies.policy_tools import filter_dictionary
@@ -17,6 +17,14 @@ _MODULE_DEPENDENCIES = {
     "plotting.py": SRC / "plotting" / "plotting.py",
     "policy_tools.py": SRC / "policies" / "policy_tools.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
+    "cosmo_frequency": SRC
+    / "original_data"
+    / "testing"
+    / "cosmo_selftest_frequency_last_four_weeks.csv",
+    "cosmo_ever_rapid_test": SRC
+    / "original_data"
+    / "testing"
+    / "cosmo_share_ever_had_a_rapid_test.csv",
 }
 
 NAMED_SCENARIOS = get_named_scenarios()
@@ -313,14 +321,18 @@ def task_plot_scenario_comparison(
 
     """
     # drop py file dependencies
-    depends_on = filter_dictionary(lambda x: not x.endswith(".py"), depends_on)
+    depends_on = filter_dictionary(
+        lambda x: not x.endswith(".py") and "cosmo" not in x, depends_on
+    )
 
     # prepare the plot inputs
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
     dfs = shorten_dfs(dfs, empirical=empirical, plot_start=plot_start)
 
     title = _create_title(title, outcome)
-    name_to_label = create_nice_labels(dfs) if name_to_label is None else name_to_label
+    name_to_label = (
+        create_automatic_labels(dfs) if name_to_label is None else name_to_label
+    )
 
     missing_labels = [x for x in dfs.keys() if x not in name_to_label]
     assert (
@@ -370,7 +382,7 @@ def _create_title(title, outcome):
     elif outcome == "share_rapid_test_in_last_week":
         title_outcome = "Share of People who Have Done a Rapid Test\nin the Last Week"
     elif outcome == "r_effective":
-        title_outcome = "the Effective Replication Number"
+        title_outcome = "the Effective Reproduction Number"
     else:
         title_outcome = outcome.replace("_", " ").title()
     title = title.format(outcome=title_outcome)

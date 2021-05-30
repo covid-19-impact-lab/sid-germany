@@ -172,8 +172,21 @@ def aggregate_and_smooth_period_outcome_sim(
     per_individual = pd.concat(period_outcomes)
 
     out = _smooth_and_scale_daily_outcome_per_individual(
-        per_individual, window, min_periods, groupby, take_logs, center=center
+        per_individual,
+        window,
+        min_periods,
+        groupby,
+        take_logs,
+        center=center,
+        smooth=outcome != "r_effective",
     )
+
+    if outcome == "r_effective":
+        # discard the first two weeks because otherwise infections from the burn in
+        # period distort the estimate of the effective reproduction number downwards
+        # discard the last two weeks because there people who have become infectious
+        # don't have all meetings to have an accurate n_has_infected counter.
+        out = out[14:-14]
     return out
 
 
@@ -242,6 +255,7 @@ def _smooth_and_scale_daily_outcome_per_individual(
     groupby,
     take_logs,
     center,
+    smooth=True,
 ):
     scaling_factor = 100_000
     scaled = sr * scaling_factor
@@ -252,13 +266,17 @@ def _smooth_and_scale_daily_outcome_per_individual(
         if not isinstance(scaled, (pd.Series, pd.DataFrame)):
             scaled = scaled.compute()
         scaled = scaled.unstack()
-    smoothed = scaled.rolling(
-        window=window, min_periods=min_periods, center=center
-    ).mean()
+
+    if smooth:
+        out = scaled.rolling(
+            window=window, min_periods=min_periods, center=center
+        ).mean()
+    else:
+        out = scaled
 
     if groupby:
-        smoothed = smoothed.stack()
-    return smoothed
+        out = out.stack()
+    return out
 
 
 def _process_inputs(window, min_periods, groupby):

@@ -22,7 +22,7 @@ _DEPENDENCIES = {
     "calculate_moments.py": SRC / "calculate_moments.py",
     "plotting.py": SRC / "plotting" / "plotting.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
-    "outputs": SRC / "plotting" / "task_plot_scenario_comparisons.py",
+    "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
 }
 
 

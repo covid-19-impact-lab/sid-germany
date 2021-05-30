@@ -5,7 +5,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import SRC
-from src.plotting.plotting import create_nice_labels
+from src.plotting.plotting import create_automatic_labels
 from src.plotting.plotting import make_name_nice
 from src.plotting.plotting import plot_group_time_series
 from src.plotting.plotting import plot_incidences
@@ -34,6 +34,14 @@ _JOINT_DEPENDENCIES = {
     / "data"
     / "vaccinations"
     / "vaccination_shares_extended.pkl",
+    "cosmo_frequency": SRC
+    / "original_data"
+    / "testing"
+    / "cosmo_selftest_frequency_last_four_weeks.csv",
+    "cosmo_ever_rapid_test": SRC
+    / "original_data"
+    / "testing"
+    / "cosmo_share_ever_had_a_rapid_test.csv",
 }
 
 
@@ -62,10 +70,10 @@ def task_plot_overall_vaccination_shares_across_scenarios(depends_on, produces):
         for name, path in depends_on.items()
         if name in VACCINATION_SCENARIOS
     }
-    dfs = shorten_dfs(dfs, rki=False)
+    dfs = shorten_dfs(dfs, empirical=False)
     title = "Comparison of Vaccination Rates Across Scenarios"
 
-    name_to_label = create_nice_labels(dfs)
+    name_to_label = create_automatic_labels(dfs)
 
     fig, ax = plot_incidences(
         incidences=dfs,
