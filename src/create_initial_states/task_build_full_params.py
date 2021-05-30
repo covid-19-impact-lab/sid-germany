@@ -101,7 +101,7 @@ def task_create_full_params(depends_on, produces):
 
     params = _add_work_rapid_test_params(params)
     params = _add_educ_rapid_test_fade_in_params(params)
-    params = _add_hh_rapid_test_fade_in_params(params)
+    params = _add_private_rapid_test_demand_fade_in_params(params)
     params = _add_rapid_test_reaction_params(params)
 
     # seasonality parameter
@@ -309,7 +309,7 @@ def _add_educ_rapid_test_fade_in_params(params):
     return params
 
 
-def _add_hh_rapid_test_fade_in_params(params):
+def _add_private_rapid_test_demand_fade_in_params(params):
     """Add the share of people demanding a rapid test after a Covid household event.
 
     Bürgertests started in mid March but demand was very low initially
@@ -328,7 +328,7 @@ def _add_hh_rapid_test_fade_in_params(params):
 
     """
     params = params.copy(deep=True)
-    loc = ("rapid_test_demand", "hh_member_demand")
+    loc = ("rapid_test_demand", "private_demand")
     params.loc[(*loc, "2020-01-01"), "value"] = 0
     params.loc[(*loc, "2021-02-28"), "value"] = 0
     params.loc[(*loc, "2021-03-15"), "value"] = 0.075

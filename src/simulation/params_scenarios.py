@@ -43,14 +43,14 @@ def reduce_rapid_test_demand_after_summer_scenario_start_by_half(params):
     """
     change_date = pd.Timestamp(SUMMER_SCENARIO_START)
 
-    hh_loc = ("rapid_test_demand", "hh_member_demand")
+    private_loc = ("rapid_test_demand", "private_demand")
     work_offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
         old_hh_val = get_piecewise_linear_interpolation_for_one_day(
-            change_date, params.loc[hh_loc]
+            change_date, params.loc[private_loc]
         )
         old_work_offer_share = get_piecewise_linear_interpolation_for_one_day(
             change_date, params.loc[work_offer_loc]
@@ -61,7 +61,7 @@ def reduce_rapid_test_demand_after_summer_scenario_start_by_half(params):
 
     params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params,
-        loc=hh_loc,
+        loc=private_loc,
         change_date=change_date,
         new_val=new_hh_val,
     )
