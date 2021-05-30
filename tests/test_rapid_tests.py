@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from src.testing.rapid_tests import _calculate_educ_rapid_test_demand
+from src.testing.rapid_tests import _calculate_other_meeting_rapid_test_demand
 from src.testing.rapid_tests import _calculate_own_symptom_rapid_test_demand
 from src.testing.rapid_tests import _calculate_work_rapid_test_demand
 from src.testing.rapid_tests import _determine_if_hh_had_event
@@ -223,4 +224,23 @@ def test_calculate_own_symptom_rapid_test_demand():
     )
     expected = pd.Series([False, False, False, False, True])
     res = _calculate_own_symptom_rapid_test_demand(states=states, demand_share=0.5)
+    pd.testing.assert_series_equal(res, expected)
+
+
+def test_calculate_other_meeting_rapid_test_demand():
+    states = pd.DataFrame()
+    states["quarantine_compliance"] = [0.2, 0.8, 0.8, 0.8]
+    states["cd_received_rapid_test"] = [-99, -2, -99, -99]
+
+    contacts = pd.DataFrame()
+    contacts["other_recurrent_weekly_1"] = [3, 3, 0, 3]
+    contacts["other_non_recurrent"] = 2
+    demand_share = 0.3
+
+    res = _calculate_other_meeting_rapid_test_demand(
+        states=states, contacts=contacts, demand_share=demand_share
+    )
+
+    # 0: non-complier, 1: recently tested, 2: no relevant contact, 3: test
+    expected = pd.Series([False, False, False, True])
     pd.testing.assert_series_equal(res, expected)
