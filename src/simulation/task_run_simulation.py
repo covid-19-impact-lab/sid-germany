@@ -50,7 +50,7 @@ def _create_simulation_parametrization():
 
     signature = (
         "depends_on, sim_input_scenario, params_scenario, "
-        + "start_date, end_date, produces, seed"
+        "start_date, end_date, produces, seed"
     )
     return signature, scenarios
 

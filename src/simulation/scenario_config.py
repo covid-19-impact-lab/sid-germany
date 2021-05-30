@@ -137,7 +137,7 @@ def get_named_scenarios():
             "n_seeds": n_main_seeds,
             **spring_dates,
         },
-        "spring_without_rapid_tests_and_no_vaccinations": {
+        "spring_with_only_seasonality": {
             "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
             "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
@@ -150,6 +150,18 @@ def get_named_scenarios():
             **spring_dates,
         },
         "spring_without_vaccinations_without_seasonality": {  # i.e. only rapid tests
+            "sim_input_scenario": "no_vaccinations_after_feb_10",
+            "params_scenario": "no_seasonality",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_with_only_vaccinations": {
+            "sim_input_scenario": "no_rapid_tests",
+            "params_scenario": "no_seasonality",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_with_only_rapid_tests": {
             "sim_input_scenario": "no_vaccinations_after_feb_10",
             "params_scenario": "no_seasonality",
             "n_seeds": n_other_seeds,
