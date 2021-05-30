@@ -71,7 +71,8 @@ def plot_incidences(
         n_single_runs (Optional[int]): Number of individual runs with different seeds
             visualize to show statistical uncertainty. Passing ``None`` will plot all
             runs.
-        empirical (bool): Whether to plot the empirical data.
+        empirical (str or bool): if str name of the empirical outcome to be added to
+        the plot.
         scenario_start (list, optional): the scenario start points
 
     Returns:
@@ -121,7 +122,7 @@ def plot_incidences(
                 linewidth=0.5,
                 alpha=0.1,
             )
-    if empirical is not False:
+    if empirical:
         if empirical in ["new_known_case", "newly_deceased"]:
             rki_data = rki_data.groupby("date").sum()
             if empirical == "new_known_case":

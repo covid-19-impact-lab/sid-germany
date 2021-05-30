@@ -178,15 +178,7 @@ def aggregate_and_smooth_period_outcome_sim(
         groupby,
         take_logs,
         center=center,
-        smooth=outcome != "r_effective",
     )
-
-    if outcome == "r_effective":
-        # discard the first two weeks because otherwise infections from the burn in
-        # period distort the estimate of the effective reproduction number downwards
-        # discard the last two weeks because there people who have become infectious
-        # don't have all meetings to have an accurate n_has_infected counter.
-        out = out[14:-14]
     return out
 
 
@@ -255,7 +247,6 @@ def _smooth_and_scale_daily_outcome_per_individual(
     groupby,
     take_logs,
     center,
-    smooth=True,
 ):
     scaling_factor = 100_000
     scaled = sr * scaling_factor
@@ -267,12 +258,7 @@ def _smooth_and_scale_daily_outcome_per_individual(
             scaled = scaled.compute()
         scaled = scaled.unstack()
 
-    if smooth:
-        out = scaled.rolling(
-            window=window, min_periods=min_periods, center=center
-        ).mean()
-    else:
-        out = scaled
+    out = scaled.rolling(window=window, min_periods=min_periods, center=center).mean()
 
     if groupby:
         out = out.stack()

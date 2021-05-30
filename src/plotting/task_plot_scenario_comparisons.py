@@ -371,19 +371,16 @@ def task_plot_scenario_comparison(
 
 
 def _create_title(title, outcome):
-    if outcome == "new_known_case":
-        title_outcome = "Observed New Cases"
-    elif outcome == "newly_infected":
-        title_outcome = "Total New Cases"
-    elif outcome == "newly_deceased":
-        title_outcome = "New Deaths"
-    elif outcome == "share_ever_rapid_test":
-        title_outcome = "Share of People who Have Ever Done a Rapid Test\n"
-    elif outcome == "share_rapid_test_in_last_week":
-        title_outcome = "Share of People who Have Done a Rapid Test\nin the Last Week"
-    elif outcome == "r_effective":
-        title_outcome = "the Effective Reproduction Number"
-    else:
-        title_outcome = outcome.replace("_", " ").title()
+    name_to_nice_name = {
+        "new_known_case": "Observed New Cases",
+        "newly_infected": "Total New Cases",
+        "newly_deceased": "New Deaths",
+        "share_ever_rapid_test": "Share of People who Have Ever Done a Rapid Test\n",
+        "share_rapid_test_in_last_week": "Share of People who Have Done a Rapid Test\n"
+        + "in the Last Week",
+        "r_effective": "the Effective Reproduction Number",
+    }
+
+    title_outcome = name_to_nice_name.get(outcome, outcome.replace("_", " ").title())
     title = title.format(outcome=title_outcome)
     return title

@@ -281,7 +281,7 @@ def get_simulation_dependencies(debug):
 def create_period_outputs():
     period_outputs = {}
 
-    outcomes_to_average = [
+    incidence_outcomes = [
         "newly_infected",  # 7 day incidence
         "new_known_case",  # 7 day incidence
         "newly_deceased",  # 7 day incidence
@@ -291,7 +291,7 @@ def create_period_outputs():
     ]
     groupbys = ["state", "age_group_rki", None]
 
-    for outcome in outcomes_to_average:
+    for outcome in incidence_outcomes:
         for groupby in groupbys:
             gb_str = f"_by_{groupby}" if groupby is not None else ""
             period_outputs[outcome + gb_str] = partial(
@@ -305,30 +305,29 @@ def create_period_outputs():
     for groupby in groupbys:
         gb_str = f"_by_{groupby}" if groupby is not None else ""
         period_outputs["share_ever_rapid_test" + gb_str] = partial(
-            _share_ever_rapid_test, groupby=groupby
+            _calculate_share_ever_rapid_test, groupby=groupby
         )
         period_outputs["share_rapid_test_in_last_week" + gb_str] = partial(
-            _share_rapid_test_in_last_week, groupby=groupby
+            _calculate_share_rapid_test_in_last_week, groupby=groupby
         )
 
     return period_outputs
 
 
-def _share_ever_rapid_test(df, groupby):
+def _calculate_share_ever_rapid_test(df, groupby):
     sid_start_value = -9999
-    above_sid_start_value = sid_start_value + 1
-    ever_tested_share_per_group = _share_rapid_test_countdown_between(
+    ever_tested_share_per_group = _calculate_share_rapid_test_countdown_between(
         df=df,
         groupby=groupby,
-        lower=above_sid_start_value,
+        lower=sid_start_value + 1,
         upper=0,
         name="ever_had_a_rapid_test",
     )
     return ever_tested_share_per_group
 
 
-def _share_rapid_test_in_last_week(df, groupby):
-    tested_last_week = _share_rapid_test_countdown_between(
+def _calculate_share_rapid_test_in_last_week(df, groupby):
+    tested_last_week = _calculate_share_rapid_test_countdown_between(
         df=df,
         groupby=groupby,
         lower=-6,
@@ -338,7 +337,7 @@ def _share_rapid_test_in_last_week(df, groupby):
     return tested_last_week
 
 
-def _share_rapid_test_countdown_between(df, groupby, lower, upper, name):
+def _calculate_share_rapid_test_countdown_between(df, groupby, lower, upper, name):
     """Share by groupby with their last rapid test between lower and upper (inclusively).
 
     Args:

@@ -56,9 +56,22 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
             outcome, groupby = outcome_and_groupby
         out = pd.DataFrame()
         for seed, res in results.items():
+            window = 7 if outcome != "r_effective" else 1
             daily_incidence = aggregate_and_smooth_period_outcome_sim(
-                res, outcome=entry, groupby=groupby, take_logs=False
+                res,
+                outcome=entry,
+                groupby=groupby,
+                take_logs=False,
+                window=window,
             )
+            if outcome == "r_effective":
+                # discard the first two weeks because otherwise infections from the
+                # burn in period distort the estimate of the effective reproduction
+                # number downwards. We discard the last two weeks because there people
+                # who have become infectious don't have all meetings to have an
+                # accurate n_has_infected counter.
+                daily_incidence = daily_incidence[14:-14]
+
             if groupby is not None:
                 # ensure that the index is complete
                 dates = daily_incidence.index.levels[0].unique()
