@@ -142,7 +142,7 @@ def plot_incidences(
             sns.lineplot(
                 x=dates, y=weekly_smoothed[dates], ax=ax, color="k", label=label
             )
-        elif empirical == "ever_had_a_rapid_test":
+        elif empirical == "share_ever_rapid_test":
             cosmo_share = pd.read_csv(
                 SRC
                 / "original_data"
@@ -151,10 +151,7 @@ def plot_incidences(
                 parse_dates=["date"],
                 index_col="date",
             )
-            label = (
-                "share of Germans reporting to have ever done\n"
-                "a rapid test acc. to the COSMO data"
-            )
+            label = "share of Germans reporting to have\n" "ever done a rapid test"
             sns.lineplot(
                 x=cosmo_share.index,
                 y=cosmo_share["share_ever_had_a_rapid_test"],
@@ -179,9 +176,9 @@ def plot_incidences(
             ]
             cosmo_share = cosmo_share[weekly_or_more_cols].sum(axis=1)
             label = (
-                "share of Germans reporting to have done\n"
-                "at least one self-administered rapid test per week\n"
-                "within the last four weeks acc. to the COSMO data"
+                "share of Germans reporting to have\n"
+                "done at least one self-administered\n"
+                "rapid test per week within the last 4 weeks"
             )
             sns.lineplot(
                 x=cosmo_share.index,
@@ -205,8 +202,13 @@ def plot_incidences(
             )
 
     fig, ax = style_plot(fig, ax)
-    ax.set_ylabel("smoothed weekly incidence")
     ax.set_title(title)
+    if "New Cases" in title or "New Deaths" in title:
+        ax.set_ylabel("smoothed weekly incidence")
+    elif "share" in title.lower():
+        ax.set_ylabel("share")
+    elif "Effective" in title:
+        ax.set_ylabel("$R_{effective}$")
     x, y, width, height = 0.0, -0.3, 1, 0.2
     ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=2)
     fig.tight_layout()
@@ -238,18 +240,6 @@ def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
                 alpha=alpha,
             )
 
-        handles, labels = ax.get_legend_handles_labels()
-        # Reduce legend to have each age group only once and move it to below the plot
-        x, y, width, height = 0.0, -0.3, 1, 0.2
-        n_groups = share_known_cases.index.get_level_values("age_group_rki").nunique()
-        ax.legend(
-            handles[:n_groups],
-            labels[:n_groups],
-            loc="upper center",
-            bbox_to_anchor=(x, y, width, height),
-            ncol=n_groups,
-        )
-
     else:
         sns.lineplot(
             data=share_known_cases.reset_index(),
@@ -262,6 +252,19 @@ def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
 
     fig, ax = style_plot(fig, ax)
     ax.set_title(title)
+
+    # Reduce legend to have each age group only once and move it to below the plot
+    x, y, width, height = 0.0, -0.3, 1, 0.2
+    n_groups = share_known_cases.index.get_level_values("age_group_rki").nunique()
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(
+        handles[:n_groups],
+        labels[:n_groups],
+        loc="upper center",
+        bbox_to_anchor=(x, y, width, height),
+        ncol=n_groups,
+        title=None,
+    )
 
     fig.tight_layout()
 

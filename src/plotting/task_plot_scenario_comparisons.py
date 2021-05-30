@@ -164,8 +164,8 @@ PLOTS = {
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
     "effect_of_channels_on_pessimistic_scenario": {
-        "title": "Effect on {outcome} when Adding\n"
-        "Single Channels on the Pessimistic Scenario",
+        "title": "Effect on {outcome} when Adding"
+        "Single Channels\non the Pessimistic Scenario",
         "scenarios": [
             "spring_no_effects",
             "spring_without_rapid_tests_and_no_vaccinations",
@@ -366,9 +366,9 @@ def _create_title(title, outcome):
     elif outcome == "newly_deceased":
         title_outcome = "New Deaths"
     elif outcome == "share_ever_rapid_test":
-        title_outcome = "Share of People who Have Ever Done a Rapid Test"
+        title_outcome = "Share of People who Have Ever Done a Rapid Test\n"
     elif outcome == "share_rapid_test_in_last_week":
-        title_outcome = "Share of People who Have Done a Rapid Test in the Last Week"
+        title_outcome = "Share of People who Have Done a Rapid Test\nin the Last Week"
     elif outcome == "r_effective":
         title_outcome = "the Effective Replication Number"
     else:
