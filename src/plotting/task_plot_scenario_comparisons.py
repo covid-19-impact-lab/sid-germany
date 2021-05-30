@@ -163,6 +163,22 @@ PLOTS = {
         "colors": [BLUE, PURPLE, RED],
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
+    "effect_of_channels_on_pessimistic_scenario": {
+        "title": "Effect on {outcome} when Adding\n"
+        "Single Channels on the Pessimistic Scenario",
+        "scenarios": [
+            "spring_no_effects",
+            "spring_without_rapid_tests_and_no_vaccinations",
+            "spring_without_rapid_tests_without_seasonality",
+            "spring_without_vaccinations_without_seasonality",
+        ],
+        "name_to_label": {
+            "spring_no_effects": "pessimistic scenario",
+            "spring_without_rapid_tests_and_no_vaccinations": "just seasonality",
+            "spring_without_rapid_tests_without_seasonality": "just vaccinations",
+            "spring_without_vaccinations_without_seasonality": "just rapid tests",
+        },
+    },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
 
