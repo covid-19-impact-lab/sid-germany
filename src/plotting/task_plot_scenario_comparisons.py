@@ -89,7 +89,7 @@ PLOTS = {
         "colors": [BROWN, RED, ORANGE, BLUE],
     },
     "explaining_the_decline": {
-        "title": "Explaining the Puzzling Decline in {outcome}",
+        "title": "Explaining the Puzzling Decline in\n{outcome}",
         "scenarios": [
             "spring_no_effects",
             "spring_without_rapid_tests_and_no_vaccinations",
@@ -172,7 +172,7 @@ PLOTS = {
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
     "effect_of_channels_on_pessimistic_scenario": {
-        "title": "Effect on {outcome} when Adding"
+        "title": "Effect on {outcome} when Adding "
         "Single Channels\non the Pessimistic Scenario",
         "scenarios": [
             "spring_no_effects",
@@ -187,6 +187,7 @@ PLOTS = {
             "spring_without_vaccinations_without_seasonality": "just rapid tests",
         },
         "colors": None,
+        "empirical": False,
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
