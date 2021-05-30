@@ -300,7 +300,7 @@ def create_period_outputs():
                 groupby=groupby,
             )
 
-    period_outputs["r_effective"] = calculate_r_effective
+    period_outputs["r_effective"] = partial(calculate_r_effective, window_length=3)
 
     for groupby in groupbys:
         gb_str = f"_by_{groupby}" if groupby is not None else ""

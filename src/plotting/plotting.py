@@ -83,6 +83,12 @@ def plot_incidences(
         else:
             fig, ax = plt.subplots(figsize=(6, 6))
 
+    dates = list(incidences.values())[0].index
+    if rki is not False:
+        rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
+        rki_dates = rki_data.index.get_level_values("date")
+        dates = rki_dates.intersection(dates).unique().sort_values()
+
     if colors is None:
         colors = [
             "#4e79a7",
@@ -95,7 +101,6 @@ def plot_incidences(
             "#9c755f",
         ]
     for (name, df), color in zip(incidences.items(), colors):
-        dates = df.index
         sns.lineplot(
             x=dates,
             y=df.mean(axis=1),
@@ -116,12 +121,7 @@ def plot_incidences(
                 alpha=0.1,
             )
     if rki is not False:
-        rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
-        rki_dates = rki_data.index.get_level_values("date")
-        keep_dates = rki_dates.intersection(dates).unique().sort_values()
-        cropped_rki = rki_data.loc[keep_dates]
-        national_data = cropped_rki.groupby("date").sum()
-
+        rki_data = rki_data.groupby("date").sum()
         if rki == "new_known_case":
             rki_col = "newly_infected"
         else:
@@ -130,16 +130,14 @@ def plot_incidences(
 
         weekly_smoothed = (
             smoothed_outcome_per_hundred_thousand_rki(
-                df=national_data,
+                df=rki_data,
                 outcome=rki_col,
                 take_logs=False,
                 window=7,
             )
             * 7
         )
-        sns.lineplot(
-            x=weekly_smoothed.index, y=weekly_smoothed, ax=ax, color="k", label=label
-        )
+        sns.lineplot(x=dates, y=weekly_smoothed[dates], ax=ax, color="k", label=label)
     if scenario_starts is not None:
         if isinstance(scenario_starts, (str, pd.Timestamp)):
             scenario_starts = [(scenario_starts, "scenario start")]
