@@ -172,7 +172,12 @@ def aggregate_and_smooth_period_outcome_sim(
     per_individual = pd.concat(period_outcomes)
 
     out = _smooth_and_scale_daily_outcome_per_individual(
-        per_individual, window, min_periods, groupby, take_logs, center=center
+        per_individual,
+        window,
+        min_periods,
+        groupby,
+        take_logs,
+        center=center,
     )
     return out
 
@@ -252,13 +257,12 @@ def _smooth_and_scale_daily_outcome_per_individual(
         if not isinstance(scaled, (pd.Series, pd.DataFrame)):
             scaled = scaled.compute()
         scaled = scaled.unstack()
-    smoothed = scaled.rolling(
-        window=window, min_periods=min_periods, center=center
-    ).mean()
+
+    out = scaled.rolling(window=window, min_periods=min_periods, center=center).mean()
 
     if groupby:
-        smoothed = smoothed.stack()
-    return smoothed
+        out = out.stack()
+    return out
 
 
 def _process_inputs(window, min_periods, groupby):

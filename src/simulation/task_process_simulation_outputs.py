@@ -9,6 +9,7 @@ from src.simulation.scenario_config import create_path_to_scenario_outcome_time_
 from src.simulation.scenario_config import create_path_to_share_known_cases_of_scenario
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
+from src.simulation.scenario_config import NON_INCIDENCE_OUTCOMES
 
 
 _MODULE_DEPENDENCIES = {
@@ -18,7 +19,7 @@ _MODULE_DEPENDENCIES = {
 }
 
 
-def _create_create_weekly_incidence_parametrization():
+def _create_incidence_parametrization():
     named_scenarios = get_named_scenarios()
     parametrization = []
     period_output_keys = create_period_outputs().keys()
@@ -39,7 +40,7 @@ def _create_create_weekly_incidence_parametrization():
     return "depends_on, produces", parametrization
 
 
-_SIGNATURE, _PARAMETRIZATION = _create_create_weekly_incidence_parametrization()
+_SIGNATURE, _PARAMETRIZATION = _create_incidence_parametrization()
 
 
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
@@ -55,20 +56,35 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
             outcome, groupby = outcome_and_groupby
         out = pd.DataFrame()
         for seed, res in results.items():
+            window = 7 if outcome != "r_effective" else 1
             daily_incidence = aggregate_and_smooth_period_outcome_sim(
-                res, outcome=entry, groupby=groupby, take_logs=False
+                res,
+                outcome=entry,
+                groupby=groupby,
+                take_logs=False,
+                window=window,
             )
-            if outcome != "ever_vaccinated":
-                # weekly incidence
-                out[seed] = daily_incidence * 7
-            else:
-                # daily share who are vaccinated already
-                if groupby is not None:
-                    dates = daily_incidence.index.levels[0].unique()
-                    groups = daily_incidence.index.levels[1].unique()
-                    full_index = pd.MultiIndex.from_product([dates, groups])
-                    daily_incidence = daily_incidence.reindex(full_index).fillna(0)
+            if outcome == "r_effective":
+                # discard the first two weeks because otherwise infections from the
+                # burn in period distort the estimate of the effective reproduction
+                # number downwards. We discard the last two weeks because there people
+                # who have become infectious don't have all meetings to have an
+                # accurate n_has_infected counter.
+                daily_incidence = daily_incidence[14:-14]
+
+            if groupby is not None:
+                # ensure that the index is complete
+                dates = daily_incidence.index.levels[0].unique()
+                groups = daily_incidence.index.levels[1].unique()
+                full_index = pd.MultiIndex.from_product([dates, groups])
+                daily_incidence = daily_incidence.reindex(full_index).fillna(0)
+
+            # undo scaling for non incidence outcomes
+            if outcome in NON_INCIDENCE_OUTCOMES:
                 out[seed] = daily_incidence / 100_000
+            # for incidence outcomes make incidence weekly
+            else:
+                out[seed] = daily_incidence * 7
         out.to_pickle(path)
 
 
