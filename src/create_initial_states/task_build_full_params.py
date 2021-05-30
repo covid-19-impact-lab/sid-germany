@@ -332,9 +332,9 @@ def _add_private_rapid_test_demand_fade_in_params(params):
     params.loc[(*loc, "2020-01-01"), "value"] = 0
     params.loc[(*loc, "2021-02-28"), "value"] = 0
     params.loc[(*loc, "2021-03-15"), "value"] = 0.1
-    params.loc[(*loc, "2021-03-31"), "value"] = 0.25
-    params.loc[(*loc, "2021-04-06"), "value"] = 0.25
-    params.loc[(*loc, "2021-04-10"), "value"] = 0.4
+    params.loc[(*loc, "2021-03-31"), "value"] = 0.225
+    params.loc[(*loc, "2021-04-06"), "value"] = 0.225
+    params.loc[(*loc, "2021-04-15"), "value"] = 0.4
     params.loc[(*loc, "2021-05-20"), "value"] = 0.63
     params.loc[(*loc, "2025-12-31"), "value"] = 0.63
 
