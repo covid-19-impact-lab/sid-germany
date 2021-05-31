@@ -345,7 +345,7 @@ def task_plot_scenario_comparison(
         "new_known_case",
         "newly_deceased",
         "share_ever_rapid_test",
-        "last_rapid_test_in_the_last_week",
+        "share_rapid_test_in_last_week",
     ]
     if empirical is None:
         empirical = outcome if outcome in empirical_available else False

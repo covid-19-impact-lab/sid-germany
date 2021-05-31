@@ -389,7 +389,7 @@ def _get_cosmo_share(empirical):
         )
         label = "share of Germans reporting to have\n" "ever done a rapid test"
         cosmo_share = cosmo_share["share_ever_had_a_rapid_test"]
-    elif empirical == "last_rapid_test_in_the_last_week":
+    elif empirical == "share_rapid_test_in_last_week":
         cosmo_share = pd.read_csv(
             SRC
             / "original_data"
@@ -410,7 +410,6 @@ def _get_cosmo_share(empirical):
             "done at least one self-administered\n"
             "rapid test per week within the last 4 weeks"
         )
-        cosmo_share = (cosmo_share["share_ever_had_a_rapid_test"],)
     else:
         raise ValueError(f"No known empirical equivalent for {empirical}.")
     return cosmo_share, label
