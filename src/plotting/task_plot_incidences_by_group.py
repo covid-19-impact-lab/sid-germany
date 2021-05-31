@@ -72,10 +72,13 @@ def task_plot_age_group_incidences_in_one_scenario(depends_on, produces, groupby
             group_sizes = state_info.set_index("name")["population"]
 
         rki_data = pd.read_pickle(depends_on["rki"])
+        rki_outcome = (
+            "newly_infected" if "new_known_case" in produces.name else "newly_deceased"
+        )
         rki = (
             smoothed_outcome_per_hundred_thousand_rki(
                 df=rki_data,
-                outcome="newly_infected",
+                outcome=rki_outcome,
                 groupby=groupby,
                 group_sizes=group_sizes,
                 take_logs=False,
