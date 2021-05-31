@@ -13,7 +13,7 @@ def start_all_rapid_tests_after_easter(params):
         "share_workers_receiving_offer",
         "educ_worker_shares",
         "student_shares",
-        "hh_member_demand",
+        "private_demand",
     ]
     new = params.copy(deep=True)
 
