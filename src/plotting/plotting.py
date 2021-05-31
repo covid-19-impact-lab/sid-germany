@@ -178,7 +178,7 @@ def plot_incidences(
     return fig, ax
 
 
-def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
+def plot_share_known_cases(share_known_cases, title, plot_single_runs=True):
     colors = [
         "#4e79a7",  # blue
         "#76b7b2",  # light blue
