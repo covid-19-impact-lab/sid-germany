@@ -59,7 +59,7 @@ OUTCOMES = [
 ]
 
 PLOTS = {
-    # Fixed Plots
+    # Main Plots (Fixed)
     "fall_fit": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
@@ -72,6 +72,37 @@ PLOTS = {
         "name_to_label": {"spring_baseline": "simulation"},
         "colors": [BLUE],
     },
+    "one_off_and_combined": {
+        "title": "The Effect of Each Channel on {outcome} Separately",
+        "scenarios": [
+            "spring_no_effects",
+            "spring_without_seasonality",
+            "spring_without_vaccines",
+            "spring_without_rapid_tests",
+            "spring_baseline",
+        ],
+        "name_to_label": {
+            "spring_no_effects": "without any channel",
+            "spring_without_seasonality": "without seasonality",
+            "spring_without_vaccines": "without vaccines",
+            "spring_without_rapid_tests": "without rapid tests",
+            "spring_baseline": "with all channels",
+        },
+        "colors": None,
+    },
+    "school_scenarios": {
+        "title": "The Effect of Schools on {outcome}",
+        "scenarios": SCHOOL_SCENARIOS,
+        "name_to_label": {
+            "spring_educ_open_after_easter_without_tests": "open schools without tests",
+            "spring_educ_open_after_easter_with_tests": "open schools with tests",
+            "spring_baseline": "current school and test policy",
+            "spring_close_educ_after_easter": "keep schools closed",
+        },
+        "colors": [RED, YELLOW, BLUE, GREEN],
+        "plot_start": AFTER_EASTER,
+    },
+    # Other Fixed Plots
     "effect_of_rapid_tests": {
         "title": "Decomposing the Effect of Rapid Tests on {outcome}",
         "scenarios": [
@@ -104,41 +135,11 @@ PLOTS = {
         },
         "colors": None,
     },
-    "one_off_and_combined": {
-        "title": "The Effect of Each Channel on {outcome} Separately",
-        "scenarios": [
-            # "spring_no_effects",
-            "spring_without_seasonality",
-            "spring_without_vaccines",
-            "spring_without_rapid_tests",
-            "spring_baseline",
-        ],
-        "name_to_label": {
-            "spring_no_effects": "without any channel",
-            "spring_without_seasonality": "without seasonality",
-            "spring_without_vaccines": "without vaccines",
-            "spring_without_rapid_tests": "without rapid tests",
-            "spring_baseline": "with all channels",
-        },
-        "colors": None,
-    },
     # Variable Plots
     "pessimistic_scenario": {
         "title": "Replicating the Pessimistic Scenarios of March",
         "scenarios": ["spring_no_effects"],
         "colors": None,
-    },
-    "school_scenarios": {
-        "title": "The Effect of Schools on {outcome}",
-        "scenarios": SCHOOL_SCENARIOS,
-        "name_to_label": {
-            "spring_educ_open_after_easter_without_tests": "open schools without tests",
-            "spring_educ_open_after_easter_with_tests": "open schools with tests",
-            "spring_baseline": "current school and test policy",
-            "spring_close_educ_after_easter": "keep schools closed",
-        },
-        "colors": [RED, YELLOW, BLUE, GREEN],
-        "plot_start": AFTER_EASTER,
     },
     "vaccine_scenarios": {
         "title": "Effect of Different Vaccination Scenarios on {outcome}",
