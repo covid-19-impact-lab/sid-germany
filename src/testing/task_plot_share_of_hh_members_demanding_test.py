@@ -35,7 +35,7 @@ def task_plot_share_of_workers_receiving_test_offer(depends_on, produces):
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
-        params_slice = params.loc[("rapid_test_demand", "hh_member_demand")]
+        params_slice = params.loc[("rapid_test_demand", "private_demand")]
     share_hh_members_demanding_test = get_piecewise_linear_interpolation(params_slice)
     share_hh_members_demanding_test = share_hh_members_demanding_test.loc[
         "2021-03-01" : rki.index.max()

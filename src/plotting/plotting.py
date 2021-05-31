@@ -178,7 +178,7 @@ def plot_incidences(
     return fig, ax
 
 
-def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
+def plot_share_known_cases(share_known_cases, title, plot_single_runs=True):
     colors = [
         "#4e79a7",  # blue
         "#76b7b2",  # light blue
@@ -389,7 +389,7 @@ def _get_cosmo_share(empirical):
         )
         label = "share of Germans reporting to have\n" "ever done a rapid test"
         cosmo_share = cosmo_share["share_ever_had_a_rapid_test"]
-    elif empirical == "last_rapid_test_in_the_last_week":
+    elif empirical == "share_rapid_test_in_last_week":
         cosmo_share = pd.read_csv(
             SRC
             / "original_data"
@@ -410,7 +410,6 @@ def _get_cosmo_share(empirical):
             "done at least one self-administered\n"
             "rapid test per week within the last 4 weeks"
         )
-        cosmo_share = (cosmo_share["share_ever_had_a_rapid_test"],)
     else:
         raise ValueError(f"No known empirical equivalent for {empirical}.")
     return cosmo_share, label

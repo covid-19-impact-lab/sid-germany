@@ -67,9 +67,9 @@ def get_named_scenarios():
     """
     if FAST_FLAG == "debug":
         n_main_seeds = 1
-        n_other_seeds = 0
+        n_other_seeds = 1
     elif FAST_FLAG == "verify":
-        n_main_seeds = 5
+        n_main_seeds = 15
         n_other_seeds = 0
     elif FAST_FLAG == "full":
         n_main_seeds = 25
@@ -100,7 +100,13 @@ def get_named_scenarios():
             "n_seeds": n_main_seeds,
             **spring_dates,
         },
-        # Policy Scenarios
+        # Scenarios for the main plots
+        "spring_no_effects": {
+            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
+            "params_scenario": "no_seasonality",
+            "n_seeds": n_main_seeds,
+            **spring_dates,
+        },
         "spring_without_seasonality": {
             "sim_input_scenario": "baseline",
             "params_scenario": "no_seasonality",
@@ -113,73 +119,13 @@ def get_named_scenarios():
             "n_seeds": n_main_seeds,
             **spring_dates,
         },
-        "spring_vaccinate_1_pct_per_day_after_easter": {
-            "sim_input_scenario": "vaccinate_1_pct_per_day_after_easter",
-            "params_scenario": "baseline",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_without_school_rapid_tests": {
-            "sim_input_scenario": "baseline",
-            "params_scenario": "no_rapid_tests_at_schools",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_without_work_rapid_tests": {
-            "sim_input_scenario": "baseline",
-            "params_scenario": "no_rapid_tests_at_work",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
         "spring_without_rapid_tests": {
             "sim_input_scenario": "no_rapid_tests",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
             **spring_dates,
         },
-        "spring_with_only_seasonality": {
-            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
-            "params_scenario": "baseline",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_without_rapid_tests_without_seasonality": {  # i.e. only vaccinations
-            "sim_input_scenario": "no_rapid_tests",
-            "params_scenario": "no_seasonality",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_without_vaccinations_without_seasonality": {  # i.e. only rapid tests
-            "sim_input_scenario": "no_vaccinations_after_feb_10",
-            "params_scenario": "no_seasonality",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_with_only_vaccinations": {
-            "sim_input_scenario": "no_rapid_tests",
-            "params_scenario": "no_seasonality",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_with_only_rapid_tests": {
-            "sim_input_scenario": "no_vaccinations_after_feb_10",
-            "params_scenario": "no_seasonality",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_no_effects": {
-            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
-            "params_scenario": "no_seasonality",
-            "n_seeds": n_main_seeds,
-            **spring_dates,
-        },
-        "spring_start_all_rapid_tests_after_easter": {
-            "sim_input_scenario": "baseline",
-            "params_scenario": "start_all_rapid_tests_after_easter",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        # Rapid Tests vs School Closures
+        # School Scenarios
         "spring_close_educ_after_easter": {
             "sim_input_scenario": "close_educ_after_april_5",
             "params_scenario": "no_rapid_tests_at_schools",
@@ -200,6 +146,49 @@ def get_named_scenarios():
             "sim_input_scenario": "open_all_educ_after_easter",
             "params_scenario": "no_rapid_tests_at_schools",
             "n_seeds": n_main_seeds,
+            **spring_dates,
+        },
+        # Other Scenarios
+        "spring_vaccinate_1_pct_per_day_after_easter": {
+            "sim_input_scenario": "vaccinate_1_pct_per_day_after_easter",
+            "params_scenario": "baseline",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_school_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_rapid_tests_at_schools",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_work_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_rapid_tests_at_work",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_rapid_tests_and_without_vaccinations": {  # i.e. only seasonalit
+            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
+            "params_scenario": "baseline",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_rapid_tests_without_seasonality": {  # i.e. only vaccinations
+            "sim_input_scenario": "no_rapid_tests",
+            "params_scenario": "no_seasonality",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_vaccinations_without_seasonality": {  # i.e. only rapid tests
+            "sim_input_scenario": "no_vaccinations_after_feb_10",
+            "params_scenario": "no_seasonality",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_start_all_rapid_tests_after_easter": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "start_all_rapid_tests_after_easter",
+            "n_seeds": n_other_seeds,
             **spring_dates,
         },
     }
