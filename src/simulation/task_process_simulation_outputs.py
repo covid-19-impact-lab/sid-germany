@@ -43,6 +43,7 @@ def _create_incidence_parametrization():
 _SIGNATURE, _PARAMETRIZATION = _create_incidence_parametrization()
 
 
+@pytask.mark.persist
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_weekly_outcome_for_scenario(depends_on, produces):
