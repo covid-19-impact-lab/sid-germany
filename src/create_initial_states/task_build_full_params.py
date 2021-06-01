@@ -103,6 +103,7 @@ def task_create_full_params(depends_on, produces):
     params = _add_educ_rapid_test_fade_in_params(params)
     params = _add_private_rapid_test_demand_fade_in_params(params)
     params = _add_rapid_test_reaction_params(params)
+    params = _add_event_params(params)
 
     # seasonality parameter
     params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.2
@@ -412,3 +413,10 @@ def _convert_to_int_if_possible(x):
         return int(x)
     except ValueError:
         return x
+
+
+def _add_event_params(params):
+    params = params.copy(deep=True)
+    params.loc[("events", "b117_cases_per_100_000", "2021-01-01"), "value"] = 0
+    params.loc[("events", "b117_cases_per_100_000", "2021-01-31"), "value"] = 5
+    return params

@@ -411,7 +411,7 @@ def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
         "aggregated_infections_not_log": 1e-10,
         # strong weight because very important
         "aggregated_infections": 2.5,
-        "aggregated_b117_share": 0.1,
+        "aggregated_b117_share": 1,
     }
 
     weight_mat = get_diag_weighting_matrix(

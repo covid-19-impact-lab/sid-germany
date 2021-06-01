@@ -12,6 +12,7 @@ from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
+from src.events.events import introduce_b117
 from src.policies.policy_tools import combine_dictionaries
 from src.simulation import scenario_simulation_inputs
 from src.simulation.calculate_susceptibility import calculate_susceptibility
@@ -176,11 +177,13 @@ def load_simulation_inputs(
         "knows_currently_infected": _knows_currently_infected,
     }
 
+    events = {"introduce_b117": {"model": introduce_b117}}
+
     fixed_inputs = {
         "initial_states": initial_states,
         "contact_models": contact_models,
         "duration": duration,
-        "events": None,
+        "events": events,
         "testing_demand_models": testing_demand_models,
         "testing_allocation_models": testing_allocation_models,
         "testing_processing_models": testing_processing_models,
