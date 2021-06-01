@@ -6,9 +6,9 @@ import pytask
 
 from src.config import BLD
 from src.config import FAST_FLAG
-from src.scenario_config import create_path_to_scenario_outcome_time_series
-from src.scenario_config import get_available_scenarios
-from src.scenario_config import get_named_scenarios
+from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
+from src.simulation.scenario_config import get_available_scenarios
+from src.simulation.scenario_config import get_named_scenarios
 
 
 _SCENARIOS = [
