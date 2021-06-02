@@ -337,7 +337,7 @@ def task_plot_scenario_comparison(
 
     # prepare the plot inputs
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
-    dfs = shorten_dfs(dfs, empirical=empirical, plot_start=plot_start)
+    dfs = shorten_dfs(dfs, empirical=False, plot_start=plot_start)
 
     nice_outcome = make_nice_outcome(outcome)
     title = title.format(outcome=nice_outcome)
