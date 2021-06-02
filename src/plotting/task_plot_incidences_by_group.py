@@ -29,10 +29,17 @@ _DEPENDENCIES = {
 def create_parametrization():
     named_scenarios = get_named_scenarios()
     available_scenarios = get_available_scenarios(named_scenarios)
-    entries = [entry for entry in create_period_outputs().keys() if "_by_" in entry]
+    baseline_scenarios = [
+        scenario for scenario in available_scenarios if "baseline" in scenario
+    ]
+    entries = [
+        entry
+        for entry in create_period_outputs().keys()
+        if "_by_" in entry and "currently_infected" not in entry
+    ]
 
     parametrization = []
-    for scenario, entry in product(available_scenarios, entries):
+    for scenario, entry in product(baseline_scenarios, entries):
         outcome, groupby = entry.split("_by_")
         depends_on = {
             "simulated": create_path_to_scenario_outcome_time_series(

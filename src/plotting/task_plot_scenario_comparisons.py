@@ -5,13 +5,20 @@ import pytask
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.config import SRC
+from src.plotting.plotting import BLUE
+from src.plotting.plotting import BROWN
 from src.plotting.plotting import create_automatic_labels
+from src.plotting.plotting import GREEN
+from src.plotting.plotting import ORANGE
 from src.plotting.plotting import plot_incidences
+from src.plotting.plotting import PURPLE
+from src.plotting.plotting import RED
 from src.plotting.plotting import shorten_dfs
 from src.policies.policy_tools import filter_dictionary
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
+
 
 _MODULE_DEPENDENCIES = {
     "plotting.py": SRC / "plotting" / "plotting.py",
@@ -36,16 +43,6 @@ SCHOOL_SCENARIOS = [
     "spring_educ_open_after_easter_with_tests",
     "spring_close_educ_after_easter",
 ]
-
-# Colors
-BLUE = "#4e79a7"
-ORANGE = "#f28e2b"
-RED = "#e15759"
-TEAL = "#76b7b2"
-GREEN = "#59a14f"
-YELLOW = "#edc948"
-PURPLE = "#b07aa1"
-BROWN = "#9c755f"
 
 
 OUTCOMES = [

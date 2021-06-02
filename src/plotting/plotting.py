@@ -20,6 +20,18 @@ plt.rcParams.update(
     }
 )
 
+# Colors
+BLUE = "#4e79a7"
+ORANGE = "#f28e2b"
+RED = "#e15759"
+TEAL = "#76b7b2"
+GREEN = "#59a14f"
+YELLOW = "#edc948"
+PURPLE = "#b07aa1"
+BROWN = "#9c755f"
+
+ORDERED_COLORS = [BLUE, TEAL, YELLOW, ORANGE, RED, PURPLE]
+
 
 def calculate_virus_strain_shares(results):
     """Create the weekly incidences from a list of simulation runs.
@@ -92,16 +104,7 @@ def plot_incidences(
         dates = rki_dates.intersection(dates).unique().sort_values()
 
     if colors is None:
-        colors = [
-            "#4e79a7",
-            "#f28e2b",
-            "#e15759",
-            "#76b7b2",
-            "#59a14f",
-            "#edc948",
-            "#b07aa1",
-            "#9c755f",
-        ]
+        colors = [BLUE, ORANGE, RED, TEAL, GREEN, YELLOW, PURPLE, BROWN]
     for (name, df), color in zip(incidences.items(), colors):
         sns.lineplot(
             x=dates,
@@ -179,15 +182,7 @@ def plot_incidences(
 
 
 def plot_share_known_cases(share_known_cases, title, plot_single_runs=True):
-    colors = [
-        "#4e79a7",  # blue
-        "#76b7b2",  # light blue
-        "#edc948",  # yellow
-        "#f28e2b",  # orange
-        "#e15759",  # red
-        "#b07aa1",  # purple
-    ]
-    sns.set_palette(colors)
+    sns.set_palette(ORDERED_COLORS)
     fig, ax = plt.subplots(figsize=(10, 5))
 
     if plot_single_runs:
@@ -256,16 +251,9 @@ def plot_group_time_series(df, title, rki=None):
     axes = axes.flatten()
 
     if "0-4" in groups:
-        colors = [
-            "#C89D64",
-            "#F1B05D",
-            "#EE8445",
-            "#c87259",
-            "#6c4a4d",
-            "#3C2030",
-        ]
+        colors = ORDERED_COLORS
     else:
-        colors = ["#C89D64"] * len(groups)
+        colors = [BLUE] * len(groups)
 
     for group, ax in zip(groups, axes):
         plot_incidences(
