@@ -34,7 +34,6 @@ AFTER_EASTER = pd.Timestamp("2021-04-06")
 SCHOOL_SCENARIOS = [
     "spring_educ_open_after_easter_without_tests",
     "spring_educ_open_after_easter_with_tests",
-    "spring_baseline",
     "spring_close_educ_after_easter",
 ]
 
@@ -60,6 +59,12 @@ OUTCOMES = [
 
 PLOTS = {
     # Main Plots (Fixed)
+    "fitness_plot": {
+        "title": "Simulated versus Empirical Infections",
+        "scenarios": ["combined_baseline"],
+        "name_to_label": {"combined_baseline": "simulated"},
+        "colors": [BLUE],
+    },
     "fall_fit": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
@@ -96,7 +101,6 @@ PLOTS = {
         "name_to_label": {
             "spring_educ_open_after_easter_without_tests": "open schools without tests",
             "spring_educ_open_after_easter_with_tests": "open schools with tests",
-            # "spring_baseline": "current school and test policy", # noqa: E800
             "spring_close_educ_after_easter": "keep schools closed",
         },
         "colors": None,

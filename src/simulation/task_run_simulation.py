@@ -26,7 +26,7 @@ def _create_simulation_parametrization():
 
     scenarios = []
     for name, specs in named_scenarios.items():
-        if pd.Timestamp(specs["start_date"]) > pd.Timestamp("2020-11-01"):
+        if pd.Timestamp(specs["start_date"]) > pd.Timestamp("2020-12-31"):
             skc_path = create_path_to_initial_group_share_known_cases("fall_baseline")
             group_share_dependencies = {"group_share_known_case_path": skc_path}
         else:

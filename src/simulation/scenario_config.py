@@ -1,7 +1,9 @@
+import pandas as pd
+
 from src.config import BLD
 from src.config import FAST_FLAG
 
-SPRING_START = "2021-01-16"
+SPRING_START = pd.Timestamp("2021-02-01")
 
 
 NON_INCIDENCE_OUTCOMES = [
@@ -66,8 +68,8 @@ def get_named_scenarios():
 
     """
     if FAST_FLAG == "debug":
-        n_main_seeds = 1
-        n_other_seeds = 1
+        n_main_seeds = 0
+        n_other_seeds = 0
     elif FAST_FLAG == "verify":
         n_main_seeds = 15
         n_other_seeds = 0
@@ -90,8 +92,8 @@ def get_named_scenarios():
         "fall_baseline": {
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
-            "start_date": "2020-09-15",
-            "end_date": "2021-01-14",
+            "start_date": "2020-09-15" if FAST_FLAG != "debug" else "2020-12-15",
+            "end_date": SPRING_START - pd.Timedelta(days=1),
             "n_seeds": n_main_seeds,
         },
         "spring_baseline": {
@@ -99,6 +101,13 @@ def get_named_scenarios():
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
             **spring_dates,
+        },
+        "combined_baseline": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "baseline",
+            "start_date": "2020-09-15" if FAST_FLAG != "debug" else "2020-12-15",
+            "end_date": spring_dates["end_date"],
+            "n_seeds": n_main_seeds,
         },
         # Scenarios for the main plots
         "spring_no_effects": {
