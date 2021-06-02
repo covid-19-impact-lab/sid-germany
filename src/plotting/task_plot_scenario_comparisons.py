@@ -64,18 +64,21 @@ PLOTS = {
         "scenarios": ["combined_baseline"],
         "name_to_label": {"combined_baseline": "simulated"},
         "colors": [BLUE],
+        "empirical": True,
     },
     "fall_fit": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
         "name_to_label": {"fall_baseline": "simulation"},
         "colors": [BLUE],
+        "empirical": True,
     },
     "spring_fit": {
         "title": "{outcome} in Spring",
         "scenarios": ["spring_baseline"],
         "name_to_label": {"spring_baseline": "simulation"},
         "colors": [BLUE],
+        "empirical": True,
     },
     "one_off_and_combined": {
         "title": "The Effect of Each Channel on {outcome} Separately",
@@ -272,7 +275,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         plot_info.get("name_to_label"),
                         plot_info.get("scenario_starts"),
                         plot_info.get("plot_start"),
-                        plot_info.get("empirical"),
+                        plot_info.get("empirical", False),
                         produces,
                     )
                 )

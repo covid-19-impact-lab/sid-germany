@@ -68,7 +68,7 @@ def plot_incidences(
     title,
     name_to_label,
     colors,
-    n_single_runs: Optional[int] = None,
+    n_single_runs: Optional[int] = 0,
     empirical=False,
     scenario_starts=None,
     fig=None,
@@ -181,7 +181,7 @@ def plot_incidences(
     return fig, ax
 
 
-def plot_share_known_cases(share_known_cases, title, plot_single_runs=True):
+def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
     sns.set_palette(ORDERED_COLORS)
     fig, ax = plt.subplots(figsize=(10, 5))
 
