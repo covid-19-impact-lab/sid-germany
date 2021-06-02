@@ -30,6 +30,7 @@ def load_simulation_inputs(
     debug,
     group_share_known_case_path=None,
     period_outputs=False,
+    return_last_states=False,
 ):
     """Load the simulation inputs.
 
@@ -47,6 +48,8 @@ def load_simulation_inputs(
             initial conditions.
         period_outputs (bool, optional): whether to use period_outputs instead of saving
             the time series. Default is False.
+        return_last_states (bool, optional): if True, the last states are returned as
+            part of the simulation result.
 
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
@@ -193,11 +196,11 @@ def load_simulation_inputs(
         "virus_strains": ["base_strain", "b117"],
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
+        "return_last_states": return_last_states,
     }
 
     if period_outputs:
         fixed_inputs["period_outputs"] = create_period_outputs()
-        fixed_inputs["return_last_states"] = scenario == "fall_baseline"
         fixed_inputs["return_time_series"] = False
 
     scenario_func = getattr(scenario_simulation_inputs, scenario)
