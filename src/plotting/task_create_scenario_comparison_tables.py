@@ -2,6 +2,7 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
+from src.config import FAST_FLAG
 from src.config import N_HOUSEHOLDS
 from src.config import POPULATION_GERMANY
 from src.config import SRC
@@ -49,7 +50,7 @@ WORK_RAPID_TEST_SCENARIOS = [
 _PARAMETRIZATION = [
     (
         _create_deps(SCHOOL_SCENARIOS, "age_group_rki"),
-        "2021-04-06",
+        "2021-04-06" if FAST_FLAG != "debug" else None,
         "5-14",
         "predicted total infections among 5-14 year olds from Easter until {end_date}",
         _create_table_path("student_infections"),
