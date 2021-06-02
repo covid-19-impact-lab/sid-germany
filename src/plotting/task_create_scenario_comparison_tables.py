@@ -75,12 +75,16 @@ def task_create_infections_across_scenarios_table(
         scenario: pd.read_pickle(path) for scenario, path in data_dependencies.items()
     }
 
-    scenario_infections = _create_table_with_total_infections(
-        scenario_to_data=scenario_to_data,
-        start_date=start_date,
-        group=group,
-        name=name,
-    )
+    if scenario_to_data:
+        scenario_infections = _create_table_with_total_infections(
+            scenario_to_data=scenario_to_data,
+            start_date=start_date,
+            group=group,
+            name=name,
+        )
+    else:
+        scenario_infections = pd.DataFrame()
+
     with open(produces, "w") as f:
         f.write(scenario_infections.to_latex())
 

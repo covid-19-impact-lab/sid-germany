@@ -197,7 +197,7 @@ def load_simulation_inputs(
 
     if period_outputs:
         fixed_inputs["period_outputs"] = create_period_outputs()
-        fixed_inputs["return_last_states"] = False
+        fixed_inputs["return_last_states"] = scenario == "fall_baseline"
         fixed_inputs["return_time_series"] = False
 
     scenario_func = getattr(scenario_simulation_inputs, scenario)
