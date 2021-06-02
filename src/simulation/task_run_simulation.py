@@ -95,7 +95,7 @@ def task_simulate_scenario(
     res = simulate(params)
 
     if save_last_states:
-        last_states = res.pop("last_states").compute()
+        last_states = res.pop("last_states")
         last_states.to_pickle(produces["last_states"])
 
     pd.to_pickle(res, produces["period_outputs"])
