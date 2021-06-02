@@ -122,8 +122,8 @@ def plot_incidences(
                 y=df.loc[dates, run],
                 ax=ax,
                 color=color,
-                linewidth=0.5,
-                alpha=0.1,
+                linewidth=1.0,
+                alpha=0.2,
             )
     if empirical:
         if empirical in ["new_known_case", "newly_deceased"]:
@@ -366,6 +366,23 @@ def make_name_nice(name):
         nice_name = nice_name.replace(old, new)
     nice_name = nice_name.lstrip("\n")
     return nice_name
+
+
+def make_nice_outcome(outcome):
+    outcome_to_nice_outcome = {
+        "new_known_case": "Observed New Cases",
+        "newly_infected": "Total New Cases",
+        "newly_deceased": "New Deaths",
+        "share_ever_rapid_test": "Share of People who Have Ever Done a Rapid Test\n",
+        "share_rapid_test_in_last_week": "Share of People who Have Done a Rapid Test\n"
+        + "in the Last Week",
+        "r_effective": "the Effective Reproduction Number",
+    }
+
+    nice_outcome = outcome_to_nice_outcome.get(
+        outcome, outcome.replace("_", " ").title()
+    )
+    return nice_outcome
 
 
 def _get_cosmo_share(empirical):

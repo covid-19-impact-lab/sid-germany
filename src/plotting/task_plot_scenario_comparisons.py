@@ -9,6 +9,7 @@ from src.plotting.plotting import BLUE
 from src.plotting.plotting import BROWN
 from src.plotting.plotting import create_automatic_labels
 from src.plotting.plotting import GREEN
+from src.plotting.plotting import make_nice_outcome
 from src.plotting.plotting import ORANGE
 from src.plotting.plotting import plot_incidences
 from src.plotting.plotting import PURPLE
@@ -221,9 +222,9 @@ def create_path_for_weekly_outcome_of_scenario(
 ):
     file_name = f"{fast_flag}_{outcome}.{suffix}"
     if suffix == "png":
-        path = BLD / "figures" / "comparisons" / comparison_name / file_name
+        path = BLD / "figures" / "scenario_comparisons" / comparison_name / file_name
     elif suffix == "csv":
-        path = BLD / "tables" / "comparisons" / comparison_name / file_name
+        path = BLD / "tables" / "scenario_comparisons" / comparison_name / file_name
     else:
         raise ValueError(f"Unknown suffix {suffix}. Only 'png' and 'csv' supported")
     return path
@@ -338,7 +339,8 @@ def task_plot_scenario_comparison(
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
     dfs = shorten_dfs(dfs, empirical=empirical, plot_start=plot_start)
 
-    title = _create_title(title, outcome)
+    nice_outcome = make_nice_outcome(outcome)
+    title = title.format(outcome=nice_outcome)
     name_to_label = (
         create_automatic_labels(dfs) if name_to_label is None else name_to_label
     )
@@ -354,7 +356,7 @@ def task_plot_scenario_comparison(
         "share_ever_rapid_test",
         "share_rapid_test_in_last_week",
     ]
-    if empirical is None:
+    if empirical is True:
         empirical = outcome if outcome in empirical_available else False
 
     # create the plots
@@ -365,6 +367,7 @@ def task_plot_scenario_comparison(
         empirical=empirical,
         colors=colors,
         scenario_starts=scenario_starts,
+        n_single_runs=None if empirical else 0,
     )
     plt.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
     plt.close()
@@ -377,19 +380,3 @@ def task_plot_scenario_comparison(
         weekly_mean_values[key] = mean_over_weeks.round(2)
 
     weekly_mean_values.to_csv(produces["data"])
-
-
-def _create_title(title, outcome):
-    name_to_nice_name = {
-        "new_known_case": "Observed New Cases",
-        "newly_infected": "Total New Cases",
-        "newly_deceased": "New Deaths",
-        "share_ever_rapid_test": "Share of People who Have Ever Done a Rapid Test\n",
-        "share_rapid_test_in_last_week": "Share of People who Have Done a Rapid Test\n"
-        + "in the Last Week",
-        "r_effective": "the Effective Reproduction Number",
-    }
-
-    title_outcome = name_to_nice_name.get(outcome, outcome.replace("_", " ").title())
-    title = title.format(outcome=title_outcome)
-    return title

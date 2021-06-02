@@ -73,8 +73,8 @@ def _create_parametrization():
         produce_paths = [
             BLD
             / "figures"
-            / "contact_models"
-            / "empirical_distributions"
+            / "data"
+            / "distributions_of_the_number_of_contacts"
             / f"{name}.png",
             BLD / "contact_models" / "empirical_distributions" / f"{name}.pkl",
         ]

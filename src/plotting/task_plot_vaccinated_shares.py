@@ -119,7 +119,7 @@ def task_plot_groupby_vaccination_shares(name, depends_on, produces):
     vaccination_shares = pd.read_pickle(depends_on["simulated"])
 
     nice_name = make_name_nice(name)
-    title = "Share of Vaccinated People by Age Group {group} in " + nice_name.title()
+    title = "Share of Vaccinated People by Age Group {group} in\n" + nice_name.title()
     fig, axes = plot_group_time_series(df=vaccination_shares, title=title, rki=None)
     for ax in axes:
         ax.set_ylabel("share of vaccinated individuals")
