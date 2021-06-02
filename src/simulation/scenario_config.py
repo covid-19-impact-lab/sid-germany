@@ -68,14 +68,14 @@ def get_named_scenarios():
 
     """
     if FAST_FLAG == "debug":
-        n_main_seeds = 2
-        n_other_seeds = 2
+        n_main_seeds = 1
+        n_other_seeds = 1
     elif FAST_FLAG == "verify":
-        n_main_seeds = 15
-        n_other_seeds = 0
+        n_main_seeds = 1
+        n_other_seeds = 1
     elif FAST_FLAG == "full":
-        n_main_seeds = 25
-        n_other_seeds = 25
+        n_main_seeds = 1
+        n_other_seeds = 1
     else:
         raise ValueError(
             f"Unknown FAST_FLAG {FAST_FLAG}."
