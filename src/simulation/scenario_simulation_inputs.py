@@ -198,20 +198,9 @@ def no_rapid_tests(paths, fixed_inputs):
     return out
 
 
-def no_vaccinations_after_feb_10(paths, fixed_inputs):
-    start_date = fixed_inputs["duration"]["start"]
-    init_start = start_date - pd.Timedelta(31, unit="D")
-
-    vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
-    vaccination_models = _get_vaccination_model_with_new_value_after_date(
-        vaccination_shares,
-        init_start,
-        change_date="2021-02-10",
-        new_val=0,
-        model_name="only_vaccinate_until_feb_10",
-    )
+def no_vaccinations(paths, fixed_inputs):  # noqa: U100
     scenario_inputs = {
-        "vaccination_models": vaccination_models,
+        "vaccination_models": None,
         "contact_policies": _baseline_policies(fixed_inputs),
         "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
         "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
@@ -221,11 +210,14 @@ def no_vaccinations_after_feb_10(paths, fixed_inputs):
     return scenario_inputs
 
 
-def no_rapid_tests_and_no_vaccinations_after_feb_10(paths, fixed_inputs):
-    out = no_vaccinations_after_feb_10(paths, fixed_inputs)
-    out["rapid_test_models"] = None
-    out["rapid_test_reaction_models"] = None
-    return out
+def no_rapid_tests_and_no_vaccinations(paths, fixed_inputs):  # noqa: U100
+    scenario_inputs = {
+        "contact_policies": _baseline_policies(fixed_inputs),
+        "vaccination_models": None,
+        "rapid_test_models": None,
+        "rapid_test_reaction_models": None,
+    }
+    return scenario_inputs
 
 
 def vaccinations_after_summer_scenario_start_as_on_strongest_week_day(

@@ -3,7 +3,6 @@ import pytask
 from sid import get_simulate_func
 
 from src.config import FAST_FLAG
-from src.policies.policy_tools import combine_dictionaries
 from src.simulation.load_params import load_params
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
@@ -20,10 +19,10 @@ def _create_simulation_parametrization():
 
     """
     named_scenarios = get_named_scenarios()
-    common_dependencies = get_simulation_dependencies(debug=FAST_FLAG == "debug")
 
     scenarios = []
     for name, specs in named_scenarios.items():
+        is_resumed = specs.get("is_resumed", True)
         for seed in range(specs["n_seeds"]):
             produces = {
                 "period_outputs": create_path_to_period_outputs_of_simulation(
@@ -35,8 +34,14 @@ def _create_simulation_parametrization():
                     name, seed
                 )
 
-            scaled_seed = 500 + 100_000 * seed
-            depends_on = combine_dictionaries([common_dependencies])
+            depends_on = get_simulation_dependencies(
+                debug=FAST_FLAG == "debug", is_resumed=is_resumed
+            )
+            if is_resumed:
+                depends_on["initial_states"] = create_path_to_last_states_of_simulation(
+                    "fall_baseline", seed
+                )
+
             spec_tuple = (
                 depends_on,
                 specs["sim_input_scenario"],
@@ -45,13 +50,14 @@ def _create_simulation_parametrization():
                 specs["end_date"],
                 specs.get("save_last_states", False),
                 produces,
-                scaled_seed,
+                500 + 100_000 * seed,
+                is_resumed,
             )
             scenarios.append(spec_tuple)
 
     signature = (
         "depends_on, sim_input_scenario, params_scenario, "
-        + "start_date, end_date, save_last_states, produces, seed"
+        + "start_date, end_date, save_last_states, produces, seed, is_resumed"
     )
     return signature, scenarios
 
@@ -69,6 +75,7 @@ def task_simulate_scenario(
     save_last_states,
     produces,
     seed,
+    is_resumed,
 ):
     simulation_kwargs = load_simulation_inputs(
         scenario=sim_input_scenario,
@@ -77,6 +84,8 @@ def task_simulate_scenario(
         return_last_states=save_last_states,
         debug=FAST_FLAG == "debug",
         period_outputs=True,
+        initial_states_path=depends_on["initial_states"],
+        is_resumed=is_resumed,
     )
     params = load_params(params_scenario)
 
