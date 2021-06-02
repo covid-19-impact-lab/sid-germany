@@ -96,10 +96,10 @@ PLOTS = {
         "name_to_label": {
             "spring_educ_open_after_easter_without_tests": "open schools without tests",
             "spring_educ_open_after_easter_with_tests": "open schools with tests",
-            "spring_baseline": "current school and test policy",
+            # "spring_baseline": "current school and test policy", # noqa: E800
             "spring_close_educ_after_easter": "keep schools closed",
         },
-        "colors": [RED, YELLOW, BLUE, GREEN],
+        "colors": None,
         "plot_start": AFTER_EASTER,
     },
     # Other Fixed Plots
