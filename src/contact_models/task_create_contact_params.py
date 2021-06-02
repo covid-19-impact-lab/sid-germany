@@ -68,11 +68,16 @@ def _create_parametrization():
         },
     }
 
-    out_path = BLD / "contact_models" / "empirical_distributions"
-
     parametrization = []
     for name, criteria in data_selection_criteria.items():
-        produce_paths = [out_path / "figures" / f"{name}.png", out_path / f"{name}.pkl"]
+        produce_paths = [
+            BLD
+            / "figures"
+            / "contact_models"
+            / "empirical_distributions"
+            / f"{name}.png",
+            BLD / "contact_models" / "empirical_distributions" / f"{name}.pkl",
+        ]
         if not criteria["recurrent"]:
             produce_paths.append(
                 BLD / "contact_models" / "age_assort_params" / f"{name}.pkl"
