@@ -7,6 +7,7 @@ from src.policies.policy_tools import combine_dictionaries
 from src.simulation.load_params import load_params
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
+from src.simulation.scenario_config import create_path_to_last_states_of_simulation
 from src.simulation.scenario_config import create_path_to_period_outputs_of_simulation
 from src.simulation.scenario_config import get_named_scenarios
 
@@ -24,7 +25,16 @@ def _create_simulation_parametrization():
     scenarios = []
     for name, specs in named_scenarios.items():
         for seed in range(specs["n_seeds"]):
-            produces = create_path_to_period_outputs_of_simulation(name, seed)
+            produces = {
+                "period_outputs": create_path_to_period_outputs_of_simulation(
+                    name, seed
+                )
+            }
+            if name == "fall_baseline":
+                produces["last_states"] = create_path_to_last_states_of_simulation(
+                    name, seed
+                )
+
             scaled_seed = 500 + 100_000 * seed
             depends_on = combine_dictionaries([common_dependencies])
             spec_tuple = (
@@ -60,14 +70,12 @@ def task_simulate_scenario(
     produces,
     seed,
 ):
-    group_share_known_case_path = depends_on.get("group_share_known_case_path")
     simulation_kwargs = load_simulation_inputs(
         scenario=sim_input_scenario,
         start_date=start_date,
         end_date=end_date,
         return_last_states=save_last_states,
         debug=FAST_FLAG == "debug",
-        group_share_known_case_path=group_share_known_case_path,
         period_outputs=True,
     )
     params = load_params(params_scenario)
@@ -78,5 +86,7 @@ def task_simulate_scenario(
     res = simulate(params)
 
     if save_last_states:
-        res["last_states"] = res["last_states"].compute()
-    pd.to_pickle(res, produces)
+        last_states = res.pop("last_states").compute()
+        last_states.to_pickle(produces["last_states"])
+
+    pd.to_pickle(res, produces["period_outputs"])
