@@ -20,6 +20,18 @@ plt.rcParams.update(
     }
 )
 
+# Colors
+BLUE = "#4e79a7"
+ORANGE = "#f28e2b"
+RED = "#e15759"
+TEAL = "#76b7b2"
+GREEN = "#59a14f"
+YELLOW = "#edc948"
+PURPLE = "#b07aa1"
+BROWN = "#9c755f"
+
+ORDERED_COLORS = [BLUE, TEAL, YELLOW, ORANGE, RED, PURPLE]
+
 
 def calculate_virus_strain_shares(results):
     """Create the weekly incidences from a list of simulation runs.
@@ -56,7 +68,7 @@ def plot_incidences(
     title,
     name_to_label,
     colors,
-    n_single_runs: Optional[int] = None,
+    n_single_runs: Optional[int] = 0,
     empirical=False,
     scenario_starts=None,
     fig=None,
@@ -92,16 +104,7 @@ def plot_incidences(
         dates = rki_dates.intersection(dates).unique().sort_values()
 
     if colors is None:
-        colors = [
-            "#4e79a7",
-            "#f28e2b",
-            "#e15759",
-            "#76b7b2",
-            "#59a14f",
-            "#edc948",
-            "#b07aa1",
-            "#9c755f",
-        ]
+        colors = [BLUE, ORANGE, RED, TEAL, GREEN, YELLOW, PURPLE, BROWN]
     for (name, df), color in zip(incidences.items(), colors):
         sns.lineplot(
             x=dates,
@@ -119,8 +122,8 @@ def plot_incidences(
                 y=df.loc[dates, run],
                 ax=ax,
                 color=color,
-                linewidth=0.5,
-                alpha=0.1,
+                linewidth=1.0,
+                alpha=0.2,
             )
     if empirical:
         if empirical in ["new_known_case", "newly_deceased"]:
@@ -178,16 +181,8 @@ def plot_incidences(
     return fig, ax
 
 
-def plot_share_known_cases(share_known_cases, title, plot_single_runs=True):
-    colors = [
-        "#4e79a7",  # blue
-        "#76b7b2",  # light blue
-        "#edc948",  # yellow
-        "#f28e2b",  # orange
-        "#e15759",  # red
-        "#b07aa1",  # purple
-    ]
-    sns.set_palette(colors)
+def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
+    sns.set_palette(ORDERED_COLORS)
     fig, ax = plt.subplots(figsize=(10, 5))
 
     if plot_single_runs:
@@ -256,16 +251,9 @@ def plot_group_time_series(df, title, rki=None):
     axes = axes.flatten()
 
     if "0-4" in groups:
-        colors = [
-            "#C89D64",
-            "#F1B05D",
-            "#EE8445",
-            "#c87259",
-            "#6c4a4d",
-            "#3C2030",
-        ]
+        colors = ORDERED_COLORS
     else:
-        colors = ["#C89D64"] * len(groups)
+        colors = [BLUE] * len(groups)
 
     for group, ax in zip(groups, axes):
         plot_incidences(
@@ -378,6 +366,23 @@ def make_name_nice(name):
         nice_name = nice_name.replace(old, new)
     nice_name = nice_name.lstrip("\n")
     return nice_name
+
+
+def make_nice_outcome(outcome):
+    outcome_to_nice_outcome = {
+        "new_known_case": "Observed New Cases",
+        "newly_infected": "Total New Cases",
+        "newly_deceased": "New Deaths",
+        "share_ever_rapid_test": "Share of People who Have Ever Done a Rapid Test\n",
+        "share_rapid_test_in_last_week": "Share of People who Have Done a Rapid Test\n"
+        + "in the Last Week",
+        "r_effective": "the Effective Reproduction Number",
+    }
+
+    nice_outcome = outcome_to_nice_outcome.get(
+        outcome, outcome.replace("_", " ").title()
+    )
+    return nice_outcome
 
 
 def _get_cosmo_share(empirical):

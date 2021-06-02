@@ -68,8 +68,8 @@ def get_named_scenarios():
 
     """
     if FAST_FLAG == "debug":
-        n_main_seeds = 1
-        n_other_seeds = 1
+        n_main_seeds = 2
+        n_other_seeds = 2
     elif FAST_FLAG == "verify":
         n_main_seeds = 15
         n_other_seeds = 0

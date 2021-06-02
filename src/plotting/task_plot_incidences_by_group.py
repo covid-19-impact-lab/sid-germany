@@ -8,6 +8,7 @@ import pytask
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
 from src.config import SRC
+from src.plotting.plotting import make_nice_outcome
 from src.plotting.plotting import plot_group_time_series
 from src.simulation.load_simulation_inputs import create_period_outputs
 from src.simulation.scenario_config import create_path_to_group_incidence_plot
@@ -29,10 +30,17 @@ _DEPENDENCIES = {
 def create_parametrization():
     named_scenarios = get_named_scenarios()
     available_scenarios = get_available_scenarios(named_scenarios)
-    entries = [entry for entry in create_period_outputs().keys() if "_by_" in entry]
+    baseline_scenarios = [
+        scenario for scenario in available_scenarios if "baseline" in scenario
+    ]
+    entries = [
+        entry
+        for entry in create_period_outputs().keys()
+        if "_by_" in entry and "currently_infected" not in entry
+    ]
 
     parametrization = []
-    for scenario, entry in product(available_scenarios, entries):
+    for scenario, entry in product(baseline_scenarios, entries):
         outcome, groupby = entry.split("_by_")
         depends_on = {
             "simulated": create_path_to_scenario_outcome_time_series(
@@ -51,9 +59,9 @@ def create_parametrization():
         produces = create_path_to_group_incidence_plot(
             name=scenario, outcome=outcome, groupby=groupby
         )
-        parametrization.append((depends_on, produces, groupby))
+        parametrization.append((depends_on, produces, outcome, groupby))
 
-    return "depends_on, produces, groupby", parametrization
+    return "depends_on, produces, outcome, groupby", parametrization
 
 
 _SIGNATURE, _PARAMETRIZATION = create_parametrization()
@@ -61,7 +69,9 @@ _SIGNATURE, _PARAMETRIZATION = create_parametrization()
 
 @pytask.mark.depends_on(_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
-def task_plot_age_group_incidences_in_one_scenario(depends_on, produces, groupby):
+def task_plot_age_group_incidences_in_one_scenario(
+    depends_on, produces, outcome, groupby
+):
     incidences = pd.read_pickle(depends_on["simulated"])
 
     if "rki" in depends_on:
@@ -89,7 +99,8 @@ def task_plot_age_group_incidences_in_one_scenario(depends_on, produces, groupby
     else:
         rki = None
 
-    title = f"Incidences by {groupby.replace('_', ' ')} in " + "{group}"
+    nice_outcome = make_nice_outcome(outcome)
+    title = f"{nice_outcome} by {groupby.replace('_', ' ')} in " + "{group}"
     fig, ax = plot_group_time_series(incidences, title, rki)
 
     fig.savefig(produces, dpi=200, transparent=False, facecolor="w")

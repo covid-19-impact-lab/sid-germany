@@ -19,8 +19,6 @@ plt.rcParams.update(
     }
 )
 
-OUT_PATH = BLD / "data" / "testing"
-
 
 @pytask.mark.depends_on(
     {
@@ -30,13 +28,21 @@ OUT_PATH = BLD / "data" / "testing"
 )
 @pytask.mark.produces(
     {
-        "data": OUT_PATH / "characteristics_of_the_tested.csv",
-        "share_of_tests_for_symptomatics_series": OUT_PATH
+        "data": BLD / "data" / "testing" / "characteristics_of_the_tested.csv",
+        "share_of_tests_for_symptomatics_series": BLD
+        / "data"
+        / "testing"
         / "share_of_tests_for_symptomatics_series.pkl",
-        "mean_age": OUT_PATH / "mean_age_of_tested.png",
-        "share_with_symptom_status": OUT_PATH
+        "mean_age": BLD / "data" / "testing" / "mean_age_of_tested.png",
+        "share_with_symptom_status": BLD
+        / "data"
+        / "testing"
         / "share_of_tested_with_symptom_status.png",
-        "symptom_shares": OUT_PATH / "share_of_symptomatic_among_tests.png",
+        "symptom_shares": BLD
+        / "figures"
+        / "data"
+        / "testing"
+        / "share_of_pcr_tests_going_to_symptomatics.png",
     }
 )
 def task_prepare_characteristics_of_the_tested(depends_on, produces):
@@ -46,11 +52,15 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
     df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[])
 
     fig, ax = _plot_df_column(df, "mean_age")
+    fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     fig.savefig(produces["mean_age"])
+
     fig, ax = _plot_df_column(df, "share_with_symptom_status")
+    fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     fig.savefig(produces["share_with_symptom_status"])
+
     symptom_shares = [
         "share_symptomatic_lower_bound",
         "share_symptomatic_among_known",
@@ -72,6 +82,7 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
         sns.lineplot(x=df.index, y=df[share], ax=ax, color=color, label=share)
         sns.lineplot(x=df.index, y=df[extrapolated], ax=ax, color=color)
     fig.tight_layout()
+    fig, ax = style_plot(fig, ax)
     fig.savefig(produces["symptom_shares"])
 
     share_of_tests_for_symptomatics_series = df[

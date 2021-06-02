@@ -5,13 +5,21 @@ import pytask
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.config import SRC
+from src.plotting.plotting import BLUE
+from src.plotting.plotting import BROWN
 from src.plotting.plotting import create_automatic_labels
+from src.plotting.plotting import GREEN
+from src.plotting.plotting import make_nice_outcome
+from src.plotting.plotting import ORANGE
 from src.plotting.plotting import plot_incidences
+from src.plotting.plotting import PURPLE
+from src.plotting.plotting import RED
 from src.plotting.plotting import shorten_dfs
 from src.policies.policy_tools import filter_dictionary
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
+
 
 _MODULE_DEPENDENCIES = {
     "plotting.py": SRC / "plotting" / "plotting.py",
@@ -37,16 +45,6 @@ SCHOOL_SCENARIOS = [
     "spring_close_educ_after_easter",
 ]
 
-# Colors
-BLUE = "#4e79a7"
-ORANGE = "#f28e2b"
-RED = "#e15759"
-TEAL = "#76b7b2"
-GREEN = "#59a14f"
-YELLOW = "#edc948"
-PURPLE = "#b07aa1"
-BROWN = "#9c755f"
-
 
 OUTCOMES = [
     "newly_infected",
@@ -67,18 +65,21 @@ PLOTS = {
         "scenarios": ["combined_baseline"],
         "name_to_label": {"combined_baseline": "simulated"},
         "colors": [BLUE],
+        "empirical": True,
     },
     "fall_fit": {
         "title": "{outcome} in Fall",
         "scenarios": ["fall_baseline"],
         "name_to_label": {"fall_baseline": "simulation"},
         "colors": [BLUE],
+        "empirical": True,
     },
     "spring_fit": {
         "title": "{outcome} in Spring",
         "scenarios": ["spring_baseline"],
         "name_to_label": {"spring_baseline": "simulation"},
         "colors": [BLUE],
+        "empirical": True,
     },
     "one_off_and_combined": {
         "title": "The Effect of Each Channel on {outcome} Separately",
@@ -221,9 +222,9 @@ def create_path_for_weekly_outcome_of_scenario(
 ):
     file_name = f"{fast_flag}_{outcome}.{suffix}"
     if suffix == "png":
-        path = BLD / "figures" / "comparisons" / comparison_name / file_name
+        path = BLD / "figures" / "scenario_comparisons" / comparison_name / file_name
     elif suffix == "csv":
-        path = BLD / "tables" / "comparisons" / comparison_name / file_name
+        path = BLD / "tables" / "scenario_comparisons" / comparison_name / file_name
     else:
         raise ValueError(f"Unknown suffix {suffix}. Only 'png' and 'csv' supported")
     return path
@@ -275,7 +276,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
                         plot_info.get("name_to_label"),
                         plot_info.get("scenario_starts"),
                         plot_info.get("plot_start"),
-                        plot_info.get("empirical"),
+                        plot_info.get("empirical", False),
                         produces,
                     )
                 )
@@ -336,9 +337,10 @@ def task_plot_scenario_comparison(
 
     # prepare the plot inputs
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
-    dfs = shorten_dfs(dfs, empirical=empirical, plot_start=plot_start)
+    dfs = shorten_dfs(dfs, empirical=False, plot_start=plot_start)
 
-    title = _create_title(title, outcome)
+    nice_outcome = make_nice_outcome(outcome)
+    title = title.format(outcome=nice_outcome)
     name_to_label = (
         create_automatic_labels(dfs) if name_to_label is None else name_to_label
     )
@@ -354,7 +356,7 @@ def task_plot_scenario_comparison(
         "share_ever_rapid_test",
         "share_rapid_test_in_last_week",
     ]
-    if empirical is None:
+    if empirical is True:
         empirical = outcome if outcome in empirical_available else False
 
     # create the plots
@@ -365,6 +367,7 @@ def task_plot_scenario_comparison(
         empirical=empirical,
         colors=colors,
         scenario_starts=scenario_starts,
+        n_single_runs=None if empirical else 0,
     )
     plt.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
     plt.close()
@@ -377,19 +380,3 @@ def task_plot_scenario_comparison(
         weekly_mean_values[key] = mean_over_weeks.round(2)
 
     weekly_mean_values.to_csv(produces["data"])
-
-
-def _create_title(title, outcome):
-    name_to_nice_name = {
-        "new_known_case": "Observed New Cases",
-        "newly_infected": "Total New Cases",
-        "newly_deceased": "New Deaths",
-        "share_ever_rapid_test": "Share of People who Have Ever Done a Rapid Test\n",
-        "share_rapid_test_in_last_week": "Share of People who Have Done a Rapid Test\n"
-        + "in the Last Week",
-        "r_effective": "the Effective Reproduction Number",
-    }
-
-    title_outcome = name_to_nice_name.get(outcome, outcome.replace("_", " ").title())
-    title = title.format(outcome=title_outcome)
-    return title

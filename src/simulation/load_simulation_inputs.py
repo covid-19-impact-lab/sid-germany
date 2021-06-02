@@ -251,8 +251,9 @@ def get_simulation_dependencies(debug, is_resumed):
         # simulations we add the output of task_check_initial_states here
         # even though we don't use it.
         "output_of_check_initial_states": BLD
+        / "figures"
         / "data"
-        / "comparison_of_age_group_distributions.png",
+        / "how_well_our_synthetic_population_matches_the_german_age_distribution.png",
         "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
         "contact_policies.py": SRC / "policies" / "enacted_policies.py",
         "testing_models.py": SRC / "testing" / "testing_models.py",
