@@ -82,19 +82,35 @@ def get_named_scenarios():
             "Only 'debug', 'verify' or 'full' are allowed."
         )
 
-    spring_dates = {
-        "start_date": SPRING_START,
-        "end_date": "2021-05-31" if FAST_FLAG != "debug" else "2021-04-15",
-    }
+    if FAST_FLAG != "debug":
+        fall_dates = {
+            "start_date": "2020-09-15",
+            "end_date": SPRING_START - pd.Timedelta(days=1),
+        }
+        spring_dates = {"start_date": SPRING_START, "end_date": "2021-05-31"}
+        combined_dates = {
+            "start_date": fall_dates["start_date"],
+            "end_date": spring_dates["end_date"],
+        }
+    else:
+        fall_dates = {
+            "start_date": "2020-12-25",
+            "end_date": "2020-12-30",
+        }
+        spring_dates = {
+            "start_date": SPRING_START,
+            "end_date": SPRING_START + pd.Timedelta(days=5),
+        }
+        combined_dates = {"start_date": "2020-12-25", "end_date": "2021-01-05"}
 
     named_scenarios = {
         # Baseline Scenarios
         "fall_baseline": {
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
-            "start_date": "2020-09-15" if FAST_FLAG != "debug" else "2020-12-15",
-            "end_date": SPRING_START - pd.Timedelta(days=1),
             "n_seeds": n_main_seeds,
+            "save_last_states": True,
+            **fall_dates,
         },
         "spring_baseline": {
             "sim_input_scenario": "baseline",
@@ -105,9 +121,8 @@ def get_named_scenarios():
         "combined_baseline": {
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
-            "start_date": "2020-09-15" if FAST_FLAG != "debug" else "2020-12-15",
-            "end_date": spring_dates["end_date"],
             "n_seeds": n_main_seeds,
+            **combined_dates,
         },
         # Scenarios for the main plots
         "spring_no_effects": {

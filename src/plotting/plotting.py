@@ -336,9 +336,9 @@ def shorten_dfs(dfs, empirical, plot_start=None):
     shortened = {}
 
     start_date = max(df.index.min() for df in dfs.values())
-    if plot_start is not None:
-        start_date = max(plot_start, start_date)
     end_date = min(df.index.max() for df in dfs.values())
+    if plot_start is not None and plot_start < end_date:
+        start_date = max(plot_start, start_date)
     if empirical and empirical in ["new_known_case", "newly_deceased"]:
         rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
         end_date = min(end_date, rki_data.index.get_level_values("date").max())

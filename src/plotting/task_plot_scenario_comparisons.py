@@ -52,10 +52,13 @@ OUTCOMES = [
     "newly_infected",
     "new_known_case",
     "newly_deceased",
-    "r_effective",
     "share_ever_rapid_test",
     "share_rapid_test_in_last_week",
 ]
+
+if FAST_FLAG != "debug":
+    OUTCOMES.append("r_effective")
+
 
 PLOTS = {
     # Main Plots (Fixed)
