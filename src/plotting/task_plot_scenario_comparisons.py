@@ -343,7 +343,7 @@ def task_plot_scenario_comparison(
         "share_ever_rapid_test",
         "share_rapid_test_in_last_week",
     ]
-    if empirical is True:
+    if empirical:
         empirical = outcome if outcome in empirical_available else False
 
     # create the plots

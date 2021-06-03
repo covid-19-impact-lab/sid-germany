@@ -35,7 +35,7 @@ def create_parametrization():
     ]
     entries = [
         entry
-        for entry in create_period_outputs().keys()
+        for entry in create_period_outputs()
         if "_by_" in entry and "currently_infected" not in entry
     ]
 
