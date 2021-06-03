@@ -210,7 +210,7 @@ def no_vaccinations(paths, fixed_inputs):  # noqa: U100
     return scenario_inputs
 
 
-def no_rapid_tests_and_no_vaccinations(paths, fixed_inputs):  # noqa: U100
+def just_seasonality(paths, fixed_inputs):  # noqa: U100
     scenario_inputs = {
         "contact_policies": _baseline_policies(fixed_inputs),
         "vaccination_models": None,
