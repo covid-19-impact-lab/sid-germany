@@ -35,7 +35,12 @@ from src.config import POPULATION_GERMANY
         "work_multiplier": BLD / "policies" / "work_multiplier.csv",
     }
 )
-@pytask.mark.produces(BLD / "data" / "comparison_of_age_group_distributions.png")
+@pytask.mark.produces(
+    BLD
+    / "figures"
+    / "data"
+    / "how_well_our_synthetic_population_matches_the_german_age_distribution.png"
+)
 def task_check_initial_states(depends_on, produces):
     df = pd.read_parquet(depends_on["initial_states"])
     true_age_shares = pd.read_parquet(depends_on["true_age_group_dist"])["weight"]
@@ -76,6 +81,7 @@ def task_check_initial_states(depends_on, produces):
         "Difference between the shares in the initial states and in the "
         "general population\n(> 0 means over represented in the synthetic data)"
     )
+    sns.despine()
     fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
     plt.close()
 

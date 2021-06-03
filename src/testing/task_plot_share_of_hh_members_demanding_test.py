@@ -6,7 +6,6 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
-from src.config import POPULATION_GERMANY
 from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.testing.shared import get_piecewise_linear_interpolation
@@ -21,42 +20,33 @@ from src.testing.shared import get_piecewise_linear_interpolation
     }
 )
 @pytask.mark.produces(
-    BLD / "data" / "testing" / "share_of_hh_members_with_rapid_test_after_hh_event.png"
+    BLD / "figures" / "data" / "testing" / "private_test_demand_shares.png"
 )
-def task_plot_share_of_workers_receiving_test_offer(depends_on, produces):
-    rki = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
-    rki = rki.groupby("date")["newly_infected"].sum()
-    rki = rki.rolling(7).sum().dropna()
-    rki = 100_000 * rki / POPULATION_GERMANY
-    rki = rki["2021-03-01":]
-
+def task_plot_private_test_demand_shares(depends_on, produces):
     params = pd.read_pickle(depends_on["params"])
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
         params_slice = params.loc[("rapid_test_demand", "private_demand")]
-    share_hh_members_demanding_test = get_piecewise_linear_interpolation(params_slice)
-    share_hh_members_demanding_test = share_hh_members_demanding_test.loc[
-        "2021-03-01" : rki.index.max()
-    ]
 
-    fig, axes = plt.subplots(2, figsize=(10, 10), sharex=True)
-    sns.lineplot(x=rki.index, y=rki, ax=axes[0])
-    axes[0].grid()
-    axes[0].set_title("Incidence")
+    private_demand_shares = get_piecewise_linear_interpolation(params_slice)
+    private_demand_shares = private_demand_shares.loc["2021-01-01":"2021-07-01"]
 
+    fig, ax = plt.subplots(figsize=(8, 6))
     sns.lineplot(
-        x=share_hh_members_demanding_test.index,
-        y=share_hh_members_demanding_test,
-        ax=axes[1],
+        x=private_demand_shares.index,
+        y=private_demand_shares,
+        ax=ax,
     )
-    axes[1].grid()
-    axes[1].set_title(
-        "Share of Household Members Demanding Rapid Test\n"
-        "When Household Member Tests Positive Or Becomes Symptomatic"
+    ax.set_title(
+        "Private Rapid Test Demand\n"
+        "(Share of Individuals who Do a Rapid Test \n"
+        "When a Household Member Tests Positive Or Becomes Symptomatic Or \n"
+        "When Developing Symptoms but not Receiving a Rapid Test Or \n"
+        "When Participating in Some Private Events)"
     )
-    fig, axes = style_plot(fig, axes)
+    fig, ax = style_plot(fig, ax)
     fig.tight_layout()
 
     fig.savefig(produces)

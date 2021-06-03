@@ -19,7 +19,11 @@ from src.testing.shared import get_piecewise_linear_interpolation
     }
 )
 @pytask.mark.produces(
-    BLD / "data" / "testing" / "share_of_educ_participants_with_rapid_test.png"
+    BLD
+    / "figures"
+    / "data"
+    / "testing"
+    / "share_of_educ_participants_with_rapid_test.png"
 )
 def task_plot_share_of_educ_participants_with_rapid_test(depends_on, produces):
     params = pd.read_pickle(depends_on["params"])
@@ -49,7 +53,7 @@ def task_plot_share_of_educ_participants_with_rapid_test(depends_on, produces):
         ax=ax,
         label="School Students",
     )
-    ax.set_title("Share Educ Participants Getting Rapid Test")
+    ax.set_title("Share of Students and Teachers Receiving Rapid Tests")
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
 
