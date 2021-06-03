@@ -29,9 +29,10 @@ from src.testing.shared import get_piecewise_linear_interpolation
 @pytask.mark.produces(
     {
         "share_known_cases_fig": BLD
+        / "figures"
         / "data"
-        / "processed_time_series"
-        / "share_known_cases.png",
+        / "testing"
+        / "assumed_overall_share_known_cases.png",
     }
 )
 def task_plot_overall_share_known_cases(depends_on, produces):

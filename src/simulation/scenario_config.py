@@ -1,7 +1,9 @@
+import pandas as pd
+
 from src.config import BLD
 from src.config import FAST_FLAG
 
-SPRING_START = "2021-01-16"
+SPRING_START = pd.Timestamp("2021-01-01")
 
 
 NON_INCIDENCE_OUTCOMES = [
@@ -12,15 +14,15 @@ NON_INCIDENCE_OUTCOMES = [
 ]
 
 
+def create_path_to_last_states_of_simulation(name, seed):
+    path = BLD / "simulations" / "last_states" / f"{FAST_FLAG}_{name}_{seed}.pkl"
+    return path
+
+
 def create_path_to_period_outputs_of_simulation(name, seed):
     """Return the path to the simulation results with the period outcomes."""
     path = BLD / "simulations" / "period_outputs" / f"{FAST_FLAG}_{name}_{seed}.pkl"
     return path
-
-
-def create_path_to_initial_group_share_known_cases(name):
-    file_name = f"{FAST_FLAG}_{name}.pkl"
-    return BLD / "simulations" / "share_known_case_prediction" / file_name
 
 
 def create_path_to_share_known_cases_of_scenario(name):
@@ -69,30 +71,54 @@ def get_named_scenarios():
         n_main_seeds = 1
         n_other_seeds = 1
     elif FAST_FLAG == "verify":
-        n_main_seeds = 15
-        n_other_seeds = 0
+        n_main_seeds = 1
+        n_other_seeds = 1
     elif FAST_FLAG == "full":
-        n_main_seeds = 25
-        n_other_seeds = 25
+        n_main_seeds = 20
+        n_other_seeds = 20
     else:
         raise ValueError(
             f"Unknown FAST_FLAG {FAST_FLAG}."
             "Only 'debug', 'verify' or 'full' are allowed."
         )
 
-    spring_dates = {
-        "start_date": SPRING_START,
-        "end_date": "2021-05-31" if FAST_FLAG != "debug" else "2021-04-15",
-    }
+    if FAST_FLAG != "debug":
+        fall_dates = {
+            "start_date": "2020-09-15",
+            "end_date": SPRING_START - pd.Timedelta(days=1),
+        }
+        spring_dates = {"start_date": SPRING_START, "end_date": "2021-05-31"}
+        combined_dates = {
+            "start_date": fall_dates["start_date"],
+            "end_date": spring_dates["end_date"],
+        }
+    else:
+        fall_dates = {
+            "start_date": "2020-12-25",
+            "end_date": "2020-12-31",
+        }
+        spring_dates = {
+            "start_date": "2021-01-01",
+            "end_date": "2021-01-05",
+        }
+        combined_dates = {"start_date": "2020-12-25", "end_date": "2021-01-05"}
 
     named_scenarios = {
         # Baseline Scenarios
+        "combined_baseline": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "baseline",
+            "n_seeds": n_main_seeds,
+            "is_resumed": False,
+            **combined_dates,
+        },
         "fall_baseline": {
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
-            "start_date": "2020-09-15",
-            "end_date": "2021-01-14",
             "n_seeds": n_main_seeds,
+            "save_last_states": True,
+            "is_resumed": False,
+            **fall_dates,
         },
         "spring_baseline": {
             "sim_input_scenario": "baseline",
@@ -102,7 +128,7 @@ def get_named_scenarios():
         },
         # Scenarios for the main plots
         "spring_no_effects": {
-            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
+            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations",
             "params_scenario": "no_seasonality",
             "n_seeds": n_main_seeds,
             **spring_dates,
@@ -114,7 +140,7 @@ def get_named_scenarios():
             **spring_dates,
         },
         "spring_without_vaccines": {
-            "sim_input_scenario": "no_vaccinations_after_feb_10",
+            "sim_input_scenario": "no_vaccinations",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
             **spring_dates,
@@ -168,7 +194,7 @@ def get_named_scenarios():
             **spring_dates,
         },
         "spring_without_rapid_tests_and_no_vaccinations": {
-            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations_after_feb_10",
+            "sim_input_scenario": "just_seasonality",
             "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
             **spring_dates,
@@ -180,7 +206,7 @@ def get_named_scenarios():
             **spring_dates,
         },
         "spring_without_vaccinations_without_seasonality": {  # i.e. only rapid tests
-            "sim_input_scenario": "no_vaccinations_after_feb_10",
+            "sim_input_scenario": "no_vaccinations",
             "params_scenario": "no_seasonality",
             "n_seeds": n_other_seeds,
             **spring_dates,

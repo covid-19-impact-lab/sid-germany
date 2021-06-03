@@ -12,6 +12,7 @@ from src.contact_models.get_contact_models import get_all_contact_models
 from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
+from src.events.events import introduce_b117
 from src.policies.policy_tools import combine_dictionaries
 from src.simulation import scenario_simulation_inputs
 from src.simulation.calculate_susceptibility import calculate_susceptibility
@@ -29,6 +30,9 @@ def load_simulation_inputs(
     debug,
     group_share_known_case_path=None,
     period_outputs=False,
+    return_last_states=False,
+    initial_states_path=None,
+    is_resumed=False,
 ):
     """Load the simulation inputs.
 
@@ -46,6 +50,12 @@ def load_simulation_inputs(
             initial conditions.
         period_outputs (bool, optional): whether to use period_outputs instead of saving
             the time series. Default is False.
+        return_last_states (bool, optional): if True, the last states are returned as
+            part of the simulation result.
+        initial_states_path (pathlib.Path, optional): Path to the initial states.
+            If not given the standard initial states are used.
+        is_resumed (bool, optional): if True, the initial_states_path must be given. In
+            that case no initial conditions are created
 
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
@@ -72,12 +82,24 @@ def load_simulation_inputs(
             - rapid_test_reaction_models
 
     """
+    if is_resumed:
+        assert (
+            initial_states_path is not None
+        ), "You must specify the path to the initial states if you resume a simulation."
+
     start_date = pd.Timestamp(start_date)
     end_date = pd.Timestamp(end_date)
 
-    paths = get_simulation_dependencies(debug=debug)
+    paths = get_simulation_dependencies(debug=debug, is_resumed=is_resumed)
 
-    initial_states = pd.read_parquet(paths["initial_states"])
+    if initial_states_path is None:
+        initial_states_path = paths["initial_states"]
+
+    if initial_states_path.suffix == ".pkl":
+        initial_states = pd.read_pickle(initial_states_path)
+    elif initial_states_path.suffix == ".parquet":
+        initial_states = pd.read_parquet(paths["initial_states"])
+
     contact_models = get_all_contact_models()
 
     # process dates
@@ -133,35 +155,38 @@ def load_simulation_inputs(
         ],
     }
 
-    virus_shares = pd.read_pickle(paths["virus_shares"])
-    rki_infections = pd.read_pickle(paths["rki"])
+    if not is_resumed:
+        virus_shares = pd.read_pickle(paths["virus_shares"])
+        rki_infections = pd.read_pickle(paths["rki"])
 
-    group_weights = pd.read_pickle(paths["rki_age_groups"])["weight"]
-    if group_share_known_case_path is not None:
-        group_share_known_cases = pd.read_pickle(group_share_known_case_path)
-    else:
-        group_share_known_cases = None
+        group_weights = pd.read_pickle(paths["rki_age_groups"])["weight"]
+        if group_share_known_case_path is not None:
+            group_share_known_cases = pd.read_pickle(group_share_known_case_path)
+        else:
+            group_share_known_cases = None
 
-    params = pd.read_pickle(paths["params"])
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore", message="indexing past lexsort depth may impact performance."
+        params = pd.read_pickle(paths["params"])
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", message="indexing past lexsort depth may impact performance."
+            )
+            params_slice = params.loc[("share_known_cases", "share_known_cases")]
+        overall_share_known_cases = get_piecewise_linear_interpolation(params_slice)
+
+        initial_conditions = create_initial_conditions(
+            start=init_start,
+            end=init_end,
+            seed=3930,
+            reporting_delay=5,
+            synthetic_data=initial_states[["county", "age_group_rki"]],
+            empirical_infections=rki_infections,
+            virus_shares=virus_shares,
+            overall_share_known_cases=overall_share_known_cases,
+            group_share_known_cases=group_share_known_cases,
+            group_weights=group_weights,
         )
-        params_slice = params.loc[("share_known_cases", "share_known_cases")]
-    overall_share_known_cases = get_piecewise_linear_interpolation(params_slice)
-
-    initial_conditions = create_initial_conditions(
-        start=init_start,
-        end=init_end,
-        seed=3930,
-        reporting_delay=5,
-        synthetic_data=initial_states[["county", "age_group_rki"]],
-        empirical_infections=rki_infections,
-        virus_shares=virus_shares,
-        overall_share_known_cases=overall_share_known_cases,
-        group_share_known_cases=group_share_known_cases,
-        group_weights=group_weights,
-    )
+    else:
+        initial_conditions = None
 
     seasonality_factor_model = partial(seasonality_model, contact_models=contact_models)
 
@@ -176,11 +201,13 @@ def load_simulation_inputs(
         "knows_currently_infected": _knows_currently_infected,
     }
 
+    events = {"introduce_b117": {"model": introduce_b117}}
+
     fixed_inputs = {
         "initial_states": initial_states,
         "contact_models": contact_models,
         "duration": duration,
-        "events": None,
+        "events": events,
         "testing_demand_models": testing_demand_models,
         "testing_allocation_models": testing_allocation_models,
         "testing_processing_models": testing_processing_models,
@@ -190,11 +217,11 @@ def load_simulation_inputs(
         "virus_strains": ["base_strain", "b117"],
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
+        "return_last_states": return_last_states,
     }
 
     if period_outputs:
         fixed_inputs["period_outputs"] = create_period_outputs()
-        fixed_inputs["return_last_states"] = False
         fixed_inputs["return_time_series"] = False
 
     scenario_func = getattr(scenario_simulation_inputs, scenario)
@@ -203,7 +230,7 @@ def load_simulation_inputs(
     return simulation_inputs
 
 
-def get_simulation_dependencies(debug):
+def get_simulation_dependencies(debug, is_resumed):
     """Collect paths on which the simulation depends.
 
     This contains both paths to python modules and data paths.
@@ -214,22 +241,19 @@ def get_simulation_dependencies(debug):
 
     Returns:
         paths (dict): Dictionary with the dependencies for the simulation.
+        is_resumed (bool, optional): Whether the simulation is a resumed simulation.
+            If False the path to the initial states from BLD / "data" are given.
 
     """
-    if debug:
-        initial_states_path = BLD / "data" / "debug_initial_states.parquet"
-    else:
-        initial_states_path = BLD / "data" / "initial_states.parquet"
-
     out = {
         **SID_DEPENDENCIES,
-        "initial_states": initial_states_path,
         # to ensure that the checks on the initial states run before the
         # simulations we add the output of task_check_initial_states here
         # even though we don't use it.
         "output_of_check_initial_states": BLD
+        / "figures"
         / "data"
-        / "comparison_of_age_group_distributions.png",
+        / "how_well_our_synthetic_population_matches_the_german_age_distribution.png",
         "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
         "contact_policies.py": SRC / "policies" / "enacted_policies.py",
         "testing_models.py": SRC / "testing" / "testing_models.py",
@@ -274,6 +298,12 @@ def get_simulation_dependencies(debug):
         "testing_shared.py": SRC / "testing" / "shared.py",
         "policy_tools.py": SRC / "policies" / "policy_tools.py",
     }
+
+    if not is_resumed:
+        if debug:
+            out["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
+        else:
+            out["initial_states"] = BLD / "data" / "initial_states.parquet"
 
     return out
 

@@ -18,8 +18,6 @@ plt.rcParams.update(
     }
 )
 
-OUT_PATH = BLD / "data" / "vaccinations"
-
 
 @pytask.mark.depends_on(
     {
@@ -28,11 +26,26 @@ OUT_PATH = BLD / "data" / "vaccinations"
 )
 @pytask.mark.produces(
     {
-        "vaccination_shares_raw": OUT_PATH / "vaccination_shares_raw.pkl",
-        "vaccination_shares_extended": OUT_PATH / "vaccination_shares_extended.pkl",
-        "fig_first_dose": OUT_PATH / "first_dose.png",
-        "fig_vaccination_shares": OUT_PATH / "vaccination_shares.png",
-        "mean_vacc_share_per_day": OUT_PATH / "mean_vacc_share_per_day.yaml",
+        "vaccination_shares_raw": BLD
+        / "data"
+        / "vaccinations"
+        / "vaccination_shares_raw.pkl",
+        "vaccination_shares_extended": BLD
+        / "data"
+        / "vaccinations"
+        / "vaccination_shares_extended.pkl",
+        "fig_first_dose": BLD
+        / "figures"
+        / "data"
+        / "share_of_individuals_with_frist_vaccine.png",
+        "fig_vaccination_shares": BLD
+        / "figures"
+        / "data"
+        / "share_receiving_vaccination_per_day.png",
+        "mean_vacc_share_per_day": BLD
+        / "data"
+        / "vaccinations"
+        / "mean_vacc_share_per_day.yaml",
     }
 )
 def task_prepare_vaccination_data(depends_on, produces):

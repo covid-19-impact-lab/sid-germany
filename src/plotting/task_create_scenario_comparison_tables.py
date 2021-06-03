@@ -2,6 +2,7 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
+from src.config import FAST_FLAG
 from src.config import N_HOUSEHOLDS
 from src.config import POPULATION_GERMANY
 from src.config import SRC
@@ -49,7 +50,7 @@ WORK_RAPID_TEST_SCENARIOS = [
 _PARAMETRIZATION = [
     (
         _create_deps(SCHOOL_SCENARIOS, "age_group_rki"),
-        "2021-04-06",
+        "2021-04-06" if FAST_FLAG != "debug" else None,
         "5-14",
         "predicted total infections among 5-14 year olds from Easter until {end_date}",
         _create_table_path("student_infections"),
@@ -75,12 +76,16 @@ def task_create_infections_across_scenarios_table(
         scenario: pd.read_pickle(path) for scenario, path in data_dependencies.items()
     }
 
-    scenario_infections = _create_table_with_total_infections(
-        scenario_to_data=scenario_to_data,
-        start_date=start_date,
-        group=group,
-        name=name,
-    )
+    if scenario_to_data:
+        scenario_infections = _create_table_with_total_infections(
+            scenario_to_data=scenario_to_data,
+            start_date=start_date,
+            group=group,
+            name=name,
+        )
+    else:
+        scenario_infections = pd.DataFrame()
+
     with open(produces, "w") as f:
         f.write(scenario_infections.to_latex())
 
