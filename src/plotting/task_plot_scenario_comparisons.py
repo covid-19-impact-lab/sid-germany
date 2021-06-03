@@ -356,18 +356,23 @@ def task_plot_scenario_comparison(
         scenario_starts=scenario_starts,
         n_single_runs=None if empirical else 0,
     )
+    plt.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
+
     min_y, max_y = ax.get_ylim()
+    fig_path = produces["fig"]
+    cropped_path = fig_path.parent / (fig_path.stem + "_cropped" + fig_path.suffix)
     if outcome == "new_known_case":
         max_y = min(max_y, 510)
         ax.set_ylim(min_y, max_y)
+        plt.savefig(cropped_path, dpi=200, transparent=False, facecolor="w")
     elif outcome == "newly_infected":
         max_y = min(max_y, 1050)
         ax.set_ylim(min_y, max_y)
+        plt.savefig(cropped_path, dpi=200, transparent=False, facecolor="w")
     elif outcome == "newly_deceased":
         max_y = min(max_y, 20.5)
         ax.set_ylim(min_y, max_y)
-
-    plt.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
+        plt.savefig(cropped_path, dpi=200, transparent=False, facecolor="w")
     plt.close()
 
     # save data for report write up as .csv
