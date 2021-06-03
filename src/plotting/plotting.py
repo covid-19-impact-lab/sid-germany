@@ -251,7 +251,7 @@ def plot_group_time_series(df, title, rki=None):
 
     n_rows = int(np.ceil(len(groups) / 2))
     fig, axes = plt.subplots(
-        figsize=(12, n_rows * 3), nrows=n_rows, ncols=2, sharey=True
+        figsize=(12, n_rows * 2.8), nrows=n_rows, ncols=2, sharey=True
     )
     axes = axes.flatten()
 
