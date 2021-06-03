@@ -247,7 +247,9 @@ def plot_group_time_series(df, title, rki=None):
     dates = df.index.levels[1].unique()
 
     n_rows = int(np.ceil(len(groups) / 2))
-    fig, axes = plt.subplots(figsize=(12, n_rows * 3), nrows=n_rows, ncols=2)
+    fig, axes = plt.subplots(
+        figsize=(12, n_rows * 3), nrows=n_rows, ncols=2, sharey=True
+    )
     axes = axes.flatten()
 
     if "0-4" in groups:
