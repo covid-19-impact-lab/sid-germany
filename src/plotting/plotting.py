@@ -96,9 +96,9 @@ def plot_incidences(
     """
     if fig is None and ax is None:
         if len(incidences) <= 4:
-            fig, ax = plt.subplots(figsize=(6, 4))
+            fig, ax = plt.subplots(figsize=(8, 4))
         else:
-            fig, ax = plt.subplots(figsize=(6, 6))
+            fig, ax = plt.subplots(figsize=(8, 6))
 
     dates = list(incidences.values())[0].index
     if empirical in ["new_known_case", "newly_deceased"]:
