@@ -60,24 +60,10 @@ if FAST_FLAG != "debug":
 
 PLOTS = {
     # Main Plots (Fixed)
-    "fitness_plot": {
+    "combined_fit": {
         "title": "Simulated versus Empirical {outcome}",
         "scenarios": ["combined_baseline"],
         "name_to_label": {"combined_baseline": "simulated"},
-        "colors": [BLUE],
-        "empirical": True,
-    },
-    "fall_fit": {
-        "title": "{outcome} in Fall",
-        "scenarios": ["fall_baseline"],
-        "name_to_label": {"fall_baseline": "simulation"},
-        "colors": [BLUE],
-        "empirical": True,
-    },
-    "spring_fit": {
-        "title": "{outcome} in Spring",
-        "scenarios": ["spring_baseline"],
-        "name_to_label": {"spring_baseline": "simulation"},
         "colors": [BLUE],
         "empirical": True,
     },
@@ -212,7 +198,7 @@ AVAILABLE_SCENARIOS = get_available_scenarios(NAMED_SCENARIOS)
 
 plotted_scenarios = {x for spec in PLOTS.values() for x in spec["scenarios"]}
 assert set(AVAILABLE_SCENARIOS).issubset(
-    plotted_scenarios
+    plotted_scenarios.union(["fall_baseline"])
 ), "The following scenarios do not appear in any plots: " + "\n\t".join(
     list(set(AVAILABLE_SCENARIOS).difference(plotted_scenarios))
 )
@@ -370,6 +356,17 @@ def task_plot_scenario_comparison(
         scenario_starts=scenario_starts,
         n_single_runs=None if empirical else 0,
     )
+    min_y, max_y = ax.get_ylim()
+    if outcome == "new_known_case":
+        max_y = min(max_y, 510)
+        ax.set_ylim(min_y, max_y)
+    elif outcome == "newly_infected":
+        max_y = min(max_y, 1050)
+        ax.set_ylim(min_y, max_y)
+    elif outcome == "newly_deceased":
+        max_y = min(max_y, 20.5)
+        ax.set_ylim(min_y, max_y)
+
     plt.savefig(produces["fig"], dpi=200, transparent=False, facecolor="w")
     plt.close()
 

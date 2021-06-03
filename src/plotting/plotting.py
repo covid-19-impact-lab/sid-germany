@@ -375,9 +375,9 @@ def make_nice_outcome(outcome):
         "new_known_case": "Observed New Cases",
         "newly_infected": "Total New Cases",
         "newly_deceased": "New Deaths",
-        "share_ever_rapid_test": "Share of People who Have Ever Done a Rapid Test\n",
-        "share_rapid_test_in_last_week": "Share of People who Have Done a Rapid Test\n"
-        + "in the Last Week",
+        "share_ever_rapid_test": "\nShare of People who Have Ever Done a Rapid Test\n",
+        "share_rapid_test_in_last_week": "\nShare of People who Have Done a Rapid Test"
+        + "\nin the Last Week",
         "r_effective": "the Effective Reproduction Number",
     }
 
