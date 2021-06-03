@@ -80,12 +80,15 @@ def plot_incidences(
         incidences (dict): keys are names of the scenarios, values are dataframes where
             each column is the incidence of interest of one run
         title (str): plot title.
-        n_single_runs (Optional[int]): Number of individual runs with different seeds
-            visualize to show statistical uncertainty. Passing ``None`` will plot all
-            runs.
+        name_to_label (dict): keys must contain the ones in *incidences*. Values will be
+            plotted as labels of the scenarios in the figure's legend.
+        n_single_runs (Optional[int or None]): Number of individual runs with
+            different seeds visualize to show statistical uncertainty. Passing ``None``
+            will plot all runs.
         empirical (str or bool): if str name of the empirical outcome to be added to
-        the plot.
-        scenario_start (list, optional): the scenario start points
+            the plot.
+        scenario_starts (list, optional): the scenario start points. Each consists of a
+            tuple of the date and a label.
 
     Returns:
         fig, ax
