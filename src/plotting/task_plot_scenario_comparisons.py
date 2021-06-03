@@ -61,7 +61,7 @@ if FAST_FLAG != "debug":
 PLOTS = {
     # Main Plots (Fixed)
     "fitness_plot": {
-        "title": "Simulated versus Empirical Infections",
+        "title": "Simulated versus Empirical {outcome}",
         "scenarios": ["combined_baseline"],
         "name_to_label": {"combined_baseline": "simulated"},
         "colors": [BLUE],
@@ -108,7 +108,8 @@ PLOTS = {
             "spring_close_educ_after_easter": "keep schools closed",
         },
         "colors": None,
-        "plot_start": AFTER_EASTER,
+        "plot_start": AFTER_EASTER - pd.Timedelta(days=10),
+        "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
     # Other Fixed Plots
     "effect_of_rapid_tests": {
