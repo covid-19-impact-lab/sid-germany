@@ -9,12 +9,12 @@ _PARAMETRIZATION = [
     (
         BLD / "contact_models" / "age_assort_params" / "other_non_recurrent.pkl",
         "assortative_matching_other_non_recurrent_age_group",
-        BLD / "figures" / "data" / "assortativity_other_non_recurrent.png",
+        BLD / "figures" / "data" / "assortativity_other_non_recurrent.pdf",
     ),
     (
         BLD / "contact_models" / "age_assort_params" / "work_non_recurrent.pkl",
         "assortative_matching_work_non_recurrent_age_group",
-        BLD / "figures" / "data" / "assortativity_work_non_recurrent.png",
+        BLD / "figures" / "data" / "assortativity_work_non_recurrent.pdf",
     ),
 ]
 

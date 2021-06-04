@@ -26,12 +26,12 @@ plt.rcParams.update(
 )
 @pytask.mark.produces(
     {
-        "hygiene": BLD / "policies" / "hygiene_score.png",
-        "by_state": BLD / "policies" / "work_mobility_reduction_by_state.png",
-        "de": BLD / "policies" / "work_multiplier.png",
-        "since_sep": BLD / "figures" / "data" / "work_multiplier_since_sep.png",
-        "old_vs_new": BLD / "policies" / "old_vs_new_work_multipliers_since_sep.png",
-        "2021": BLD / "policies" / "work_mobility_2021.png",
+        "hygiene": BLD / "policies" / "hygiene_score.pdf",
+        "by_state": BLD / "policies" / "work_mobility_reduction_by_state.pdf",
+        "de": BLD / "policies" / "work_multiplier.pdf",
+        "since_sep": BLD / "figures" / "data" / "work_multiplier_since_sep.pdf",
+        "old_vs_new": BLD / "policies" / "old_vs_new_work_multipliers_since_sep.pdf",
+        "2021": BLD / "policies" / "work_mobility_2021.pdf",
     }
 )
 def task_visualize_work_multipliers(depends_on, produces):

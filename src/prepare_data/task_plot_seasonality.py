@@ -24,7 +24,7 @@ plt.rcParams.update(
 
 
 @pytask.mark.depends_on(_DEPENDENCIES)
-@pytask.mark.produces(BLD / "figures" / "data" / "seasonality.png")
+@pytask.mark.produces(BLD / "figures" / "data" / "seasonality.pdf")
 def task_plot_seasonality(depends_on, produces):
     params = pd.read_pickle(depends_on["params"])
     tup = ("seasonality_effect", "seasonality_effect")

@@ -62,7 +62,7 @@ _COMPARISON_DEPENDENCIES = _create_comparison_dependencies()
 )
 @pytask.mark.depends_on(_COMPARISON_DEPENDENCIES)
 @pytask.mark.produces(
-    BLD / "figures" / "vaccinations" / "comparison_across_scenarios.png"
+    BLD / "figures" / "vaccinations" / "comparison_across_scenarios.pdf"
 )
 def task_plot_overall_vaccination_shares_across_scenarios(depends_on, produces):
     dfs = {
@@ -109,7 +109,7 @@ for name in VACCINATION_SCENARIOS:
             name, "ever_vaccinated_by_age_group_rki"
         ),
     }
-    produces = BLD / "figures" / "vaccinations" / f"{name}.png"
+    produces = BLD / "figures" / "vaccinations" / f"{name}.pdf"
     _PARAMETRIZATION.append((name, dep, produces))
 
 

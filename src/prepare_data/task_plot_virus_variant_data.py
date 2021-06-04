@@ -15,7 +15,7 @@ _MODULE_DEPENDENCIES = {
 
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.depends_on(STRAIN_FILES)
-@pytask.mark.produces(BLD / "data" / "virus_strains" / "compare_b117.png")
+@pytask.mark.produces(BLD / "data" / "virus_strains" / "compare_b117.pdf")
 def task_plot_comparison_of_virus_variant_data(depends_on, produces):
     rki_b117 = pd.read_csv(
         depends_on["rki_strains"],
@@ -41,7 +41,7 @@ def task_plot_comparison_of_virus_variant_data(depends_on, produces):
 
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.depends_on(STRAIN_FILES)
-@pytask.mark.produces(BLD / "figures" / "data" / "share_of_b117_acc_to_rki.png")
+@pytask.mark.produces(BLD / "figures" / "data" / "share_of_b117_acc_to_rki.pdf")
 def task_plot_virus_variant_data(depends_on, produces):
     rki_b117 = pd.read_csv(
         depends_on["rki_strains"],

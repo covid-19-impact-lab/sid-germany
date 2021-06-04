@@ -23,7 +23,7 @@ from src.testing.shared import get_piecewise_linear_interpolation
     / "figures"
     / "data"
     / "testing"
-    / "share_of_educ_participants_with_rapid_test.png"
+    / "share_of_educ_participants_with_rapid_test.pdf"
 )
 def task_plot_share_of_educ_participants_with_rapid_test(depends_on, produces):
     params = pd.read_pickle(depends_on["params"])

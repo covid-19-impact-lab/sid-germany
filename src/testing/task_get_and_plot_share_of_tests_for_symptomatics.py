@@ -33,16 +33,16 @@ plt.rcParams.update(
         / "data"
         / "testing"
         / "share_of_tests_for_symptomatics_series.pkl",
-        "mean_age": BLD / "data" / "testing" / "mean_age_of_tested.png",
+        "mean_age": BLD / "data" / "testing" / "mean_age_of_tested.pdf",
         "share_with_symptom_status": BLD
         / "data"
         / "testing"
-        / "share_of_tested_with_symptom_status.png",
+        / "share_of_tested_with_symptom_status.pdf",
         "symptom_shares": BLD
         / "figures"
         / "data"
         / "testing"
-        / "share_of_pcr_tests_going_to_symptomatics.png",
+        / "share_of_pcr_tests_going_to_symptomatics.pdf",
     }
 )
 def task_prepare_characteristics_of_the_tested(depends_on, produces):

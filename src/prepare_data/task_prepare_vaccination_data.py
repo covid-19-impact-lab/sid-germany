@@ -37,11 +37,11 @@ plt.rcParams.update(
         "fig_first_dose": BLD
         / "figures"
         / "data"
-        / "share_of_individuals_with_first_vaccine.png",
+        / "share_of_individuals_with_first_vaccine.pdf",
         "fig_vaccination_shares": BLD
         / "figures"
         / "data"
-        / "share_receiving_vaccination_per_day.png",
+        / "share_receiving_vaccination_per_day.pdf",
         "mean_vacc_share_per_day": BLD
         / "data"
         / "vaccinations"

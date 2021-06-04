@@ -32,7 +32,7 @@ from src.testing.shared import get_piecewise_linear_interpolation
         / "figures"
         / "data"
         / "testing"
-        / "assumed_overall_share_known_cases.png",
+        / "assumed_overall_share_known_cases.pdf",
     }
 )
 def task_plot_overall_share_known_cases(depends_on, produces):

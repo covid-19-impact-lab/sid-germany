@@ -253,7 +253,7 @@ def get_simulation_dependencies(debug, is_resumed):
         "output_of_check_initial_states": BLD
         / "figures"
         / "data"
-        / "how_well_our_synthetic_population_matches_the_german_age_distribution.png",
+        / "how_well_our_synthetic_population_matches_the_german_age_distribution.pdf",
         "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
         "contact_policies.py": SRC / "policies" / "enacted_policies.py",
         "testing_models.py": SRC / "testing" / "testing_models.py",

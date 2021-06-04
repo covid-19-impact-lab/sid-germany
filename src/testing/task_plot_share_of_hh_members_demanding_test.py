@@ -20,7 +20,7 @@ from src.testing.shared import get_piecewise_linear_interpolation
     }
 )
 @pytask.mark.produces(
-    BLD / "figures" / "data" / "testing" / "private_test_demand_shares.png"
+    BLD / "figures" / "data" / "testing" / "private_test_demand_shares.pdf"
 )
 def task_plot_private_test_demand_shares(depends_on, produces):
     params = pd.read_pickle(depends_on["params"])

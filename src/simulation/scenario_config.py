@@ -47,14 +47,14 @@ def create_path_to_scenario_outcome_time_series(scenario_name, entry):
 
 def create_path_to_share_known_cases_plot(name, groupby):
     if groupby is not None:
-        fig_name = f"{FAST_FLAG}_{name}_by_{groupby}.png"
+        fig_name = f"{FAST_FLAG}_{name}_by_{groupby}.pdf"
     else:
-        fig_name = f"{FAST_FLAG}_{name}.png"
+        fig_name = f"{FAST_FLAG}_{name}.pdf"
     return BLD / "figures" / "share_known_cases" / fig_name
 
 
 def create_path_to_group_incidence_plot(name, outcome, groupby):
-    fig_name = f"{FAST_FLAG}_{name}_{outcome}.png"
+    fig_name = f"{FAST_FLAG}_{name}_{outcome}.pdf"
     return BLD / "figures" / "incidences_by_group" / groupby / fig_name
 
 

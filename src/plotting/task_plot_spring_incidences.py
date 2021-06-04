@@ -15,7 +15,7 @@ from src.plotting.plotting import style_plot
         "plotting.py": SRC / "plotting" / "plotting.py",
     }
 )
-@pytask.mark.produces(BLD / "figures" / "data" / "official_case_numbers_in_spring.png")
+@pytask.mark.produces(BLD / "figures" / "data" / "official_case_numbers_in_spring.pdf")
 def task_plot_spring_incidences(depends_on, produces):
     rki = pd.read_pickle(depends_on["rki"])
     rki_n_cases = rki.groupby("date")["newly_infected"].sum()
