@@ -105,7 +105,7 @@ def _create_scenario_share_known_cases_parametrization():
             produces = create_path_to_share_known_cases_of_scenario(
                 scenario_name, groupby
             )
-        parametrization.append((depends_on, produces))
+            parametrization.append((depends_on, produces))
     return "depends_on, produces", parametrization
 
 
