@@ -26,8 +26,11 @@ def create_path_to_period_outputs_of_simulation(name, seed):
     return path
 
 
-def create_path_to_share_known_cases_of_scenario(name):
-    file_name = f"{FAST_FLAG}_{name}.pkl"
+def create_path_to_share_known_cases_of_scenario(name, groupby):
+    if groupby is None:
+        file_name = f"{FAST_FLAG}_{name}_by_{groupby}.pkl"
+    else:
+        file_name = f"{FAST_FLAG}_{name}.pkl"
     return BLD / "simulations" / "share_known_cases" / file_name
 
 

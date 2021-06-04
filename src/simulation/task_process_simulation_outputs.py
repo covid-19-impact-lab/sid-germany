@@ -6,7 +6,9 @@ from src.config import SRC
 from src.simulation.load_simulation_inputs import create_period_outputs
 from src.simulation.scenario_config import create_path_to_period_outputs_of_simulation
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
-from src.simulation.scenario_config import create_path_to_share_known_cases_of_scenario
+from src.simulation.scenario_config import (
+    create_path_to_share_known_cases_of_scenario,
+)
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
 from src.simulation.scenario_config import NON_INCIDENCE_OUTCOMES
@@ -93,12 +95,16 @@ def _create_scenario_share_known_cases_parametrization():
     parametrization = []
 
     for scenario_name in available_scenarios:
-        depends_on = {}
-        for outcome in ["currently_infected", "knows_currently_infected"]:
-            depends_on[outcome] = create_path_to_scenario_outcome_time_series(
-                scenario_name, f"{outcome}_by_age_group_rki"
+        for groupby in ["age_group_rki", None]:
+            depends_on = {}
+            for outcome in ["currently_infected", "knows_currently_infected"]:
+                depends_on[outcome] = create_path_to_scenario_outcome_time_series(
+                    scenario_name,
+                    f"{outcome}_by_{groupby}" if groupby is not None else outcome,
+                )
+            produces = create_path_to_share_known_cases_of_scenario(
+                scenario_name, groupby
             )
-        produces = create_path_to_share_known_cases_of_scenario(scenario_name)
         parametrization.append((depends_on, produces))
     return "depends_on, produces", parametrization
 
