@@ -331,7 +331,7 @@ def create_period_outputs():
             )
 
     period_outputs["r_effective"] = partial(calculate_r_effective, window_length=7)
-    period_outputs["b117_share"] = calculate_period_virus_share
+    period_outputs["share_b117"] = calculate_period_virus_share
 
     for groupby in groupbys:
         gb_str = f"_by_{groupby}" if groupby is not None else ""

@@ -52,7 +52,7 @@ OUTCOMES = [
     "newly_deceased",
     "share_ever_rapid_test",
     "share_rapid_test_in_last_week",
-    "b117_share",
+    "share_b117",
 ]
 
 if FAST_FLAG != "debug":

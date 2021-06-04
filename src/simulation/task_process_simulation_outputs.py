@@ -67,10 +67,8 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
             if outcome == "r_effective":
                 # discard the first two weeks because otherwise infections from the
                 # burn in period distort the estimate of the effective reproduction
-                # number downwards. We discard the last two weeks because there people
-                # who have become infectious don't have all meetings to have an
-                # accurate n_has_infected counter.
-                daily_incidence = daily_incidence[14:-14]
+                # number downwards.
+                daily_incidence = daily_incidence[14:]
 
             if groupby is not None:
                 # ensure that the index is complete
