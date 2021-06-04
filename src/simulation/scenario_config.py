@@ -155,7 +155,7 @@ def get_named_scenarios():
         # School Scenarios
         "spring_close_educ_after_easter": {
             "sim_input_scenario": "close_educ_after_april_5",
-            "params_scenario": "no_rapid_tests_at_schools",
+            "params_scenario": "no_rapid_tests_at_schools_after_easter",
             "n_seeds": n_main_seeds,
             **spring_dates,
         },
@@ -171,7 +171,7 @@ def get_named_scenarios():
         },
         "spring_educ_open_after_easter_without_tests": {
             "sim_input_scenario": "open_all_educ_after_easter",
-            "params_scenario": "no_rapid_tests_at_schools",
+            "params_scenario": "no_rapid_tests_at_schools_after_easter",
             "n_seeds": n_main_seeds,
             **spring_dates,
         },
