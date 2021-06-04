@@ -30,6 +30,8 @@ YELLOW = "#edc948"
 PURPLE = "#b07aa1"
 BROWN = "#9c755f"
 
+
+UNORDERED_COLORS = [BLUE, ORANGE, RED, TEAL, GREEN, YELLOW, PURPLE, BROWN]
 ORDERED_COLORS = [BLUE, TEAL, YELLOW, ORANGE, RED, PURPLE]
 
 
@@ -305,7 +307,7 @@ def style_plot(fig, axes):
 def format_date_axis(ax):
     ax.xaxis.set_major_locator(dt.MonthLocator())
     # for month and year use "%b %Y"
-    ax.xaxis.set_major_formatter(dt.DateFormatter("%b %y"))
+    ax.xaxis.set_major_formatter(dt.DateFormatter("%b\n%Y"))
     ax.xaxis.set_minor_locator(dt.DayLocator())
     ax.xaxis.set_minor_formatter(ticker.NullFormatter())
     return ax

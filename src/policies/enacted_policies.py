@@ -13,6 +13,20 @@ from src.policies.policy_tools import combine_dictionaries
 HYGIENE_MULTIPLIER = 0.66
 """Hygiene multiplier for educ and work models. Is in effect from November 2020 on."""
 
+OTHER_MULTIPLIER_SPECS = [
+    ("pre_fall_vacation", "2020-10-01", 0.75),
+    ("fall_vacation", "2020-10-20", 0.925),
+    ("post_fall_vacation", "2020-11-01", 0.75),
+    ("lockdown_light", "2020-12-01", 0.52),
+    ("lockdown_light_with_fatigue", "2020-12-23", 0.57),
+    ("christmas_days", "2020-12-26", 0.6),
+    ("hard_lockdown", "2021-02-15", 0.4),
+    ("hard_lockdown_with_fatige", "2021-02-28", 0.45),
+    ("reopening", "2021-04-10", 0.54),
+    ("decline", VERY_LATE, 0.5),
+]
+"""Specification for the other multipliers"""
+
 
 def get_enacted_policies(contact_models):
     """Get enacted policies."""
@@ -73,18 +87,7 @@ def _get_enacted_other_policies(contact_models):
     These multipliers are on top of the implemented seasonality.
 
     """
-    specs = [
-        ("pre_fall_vacation", "2020-10-01", 0.75),
-        ("fall_vacation", "2020-10-20", 0.925),
-        ("post_fall_vacation", "2020-11-01", 0.75),
-        ("lockdown_light", "2020-12-01", 0.52),
-        ("lockdown_light_with_fatigue", "2020-12-23", 0.57),
-        ("christmas_days", "2020-12-26", 0.6),
-        ("hard_lockdown", "2021-02-15", 0.4),
-        ("hard_lockdown_with_fatige", "2021-02-28", 0.45),
-        ("reopening", "2021-04-10", 0.54),
-        ("decline", VERY_LATE, 0.5),
-    ]
+    specs = OTHER_MULTIPLIER_SPECS
 
     start_date = VERY_EARLY
     to_combine = []
@@ -403,16 +406,16 @@ def _get_enacted_school_policies(contact_models):
             generous_emergency_care_kwargs,
         ),
         (
-            "may2021",
+            "may2021",  # incidence fell from 150 to 35
             "2021-05-31",
             apply_mixed_educ_policies,
             mid_march_to_easter_policy_kwargs,
         ),
         (
-            "june2021",
-            "2021-06-20",
-            apply_mixed_educ_policies,
-            mid_march_to_easter_policy_kwargs,
+            "june2021",  # nationwide incidence below 40
+            "2021-06-30",
+            reduce_educ_models,
+            HYGIENE_MULTIPLIER,
         ),
         ("summer", VERY_LATE, reduce_educ_models, HYGIENE_MULTIPLIER),
     ]
