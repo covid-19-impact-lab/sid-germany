@@ -11,6 +11,7 @@ NON_INCIDENCE_OUTCOMES = [
     "r_effective",
     "share_ever_rapid_test",
     "share_rapid_test_in_last_week",
+    "share_b117",
 ]
 
 
@@ -128,7 +129,7 @@ def get_named_scenarios():
         },
         # Scenarios for the main plots
         "spring_no_effects": {
-            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations",
+            "sim_input_scenario": "just_seasonality",
             "params_scenario": "no_seasonality",
             "n_seeds": n_main_seeds,
             **spring_dates,
