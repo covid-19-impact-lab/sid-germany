@@ -21,8 +21,8 @@ OTHER_MULTIPLIER_SPECS = [
     ("lockdown_light_with_fatigue", "2020-12-23", 0.57),
     ("christmas_days", "2020-12-26", 0.6),
     ("hard_lockdown", "2021-02-15", 0.4),
-    ("hard_lockdown_with_fatige", "2021-02-28", 0.45),
-    ("reopening", "2021-04-10", 0.54),
+    ("hard_lockdown_with_fatige", "2021-02-28", 0.475),
+    ("reopening", "2021-04-10", 0.55),
     ("decline", VERY_LATE, 0.5),
 ]
 """Specification for the other multipliers"""
