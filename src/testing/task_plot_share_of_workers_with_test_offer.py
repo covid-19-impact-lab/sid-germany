@@ -6,6 +6,8 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
+from src.config import PLOT_END_DATE
+from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.testing.shared import get_piecewise_linear_interpolation
@@ -36,7 +38,7 @@ def task_plot_share_of_workers_receiving_test_offer(depends_on, produces):
         ]
     share_workers_receiving_offer = get_piecewise_linear_interpolation(params_slice)
     share_workers_receiving_offer = share_workers_receiving_offer.loc[
-        "2020-12-15":"2021-07-01"
+        PLOT_START_DATE:PLOT_END_DATE
     ]
 
     fig, ax = plt.subplots(figsize=(8, 3))

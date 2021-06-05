@@ -4,6 +4,8 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
+from src.config import PLOT_END_DATE
+from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import BLUE
 from src.plotting.plotting import ORANGE
@@ -18,44 +20,52 @@ from src.testing.shared import get_piecewise_linear_interpolation
 _DEPENDENCIES = {
     # modules
     "plotting.py": SRC / "plotting" / "plotting.py",
-    "enacted_policies.py": SRC / "policies" / "enacted_policies.py",
     "testing_shared.py": SRC / "testing" / "shared.py",
     # data
+    "enacted_policies.py": SRC / "policies" / "enacted_policies.py",
     "stringency_data": BLD / "data" / "raw_time_series" / "stringency_data.csv",
     "work_multiplier": BLD / "policies" / "work_multiplier.csv",
 }
 
+_PRODUCTS = {
+    0: BLD / "figures" / "data" / "stringency.pdf",
+    1: BLD / "figures" / "data" / "stringency2.pdf",
+}
+
 
 @pytask.mark.depends_on(_DEPENDENCIES)
-@pytask.mark.produces(BLD / "figures" / "data" / "stringency.pdf")
+@pytask.mark.produces(_PRODUCTS)
 def task_plot_multipliers_and_stringency_index(depends_on, produces):
-    start_date = "2020-09-15"
-    end_date = "2021-06-01"
-
     home_office_share = pd.read_csv(
         depends_on["work_multiplier"], parse_dates=["date"], index_col="date"
     )
     df = pd.read_csv(
         depends_on["stringency_data"], low_memory=False, parse_dates=["Date"]
     )
-    oxford_stringency = _prepare_stringency(df, start_date, end_date)
+    stringency, doubled_stringency = _prepare_stringency(
+        df, PLOT_START_DATE, PLOT_END_DATE
+    )
 
-    work_multiplier = home_office_share.loc[start_date:end_date, "Germany"]
+    work_multiplier = home_office_share.loc[PLOT_START_DATE:PLOT_END_DATE, "Germany"]
     work_multiplier["2020-11-01":] = HYGIENE_MULTIPLIER * work_multiplier["2020-11-01":]
-    other_multiplier = _get_other_multiplier(start_date)
-    school_multiplier = _get_school_multiplier(start_date)
+    other_multiplier = _get_other_multiplier(PLOT_START_DATE)
+    other_multiplier = other_multiplier[PLOT_START_DATE:PLOT_END_DATE]
+    school_multiplier = _get_school_multiplier(PLOT_START_DATE)
+    school_multiplier = school_multiplier[PLOT_START_DATE:PLOT_END_DATE]
+
     our_stringency = pd.concat(
         [work_multiplier, other_multiplier, school_multiplier], axis=1
     ).mean(axis=1)
 
-    fig = _create_multiplier_plot(
-        oxford_stringency,
-        work_multiplier,
-        other_multiplier,
-        school_multiplier,
-        our_stringency,
-    )
-    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    for i, oxford_stringency in enumerate([stringency, doubled_stringency]):
+        fig = _create_multiplier_plot(
+            oxford_stringency=oxford_stringency,
+            work_multiplier=work_multiplier,
+            other_multiplier=other_multiplier,
+            school_multiplier=school_multiplier,
+            our_stringency=our_stringency,
+        )
+        fig.savefig(produces[i])
 
 
 def _prepare_stringency(df, start_date, end_date):
@@ -68,8 +78,9 @@ def _prepare_stringency(df, start_date, end_date):
     df = df.query("CountryName == 'Germany'")
     df = df.set_index("Date")
     df = df[start_date:end_date]
-    stringency = 2 * (1 - df["StringencyIndex"] / 100)
-    return stringency
+    stringency = 1 - df["StringencyIndex"] / 100
+    doubled_stringency = 2 * stringency
+    return stringency, doubled_stringency
 
 
 def _get_other_multiplier(start_date):

@@ -98,7 +98,7 @@ def task_plot_overall_vaccination_shares_across_scenarios(depends_on, produces):
     )
     ax.set_ylabel("share of vaccinated individuals")
 
-    plt.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    plt.savefig(produces)
     plt.close()
 
 
@@ -124,5 +124,5 @@ def task_plot_groupby_vaccination_shares(name, depends_on, produces):
     for ax in axes:
         ax.set_ylabel("share of vaccinated individuals")
 
-    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces)
     plt.close()

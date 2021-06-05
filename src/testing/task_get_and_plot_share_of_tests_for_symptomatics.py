@@ -5,6 +5,8 @@ import seaborn as sns
 from sid import get_colors
 
 from src.config import BLD
+from src.config import PLOT_END_DATE
+from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.testing.shared import convert_weekly_to_daily
@@ -50,6 +52,7 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
 
     df = _clean_data(df)
     df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[])
+    df = df[df["date"].between(PLOT_START_DATE, PLOT_END_DATE)]
 
     fig, ax = _plot_df_column(df, "mean_age")
     fig, ax = style_plot(fig, ax)

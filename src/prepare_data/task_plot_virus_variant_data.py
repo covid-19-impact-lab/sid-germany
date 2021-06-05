@@ -4,6 +4,8 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
+from src.config import PLOT_END_DATE
+from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.prepare_data.task_prepare_virus_variant_data import STRAIN_FILES
@@ -35,7 +37,7 @@ def task_plot_comparison_of_virus_variant_data(depends_on, produces):
 
     fig, ax = style_plot(fig, ax)
     ax.set_title("Share of Virus Variants Over Time")
-    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces)
     plt.close()
 
 
@@ -49,11 +51,13 @@ def task_plot_virus_variant_data(depends_on, produces):
         index_col="date",
     )["share_b117"]
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(8, 3))
 
     sns.lineplot(x=rki_b117.index, y=rki_b117, ax=ax, color="#4e79a7")
+    ax.set_xlim(pd.Timestamp(PLOT_START_DATE), pd.Timestamp(PLOT_END_DATE))
 
     fig, ax = style_plot(fig, ax)
     ax.set_title("Share of B117 Over Time")
-    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    fig.tight_layout()
+    fig.savefig(produces)
     plt.close()

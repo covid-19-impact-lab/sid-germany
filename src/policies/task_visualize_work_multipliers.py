@@ -5,6 +5,8 @@ import seaborn as sns
 from sid.colors import get_colors
 
 from src.config import BLD
+from src.config import PLOT_END_DATE
+from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
 
@@ -45,31 +47,33 @@ def task_visualize_work_multipliers(depends_on, produces):
         x="date",
         title="Hygiene Score Acc. to the COSMOS Data",
     )
-    fig.savefig(produces["hygiene"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["hygiene"])
     plt.close()
 
     fig, ax = _visualize_reductions_by_state(df=work_multiplier)
-    fig.savefig(produces["by_state"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["by_state"])
     plt.close()
 
     fig, ax = _plot_time_series(work_multiplier, title="Work Multiplier")
-    fig.savefig(produces["de"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["de"])
     plt.close()
 
     fig, ax = _plot_time_series(work_multiplier, title="Work Multiplier")
-    fig.savefig(produces["de"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["de"])
     plt.close()
 
-    since_sep = work_multiplier[work_multiplier["date"] > "2020-09-01"]
-    fig, ax = _plot_time_series(since_sep, title="Work Multiplier Since September")
-    fig.savefig(produces["since_sep"], dpi=200, transparent=False, facecolor="w")
+    since_sep = work_multiplier[
+        work_multiplier["date"].between(PLOT_START_DATE, PLOT_END_DATE)
+    ]
+    fig, ax = _plot_time_series(since_sep, title="")
+    fig.savefig(produces["since_sep"])
     plt.close()
 
     old_multipliers = _get_old_work_multipliers()
     sns.lineplot(
         x=old_multipliers.index, y=old_multipliers, ax=ax, label="old multipliers"
     )
-    fig.savefig(produces["old_vs_new"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["old_vs_new"])
     plt.close()
 
     this_year = work_multiplier[work_multiplier["date"] > "2021-01-03"]
@@ -107,6 +111,7 @@ def _plot_time_series(
     fig=None,
     ax=None,
 ):
+    data = data[data[x].between(PLOT_START_DATE, PLOT_END_DATE)]
     y = [y] if isinstance(y, str) else y
     if ax is None:
         fig, ax = plt.subplots(figsize=(15, 5))
