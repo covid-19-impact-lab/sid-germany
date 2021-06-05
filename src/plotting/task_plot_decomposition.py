@@ -68,7 +68,7 @@ def task_plot_decomposition(depends_on, produces):
     ratios = ratios.rename(
         index=lambda x: x.replace("shapley_value_", "").replace("_", " ").title()
     ).sort_values()
-    ratios.index.name = None
+    ratios.index.name = ""
 
     fig, ax = plt.subplots()
 
