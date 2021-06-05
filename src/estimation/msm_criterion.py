@@ -14,6 +14,7 @@ from src.calculate_moments import calculate_period_outcome_sim
 from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
 from src.manfred.shared import hash_array
+from src.simulation.load_simulation_inputs import calculate_period_virus_share
 from src.simulation.load_simulation_inputs import load_simulation_inputs
 
 
@@ -259,7 +260,7 @@ def _get_period_outputs_for_simulate():
             outcome="knows_currently_infected",
             groupby="age_group_rki",
         ),
-        "aggregated_b117_share": _calculate_period_virus_share,
+        "aggregated_b117_share": calculate_period_virus_share,
     }
     return additional_outputs
 
@@ -324,15 +325,6 @@ def _calculate_share_known_cases(sim_out):
     avg_share_known = share_known[end_date - pd.Timedelta(days=28) :].mean()
 
     return avg_share_known
-
-
-def _calculate_period_virus_share(df):
-    df = df[["virus_strain", "date", "newly_infected"]]
-    df = df[df["newly_infected"]]
-    df["b117"] = df["virus_strain"] == "b117"
-
-    out = df.groupby([pd.Grouper(key="date", freq="D")])["b117"].mean().fillna(0)
-    return out
 
 
 def _aggregate_period_virus_share(sim_out):

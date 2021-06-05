@@ -11,6 +11,7 @@ NON_INCIDENCE_OUTCOMES = [
     "r_effective",
     "share_ever_rapid_test",
     "share_rapid_test_in_last_week",
+    "share_b117",
 ]
 
 
@@ -25,8 +26,11 @@ def create_path_to_period_outputs_of_simulation(name, seed):
     return path
 
 
-def create_path_to_share_known_cases_of_scenario(name):
-    file_name = f"{FAST_FLAG}_{name}.pkl"
+def create_path_to_share_known_cases_of_scenario(name, groupby):
+    if groupby is None:
+        file_name = f"{FAST_FLAG}_{name}_by_{groupby}.pkl"
+    else:
+        file_name = f"{FAST_FLAG}_{name}.pkl"
     return BLD / "simulations" / "share_known_cases" / file_name
 
 
@@ -43,14 +47,14 @@ def create_path_to_scenario_outcome_time_series(scenario_name, entry):
 
 def create_path_to_share_known_cases_plot(name, groupby):
     if groupby is not None:
-        fig_name = f"{FAST_FLAG}_{name}_by_{groupby}.png"
+        fig_name = f"{FAST_FLAG}_{name}_by_{groupby}.pdf"
     else:
-        fig_name = f"{FAST_FLAG}_{name}.png"
+        fig_name = f"{FAST_FLAG}_{name}.pdf"
     return BLD / "figures" / "share_known_cases" / fig_name
 
 
 def create_path_to_group_incidence_plot(name, outcome, groupby):
-    fig_name = f"{FAST_FLAG}_{name}_{outcome}.png"
+    fig_name = f"{FAST_FLAG}_{name}_{outcome}.pdf"
     return BLD / "figures" / "incidences_by_group" / groupby / fig_name
 
 
@@ -128,7 +132,7 @@ def get_named_scenarios():
         },
         # Scenarios for the main plots
         "spring_no_effects": {
-            "sim_input_scenario": "no_rapid_tests_and_no_vaccinations",
+            "sim_input_scenario": "just_seasonality",
             "params_scenario": "no_seasonality",
             "n_seeds": n_main_seeds,
             **spring_dates,
@@ -154,7 +158,7 @@ def get_named_scenarios():
         # School Scenarios
         "spring_close_educ_after_easter": {
             "sim_input_scenario": "close_educ_after_april_5",
-            "params_scenario": "no_rapid_tests_at_schools",
+            "params_scenario": "no_rapid_tests_at_schools_after_easter",
             "n_seeds": n_main_seeds,
             **spring_dates,
         },
@@ -170,7 +174,7 @@ def get_named_scenarios():
         },
         "spring_educ_open_after_easter_without_tests": {
             "sim_input_scenario": "open_all_educ_after_easter",
-            "params_scenario": "no_rapid_tests_at_schools",
+            "params_scenario": "no_rapid_tests_at_schools_after_easter",
             "n_seeds": n_main_seeds,
             **spring_dates,
         },

@@ -6,7 +6,7 @@ from src.config import FAST_FLAG
 from src.config import N_HOUSEHOLDS
 from src.config import POPULATION_GERMANY
 from src.config import SRC
-from src.plotting.plotting import make_name_nice
+from src.plotting.plotting import make_scenario_name_nice
 from src.plotting.task_plot_scenario_comparisons import SCHOOL_SCENARIOS
 from src.policies.policy_tools import combine_dictionaries
 from src.policies.policy_tools import filter_dictionary
@@ -104,7 +104,7 @@ def _create_table_with_total_infections(scenario_to_data, start_date, group, nam
             total_infected = int(data[group].sum().mean() * scaling_factor)
         else:
             total_infected = int(scaling_factor * data.sum().mean())
-        nice_name = make_name_nice(scenario).replace("\n", " ")
+        nice_name = make_scenario_name_nice(scenario).replace("\n", " ")
         scenario_to_infections[nice_name] = total_infected
 
     scenario_to_infections.name = name.format(

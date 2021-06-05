@@ -5,6 +5,8 @@ import seaborn as sns
 from sid import get_colors
 
 from src.config import BLD
+from src.config import PLOT_END_DATE
+from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.testing.shared import convert_weekly_to_daily
@@ -33,16 +35,16 @@ plt.rcParams.update(
         / "data"
         / "testing"
         / "share_of_tests_for_symptomatics_series.pkl",
-        "mean_age": BLD / "data" / "testing" / "mean_age_of_tested.png",
+        "mean_age": BLD / "data" / "testing" / "mean_age_of_tested.pdf",
         "share_with_symptom_status": BLD
         / "data"
         / "testing"
-        / "share_of_tested_with_symptom_status.png",
+        / "share_of_tested_with_symptom_status.pdf",
         "symptom_shares": BLD
         / "figures"
         / "data"
         / "testing"
-        / "share_of_pcr_tests_going_to_symptomatics.png",
+        / "share_of_pcr_tests_going_to_symptomatics.pdf",
     }
 )
 def task_prepare_characteristics_of_the_tested(depends_on, produces):
@@ -50,6 +52,7 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
 
     df = _clean_data(df)
     df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[])
+    df = df[df["date"].between(PLOT_START_DATE, PLOT_END_DATE)]
 
     fig, ax = _plot_df_column(df, "mean_age")
     fig, ax = style_plot(fig, ax)

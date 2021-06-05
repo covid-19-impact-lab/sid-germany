@@ -6,6 +6,8 @@ import yaml
 from sid.colors import get_colors
 
 from src.config import BLD
+from src.config import PLOT_END_DATE
+from src.config import PLOT_START_DATE
 from src.config import POPULATION_GERMANY
 from src.plotting.plotting import style_plot
 
@@ -37,11 +39,11 @@ plt.rcParams.update(
         "fig_first_dose": BLD
         / "figures"
         / "data"
-        / "share_of_individuals_with_frist_vaccine.png",
+        / "share_of_individuals_with_first_vaccine.pdf",
         "fig_vaccination_shares": BLD
         / "figures"
         / "data"
-        / "share_receiving_vaccination_per_day.png",
+        / "share_receiving_vaccination_per_day.pdf",
         "mean_vacc_share_per_day": BLD
         / "data"
         / "vaccinations"
@@ -53,7 +55,7 @@ def task_prepare_vaccination_data(depends_on, produces):
     df = _clean_vaccination_data(df)
     # this is for comparing with newspaper sites
     fig, ax = _plot_series(df["share_with_first_dose"], "Share with 1st Dose")
-    fig.savefig(produces["fig_first_dose"], dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces["fig_first_dose"])
     plt.close()
 
     vaccination_shares = df["share_with_first_dose"].diff().dropna()
@@ -98,9 +100,7 @@ def task_prepare_vaccination_data(depends_on, produces):
     )
     plt.legend()
 
-    fig.savefig(
-        produces["fig_vaccination_shares"], dpi=200, transparent=False, facecolor="w"
-    )
+    fig.savefig(produces["fig_vaccination_shares"])
     plt.close()
 
     extended = pd.concat([vaccination_shares, extension])
@@ -122,6 +122,7 @@ def _clean_vaccination_data(df):
 
 def _plot_series(sr, title, label=None):
     fig, ax = plt.subplots(figsize=(15, 5))
+    sr = sr.loc[PLOT_START_DATE:PLOT_END_DATE]
     sns.lineplot(x=sr.index, y=sr, label=label)
     ax.set_title(title)
     fig, ax = style_plot(fig, ax)
@@ -135,8 +136,8 @@ def _plot_labeled_series(labeled):
     colors = get_colors("categorical", len(labeled))
     for (label, sr), color in zip(labeled, colors):
         sns.lineplot(
-            x=sr.loc["2020-12-15":].index,
-            y=sr.loc["2020-12-15":],
+            x=sr.loc[PLOT_START_DATE:PLOT_END_DATE].index,
+            y=sr.loc[PLOT_START_DATE:PLOT_END_DATE],
             label=label,
             linewidth=2,
             color=color,

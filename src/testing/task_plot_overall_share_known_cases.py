@@ -6,6 +6,8 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
+from src.config import PLOT_END_DATE
+from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.testing.shared import get_piecewise_linear_interpolation
@@ -32,12 +34,12 @@ from src.testing.shared import get_piecewise_linear_interpolation
         / "figures"
         / "data"
         / "testing"
-        / "assumed_overall_share_known_cases.png",
+        / "assumed_overall_share_known_cases.pdf",
     }
 )
 def task_plot_overall_share_known_cases(depends_on, produces):
     df_old = pd.read_csv(depends_on["old"])
-    old_share_known = _calculate_share_known_cases(df_old)[:"2020-12-24"]
+    old_share_known = _calculate_share_known_cases(df_old)[PLOT_START_DATE:"2020-12-24"]
 
     df_new = pd.read_csv(depends_on["new"])
     new_share_known = _calculate_share_known_cases(df_new)["2020-12-25":]
@@ -51,7 +53,7 @@ def task_plot_overall_share_known_cases(depends_on, produces):
         len(missing_dates) == 0
     ), f"There are missing dates in the share_known: {missing_dates}"
 
-    share_known = share_known.loc["2020-03-01":"2021-04-14"]
+    share_known = share_known.loc[PLOT_START_DATE:PLOT_END_DATE]
 
     params = pd.read_pickle(depends_on["params"])
     with warnings.catch_warnings():

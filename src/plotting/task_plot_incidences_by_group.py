@@ -103,5 +103,5 @@ def task_plot_age_group_incidences_in_one_scenario(
     title = f"{nice_outcome} in " + "{group}"
     fig, ax = plot_group_time_series(incidences, title, rki)
 
-    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces)
     plt.close()

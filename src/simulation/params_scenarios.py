@@ -159,6 +159,12 @@ def no_rapid_tests_at_work(params):
     return params
 
 
+def no_rapid_tests_at_schools_after_easter(params):
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 1000
+    return params
+
+
 def rapid_tests_at_school_every_other_day_after_april_5(params):
     params = params.copy(deep=True)
     params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 2

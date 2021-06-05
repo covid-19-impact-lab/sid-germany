@@ -30,6 +30,8 @@ YELLOW = "#edc948"
 PURPLE = "#b07aa1"
 BROWN = "#9c755f"
 
+
+UNORDERED_COLORS = [BLUE, ORANGE, RED, TEAL, GREEN, YELLOW, PURPLE, BROWN]
 ORDERED_COLORS = [BLUE, TEAL, YELLOW, ORANGE, RED, PURPLE]
 
 
@@ -184,7 +186,7 @@ def plot_incidences(
     return fig, ax
 
 
-def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
+def plot_share_known_cases(share_known_cases, title, groupby, plot_single_runs=False):
     sns.set_palette(ORDERED_COLORS)
     fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -196,7 +198,7 @@ def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
                 data=share_known_cases.reset_index(),
                 x="date",
                 y=col,
-                hue="age_group_rki",
+                hue=groupby,
                 linewidth=linewidth,
                 alpha=alpha,
             )
@@ -206,7 +208,7 @@ def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
             data=share_known_cases.reset_index(),
             x="date",
             y="mean",
-            hue="age_group_rki",
+            hue=groupby,
             linewidth=2.5,
             alpha=0.6,
         )
@@ -216,7 +218,11 @@ def plot_share_known_cases(share_known_cases, title, plot_single_runs=False):
 
     # Reduce legend to have each age group only once and move it to below the plot
     x, y, width, height = 0.0, -0.3, 1, 0.2
-    n_groups = share_known_cases.index.get_level_values("age_group_rki").nunique()
+    if groupby:
+        n_groups = share_known_cases.index.get_level_values(groupby).nunique()
+    else:
+        n_groups = 1
+
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(
         handles[:n_groups],
@@ -301,7 +307,7 @@ def style_plot(fig, axes):
 def format_date_axis(ax):
     ax.xaxis.set_major_locator(dt.MonthLocator())
     # for month and year use "%b %Y"
-    ax.xaxis.set_major_formatter(dt.DateFormatter("%B"))
+    ax.xaxis.set_major_formatter(dt.DateFormatter("%b\n%Y"))
     ax.xaxis.set_minor_locator(dt.DayLocator())
     ax.xaxis.set_minor_formatter(ticker.NullFormatter())
     return ax
@@ -345,11 +351,11 @@ def shorten_dfs(dfs, empirical, plot_start=None):
 def create_automatic_labels(names):
     name_to_label = {}
     for name in names:
-        name_to_label[name] = make_name_nice(name)
+        name_to_label[name] = make_scenario_name_nice(name)
     return name_to_label
 
 
-def make_name_nice(name):
+def make_scenario_name_nice(name):
     """Make a scenario name nice.
 
     Args:

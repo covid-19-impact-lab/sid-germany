@@ -66,13 +66,14 @@ _DEPENDENCIES = {
 
 
 @pytask.mark.depends_on(_DEPENDENCIES)
-@pytask.mark.produces(
-    {
-        N_HOUSEHOLDS: BLD / "data" / "initial_states.parquet",
-        100_000: BLD / "data" / "debug_initial_states.parquet",
-    }
+@pytask.mark.parametrize(
+    "n_hhs, produces",
+    [
+        (N_HOUSEHOLDS, BLD / "data" / "initial_states.parquet"),
+        (100_000, BLD / "data" / "debug_initial_states.parquet"),
+    ],
 )
-def task_create_initial_states_microcensus(depends_on, produces):
+def task_create_initial_states_microcensus(depends_on, n_hhs, produces):
     mc = pd.read_stata(depends_on["hh_data"])
     county_probabilities = pd.read_parquet(depends_on["county_probabilities"])
     work_daily_dist = pd.read_pickle(depends_on["work_daily_dist"])
@@ -84,19 +85,18 @@ def task_create_initial_states_microcensus(depends_on, produces):
         ("vaccinations", "share_refuser", "share_refuser"), "value"
     ]
 
-    for n_hhs, path in produces.items():
-        df = _build_initial_states(
-            mc=mc,
-            county_probabilities=county_probabilities,
-            work_daily_dist=work_daily_dist,
-            work_weekly_dist=work_weekly_dist,
-            other_daily_dist=other_daily_dist,
-            other_weekly_dist=other_weekly_dist,
-            n_households=n_hhs,
-            seed=3933,
-            no_vaccination_share=no_vaccination_share,
-        )
-        df.to_parquet(path)
+    df = _build_initial_states(
+        mc=mc,
+        county_probabilities=county_probabilities,
+        work_daily_dist=work_daily_dist,
+        work_weekly_dist=work_weekly_dist,
+        other_daily_dist=other_daily_dist,
+        other_weekly_dist=other_weekly_dist,
+        n_households=n_hhs,
+        seed=3933,
+        no_vaccination_share=no_vaccination_share,
+    )
+    df.to_parquet(produces)
 
 
 def _build_initial_states(
@@ -339,6 +339,7 @@ def _only_keep_relevant_columns(df):
         "hh_model_group_id",
         "adult_in_hh_at_home",
         "educ_contact_priority",
+        "vaccination_group",
         "vaccination_rank",
         "rapid_test_compliance",
         "quarantine_compliance",
@@ -369,7 +370,6 @@ def _only_keep_relevant_columns(df):
         "index",
         "stays_home_when_schools_close",  # not used at the moment
         "work_type",
-        "vaccination_group",
     ]
 
     assert set(keep + to_drop) == set(df.columns)

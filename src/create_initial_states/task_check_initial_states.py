@@ -39,7 +39,7 @@ from src.config import POPULATION_GERMANY
     BLD
     / "figures"
     / "data"
-    / "how_well_our_synthetic_population_matches_the_german_age_distribution.png"
+    / "how_well_our_synthetic_population_matches_the_german_age_distribution.pdf"
 )
 def task_check_initial_states(depends_on, produces):
     df = pd.read_parquet(depends_on["initial_states"])
@@ -82,7 +82,7 @@ def task_check_initial_states(depends_on, produces):
         "general population\n(> 0 means over represented in the synthetic data)"
     )
     sns.despine()
-    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces)
     plt.close()
 
 

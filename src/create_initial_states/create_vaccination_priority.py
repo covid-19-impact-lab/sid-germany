@@ -66,12 +66,21 @@ disease
 => We expect a higher share among older individuals.
 
 
-4 = The Rest
--------------
+4 = The General Adult Population
+---------------------------------
 
 Approximately 45 mio people ~ 56% of the population.
 => 57% abstracting 1% nursing home population
 
+
+5 = Youths and 6 = Children
+----------------------------
+
+Youths will be vaccinated after the general population because in the
+beginning the vaccines were not allowed to be given to children.
+First, 12 to 16 year olds will be vaccinated, then children under 12.
+
+We assume that the shares refer to the adult population without children.
 
 References
 ----------
@@ -138,15 +147,26 @@ def create_vaccination_group(states, seed):
 
     """
     np.random.seed(seed)
+    is_adult = states["age"] >= 18
+
     vaccination_group = pd.Series(np.nan, index=states.index)
 
-    first_priority = states.eval("80 <= age | work_contact_priority >= 0.90")
-    vaccination_group[first_priority] = 1
+    # children are vaccination groupS 5 and 6 (i.e. after the general population)
+    vaccination_group[states["age"].between(12, 16, inclusive=True)] = 5
+    vaccination_group[states["age"] < 12] = 6
+
+    first_priority = states.eval("80 <= age | work_contact_priority >= 0.92")
+    vaccination_group[first_priority & vaccination_group.isnull()] = 1
 
     second_priority_stiko = _get_second_priority_people_acc_to_stiko(
         states, vaccination_group
     )
-    assert 0.145 < second_priority_stiko.mean() < 0.155, second_priority_stiko.mean()
+
+    if len(vaccination_group) > 1_000_000:
+        share_2nd_prio_before_educ = second_priority_stiko[is_adult].mean()
+        assert (0.145 < share_2nd_prio_before_educ) & (
+            share_2nd_prio_before_educ < 0.155
+        ), f"second priority is {share_2nd_prio_before_educ}, target is 0.15."
     vaccination_group[second_priority_stiko] = 2
     educators_of_young_children = _get_educators_of_young_children(
         states, vaccination_group
@@ -154,11 +174,11 @@ def create_vaccination_group(states, seed):
     vaccination_group[educators_of_young_children] = 2
 
     third_priority = _get_third_priority(states, vaccination_group)
-    vaccination_group[third_priority] = 3
+    vaccination_group[third_priority & vaccination_group.isnull()] = 3
 
     vaccination_group = vaccination_group.fillna(4)
     if len(vaccination_group) > 1_000_000:
-        _check_vaccination_group(vaccination_group)
+        _check_vaccination_group(vaccination_group, states)
     return vaccination_group
 
 
@@ -166,7 +186,7 @@ def _get_second_priority_people_acc_to_stiko(states, vaccination_group):
     """People aged 70 to 80 and people with serious preconditions."""
     elderly = states.eval("70 <= age < 80") & vaccination_group.isnull()
 
-    share_random_2nd_priority = 0.155
+    share_random_2nd_priority = 0.135
     n_to_sample = share_random_2nd_priority * len(states) - elderly.sum()
     sampled_for_second_priority = _sample_from_subgroups(
         n_to_sample=n_to_sample,
@@ -199,10 +219,10 @@ def _get_educators_of_young_children(states, vaccination_group):
 
 def _get_third_priority(states, vaccination_group):
     third_priority_non_random_str = (
-        "(60 <= age <= 70) | educ_worker | work_contact_priority > 0.85"
+        "(60 <= age < 70) | educ_worker | work_contact_priority > 0.88"
     )
     third_priority_non_random = states.eval(third_priority_non_random_str)
-    n_third_priority_random = 0.075 * len(states)
+    n_third_priority_random = 0.03 * (states["age"] >= 18).sum()
     third_priority_sampled = _sample_from_subgroups(
         n_to_sample=n_third_priority_random,
         states=states,
@@ -254,7 +274,7 @@ def _sample_from_subgroups(
     n_young = int((1 - share_to_sample_above_age_cutoff) * n_to_sample)
     n_old = int(share_to_sample_above_age_cutoff * n_to_sample)
 
-    pool = states[states["age"] >= 19 & vaccination_groups_so_far.isnull()]
+    pool = states[(states["age"] >= 18) & vaccination_groups_so_far.isnull()]
     young_pool = pool[pool["age"] < age_cutoff].index
     old_pool = pool[pool["age"] >= age_cutoff].index
 
@@ -271,17 +291,23 @@ def _sample_from_subgroups(
     return sampled
 
 
-def _check_vaccination_group(vaccination_group):
-    share_group_1 = (vaccination_group == 1).mean()
-    share_group_2 = (vaccination_group == 2).mean()
-    share_group_3 = (vaccination_group == 3).mean()
-    share_group_4 = (vaccination_group == 4).mean()
+def _check_vaccination_group(vaccination_group, states):
+    assert vaccination_group.notnull().all()
+
+    assert (vaccination_group[states["age"] < 12] == 6).all()
+    youth_groups = vaccination_group[(12 <= states["age"]) & (states["age"] <= 16)]
+    assert (youth_groups == 5).all()
+
+    adult_groups = vaccination_group[states["age"] >= 18]
+    share_group_1 = (adult_groups == 1).mean()
+    share_group_2 = (adult_groups == 2).mean()
+    share_group_3 = (adult_groups == 3).mean()
+    share_group_4 = (adult_groups == 4).mean()
     assert 0.08 < share_group_1 < 0.10, share_group_1
     assert 0.15 < share_group_2 < 0.17, share_group_2
     assert 0.18 < share_group_3 < 0.19, share_group_3
     assert 0.55 < share_group_4 < 0.6, share_group_4
-    res_shares = vaccination_group.value_counts(normalize=True)
+    res_shares = adult_groups.value_counts(normalize=True)
     target_shares = pd.Series([0.09, 0.15, 0.19, 0.57], index=[1, 2, 3, 4])
-    assert np.abs(target_shares - res_shares).mean() < 0.01
+    assert np.abs(target_shares - res_shares).mean() < 0.015
     assert np.abs(target_shares - res_shares).max() < 0.02
-    assert vaccination_group.notnull().all()
