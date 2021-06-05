@@ -7,11 +7,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
-from src.config import BLD
-from src.config import SRC
-
-
 plt.rcParams.update(
     {
         "axes.spines.right": False,
@@ -33,6 +28,20 @@ BROWN = "#9c755f"
 
 UNORDERED_COLORS = [BLUE, ORANGE, RED, TEAL, GREEN, YELLOW, PURPLE, BROWN]
 ORDERED_COLORS = [BLUE, TEAL, YELLOW, ORANGE, RED, PURPLE]
+
+
+OUTCOME_TO_EMPIRICAL_LABEL = {
+    "new known case": "official case numbers",
+    "newly_deceased": "official case numbers",
+    "share_ever_rapid_test": "share of Germans reporting to have\n"
+    + "ever done a rapid test",
+    "share_rapid_test_in_last_week": (
+        "share of Germans reporting to have\n"
+        "done at least one self-administered\n"
+        "rapid test per week within the last 4 weeks"
+    ),
+    "share_b117": "officially reported share of B.1.1.7",
+}
 
 
 def calculate_virus_strain_shares(results):
@@ -71,7 +80,6 @@ def plot_incidences(
     name_to_label,
     colors,
     n_single_runs: Optional[int] = 0,
-    empirical=False,
     scenario_starts=None,
     fig=None,
     ax=None,
@@ -87,8 +95,6 @@ def plot_incidences(
         n_single_runs (Optional[int or None]): Number of individual runs with
             different seeds visualize to show statistical uncertainty. Passing ``None``
             will plot all runs.
-        empirical (str or bool): if str name of the empirical outcome to be added to
-            the plot.
         scenario_starts (list, optional): the scenario start points. Each consists of a
             tuple of the date and a label.
 
@@ -103,17 +109,14 @@ def plot_incidences(
             fig, ax = plt.subplots(figsize=(8, 6))
 
     dates = list(incidences.values())[0].index
-    if empirical in ["new_known_case", "newly_deceased"]:
-        rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
-        rki_dates = rki_data.index.get_level_values("date")
-        dates = rki_dates.intersection(dates).unique().sort_values()
 
     if colors is None:
         colors = [BLUE, ORANGE, RED, TEAL, GREEN, YELLOW, PURPLE, BROWN]
     for (name, df), color in zip(incidences.items(), colors):
+        color = "k" if name == "empirical" else color
         sns.lineplot(
-            x=dates,
-            y=df.loc[dates].mean(axis=1),
+            x=df.index,
+            y=df.mean(axis=1),
             ax=ax,
             color=color,
             label=name_to_label[name] if name in name_to_label else name,
@@ -129,36 +132,6 @@ def plot_incidences(
                 color=color,
                 linewidth=1.0,
                 alpha=0.2,
-            )
-    if empirical:
-        if empirical in ["new_known_case", "newly_deceased"]:
-            rki_data = rki_data.groupby("date").sum()
-            if empirical == "new_known_case":
-                rki_col = "newly_infected"
-            else:
-                rki_col = empirical
-            label = "official case numbers"
-
-            weekly_smoothed = (
-                smoothed_outcome_per_hundred_thousand_rki(
-                    df=rki_data,
-                    outcome=rki_col,
-                    take_logs=False,
-                    window=7,
-                )
-                * 7
-            )
-            sns.lineplot(
-                x=dates, y=weekly_smoothed[dates], ax=ax, color="k", label=label
-            )
-        else:
-            cosmo_share, cosmo_label = _get_cosmo_share(empirical)
-            sns.lineplot(
-                x=cosmo_share.index,
-                y=cosmo_share,
-                label=cosmo_label,
-                ax=ax,
-                color="k",
             )
 
     if scenario_starts is not None:
@@ -271,7 +244,6 @@ def plot_group_time_series(df, title, rki=None):
             incidences={group: df.loc[group]},
             title=title.format(group=group),
             name_to_label={group: "simulated"},
-            empirical=False,
             colors=colors,
             scenario_starts=None,
             fig=fig,
@@ -313,7 +285,7 @@ def format_date_axis(ax):
     return ax
 
 
-def shorten_dfs(dfs, empirical, plot_start=None):
+def shorten_dfs(dfs, plot_start=None):
     """Shorten all incidence DataFrames.
 
     All DataFrames are shortened to the shortest. In addition, if plot_start is given
@@ -322,9 +294,6 @@ def shorten_dfs(dfs, empirical, plot_start=None):
     Args:
         dfs (dict): keys are the names of the scenarios, values are the incidence
             DataFrames.
-        empirical (str or bool): if not False and empirical is the name of an
-            outcome that is in the RKI data, reduce the DataFrames to the time
-            for which RKI data is available.
         plot_start (pd.Timestamp or None): earliest allowed start date for the plot
 
     Returns:
@@ -338,13 +307,8 @@ def shorten_dfs(dfs, empirical, plot_start=None):
     end_date = min(df.index.max() for df in dfs.values())
     if plot_start is not None and plot_start < end_date:
         start_date = max(plot_start, start_date)
-    if empirical and empirical in ["new_known_case", "newly_deceased"]:
-        rki_data = pd.read_pickle(BLD / "data" / "processed_time_series" / "rki.pkl")
-        end_date = min(end_date, rki_data.index.get_level_values("date").max())
-
     for name, df in dfs.items():
         shortened[name] = df.loc[start_date:end_date].copy(deep=True)
-
     return shortened
 
 
@@ -394,38 +358,3 @@ def make_nice_outcome(outcome):
         outcome, outcome.replace("_", " ").title()
     )
     return nice_outcome
-
-
-def _get_cosmo_share(empirical):
-    if empirical == "share_ever_rapid_test":
-        cosmo_share = pd.read_csv(
-            SRC / "original_data" / "testing" / "cosmo_share_ever_had_a_rapid_test.csv",
-            parse_dates=["date"],
-            index_col="date",
-        )
-        label = "share of Germans reporting to have\n" "ever done a rapid test"
-        cosmo_share = cosmo_share["share_ever_had_a_rapid_test"]
-    elif empirical == "share_rapid_test_in_last_week":
-        cosmo_share = pd.read_csv(
-            SRC
-            / "original_data"
-            / "testing"
-            / "cosmo_selftest_frequency_last_four_weeks.csv",
-            parse_dates=["date"],
-            index_col="date",
-        )
-        weekly_or_more_cols = [
-            "share_more_than_5_tests_per_week",
-            "share_5_tests_per_week",
-            "share_2-4_tests_per_week",
-            "share_weekly",
-        ]
-        cosmo_share = cosmo_share[weekly_or_more_cols].sum(axis=1)
-        label = (
-            "share of Germans reporting to have\n"
-            "done at least one self-administered\n"
-            "rapid test per week within the last 4 weeks"
-        )
-    else:
-        raise ValueError(f"No known empirical equivalent for {empirical}.")
-    return cosmo_share, label

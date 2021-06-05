@@ -11,6 +11,7 @@ from src.plotting.plotting import create_automatic_labels
 from src.plotting.plotting import GREEN
 from src.plotting.plotting import make_nice_outcome
 from src.plotting.plotting import ORANGE
+from src.plotting.plotting import OUTCOME_TO_EMPIRICAL_LABEL
 from src.plotting.plotting import plot_incidences
 from src.plotting.plotting import PURPLE
 from src.plotting.plotting import RED
@@ -25,14 +26,7 @@ _MODULE_DEPENDENCIES = {
     "plotting.py": SRC / "plotting" / "plotting.py",
     "policy_tools.py": SRC / "policies" / "policy_tools.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
-    "cosmo_frequency": SRC
-    / "original_data"
-    / "testing"
-    / "cosmo_selftest_frequency_last_four_weeks.csv",
-    "cosmo_ever_rapid_test": SRC
-    / "original_data"
-    / "testing"
-    / "cosmo_share_ever_had_a_rapid_test.csv",
+    "empirical": BLD / "data" / "empirical_data_for_plotting.pkl",
 }
 
 NAMED_SCENARIOS = get_named_scenarios()
@@ -63,7 +57,7 @@ if FAST_FLAG != "debug":
 PLOTS = {
     # Main Plots (Fixed)
     "combined_fit": {
-        "title": "Simulated versus Empirical {outcome}",
+        "title": "Simulated versus Empirical: {outcome}",
         "scenarios": ["combined_baseline"],
         "name_to_label": {"combined_baseline": "simulated"},
         "colors": [BLUE],
@@ -185,7 +179,6 @@ PLOTS = {
             "spring_without_vaccinations_without_seasonality": "just rapid tests",
         },
         "colors": None,
-        "empirical": False,
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
@@ -319,14 +312,14 @@ def task_plot_scenario_comparison(
         produces (pathlib.Path): path where to save the figure
 
     """
+    empirical_df = pd.read_pickle(depends_on["empirical"])
     # drop py file dependencies
     depends_on = filter_dictionary(
-        lambda x: not x.endswith(".py") and "cosmo" not in x, depends_on
+        lambda x: not x.endswith(".py") and "empirical" not in x, depends_on
     )
 
     # prepare the plot inputs
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
-    dfs = shorten_dfs(dfs, empirical=False, plot_start=plot_start)
 
     nice_outcome = make_nice_outcome(outcome)
     title = title.format(outcome=nice_outcome)
@@ -334,29 +327,25 @@ def task_plot_scenario_comparison(
         create_automatic_labels(dfs) if name_to_label is None else name_to_label
     )
 
+    dfs = shorten_dfs(dfs, plot_start=plot_start)
+    dates = list(dfs.values())[0].index
+    if empirical and outcome in empirical_df.columns:
+        dfs["empirical"] = empirical_df.loc[dates.min() : dates.max(), [outcome]]
+        name_to_label["empirical"] = OUTCOME_TO_EMPIRICAL_LABEL[outcome]
+
     missing_labels = [x for x in dfs.keys() if x not in name_to_label]
     assert (
         len(missing_labels) == 0
     ), f"You did not specify a label for {missing_labels}."
-
-    empirical_available = [
-        "new_known_case",
-        "newly_deceased",
-        "share_ever_rapid_test",
-        "share_rapid_test_in_last_week",
-    ]
-    if empirical:
-        empirical = outcome if outcome in empirical_available else False
 
     # create the plots
     fig, ax = plot_incidences(
         incidences=dfs,
         title=title,
         name_to_label=name_to_label,
-        empirical=empirical,
         colors=colors,
         scenario_starts=scenario_starts,
-        n_single_runs=None if empirical else 0,
+        n_single_runs=None if "empirical" in dfs else 0,
     )
     plt.savefig(produces["fig"])
 
