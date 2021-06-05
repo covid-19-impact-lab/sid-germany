@@ -39,7 +39,7 @@ _DEPENDS_ON = {
     not _ARE_ALL_SCENARIOS_AVAILABLE, reason="required scenarios are not available"
 )
 @pytask.mark.depends_on(_DEPENDS_ON)
-@pytask.mark.produces(BLD / "figures" / f"{FAST_FLAG}_decomposition.png")
+@pytask.mark.produces(BLD / "figures" / f"{FAST_FLAG}_decomposition.pdf")
 def task_plot_decomposition(depends_on, produces):
     scenarios = {name: pd.read_pickle(path) for name, path in depends_on.items()}
 
@@ -64,9 +64,9 @@ def task_plot_decomposition(depends_on, produces):
 
     shapley_values = _compute_shapley_values(df)
 
-    ratios = shapley_values / shapley_values.sum()
+    ratios = (shapley_values / shapley_values.sum()) * 100
     ratios = ratios.rename(
-        index=lambda x: x.replace("shapley_value_", "")
+        index=lambda x: x.replace("shapley_value_", "").replace("_", " ").title()
     ).sort_values()
 
     fig, ax = plt.subplots()
@@ -74,7 +74,9 @@ def task_plot_decomposition(depends_on, produces):
     ratios.plot(kind="barh", ax=ax)
 
     ax.set_ylabel("Policy")
-    ax.set_xlabel("Contribution to Reduction")
+    ax.set_xlabel("Contribution to Reduction (in %)")
+
+    plt.tight_layout()
 
     plt.savefig(produces)
 
