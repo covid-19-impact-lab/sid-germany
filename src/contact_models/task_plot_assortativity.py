@@ -24,7 +24,7 @@ def task_create_assortativity_heatmap(depends_on, loc, produces):
     sr = pd.read_pickle(depends_on)
     fig, ax = _create_heatmap(sr, loc)
     fig.tight_layout()
-    fig.savefig(produces, dpi=200, transparent=False, facecolor="w")
+    fig.savefig(produces)
 
 
 def _create_heatmap(sr, loc):
@@ -36,5 +36,5 @@ def _create_heatmap(sr, loc):
     ax = sns.heatmap(
         probs, annot=True, fmt=".2f", cbar=False, cmap="coolwarm", center=0, ax=ax
     )
-    ax.set_yticklabels(ax.get_yticks(), rotation=0)
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
     return fig, ax
