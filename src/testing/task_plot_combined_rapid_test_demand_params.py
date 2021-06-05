@@ -20,6 +20,10 @@ _DEPENDENCIES = {
     "params": BLD / "params.pkl",
     "plotting.py": SRC / "plotting" / "plotting.py",
     "testing_shared.py": SRC / "testing" / "shared.py",
+    "vaccination_shares_raw": BLD
+    / "data"
+    / "vaccinations"
+    / "vaccination_shares_raw.pkl",
 }
 
 
@@ -62,55 +66,47 @@ def task_plot_combined_rapid_test_demand_params(depends_on, produces):
     private_demand_shares = get_piecewise_linear_interpolation(private_demand_params)
     private_demand_shares = private_demand_shares.loc[PLOT_START_DATE:PLOT_END_DATE]
 
+    # vaccination shares
+    vaccination_share = pd.read_pickle(depends_on["vaccination_shares_raw"])
+    share_with_first_dosis = vaccination_share.cumsum()
+
     fig = _plot_rapid_test_demand_shares(
         share_educ_workers=share_educ_workers,
         share_students=share_students,
         share_workers=share_workers,
         private_demand_shares=private_demand_shares,
+        share_with_first_dosis=share_with_first_dosis,
     )
     fig.savefig(produces)
     plt.close()
 
 
 def _plot_rapid_test_demand_shares(
-    share_educ_workers, share_students, share_workers, private_demand_shares
+    share_educ_workers,
+    share_students,
+    share_workers,
+    private_demand_shares,
+    share_with_first_dosis,
 ):
-    fig, ax = plt.subplots(figsize=(8, 3))
-    sns.lineplot(
-        x=share_educ_workers.index,
-        y=share_educ_workers,
-        ax=ax,
-        label="Teachers (School, Preschool, Nursery)",
-        color=PURPLE,
-        alpha=0.8,
-    )
-    sns.lineplot(
-        x=share_students.index,
-        y=share_students,
-        ax=ax,
-        label="School Students",
-        color=RED,
-        alpha=0.8,
-    )
-    sns.lineplot(
-        x=share_workers.index,
-        y=share_workers,
-        ax=ax,
-        label="Workers",
-        color=BLUE,
-        alpha=0.8,
-    )
-    sns.lineplot(
-        x=private_demand_shares.index,
-        y=private_demand_shares,
-        ax=ax,
-        label="Share of household member of positively tested,\n"
-        "of symptomatic individuals without PCR test\n and individuals with planned "
-        "weekly leisure meeting ",
-        color=GREEN,
-        alpha=0.8,
-    )
+    named_lines = [
+        (share_educ_workers, "Teachers (School, Preschool, Nursery)", PURPLE),
+        (share_students, "School Students", RED),
+        (share_workers, "Workers", BLUE),
+        (private_demand_shares, "Private Reasons", GREEN),
+        (share_with_first_dosis, "Share with first vaccination", "k"),
+    ]
 
+    fig, ax = plt.subplots(figsize=(8, 3))
+
+    for sr, label, color in named_lines:
+        sns.lineplot(
+            x=sr.index,
+            y=sr,
+            ax=ax,
+            label=label,
+            color=color,
+            alpha=0.8,
+        )
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     return fig
