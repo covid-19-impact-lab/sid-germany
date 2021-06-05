@@ -43,6 +43,11 @@ PARAMETRIZED_DOWNLOADS = [
         "Klinische_Aspekte.xlsx?__blob=publicationFile",
         BLD / "data" / "raw_time_series" / "test_distribution.xlsx",
     ),
+    (
+        "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/"
+        "OxCGRT_latest.csv",
+        BLD / "data" / "raw_time_series" / "stringency_data.csv",
+    ),
 ]
 
 

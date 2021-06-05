@@ -253,7 +253,7 @@ def get_simulation_dependencies(debug, is_resumed):
         "output_of_check_initial_states": BLD
         / "figures"
         / "data"
-        / "how_well_our_synthetic_population_matches_the_german_age_distribution.png",
+        / "how_well_our_synthetic_population_matches_the_german_age_distribution.pdf",
         "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
         "contact_policies.py": SRC / "policies" / "enacted_policies.py",
         "testing_models.py": SRC / "testing" / "testing_models.py",
@@ -331,6 +331,7 @@ def create_period_outputs():
             )
 
     period_outputs["r_effective"] = partial(calculate_r_effective, window_length=7)
+    period_outputs["share_b117"] = calculate_period_virus_share
 
     for groupby in groupbys:
         gb_str = f"_by_{groupby}" if groupby is not None else ""
@@ -393,3 +394,12 @@ def _calculate_share_rapid_test_countdown_between(df, groupby, lower, upper, nam
     within_interval_share_per_group = within_interval.groupby(grouper)[name].mean()
 
     return within_interval_share_per_group
+
+
+def calculate_period_virus_share(df):
+    df = df[["virus_strain", "date", "newly_infected"]]
+    df = df[df["newly_infected"]]
+    df["b117"] = df["virus_strain"] == "b117"
+
+    out = df.groupby([pd.Grouper(key="date", freq="D")])["b117"].mean().fillna(0)
+    return out

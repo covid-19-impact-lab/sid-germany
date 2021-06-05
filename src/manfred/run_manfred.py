@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
     fig = plot_history(res)
 
-    fig.savefig(Path(__file__).resolve().parent / "convergence_plot.png")
+    fig.savefig(Path(__file__).resolve().parent / "convergence_plot.pdf")
 
     print("Noise Free Test:           ")  # noqa: T001
     print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa: T001
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
     fig = plot_history(res)
 
-    fig.savefig(Path(__file__).resolve().parent / "very_noisy_convergence_plot.png")
+    fig.savefig(Path(__file__).resolve().parent / "very_noisy_convergence_plot.pdf")
 
     print("Very Noisy Test:           ")  # noqa: T001
     print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa: T001
@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
     fig = plot_history(res)
 
-    fig.savefig(Path(__file__).resolve().parent / "noisy_convergence_plot.png")
+    fig.savefig(Path(__file__).resolve().parent / "noisy_convergence_plot.pdf")
 
     print("Noisy Test:           ")  # noqa: T001
     print("Manfred Solution:     ", res["solution_x"].round(2))  # noqa: T001
