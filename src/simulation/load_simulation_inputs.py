@@ -341,6 +341,9 @@ def create_period_outputs():
         period_outputs["share_rapid_test_in_last_week" + gb_str] = partial(
             _calculate_share_rapid_test_in_last_week, groupby=groupby
         )
+        period_outputs["share_doing_rapid_test_today" + gb_str] = partial(
+            _calculate_share_doing_rapid_test, groupby=groupby
+        )
 
     return period_outputs
 
@@ -402,4 +405,21 @@ def calculate_period_virus_share(df):
     df["b117"] = df["virus_strain"] == "b117"
 
     out = df.groupby([pd.Grouper(key="date", freq="D")])["b117"].mean().fillna(0)
+    return out
+
+
+def _calculate_share_doing_rapid_test(df, groupby):
+    if groupby is None:
+        groupby = []
+    elif isinstance(groupby, str):
+        groupby = [groupby]
+
+    df = df[["date", "cd_received_rapid_test"] + groupby].copy(deep=True)
+    df["did_rapid_test_today"] = df["cd_received_rapid_test"] == 0
+
+    out = (
+        df.groupby([pd.Grouper(key="date", freq="D")] + groupby)["did_rapid_test_today"]
+        .mean()
+        .fillna(0)
+    )
     return out
