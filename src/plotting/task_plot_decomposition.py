@@ -70,11 +70,10 @@ def task_plot_decomposition(depends_on, produces):
     ).sort_values()
     ratios.index.name = ""
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(12, 8))
 
     ratios.plot(kind="barh", ax=ax)
 
-    ax.set_ylabel("Policy")
     ax.set_xlabel("Contribution to Reduction (in %)")
 
     plt.tight_layout()
