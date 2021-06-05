@@ -80,7 +80,7 @@ Youths will be vaccinated after the general population because in the
 beginning the vaccines were not allowed to be given to children.
 First, 12 to 16 year olds will be vaccinated, then children under 12.
 
-We assume that the shares refer to the general population including children.
+We assume that the shares refer to the adult population without children.
 
 References
 ----------

@@ -32,7 +32,12 @@ def _create_heatmap(sr, loc):
     probs.index.name = "age group"
     probs.columns.name = "age group of contact"
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    if "work" in loc:
+        non_working_groups = ["0-9", "70-79", "80-100"]
+        probs = probs.drop(non_working_groups, axis=1).drop(non_working_groups, axis=0)
+        assert (probs.sum(axis=1) > 0.85).all()
+
+    fig, ax = plt.subplots(figsize=(10, 8))
     ax = sns.heatmap(
         probs, annot=True, fmt=".2f", cbar=False, cmap="coolwarm", center=0, ax=ax
     )
