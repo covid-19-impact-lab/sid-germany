@@ -49,9 +49,11 @@ def test_create_vaccination_rank_lln():
 
 def test_get_second_priority_people_acc_to_stiko():
     states = pd.DataFrame()
-    states["age"] = [75, 30] + [75] * 3 + [30] * 15
+    states["age"] = [75, 30] + [75] * 3 + [30] * 15 + [14] * 3 + [4] * 2
 
-    vaccination_group = pd.Series([1, np.nan] + [np.nan] * 3 + [2] * 15)
+    vaccination_group = pd.Series(
+        [1, np.nan] + [np.nan] * 3 + [2] * 15 + [5] * 3 + [np.nan] * 2
+    )
     res = _get_second_priority_people_acc_to_stiko(
         states=states, vaccination_group=vaccination_group
     )
@@ -61,14 +63,14 @@ def test_get_second_priority_people_acc_to_stiko():
             False,  # wrong age
         ]
         + [True] * 3  # elderly
-        + [False] * 15  # too young
+        + [False] * 20  # too young
     )
     pd.testing.assert_series_equal(res, expected)
 
 
 def test_get_second_priority_people_acc_to_stiko_no_elderly():
     states = pd.DataFrame()
-    states["age"] = [58] * 6666 + [28] * 3334 + [75] * 5
+    states["age"] = [15] * 5 + [58] * 6666 + [28] * 3334 + [75] * 5
 
     vaccination_group = pd.Series(np.nan, index=states.index)
 
@@ -76,10 +78,15 @@ def test_get_second_priority_people_acc_to_stiko_no_elderly():
     res = _get_second_priority_people_acc_to_stiko(
         states=states, vaccination_group=vaccination_group
     )
-    # among non-elderly 15.5% chosen to be in 2nd or 3rd group
-    assert 0.154 < res[:-5].mean() < 0.156
+
+    # children should remain NaN
+    assert vaccination_group[:5].isnull().all()
+
+    adult_vaccination_group = res[5:]
+    # among non-elderly 13.5% chosen to be in 2nd or 3rd group
+    assert 0.13 < adult_vaccination_group[:-5].mean() < 0.14
     # elderly are all in this group
-    assert res[-5:].all()
+    assert adult_vaccination_group[-5:].all()
 
 
 def test_get_educators_of_young_children():
@@ -130,7 +137,7 @@ def test_get_third_priority():
 
     # age right, educ_worker, high priority, already has priority
     assert (res[:4] == [True, True, True, False]).all()
-    assert 0.072 < res[4:].mean() < 0.078
+    assert 0.025 < res[4:].mean() < 0.035
     # share above is 0.33, so young_to_old should be approximately 2
     # with equally sized groups
     young_to_old = res[states["age"] == 40].mean() / res[states["age"] == 50].mean()

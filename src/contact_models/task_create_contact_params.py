@@ -75,7 +75,7 @@ def _create_parametrization():
             / "figures"
             / "data"
             / "distributions_of_the_number_of_contacts"
-            / f"{name}.png",
+            / f"{name}.pdf",
             BLD / "contact_models" / "empirical_distributions" / f"{name}.pkl",
         ]
         if not criteria["recurrent"]:

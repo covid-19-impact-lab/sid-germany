@@ -12,6 +12,9 @@ from pathlib import Path
 import pandas as pd
 import sid
 
+PLOT_START_DATE = "2020-09-01"
+PLOT_END_DATE = "2021-06-06"
+
 SUMMER_SCENARIO_START = "2021-05-17"
 
 FAST_FLAG = "debug"

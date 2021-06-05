@@ -6,6 +6,8 @@ import pytask
 import seaborn as sns
 
 from src.config import BLD
+from src.config import PLOT_END_DATE
+from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
 from src.testing.shared import get_piecewise_linear_interpolation
@@ -23,7 +25,7 @@ from src.testing.shared import get_piecewise_linear_interpolation
     / "figures"
     / "data"
     / "testing"
-    / "share_of_educ_participants_with_rapid_test.png"
+    / "share_of_educ_participants_with_rapid_test.pdf"
 )
 def task_plot_share_of_educ_participants_with_rapid_test(depends_on, produces):
     params = pd.read_pickle(depends_on["params"])
@@ -35,10 +37,10 @@ def task_plot_share_of_educ_participants_with_rapid_test(depends_on, produces):
         students_params = params.loc[("rapid_test_demand", "student_shares")]
 
     share_educ_workers = get_piecewise_linear_interpolation(educ_workers_params)
-    share_educ_workers = share_educ_workers.loc["2021-01-01":"2021-07-01"]
+    share_educ_workers = share_educ_workers.loc[PLOT_START_DATE:PLOT_END_DATE]
 
     share_students = get_piecewise_linear_interpolation(students_params)
-    share_students = share_students.loc["2021-01-01":"2021-07-01"]
+    share_students = share_students.loc[PLOT_START_DATE:PLOT_END_DATE]
 
     fig, ax = plt.subplots(figsize=(8, 3))
     sns.lineplot(
