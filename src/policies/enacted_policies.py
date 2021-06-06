@@ -23,7 +23,7 @@ OTHER_MULTIPLIER_SPECS = [
     ("hard_lockdown", "2021-02-15", 0.4),
     ("hard_lockdown_with_fatige", "2021-02-28", 0.475),
     ("reopening", "2021-04-10", 0.55),
-    ("decline", VERY_LATE, 0.5),
+    ("decline", VERY_LATE, 0.54),
 ]
 """Specification for the other multipliers"""
 
