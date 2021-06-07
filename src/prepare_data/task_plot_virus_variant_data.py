@@ -57,7 +57,6 @@ def task_plot_virus_variant_data(depends_on, produces):
     ax.set_xlim(pd.Timestamp(PLOT_START_DATE), pd.Timestamp(PLOT_END_DATE))
 
     fig, ax = style_plot(fig, ax)
-    ax.set_title("Share of B117 Over Time")
     fig.tight_layout()
     fig.savefig(produces)
     plt.close()

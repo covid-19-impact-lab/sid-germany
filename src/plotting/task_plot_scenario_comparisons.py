@@ -72,7 +72,7 @@ PLOTS = {
         "colors": [BLUE],
         "empirical": True,
     },
-    "adding_single_channels_on_pessimistic_scenario": {
+    "effect_of_channels_on_pessimistic_scenario": {
         "title": "Effect on {outcome} when Adding "
         "Single Channels\non the Pessimistic Scenario",
         "scenarios": [
@@ -364,7 +364,7 @@ def task_plot_scenario_comparison(
     # create the plots
     fig, ax = plot_incidences(
         incidences=dfs,
-        title=title,
+        title="",  # Do not use the title for the paper version
         name_to_label=name_to_label,
         colors=colors,
         scenario_starts=scenario_starts,
