@@ -210,10 +210,12 @@ PLOTS = {
         "title": "The Effect of Home Office and Work Rapid Tests on {outcome}",
         "scenarios": [
             "summer_baseline",
-            "summer_strict_home_office",
+            "summer_strict_home_office_continue_testing",
+            "summer_strict_home_office_reduce_testing",
+            "summer_normal_home_office_reduce_testing",
         ],
         "colors": None,
-        "scenario_starts": ([SUMMER_SCENARIO_START, "scenario start"]),
+        "scenario_starts": [(SUMMER_SCENARIO_START, "scenario start")],
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.

@@ -33,6 +33,37 @@ def start_all_rapid_tests_after_easter(params):
     return new
 
 
+def reduce_work_rapid_test_demand_after_summer_scenario_start_by_half(params):
+    """Reduce rapid tests of households and workers by half.
+
+    Since only the offer share of workers' rapid tests is time variant we change the
+    offer parameters rather than the demand even though the more intuitive
+    interpretation would be that workers demand less tests.
+
+    """
+    change_date = pd.Timestamp(SUMMER_SCENARIO_START)
+
+    work_offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="indexing past lexsort depth may impact performance."
+        )
+        old_work_offer_share = get_piecewise_linear_interpolation_for_one_day(
+            change_date, params.loc[work_offer_loc]
+        )
+
+    new_work_offer_share = 0.5 * old_work_offer_share
+
+    params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
+        params=params,
+        loc=work_offer_loc,
+        change_date=change_date,
+        new_val=new_work_offer_share,
+    )
+
+    return params
+
+
 def reduce_rapid_test_demand_after_summer_scenario_start_by_half(params):
     """Reduce rapid tests of households and workers by half.
 
