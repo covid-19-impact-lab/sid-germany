@@ -14,6 +14,7 @@ from src.plotting.plotting import style_plot
 from src.plotting.plotting import YELLOW
 from src.policies.enacted_policies import HYGIENE_MULTIPLIER
 from src.policies.enacted_policies import OTHER_MULTIPLIER_SPECS
+from src.simulation.seasonality import create_seasonality_series
 from src.testing.shared import get_piecewise_linear_interpolation
 
 
@@ -25,11 +26,14 @@ _DEPENDENCIES = {
     "enacted_policies.py": SRC / "policies" / "enacted_policies.py",
     "stringency_data": BLD / "data" / "raw_time_series" / "stringency_data.csv",
     "work_multiplier": BLD / "policies" / "work_multiplier.csv",
+    "params": BLD / "params.pkl",
 }
 
 _PRODUCTS = {
-    0: BLD / "figures" / "data" / "stringency.pdf",
-    1: BLD / "figures" / "data" / "stringency2.pdf",
+    "0_no_seasonality": BLD / "figures" / "data" / "stringency_no_seasonality.pdf",
+    "1_no_seasonality": BLD / "figures" / "data" / "stringency2_no_seasonality.pdf",
+    "0_with_seasonality": BLD / "figures" / "data" / "stringency_with_seasonality.pdf",
+    "1_with_seasonality": BLD / "figures" / "data" / "stringency2_with_seasonality.pdf",
 }
 
 
@@ -42,15 +46,19 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
     df = pd.read_csv(
         depends_on["stringency_data"], low_memory=False, parse_dates=["Date"]
     )
+    params = pd.read_pickle(depends_on["params"])
+
     stringency, doubled_stringency = _prepare_stringency(
         df, PLOT_START_DATE, PLOT_END_DATE
     )
 
     work_multiplier = home_office_share.loc[PLOT_START_DATE:PLOT_END_DATE, "Germany"]
     work_multiplier["2020-11-01":] = HYGIENE_MULTIPLIER * work_multiplier["2020-11-01":]
+    scaled_work_multiplier = work_multiplier / work_multiplier[0]
     other_multiplier = _get_other_multiplier(
         PLOT_START_DATE, PLOT_END_DATE, OTHER_MULTIPLIER_SPECS
     )
+    scaled_other_multiplier = other_multiplier / other_multiplier[0]
     school_multiplier = _get_school_multiplier(PLOT_START_DATE)
     school_multiplier = school_multiplier[PLOT_START_DATE:PLOT_END_DATE]
 
@@ -58,15 +66,40 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
         [work_multiplier, other_multiplier, school_multiplier], axis=1
     ).mean(axis=1)
 
+    weak_seasonality, mean_seasonality, strong_seasonality = _get_seasonalities(
+        params, PLOT_START_DATE, PLOT_END_DATE
+    )
+
     for i, oxford_stringency in enumerate([stringency, doubled_stringency]):
         fig = _create_multiplier_plot(
             oxford_stringency=oxford_stringency,
-            work_multiplier=work_multiplier,
-            other_multiplier=other_multiplier,
+            work_multiplier=scaled_work_multiplier,
+            other_multiplier=scaled_other_multiplier,
             school_multiplier=school_multiplier,
             our_stringency=our_stringency,
         )
-        fig.savefig(produces[i])
+        fig.savefig(produces[f"{i}_no_seasonality"])
+
+    work_multiplier_seasonal = scaled_work_multiplier * weak_seasonality
+    work_multiplier_seasonal = work_multiplier_seasonal / work_multiplier_seasonal[0]
+    other_multiplier_seasonal = scaled_other_multiplier * strong_seasonality
+    other_multiplier_seasonal = other_multiplier_seasonal / other_multiplier_seasonal[0]
+    school_multiplier_seasonal = school_multiplier * weak_seasonality
+    school_multiplier_seasonal = (
+        school_multiplier_seasonal / school_multiplier_seasonal[0]
+    )
+    our_stringency_seasonal = our_stringency * mean_seasonality
+    our_stringency_seasonal = our_stringency_seasonal / our_stringency_seasonal[0]
+
+    for i, oxford_stringency in enumerate([stringency, doubled_stringency]):
+        fig = _create_multiplier_plot(
+            oxford_stringency=oxford_stringency,
+            work_multiplier=work_multiplier_seasonal,
+            other_multiplier=other_multiplier_seasonal,
+            school_multiplier=school_multiplier_seasonal,
+            our_stringency=our_stringency_seasonal,
+        )
+        fig.savefig(produces[f"{i}_with_seasonality"])
 
 
 def _prepare_stringency(df, start_date, end_date):
@@ -172,9 +205,9 @@ def _create_multiplier_plot(
     named_lines = [
         # (our_stringency, "mean of our multiplier", 1.0, 4, RED),  # noqa: E800
         (oxford_stringency, "(rescaled) Oxford stringency index", 1.0, 3, BLUE),
-        (work_multiplier, "work multiplier", 0.8, 3, PURPLE),
-        (school_multiplier, "school multiplier", 0.8, 3, ORANGE),
-        (other_multiplier, "other multiplier", 0.8, 3, YELLOW),
+        (work_multiplier, "Work", 0.8, 3, PURPLE),
+        (school_multiplier, "School", 0.8, 3, ORANGE),
+        (other_multiplier, "Other", 0.8, 3, YELLOW),
     ]
 
     for multiplier, label, alpha, linewidth, color in named_lines:
@@ -190,3 +223,15 @@ def _create_multiplier_plot(
     style_plot(fig, ax)
     fig.tight_layout()
     return fig
+
+
+def _get_seasonalities(params, start_date, end_date):
+    dates = pd.date_range(start_date, end_date)
+    weak_val = params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"]
+    strong_val = params.loc[
+        ("seasonality_effect", "seasonality_effect", "strong"), "value"
+    ]
+    weak_seasonality = create_seasonality_series(dates, weak_val)
+    mean_seasonality = create_seasonality_series(dates, 0.5 * (weak_val + strong_val))
+    strong_seasonality = create_seasonality_series(dates, strong_val)
+    return weak_seasonality, mean_seasonality, strong_seasonality
