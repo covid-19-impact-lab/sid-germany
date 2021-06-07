@@ -332,8 +332,9 @@ def _add_private_rapid_test_demand_fade_in_params(params):
     loc = ("rapid_test_demand", "private_demand")
     params.loc[(*loc, "2020-01-01"), "value"] = 0
     params.loc[(*loc, "2021-02-28"), "value"] = 0
-    params.loc[(*loc, "2021-03-31"), "value"] = 0.225
-    params.loc[(*loc, "2021-04-06"), "value"] = 0.225
+    params.loc[(*loc, "2021-03-20"), "value"] = 0.1
+    params.loc[(*loc, "2021-03-31"), "value"] = 0.25
+    params.loc[(*loc, "2021-04-06"), "value"] = 0.25
     params.loc[(*loc, "2021-05-04"), "value"] = 0.63
     params.loc[(*loc, "2025-12-31"), "value"] = 0.63
 
@@ -416,5 +417,5 @@ def _convert_to_int_if_possible(x):
 def _add_event_params(params):
     params = params.copy(deep=True)
     params.loc[("events", "b117_cases_per_100_000", "2021-01-01"), "value"] = 0
-    params.loc[("events", "b117_cases_per_100_000", "2021-01-31"), "value"] = 0.74
+    params.loc[("events", "b117_cases_per_100_000", "2021-01-31"), "value"] = 0.755
     return params
