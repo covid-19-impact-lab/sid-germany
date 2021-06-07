@@ -7,6 +7,7 @@ from sid.colors import get_colors
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import POPULATION_GERMANY
 from src.plotting.plotting import style_plot
@@ -121,7 +122,7 @@ def _clean_vaccination_data(df):
 
 
 def _plot_series(sr, title, label=None):
-    fig, ax = plt.subplots(figsize=(15, 5))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sr = sr.loc[PLOT_START_DATE:PLOT_END_DATE]
     sns.lineplot(x=sr.index, y=sr, label=label)
     ax.set_title(title)
@@ -132,7 +133,7 @@ def _plot_series(sr, title, label=None):
 
 def _plot_labeled_series(labeled):
     title = "Actual and Extrapolated Share Receiving the Vaccination"
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     colors = get_colors("categorical", len(labeled))
     for (label, sr), color in zip(labeled, colors):
         sns.lineplot(

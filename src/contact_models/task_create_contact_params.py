@@ -8,6 +8,7 @@ import seaborn as sns
 from estimagic import minimize
 
 from src.config import BLD
+from src.config import PLOT_SIZE
 
 
 def _create_parametrization():
@@ -117,7 +118,7 @@ def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
         approx_dist = empirical_distribution
 
     pct_non_zero = (empirical_distribution / empirical_distribution.sum())[1:].sum()
-    fig, ax = plt.subplots(figsize=(10, 4))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sns.lineplot(x=approx_dist.index, y=approx_dist, ax=ax)
     ax.set_title(name)
     ax.set_xlabel(

@@ -7,6 +7,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import BLUE
@@ -96,7 +97,7 @@ def _plot_rapid_test_demand_shares(
         (share_with_first_dosis, "Share with first vaccination", "k"),
     ]
 
-    fig, ax = plt.subplots(figsize=(8, 3))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
     for sr, label, color in named_lines:
         sns.lineplot(

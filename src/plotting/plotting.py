@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from src.config import PLOT_SIZE
+
 plt.rcParams.update(
     {
         "axes.spines.right": False,
@@ -104,7 +106,7 @@ def plot_incidences(
     """
     if fig is None and ax is None:
         if len(incidences) <= 4:
-            fig, ax = plt.subplots(figsize=(8, 4))
+            fig, ax = plt.subplots(figsize=PLOT_SIZE)
         else:
             fig, ax = plt.subplots(figsize=(8, 6))
 

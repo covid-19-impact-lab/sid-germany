@@ -7,6 +7,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
@@ -62,9 +63,9 @@ def task_plot_overall_share_known_cases(depends_on, produces):
         )
         params_slice = params.loc[("share_known_cases", "share_known_cases")]
     share_known_from_params = get_piecewise_linear_interpolation(params_slice)
-    share_known_from_params = share_known_from_params.loc["2020-03-01":"2021-04-14"]
+    share_known_from_params = share_known_from_params.loc[PLOT_START_DATE:PLOT_END_DATE]
 
-    fig, ax = plt.subplots(figsize=(8, 3))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sns.lineplot(x=share_known.index, y=share_known, ax=ax, label="Dunkelzifferradar")
     sns.lineplot(
         x=share_known_from_params.index,

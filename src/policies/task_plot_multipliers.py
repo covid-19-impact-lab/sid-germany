@@ -5,6 +5,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import BLUE
@@ -200,7 +201,7 @@ def _create_multiplier_plot(
     school_multiplier,
     our_stringency,  # noqa: U100
 ):
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
     named_lines = [
         # (our_stringency, "mean of our multiplier", 1.0, 4, RED),  # noqa: E800

@@ -5,6 +5,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
@@ -27,8 +28,7 @@ def task_plot_comparison_of_virus_variant_data(depends_on, produces):
 
     our_b117 = pd.read_pickle(depends_on["virus_shares_dict"])["b117"]
 
-    fig, ax = plt.subplots()
-
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     for sr, label, style in zip(
         [rki_b117, our_b117], ["rki", "extrapolated"], ["-", "--"]
     ):
@@ -51,7 +51,7 @@ def task_plot_virus_variant_data(depends_on, produces):
         index_col="date",
     )["share_b117"]
 
-    fig, ax = plt.subplots(figsize=(8, 3))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
     sns.lineplot(x=rki_b117.index, y=rki_b117, ax=ax, color="#4e79a7")
     ax.set_xlim(pd.Timestamp(PLOT_START_DATE), pd.Timestamp(PLOT_END_DATE))
