@@ -417,5 +417,5 @@ def _convert_to_int_if_possible(x):
 def _add_event_params(params):
     params = params.copy(deep=True)
     params.loc[("events", "b117_cases_per_100_000", "2021-01-01"), "value"] = 0
-    params.loc[("events", "b117_cases_per_100_000", "2021-01-31"), "value"] = 0.755
+    params.loc[("events", "b117_cases_per_100_000", "2021-01-31"), "value"] = 0.7566666666666667
     return params
