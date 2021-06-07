@@ -48,8 +48,9 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
 
     work_multiplier = home_office_share.loc[PLOT_START_DATE:PLOT_END_DATE, "Germany"]
     work_multiplier["2020-11-01":] = HYGIENE_MULTIPLIER * work_multiplier["2020-11-01":]
-    other_multiplier = _get_other_multiplier(PLOT_START_DATE)
-    other_multiplier = other_multiplier[PLOT_START_DATE:PLOT_END_DATE]
+    other_multiplier = _get_other_multiplier(
+        PLOT_START_DATE, PLOT_END_DATE, OTHER_MULTIPLIER_SPECS
+    )
     school_multiplier = _get_school_multiplier(PLOT_START_DATE)
     school_multiplier = school_multiplier[PLOT_START_DATE:PLOT_END_DATE]
 
@@ -83,18 +84,13 @@ def _prepare_stringency(df, start_date, end_date):
     return stringency, doubled_stringency
 
 
-def _get_other_multiplier(start_date):
-    params = pd.Series(dtype=float)
-    old_multiplier = 1.0
-    params.loc[start_date] = old_multiplier
-    for _, end_date, new_multiplier in OTHER_MULTIPLIER_SPECS:
-        end_date = pd.Timestamp(end_date)
-        day_before = end_date - pd.Timedelta(days=1)
-        params.loc[str(day_before.date())] = old_multiplier
-        params.loc[str(end_date.date())] = new_multiplier
-        old_multiplier = new_multiplier
-    other_multiplier = get_piecewise_linear_interpolation(params)
-    return other_multiplier
+def _get_other_multiplier(start_date, end_date, multiplier_spec):
+    date_range = pd.date_range(start_date, end_date)
+    sr = pd.Series(index=date_range, dtype=float)
+    for _, end_date, multiplier in multiplier_spec:
+        sr[start_date:] = multiplier
+        start_date = end_date
+    return sr
 
 
 def _get_school_multiplier(start_date):
