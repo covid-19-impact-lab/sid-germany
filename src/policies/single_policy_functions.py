@@ -87,11 +87,13 @@ def reduce_work_model(
     attend_multiplier = _process_multiplier(states, attend_multiplier, "attend")
     hygiene_multiplier = _process_multiplier(states, hygiene_multiplier, "hygiene")
 
-    threshold = 1 - attend_multiplier
-    if isinstance(threshold, pd.Series):
-        threshold = states["state"].map(threshold.get)
+    threshold_short = 1 - attend_multiplier
+    if isinstance(threshold_short, pd.Series):
+        threshold = states["state"].map(threshold_short.get)
         # this assert could be skipped because we check in
         # task_check_initial_states that the federal state names overlap.
+        if threshold.dtype == "category":
+            breakpoint()
         assert threshold.notnull().all()
 
     above_threshold = states["work_contact_priority"] > threshold
