@@ -12,9 +12,9 @@ from pathlib import Path
 import pandas as pd
 import sid
 
-PLOT_START_DATE = "2020-09-01"
+PLOT_START_DATE = "2020-09-15"
 PLOT_END_DATE = "2021-06-06"
-PLOT_SIZE = (8, 4)
+PLOT_SIZE = (8, 4.5)
 
 SUMMER_SCENARIO_START = "2021-05-17"
 
