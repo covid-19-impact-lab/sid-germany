@@ -140,6 +140,7 @@ PLOTS = {
             "spring_without_rapid_tests",
             "spring_without_work_rapid_tests",
             "spring_without_school_rapid_tests",
+            "spring_without_private_rapid_tests",
             "spring_baseline",
         ],
         "name_to_label": {
@@ -147,8 +148,9 @@ PLOTS = {
             "spring_without_school_rapid_tests": "without school rapid tests",
             "spring_without_work_rapid_tests": "without work rapid tests",
             "spring_baseline": "work, school and private rapid tests",
+            "spring_without_private_rapid_tests": "without private rapid test demand",
         },
-        "colors": [BROWN, RED, ORANGE, BLUE],
+        "colors": [BROWN, RED, ORANGE, PURPLE, BLUE],
     },
     "explaining_the_decline": {
         "title": "Explaining the Puzzling Decline in\n{outcome}",
@@ -217,7 +219,7 @@ AVAILABLE_SCENARIOS = get_available_scenarios(NAMED_SCENARIOS)
 plotted_scenarios = {x for spec in PLOTS.values() for x in spec["scenarios"]}
 assert set(AVAILABLE_SCENARIOS).issubset(
     plotted_scenarios.union(["fall_baseline"])
-), "The following scenarios do not appear in any plots: " + "\n\t".join(
+), "The following scenarios do not appear in any plots:\n\t" + "\n\t".join(
     list(set(AVAILABLE_SCENARIOS).difference(plotted_scenarios))
 )
 

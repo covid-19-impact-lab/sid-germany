@@ -198,6 +198,12 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
+        "spring_without_private_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_private_rapid_test_demand",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
         "spring_without_rapid_tests_and_no_vaccinations": {
             "sim_input_scenario": "just_seasonality",
             "params_scenario": "baseline",
