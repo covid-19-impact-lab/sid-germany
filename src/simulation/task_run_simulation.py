@@ -52,7 +52,7 @@ def _create_simulation_parametrization():
                 save_last_states,
                 produces,
                 500 + 100_000 * seed,
-                is_resumed is not False,
+                is_resumed,
             )
             scenarios.append(spec_tuple)
 

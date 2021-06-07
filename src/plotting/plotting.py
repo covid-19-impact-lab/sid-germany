@@ -36,7 +36,7 @@ OUTCOME_TO_EMPIRICAL_LABEL = {
     "new_known_case": "official case numbers",
     "newly_deceased": "official case numbers",
     "share_ever_rapid_test": "share of Germans reporting to have\n"
-    + "ever done a rapid test",
+    "ever done a rapid test",
     "share_rapid_test_in_last_week": (
         "share of Germans reporting to have\n"
         "done at least one self-administered\n"
