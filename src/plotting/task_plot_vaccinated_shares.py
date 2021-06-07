@@ -29,7 +29,7 @@ VACCINATION_SCENARIOS = sorted(
 
 _JOINT_DEPENDENCIES = {
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
-    "plotting.py": SRC / "plotting" / "plotting.py",
+    # "plotting.py": SRC / "plotting" / "plotting.py",
     "actual_vaccinations": BLD
     / "data"
     / "vaccinations"

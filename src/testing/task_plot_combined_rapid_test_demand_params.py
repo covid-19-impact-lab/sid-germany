@@ -19,7 +19,7 @@ from src.testing.shared import get_piecewise_linear_interpolation
 
 _DEPENDENCIES = {
     "params": BLD / "params.pkl",
-    "plotting.py": SRC / "plotting" / "plotting.py",
+    # "plotting.py": SRC / "plotting" / "plotting.py",
     "testing_shared.py": SRC / "testing" / "shared.py",
     "vaccination_shares_raw": BLD
     / "data"

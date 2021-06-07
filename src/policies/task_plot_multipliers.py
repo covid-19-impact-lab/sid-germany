@@ -21,7 +21,7 @@ from src.testing.shared import get_piecewise_linear_interpolation
 
 _DEPENDENCIES = {
     # modules
-    "plotting.py": SRC / "plotting" / "plotting.py",
+    # "plotting.py": SRC / "plotting" / "plotting.py",
     "testing_shared.py": SRC / "testing" / "shared.py",
     # data
     "enacted_policies.py": SRC / "policies" / "enacted_policies.py",

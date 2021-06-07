@@ -15,7 +15,7 @@ from src.plotting.plotting import style_plot
 @pytask.mark.depends_on(
     {
         "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
-        "plotting.py": SRC / "plotting" / "plotting.py",
+        # "plotting.py": SRC / "plotting" / "plotting.py",
     }
 )
 @pytask.mark.produces(
