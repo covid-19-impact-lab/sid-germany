@@ -30,7 +30,10 @@ _DEPENDENCIES = {
 
 @pytask.mark.depends_on(_DEPENDENCIES)
 @pytask.mark.produces(
-    BLD / "figures" / "data" / "testing" / "rapid_test_demand_shares.pdf"
+    {
+        "figure": BLD / "figures" / "data" / "testing" / "rapid_test_demand_shares.pdf",
+        "data": BLD / "tables" / "rapid_test_demand_shares.csv",
+    }
 )
 def task_plot_combined_rapid_test_demand_params(depends_on, produces):
     params = pd.read_pickle(depends_on["params"])
@@ -78,8 +81,19 @@ def task_plot_combined_rapid_test_demand_params(depends_on, produces):
         private_demand_shares=private_demand_shares,
         share_with_first_dosis=share_with_first_dosis,
     )
-    fig.savefig(produces)
+    fig.savefig(produces["figure"])
     plt.close()
+
+    df = pd.DataFrame(
+        {
+            "share_educ_workers": share_educ_workers,
+            "share_students": share_students,
+            "share_workers": share_workers,
+            "private_demand_shares": private_demand_shares,
+            "share_with_first_dosis": share_with_first_dosis,
+        }
+    )
+    df.round(3).to_csv(produces["data"])
 
 
 def _plot_rapid_test_demand_shares(

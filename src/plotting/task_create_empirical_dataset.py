@@ -22,7 +22,12 @@ _DEPENDENCIES = {
 
 
 @pytask.mark.depends_on(_DEPENDENCIES)
-@pytask.mark.produces(BLD / "data" / "empirical_data_for_plotting.pkl")
+@pytask.mark.produces(
+    {
+        "pkl": BLD / "data" / "empirical_data_for_plotting.pkl",
+        "csv": BLD / "tables" / "empirical_analogues.csv",
+    }
+)
 def task_create_empirical_dataset(depends_on, produces):
     rki = pd.read_pickle(depends_on["rki"])
     new_known_case = 7 * smoothed_outcome_per_hundred_thousand_rki(
@@ -74,4 +79,5 @@ def task_create_empirical_dataset(depends_on, produces):
         ],
         axis=1,
     )
-    df.to_pickle(produces)
+    df.to_pickle(produces["pkl"])
+    df.to_csv(produces["csv"])

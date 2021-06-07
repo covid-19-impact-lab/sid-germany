@@ -31,10 +31,12 @@ _DEPENDENCIES = {
 }
 
 _PRODUCTS = {
+    "school_comparison": BLD / "figures" / "data" / "school_multiplier_comparison.pdf",
     "0_no_seasonality": BLD / "figures" / "data" / "stringency_no_seasonality.pdf",
     "1_no_seasonality": BLD / "figures" / "data" / "stringency2_no_seasonality.pdf",
     "0_with_seasonality": BLD / "figures" / "data" / "stringency_with_seasonality.pdf",
     "1_with_seasonality": BLD / "figures" / "data" / "stringency2_with_seasonality.pdf",
+    "data": BLD / "tables" / "multiplier_data.csv",
 }
 
 
@@ -78,7 +80,7 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
     ]:
         sns.lineplot(x=sr.index, y=sr, label=label, alpha=0.6, linewidth=4)
     fig, ax = style_plot(fig, ax)
-    fig.savefig(BLD / "figures" / "data" / "school_multiplier_comparison.pdf")
+    fig.savefig(produces["school_comparison"])
 
     our_stringency = pd.concat(
         [work_multiplier, other_multiplier, school_multiplier_with_vacations], axis=1
@@ -118,6 +120,31 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
             our_stringency=our_stringency_seasonal,
         )
         fig.savefig(produces[f"{i}_with_seasonality"])
+    plt.close()
+
+    df = pd.DataFrame(
+        {
+            # seasonal
+            "work_multiplier_seasonal": work_multiplier_seasonal,
+            "work_multiplier_seasonal": work_multiplier_seasonal,
+            "other_multiplier_seasonal": other_multiplier_seasonal,
+            "other_multiplier_seasonal": other_multiplier_seasonal,
+            "school_multiplier_seasonal": school_multiplier_seasonal,
+            "school_multiplier_seasonal": school_multiplier_seasonal,
+            # oxford stringency indices
+            "stringency": stringency,
+            "doubled_stringency": doubled_stringency,
+            # multipliers without seasonality
+            "work_multiplier": scaled_work_multiplier,
+            "other_multiplier": scaled_other_multiplier,
+            "school_multiplier": school_multiplier_with_vacations,
+            # for completeness
+            "school_multiplier_without_vacations": school_multiplier_without_vacations,
+            "our_mean_stringency": our_stringency,
+            "our_mean_stringency_seasonal": our_stringency_seasonal,
+        }
+    )
+    df.round(3).to_csv(produces["data"])
 
 
 def _prepare_stringency(df, start_date, end_date):

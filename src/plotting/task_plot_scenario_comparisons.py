@@ -391,10 +391,7 @@ def task_plot_scenario_comparison(
     plt.close()
 
     # save data for report write up as .csv
-    weekly_mean_values = pd.DataFrame()
+    plot_data = pd.DataFrame()
     for key, df in dfs.items():
-        mean_over_seeds = df.mean(axis=1)
-        mean_over_weeks = mean_over_seeds.groupby(pd.Grouper(freq="W")).mean()
-        weekly_mean_values[key] = mean_over_weeks.round(4)
-
-    weekly_mean_values.to_csv(produces["data"])
+        plot_data[key] = df.mean(axis=1)
+    plot_data.to_csv(produces["data"])
