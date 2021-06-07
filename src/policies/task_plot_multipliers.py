@@ -60,11 +60,28 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
         PLOT_START_DATE, PLOT_END_DATE, OTHER_MULTIPLIER_SPECS
     )
     scaled_other_multiplier = other_multiplier / other_multiplier[0]
-    school_multiplier = _get_school_multiplier(PLOT_START_DATE)
-    school_multiplier = school_multiplier[PLOT_START_DATE:PLOT_END_DATE]
+    (
+        school_multiplier_without_vacations,
+        school_multiplier_with_vacations,
+    ) = _get_school_multipliers(PLOT_START_DATE)
+    school_multiplier_without_vacations = school_multiplier_without_vacations[
+        PLOT_START_DATE:PLOT_END_DATE
+    ]
+    school_multiplier_with_vacations = school_multiplier_with_vacations[
+        PLOT_START_DATE:PLOT_END_DATE
+    ]
+
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
+    for sr, label in [
+        (school_multiplier_with_vacations, "with vacations"),
+        (school_multiplier_without_vacations, "without vacations"),
+    ]:
+        sns.lineplot(x=sr.index, y=sr, label=label, alpha=0.6, linewidth=4)
+    fig, ax = style_plot(fig, ax)
+    fig.savefig(BLD / "figures" / "data" / "school_multiplier_comparison.pdf")
 
     our_stringency = pd.concat(
-        [work_multiplier, other_multiplier, school_multiplier], axis=1
+        [work_multiplier, other_multiplier, school_multiplier_with_vacations], axis=1
     ).mean(axis=1)
 
     weak_seasonality, mean_seasonality, strong_seasonality = _get_seasonalities(
@@ -76,7 +93,7 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
             oxford_stringency=oxford_stringency,
             work_multiplier=scaled_work_multiplier,
             other_multiplier=scaled_other_multiplier,
-            school_multiplier=school_multiplier,
+            school_multiplier=school_multiplier_with_vacations,
             our_stringency=our_stringency,
         )
         fig.savefig(produces[f"{i}_no_seasonality"])
@@ -85,7 +102,7 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
     work_multiplier_seasonal = work_multiplier_seasonal / work_multiplier_seasonal[0]
     other_multiplier_seasonal = scaled_other_multiplier * strong_seasonality
     other_multiplier_seasonal = other_multiplier_seasonal / other_multiplier_seasonal[0]
-    school_multiplier_seasonal = school_multiplier * weak_seasonality
+    school_multiplier_seasonal = school_multiplier_with_vacations * weak_seasonality
     school_multiplier_seasonal = (
         school_multiplier_seasonal / school_multiplier_seasonal[0]
     )
@@ -127,7 +144,7 @@ def _get_other_multiplier(start_date, end_date, multiplier_spec):
     return sr
 
 
-def _get_school_multiplier(start_date):
+def _get_school_multipliers(start_date):
     share_age_for_emergency_care = 0.5
     share_in_graduating_classes = 0.25  # 16, 17 and 18 year olds
     share_in_primary = 0.3
@@ -163,7 +180,7 @@ def _get_school_multiplier(start_date):
         a_b_multiplier + feb_to_march_emergency_share * a_b_multiplier
     )
 
-    school_multiplier = pd.Series(
+    school_multiplier_without_vacations = pd.Series(
         {
             start_date: 1.0,
             "2020-11-01": 1.0,
@@ -190,8 +207,60 @@ def _get_school_multiplier(start_date):
         }
     )
 
-    school_multiplier = get_piecewise_linear_interpolation(school_multiplier)
-    return school_multiplier
+    school_multiplier_without_vacations = get_piecewise_linear_interpolation(
+        school_multiplier_without_vacations
+    )
+
+    school_multiplier_with_vacations = pd.Series(
+        {
+            start_date: 1.0,
+            # fall vacation:
+            # first start on 2020-10-05. last end 2020-11-06
+            # on average from 2020-10-13 to 2020-10-23
+            # there was no overlap in the fall vacation dates between states.
+            "2020-10-05": 1.0,
+            "2020-10-13": 0.3,  # number to cover that many states had fall vacation
+            "2020-10-23": 0.3,
+            "2020-11-06": HYGIENE_MULTIPLIER,
+            # strict emergency care started in the week before Christmas
+            "2020-12-15": HYGIENE_MULTIPLIER,
+            "2020-12-16": strict_emergency_care_multiplier,
+            # Christmas vacations started on 2002-12-21 in most states.
+            # Christmas vacations ended between 2021-01-02 and 2021-01-10.
+            "2020-12-20": strict_emergency_care_multiplier,
+            "2020-12-21": 0.0,
+            "2021-01-02": 0.0,
+            "2021-01-10": strict_emergency_care_multiplier,
+            # generous emergency care
+            # winter vacations were from 2021-01-25 until 2021-03-12 depending on the
+            # state and only short so we ignore them here.
+            "2021-01-11": generous_emergency_care_multiplier,
+            "2021-02-21": generous_emergency_care_multiplier,
+            # primary and graduating in A / B
+            "2021-02-22": feb_to_march_multiplier,
+            "2021-03-14": feb_to_march_multiplier,
+            # mid March until Easter: A / B for most
+            "2021-03-15": a_b_for_most_multiplier,
+            "2021-03-26": a_b_for_most_multiplier,
+            # Easter vacations started on 2021-03-29 in most states
+            # and ended between 2021-04-05 and 2021-04-16, for most on 2021-04-10
+            "2021-03-29": 0.0,
+            "2021-04-06": 0.0,
+            "2021-04-10": 0.1,  # some states started school before 2021-04-10
+            # easter until may:
+            "2021-04-11": generous_emergency_care_multiplier,
+            "2021-04-30": generous_emergency_care_multiplier,
+            # may
+            # we ignore Pentecoast vacation because it was <4 days on average
+            "2021-05-01": a_b_for_most_multiplier,
+            "2021-05-31": a_b_for_most_multiplier,
+        }
+    )
+    school_multiplier_with_vacations = get_piecewise_linear_interpolation(
+        school_multiplier_with_vacations
+    )
+
+    return school_multiplier_without_vacations, school_multiplier_with_vacations
 
 
 def _create_multiplier_plot(

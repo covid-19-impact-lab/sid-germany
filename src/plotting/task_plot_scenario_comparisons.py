@@ -395,6 +395,6 @@ def task_plot_scenario_comparison(
     for key, df in dfs.items():
         mean_over_seeds = df.mean(axis=1)
         mean_over_weeks = mean_over_seeds.groupby(pd.Grouper(freq="W")).mean()
-        weekly_mean_values[key] = mean_over_weeks.round(2)
+        weekly_mean_values[key] = mean_over_weeks.round(4)
 
     weekly_mean_values.to_csv(produces["data"])
