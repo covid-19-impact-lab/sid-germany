@@ -31,7 +31,7 @@ ORDERED_COLORS = [BLUE, TEAL, YELLOW, ORANGE, RED, PURPLE]
 
 
 OUTCOME_TO_EMPIRICAL_LABEL = {
-    "new known case": "official case numbers",
+    "new_known_case": "official case numbers",
     "newly_deceased": "official case numbers",
     "share_ever_rapid_test": "share of Germans reporting to have\n"
     + "ever done a rapid test",

@@ -43,14 +43,22 @@ def task_create_empirical_dataset(depends_on, produces):
 
     share_ever_rapid_test = pd.read_csv(
         depends_on["cosmo_ever_rapid_test"], parse_dates=["date"], index_col="date"
-    )
+    )["share_ever_had_a_rapid_test"]
     share_ever_rapid_test.name = "share_ever_rapid_test"
 
-    share_rapid_test_in_last_week = pd.read_csv(
+    rapid_test_frequency = pd.read_csv(
         depends_on["cosmo_weekly_rapid_test_last_4_weeks"],
         parse_dates=["date"],
         index_col="date",
     )
+    share_rapid_test_in_last_week = rapid_test_frequency[
+        [
+            "share_more_than_5_tests_per_week",
+            "share_5_tests_per_week",
+            "share_2-4_tests_per_week",
+            "share_weekly",
+        ]
+    ].sum(axis=1)
     share_rapid_test_in_last_week.name = "share_rapid_test_in_last_week"
 
     share_b117 = pd.read_pickle(depends_on["virus_shares_dict"])["b117"]
@@ -63,6 +71,7 @@ def task_create_empirical_dataset(depends_on, produces):
             share_ever_rapid_test,
             share_rapid_test_in_last_week,
             share_b117,
-        ]
+        ],
+        axis=1,
     )
     df.to_pickle(produces)
