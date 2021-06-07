@@ -5,6 +5,7 @@ import pytask
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.config import SRC
+from src.config import SUMMER_SCENARIO_START
 from src.plotting.plotting import BLUE
 from src.plotting.plotting import BROWN
 from src.plotting.plotting import create_automatic_labels
@@ -204,6 +205,15 @@ PLOTS = {
         },
         "colors": [BLUE, PURPLE, RED],
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
+    },
+    "work_scenarios": {
+        "title": "The Effect of Home Office and Work Rapid Tests on {outcome}",
+        "scenarios": [
+            "summer_baseline",
+            "summer_strict_home_office",
+        ],
+        "colors": None,
+        "scenario_starts": ([SUMMER_SCENARIO_START, "scenario start"]),
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.

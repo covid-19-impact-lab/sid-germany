@@ -97,6 +97,7 @@ def get_named_scenarios():
             "start_date": fall_dates["start_date"],
             "end_date": spring_dates["end_date"],
         }
+        summer_dates = {"start_date": "2021-06-01", "end_date": "2021-07-25"}
     else:
         fall_dates = {
             "start_date": "2020-12-25",
@@ -107,6 +108,10 @@ def get_named_scenarios():
             "end_date": "2021-01-05",
         }
         combined_dates = {"start_date": "2020-12-25", "end_date": "2021-01-05"}
+        summer_dates = {
+            "start_date": "2021-01-06",
+            "end_date": "2021-01-10",
+        }
 
     named_scenarios = {
         # Baseline Scenarios
@@ -114,6 +119,7 @@ def get_named_scenarios():
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
+            "save_last_states": True,
             "is_resumed": False,
             **combined_dates,
         },
@@ -129,7 +135,16 @@ def get_named_scenarios():
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
+            "save_last_states": True,
             **spring_dates,
+        },
+        "summer_baseline": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "baseline",
+            "n_seeds": n_main_seeds,
+            "save_last_states": True,
+            "is_resumed": "combined",
+            **summer_dates,
         },
         # Scenarios for the main plots
         "spring_no_effects": {
@@ -227,6 +242,13 @@ def get_named_scenarios():
             "params_scenario": "start_all_rapid_tests_after_easter",
             "n_seeds": n_other_seeds,
             **spring_dates,
+        },
+        "summer_strict_home_office": {
+            "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
+            "params_scenario": "baseline",
+            "n_seeds": n_other_seeds,
+            "is_resumed": "combined",
+            **summer_dates,
         },
     }
     return named_scenarios
