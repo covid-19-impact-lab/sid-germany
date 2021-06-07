@@ -50,10 +50,16 @@ def _get_enacted_work_policies(contact_models):
     multiplier_path = BLD / "policies" / "work_multiplier.csv"
     attend_multiplier = pd.read_csv(multiplier_path, parse_dates=["date"])
     attend_multiplier = attend_multiplier.set_index("date")
-    dates = pd.date_range(VERY_EARLY, VERY_LATE)
-    attend_multiplier = attend_multiplier.reindex(dates)
-    attend_multiplier = attend_multiplier.fillna(method="ffill").fillna(method="bfill")
-
+    first_2_weeks_value = attend_multiplier[:14].mean()
+    last_2_weeks_value = attend_multiplier[-14:].mean()
+    extended_attend_multiplier = attend_multiplier.reindex(
+        pd.date_range(VERY_EARLY, attend_multiplier.index.max())
+    )
+    extended_attend_multiplier = extended_attend_multiplier.fillna(first_2_weeks_value)
+    full_attend_multiplier = extended_attend_multiplier.reindex(
+        pd.date_range(VERY_EARLY, VERY_LATE)
+    )
+    full_attend_multiplier = full_attend_multiplier.fillna(last_2_weeks_value)
     before_november_policies = reduce_work_models(
         contact_models=contact_models,
         block_info={
@@ -61,7 +67,7 @@ def _get_enacted_work_policies(contact_models):
             "end_date": "2020-11-01",
             "prefix": "before_november_2020",
         },
-        attend_multiplier=attend_multiplier,
+        attend_multiplier=full_attend_multiplier,
         hygiene_multiplier=1.0,
     )
 
@@ -72,7 +78,7 @@ def _get_enacted_work_policies(contact_models):
             "end_date": VERY_LATE,
             "prefix": "after_november_2020",
         },
-        attend_multiplier=attend_multiplier,
+        attend_multiplier=full_attend_multiplier,
         hygiene_multiplier=HYGIENE_MULTIPLIER,
     )
     work_policies = combine_dictionaries(
