@@ -156,7 +156,7 @@ def get_mask_around_diagonal(dim, offset=1, flip=True):
 
 
 def _get_seeds(n_seeds):
-    return [190293 * i for i in range(n_seeds)]
+    return [500 + 100_000 * i for i in range(n_seeds)]
 
 
 def _reshape_flat_list_2d(flat_list, shape):
