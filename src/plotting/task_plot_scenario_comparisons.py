@@ -240,12 +240,12 @@ def create_path_for_weekly_outcome_of_scenario(
     comparison_name, fast_flag, outcome, suffix
 ):
     file_name = f"{fast_flag}_{outcome}.{suffix}"
-    if suffix == "png":
+    if suffix == "pdf":
         path = BLD / "figures" / "scenario_comparisons" / comparison_name / file_name
     elif suffix == "csv":
         path = BLD / "tables" / "scenario_comparisons" / comparison_name / file_name
     else:
-        raise ValueError(f"Unknown suffix {suffix}. Only 'png' and 'csv' supported")
+        raise ValueError(f"Unknown suffix {suffix}. Only 'pdf' and 'csv' supported")
     return path
 
 
@@ -278,7 +278,7 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
 
             produces = {
                 "fig": create_path_for_weekly_outcome_of_scenario(
-                    comparison_name, fast_flag, outcome, "png"
+                    comparison_name, fast_flag, outcome, "pdf"
                 ),
                 "data": create_path_for_weekly_outcome_of_scenario(
                     comparison_name, fast_flag, outcome, "csv"

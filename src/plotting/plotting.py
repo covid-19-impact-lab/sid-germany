@@ -110,12 +110,12 @@ def plot_incidences(
         else:
             fig, ax = plt.subplots(figsize=(8, 6))
 
-    dates = list(incidences.values())[0].index
-
     if colors is None:
         colors = [BLUE, ORANGE, RED, TEAL, GREEN, YELLOW, PURPLE, BROWN]
-    for (name, df), color in zip(incidences.items(), colors):
-        color = "k" if name == "empirical" else color
+
+    for i, (name, df) in enumerate(incidences.items()):
+        # this is not nice because it uses that the empirical entry is always added last
+        color = "k" if name == "empirical" else colors[i]
         sns.lineplot(
             x=df.index,
             y=df.mean(axis=1),
@@ -128,8 +128,8 @@ def plot_incidences(
         # plot individual runs to visualize statistical uncertainty
         for run in df.columns[:n_single_runs]:
             sns.lineplot(
-                x=dates,
-                y=df.loc[dates, run],
+                x=df.index,
+                y=df[run],
                 ax=ax,
                 color=color,
                 linewidth=1.0,
