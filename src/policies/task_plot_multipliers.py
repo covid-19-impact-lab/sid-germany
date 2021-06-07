@@ -44,13 +44,13 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
     home_office_share = pd.read_csv(
         depends_on["work_multiplier"], parse_dates=["date"], index_col="date"
     )
-    df = pd.read_csv(
+    stringency_data = pd.read_csv(
         depends_on["stringency_data"], low_memory=False, parse_dates=["Date"]
     )
     params = pd.read_pickle(depends_on["params"])
 
     stringency, doubled_stringency = _prepare_stringency(
-        df, PLOT_START_DATE, PLOT_END_DATE
+        stringency_data, PLOT_START_DATE, PLOT_END_DATE
     )
 
     work_multiplier = home_office_share.loc[PLOT_START_DATE:PLOT_END_DATE, "Germany"]
