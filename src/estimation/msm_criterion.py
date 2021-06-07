@@ -154,6 +154,7 @@ def _build_and_evaluate_msm_func_one_season(
         end_date=end_date,
         group_share_known_case_path=group_share_known_case_path,
         debug=debug,
+        return_last_states=False,
     )
     params_hash = hash_array(params["value"].to_numpy())
     path = BLD / "exploration" / f"{prefix}_{params_hash}_{os.getpid()}"
@@ -168,7 +169,6 @@ def _build_and_evaluate_msm_func_one_season(
         path=path,
         seed=seed,
         period_outputs=period_outputs,
-        return_last_states=False,
         return_time_series=False,
     )
 
