@@ -89,11 +89,9 @@ def reduce_work_model(
 
     threshold_short = 1 - attend_multiplier
     if isinstance(threshold_short, pd.Series):
-        threshold = states["state"].map(threshold_short.get)
+        threshold = states["state"].map(threshold_short.get).astype(float)
         # this assert could be skipped because we check in
         # task_check_initial_states that the federal state names overlap.
-        if threshold.dtype == "category":
-            breakpoint()
         assert threshold.notnull().all()
 
     above_threshold = states["work_contact_priority"] > threshold
