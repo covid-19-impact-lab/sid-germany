@@ -53,6 +53,15 @@ OUTCOMES = [
 if FAST_FLAG != "debug":
     OUTCOMES.append("r_effective")
 
+WITH_VACCINATIONS = r"vaccinations $\checkmark$ "
+NO_VACCINATIONS = r"vaccinations $\times$ "
+
+WITH_SEASONALITY = r"seasonality $\checkmark$ "
+NO_SEASONALITY = r"seasonality $\times$ "
+
+WITH_RAPID_TESTS = r"rapid tests $\checkmark$ "
+NO_RAPID_TESTS = r"rapid tests $\times$ "
+
 
 PLOTS = {
     # Main Plots (Fixed)
@@ -63,21 +72,52 @@ PLOTS = {
         "colors": [BLUE],
         "empirical": True,
     },
+    "adding_single_channels_on_pessimistic_scenario": {
+        "title": "Effect on {outcome} when Adding "
+        "Single Channels\non the Pessimistic Scenario",
+        "scenarios": [
+            "spring_baseline",
+            "spring_no_effects",
+            "spring_without_rapid_tests_without_seasonality",  # just vaccinations
+            "spring_without_rapid_tests_and_no_vaccinations",  # just seasonality
+            "spring_without_vaccinations_without_seasonality",  # just rapid tests
+        ],
+        "name_to_label": {
+            "spring_no_effects": NO_VACCINATIONS + NO_SEASONALITY + NO_RAPID_TESTS,
+            "spring_without_rapid_tests_and_no_vaccinations": NO_VACCINATIONS
+            + WITH_SEASONALITY
+            + NO_RAPID_TESTS,  # just seasonality
+            "spring_without_rapid_tests_without_seasonality": WITH_VACCINATIONS
+            + NO_SEASONALITY
+            + NO_RAPID_TESTS,  # just vaccinations
+            "spring_without_vaccinations_without_seasonality": NO_VACCINATIONS
+            + NO_SEASONALITY
+            + WITH_RAPID_TESTS,  # just rapid tests
+            "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
+        },
+        "colors": [BLUE, RED, ORANGE, GREEN, PURPLE],
+    },
     "one_off_and_combined": {
         "title": "The Effect of Each Channel on {outcome} Separately",
         "scenarios": [
+            "spring_baseline",
             "spring_no_effects",
             "spring_without_seasonality",
             "spring_without_vaccines",
             "spring_without_rapid_tests",
-            "spring_baseline",
         ],
         "name_to_label": {
-            "spring_no_effects": "without any channel",
-            "spring_without_seasonality": "without seasonality",
-            "spring_without_vaccines": "without vaccines",
-            "spring_without_rapid_tests": "without rapid tests",
-            "spring_baseline": "with all channels",
+            "spring_no_effects": NO_VACCINATIONS + NO_SEASONALITY + NO_RAPID_TESTS,
+            "spring_without_seasonality": WITH_VACCINATIONS
+            + NO_SEASONALITY
+            + WITH_RAPID_TESTS,
+            "spring_without_vaccines": NO_VACCINATIONS
+            + WITH_SEASONALITY
+            + WITH_RAPID_TESTS,
+            "spring_without_rapid_tests": WITH_VACCINATIONS
+            + WITH_SEASONALITY
+            + NO_RAPID_TESTS,
+            "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
         },
         "colors": None,
     },
@@ -162,23 +202,6 @@ PLOTS = {
         },
         "colors": [BLUE, PURPLE, RED],
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
-    },
-    "effect_of_channels_on_pessimistic_scenario": {
-        "title": "Effect on {outcome} when Adding "
-        "Single Channels\non the Pessimistic Scenario",
-        "scenarios": [
-            "spring_no_effects",
-            "spring_without_rapid_tests_and_no_vaccinations",
-            "spring_without_rapid_tests_without_seasonality",
-            "spring_without_vaccinations_without_seasonality",
-        ],
-        "name_to_label": {
-            "spring_no_effects": "pessimistic scenario",
-            "spring_without_rapid_tests_and_no_vaccinations": "just seasonality",
-            "spring_without_rapid_tests_without_seasonality": "just vaccinations",
-            "spring_without_vaccinations_without_seasonality": "just rapid tests",
-        },
-        "colors": None,
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.

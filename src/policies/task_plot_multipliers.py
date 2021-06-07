@@ -204,7 +204,7 @@ def _create_multiplier_plot(
 
     named_lines = [
         # (our_stringency, "mean of our multiplier", 1.0, 4, RED),  # noqa: E800
-        (oxford_stringency, "(rescaled) Oxford stringency index", 1.0, 3, BLUE),
+        (oxford_stringency, "rescaled Oxford stringency index", 1.0, 3, BLUE),
         (work_multiplier, "Work", 0.8, 3, PURPLE),
         (school_multiplier, "School", 0.8, 3, ORANGE),
         (other_multiplier, "Other", 0.8, 3, YELLOW),
