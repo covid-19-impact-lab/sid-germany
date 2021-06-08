@@ -18,6 +18,7 @@ from src.plotting.plotting import PURPLE
 from src.plotting.plotting import RED
 from src.plotting.plotting import shorten_dfs
 from src.policies.policy_tools import filter_dictionary
+from src.simulation.scenario_config import create_path_for_weekly_outcome_of_scenario
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
@@ -250,19 +251,6 @@ assert set(AVAILABLE_SCENARIOS).issubset(
 )
 
 
-def create_path_for_weekly_outcome_of_scenario(
-    comparison_name, fast_flag, outcome, suffix
-):
-    file_name = f"{fast_flag}_{outcome}.{suffix}"
-    if suffix == "pdf":
-        path = BLD / "figures" / "scenario_comparisons" / comparison_name / file_name
-    elif suffix == "csv":
-        path = BLD / "tables" / "scenario_comparisons" / comparison_name / file_name
-    else:
-        raise ValueError(f"Unknown suffix {suffix}. Only 'pdf' and 'csv' supported")
-    return path
-
-
 def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
     available_scenarios = get_available_scenarios(named_scenarios)
     parametrization = []
@@ -379,8 +367,17 @@ def task_plot_scenario_comparison(
         create_automatic_labels(dfs) if name_to_label is None else name_to_label
     )
 
-    dfs = shorten_dfs(dfs, plot_start=plot_start)
+    first_df = list(dfs.values())[0]
+    # save the actual x limits before dfs are shortened
+    if plot_start is None:
+        xlims = first_df.index.min(), first_df.index.max()
+    else:
+        xlims = plot_start, first_df.index.max()
+
+    plot_end = pd.Timestamp("2021-05-15") if outcome == "share_b117" else None
+    dfs = shorten_dfs(dfs, plot_start=plot_start, plot_end=plot_end)
     dates = list(dfs.values())[0].index
+
     if empirical and outcome in empirical_df.columns:
         dfs["empirical"] = empirical_df.loc[dates.min() : dates.max(), [outcome]]
         name_to_label["empirical"] = OUTCOME_TO_EMPIRICAL_LABEL[outcome]
@@ -399,6 +396,7 @@ def task_plot_scenario_comparison(
         scenario_starts=scenario_starts,
         n_single_runs=0,
     )
+    ax.set_xlim(xlims)
     fig.savefig(fig_path)
 
     # save with single run lines
@@ -413,6 +411,7 @@ def task_plot_scenario_comparison(
         scenario_starts=scenario_starts,
         n_single_runs=None,
     )
+    ax_with_lines.set_xlim(xlims)
     fig_with_lines.savefig(with_single_runs_path)
 
     # crop if necessary

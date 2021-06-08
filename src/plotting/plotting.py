@@ -289,7 +289,7 @@ def format_date_axis(ax):
     return ax
 
 
-def shorten_dfs(dfs, plot_start=None):
+def shorten_dfs(dfs, plot_start=None, plot_end=None):
     """Shorten all incidence DataFrames.
 
     All DataFrames are shortened to the shortest. In addition, if plot_start is given
@@ -299,6 +299,7 @@ def shorten_dfs(dfs, plot_start=None):
         dfs (dict): keys are the names of the scenarios, values are the incidence
             DataFrames.
         plot_start (pd.Timestamp or None): earliest allowed start date for the plot
+        plot_start (pd.Timestamp or None): latest allowed end date for the plot
 
     Returns:
         shortened (dict): keys are the names of the scenarios, values are the shortened
@@ -311,6 +312,9 @@ def shorten_dfs(dfs, plot_start=None):
     end_date = min(df.index.max() for df in dfs.values())
     if plot_start is not None and plot_start < end_date:
         start_date = max(plot_start, start_date)
+    if plot_end is not None and plot_end > start_date:
+        end_date = max(plot_end, end_date)
+
     for name, df in dfs.items():
         shortened[name] = df.loc[start_date:end_date].copy(deep=True)
     return shortened

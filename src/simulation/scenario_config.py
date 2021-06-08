@@ -59,6 +59,19 @@ def create_path_to_group_incidence_plot(name, outcome, groupby):
     return BLD / "figures" / "incidences_by_group" / groupby / fig_name
 
 
+def create_path_for_weekly_outcome_of_scenario(
+    comparison_name, fast_flag, outcome, suffix
+):
+    file_name = f"{fast_flag}_{outcome}.{suffix}"
+    if suffix == "pdf":
+        path = BLD / "figures" / "scenario_comparisons" / comparison_name / file_name
+    elif suffix == "csv":
+        path = BLD / "tables" / "scenario_comparisons" / comparison_name / file_name
+    else:
+        raise ValueError(f"Unknown suffix {suffix}. Only 'pdf' and 'csv' supported")
+    return path
+
+
 # =============================================================================
 
 
