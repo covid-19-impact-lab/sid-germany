@@ -49,6 +49,7 @@ OUTCOMES = [
     "share_rapid_test_in_last_week",
     "share_b117",
     "share_doing_rapid_test_today",
+    "ever_vaccinated",
 ]
 
 if FAST_FLAG != "debug":
@@ -148,7 +149,7 @@ PLOTS = {
             "spring_without_rapid_tests": "no rapid tests",
             "spring_without_school_rapid_tests": "without school rapid tests",
             "spring_without_work_rapid_tests": "without work rapid tests",
-            "spring_baseline": "work, school and private rapid tests",
+            "spring_baseline": "full rapid test demand",
             "spring_without_private_rapid_tests": "without private rapid test demand",
         },
         "colors": [BROWN, RED, ORANGE, PURPLE, BLUE],
@@ -163,9 +164,13 @@ PLOTS = {
         ],
         "name_to_label": {
             "spring_no_effects": "pessimistic scenario",
-            "spring_without_rapid_tests_and_no_vaccinations": "with seasonality only",
-            "spring_without_rapid_tests": "with seasonality and vaccinations",
-            "spring_baseline": "with seasonality, vaccinations\nand rapid tests",
+            "spring_without_rapid_tests_and_no_vaccinations": NO_VACCINATIONS
+            + WITH_SEASONALITY
+            + NO_RAPID_TESTS,
+            "spring_without_rapid_tests": WITH_VACCINATIONS
+            + WITH_SEASONALITY
+            + NO_RAPID_TESTS,
+            "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
         },
         "colors": None,
     },

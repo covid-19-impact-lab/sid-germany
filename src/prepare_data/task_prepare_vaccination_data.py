@@ -55,7 +55,8 @@ def task_prepare_vaccination_data(depends_on, produces):
     df = pd.read_excel(depends_on["data"], sheet_name="Impfungen_proTag")
     df = _clean_vaccination_data(df)
     # this is for comparing with newspaper sites
-    fig, ax = _plot_series(df["share_with_first_dose"], "Share with 1st Dose")
+    fig, ax = _plot_series(df["share_with_first_dose"], "")
+    ax.set_xlim(pd.Timestamp(PLOT_START_DATE), pd.Timestamp(PLOT_END_DATE))
     fig.savefig(produces["fig_first_dose"])
     plt.close()
 

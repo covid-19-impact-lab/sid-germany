@@ -121,6 +121,7 @@ def _plot_rapid_test_demand_shares(
             label=label,
             color=color,
             alpha=0.8,
+            linewidth=3,
         )
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
