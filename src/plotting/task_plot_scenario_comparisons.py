@@ -17,6 +17,7 @@ from src.plotting.plotting import plot_incidences
 from src.plotting.plotting import PURPLE
 from src.plotting.plotting import RED
 from src.plotting.plotting import shorten_dfs
+from src.plotting.plotting import TEAL
 from src.policies.policy_tools import filter_dictionary
 from src.simulation.scenario_config import create_path_for_weekly_outcome_of_scenario
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
@@ -124,7 +125,7 @@ PLOTS = {
             + NO_RAPID_TESTS,
             "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
         },
-        "colors": None,
+        "colors": [BLUE, RED, GREEN, TEAL, ORANGE],
         "plot_start": pd.Timestamp("2021-01-15"),
     },
     "school_scenarios": {
@@ -150,6 +151,7 @@ PLOTS = {
             "spring_without_private_rapid_tests",
             "spring_baseline",
         ],
+        "colors": [BROWN, RED, ORANGE, PURPLE, BLUE],
         "name_to_label": {
             "spring_without_rapid_tests": "no rapid tests",
             "spring_without_school_rapid_tests": "without school rapid tests",
@@ -157,7 +159,6 @@ PLOTS = {
             "spring_baseline": "full rapid test demand",
             "spring_without_private_rapid_tests": "without private rapid test demand",
         },
-        "colors": [BROWN, RED, ORANGE, PURPLE, BLUE],
         "plot_start": pd.Timestamp("2021-01-15"),
     },
     "explaining_the_decline": {
@@ -168,6 +169,7 @@ PLOTS = {
             "spring_without_rapid_tests",
             "spring_baseline",
         ],
+        "colors": [RED, GREEN, ORANGE, BLUE],
         "name_to_label": {
             "spring_no_effects": "pessimistic scenario",
             "spring_without_rapid_tests_and_no_vaccinations": NO_VACCINATIONS
@@ -178,14 +180,13 @@ PLOTS = {
             + NO_RAPID_TESTS,
             "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
         },
-        "colors": None,
         "plot_start": pd.Timestamp("2021-01-15"),
     },
     # Variable Plots
     "pessimistic_scenario": {
         "title": "Replicating the Pessimistic Scenarios of March",
         "scenarios": ["spring_no_effects"],
-        "colors": None,
+        "colors": [RED],
         "plot_start": pd.Timestamp("2021-01-15"),
     },
     "vaccine_scenarios": {
@@ -195,13 +196,13 @@ PLOTS = {
             "spring_vaccinate_1_pct_per_day_after_easter",
             "spring_without_vaccines",
         ],
+        "colors": [BLUE, GREEN, RED],
         "name_to_label": {
             "spring_baseline": "current vaccination progress",
             "spring_vaccinate_1_pct_per_day_after_easter": "vaccinate 1 percent "
             "of the\npopulation every day after Easter",
             "spring_without_vaccines": "stop vaccinations on February 10th",
         },
-        "colors": [BLUE, GREEN, RED],
         "plot_start": AFTER_EASTER - pd.Timedelta(days=14),
         "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
     },
@@ -212,12 +213,12 @@ PLOTS = {
             "spring_without_rapid_tests",
             "spring_start_all_rapid_tests_after_easter",
         ],
+        "colors": [BLUE, PURPLE, ORANGE],
         "name_to_label": {
             "spring_baseline": "calibrated rapid test scenario",
             "spring_without_rapid_tests": "no rapid tests",
             "spring_start_all_rapid_tests_after_easter": "start rapid tests at Easter",
         },
-        "colors": [BLUE, PURPLE, RED],
         "plot_start": AFTER_EASTER - pd.Timedelta(days=14),
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
@@ -229,7 +230,7 @@ PLOTS = {
             "summer_strict_home_office_reduce_testing",
             "summer_normal_home_office_reduce_testing",
         ],
-        "colors": None,
+        "colors": [BLUE, GREEN, ORANGE, RED],
         "scenario_starts": [(SUMMER_SCENARIO_START, "scenario start")],
     },
 }
