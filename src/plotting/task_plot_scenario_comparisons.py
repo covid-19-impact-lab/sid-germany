@@ -347,7 +347,7 @@ def task_plot_scenario_comparison(
     Args:
         depends_on (dict): keys contain py files and scenario names. Values are
             paths to the dependencies.
-        outcome (str): name of the incidence to be plotted (new_known_case or
+        outcome (str): name of the incidence to be plotted (e.g. new_known_case or
             newly_infected).
         title (str): custom title, will be formatted with New Observed Cases or
             Total New Cases depending on the outcome.
@@ -372,6 +372,7 @@ def task_plot_scenario_comparison(
     # prepare the plot inputs
     dfs = {name: pd.read_pickle(path) for name, path in depends_on.items()}
 
+    fig_path = produces["fig"]
     nice_outcome = make_nice_outcome(outcome)
     title = title.format(outcome=nice_outcome)
     name_to_label = (
@@ -396,24 +397,36 @@ def task_plot_scenario_comparison(
         name_to_label=name_to_label,
         colors=colors,
         scenario_starts=scenario_starts,
-        n_single_runs=None if "empirical" in dfs else 0,
+        n_single_runs=0,
     )
-    plt.savefig(produces["fig"])
+    fig.savefig(fig_path)
 
-    fig_path = produces["fig"]
+    # save with single run lines
+    with_single_runs_path = fig_path.parent / (
+        fig_path.stem + "_with_single_runs" + fig_path.suffix
+    )
+    fig_with_lines, ax_with_lines = plot_incidences(
+        incidences=dfs,
+        title="",  # Do not use the title for the paper version
+        name_to_label=name_to_label,
+        colors=colors,
+        scenario_starts=scenario_starts,
+        n_single_runs=None,
+    )
+    fig_with_lines.savefig(with_single_runs_path)
 
     # crop if necessary
     min_y, max_y = ax.get_ylim()
     cropped_path = fig_path.parent / (fig_path.stem + "_cropped" + fig_path.suffix)
     if outcome == "new_known_case" and max_y > 510:
         ax.set_ylim(min_y, 510)
-        plt.savefig(cropped_path)
+        fig.savefig(cropped_path)
     elif outcome == "newly_infected" and max_y > 1050:
         ax.set_ylim(min_y, 1050)
-        plt.savefig(cropped_path)
+        fig.savefig(cropped_path)
     elif outcome == "newly_deceased" and max_y > 20.5:
         ax.set_ylim(min_y, 20.5)
-        plt.savefig(cropped_path)
+        fig.savefig(cropped_path)
     plt.close()
 
     # save data for report write up as .csv

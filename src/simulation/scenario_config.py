@@ -100,7 +100,7 @@ def get_named_scenarios():
         summer_dates = {"start_date": "2021-06-01", "end_date": "2021-07-25"}
     else:
         # for the plotting we need that combined and spring have dates after 2021-01-15
-        combined_dates = {"start_date": "2020-12-30", "end_date": "2021-01-19"}
+        combined_dates = {"start_date": "2020-12-30", "end_date": "2021-01-18"}
         fall_dates = {
             "start_date": "2020-12-25",
             "end_date": "2020-12-31",
