@@ -44,6 +44,7 @@ OUTCOME_TO_EMPIRICAL_LABEL = {
     ),
     "share_b117": "officially reported share of B.1.1.7",
     "ever_vaccinated": "share of Germans with first vaccination dose",
+    "r_effective": "effective reproduction number as estimated by the RKI",
 }
 
 
@@ -313,7 +314,7 @@ def shorten_dfs(dfs, plot_start=None, plot_end=None):
     if plot_start is not None and plot_start < end_date:
         start_date = max(plot_start, start_date)
     if plot_end is not None and plot_end > start_date:
-        end_date = max(plot_end, end_date)
+        end_date = min(plot_end, end_date)
 
     for name, df in dfs.items():
         shortened[name] = df.loc[start_date:end_date].copy(deep=True)

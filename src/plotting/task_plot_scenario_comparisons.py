@@ -40,7 +40,7 @@ SCHOOL_SCENARIOS = [
     "spring_educ_open_after_easter_without_tests",
     "spring_educ_open_after_easter_with_tests",
     "spring_close_educ_after_easter",
-    "baseline",
+    "spring_baseline",
 ]
 
 
@@ -375,7 +375,7 @@ def task_plot_scenario_comparison(
     else:
         xlims = plot_start, first_df.index.max()
 
-    plot_end = pd.Timestamp("2021-05-15") if outcome == "share_b117" else None
+    plot_end = pd.Timestamp("2021-05-01") if outcome == "share_b117" else None
     dfs = shorten_dfs(dfs, plot_start=plot_start, plot_end=plot_end)
     dates = list(dfs.values())[0].index
 

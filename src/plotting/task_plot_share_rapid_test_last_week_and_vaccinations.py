@@ -44,7 +44,7 @@ def task_plot_share_rapid_test_last_week_and_vaccinations(depends_on, produces):
     rapid_test_share = pd.read_pickle(depends_on["share_rapid_test_in_last_week"])
 
     rapid_test_label = (
-        "share of people who did a rapid test in the last 7 days in the simulation"
+        "share of people who did a rapid test\nwithin the last 7 days in the simulation"
     )
 
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
@@ -74,6 +74,10 @@ def task_plot_share_rapid_test_last_week_and_vaccinations(depends_on, produces):
             linewidth=3.0,
             alpha=0.6,
         )
+
+    x, y, width, height = 0.0, -0.3, 1, 0.2
+    ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=2)
+    fig.tight_layout()
 
     fig, ax = style_plot(fig, ax)
     fig.savefig(produces)
