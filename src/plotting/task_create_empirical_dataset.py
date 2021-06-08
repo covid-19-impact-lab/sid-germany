@@ -19,6 +19,7 @@ _DEPENDENCIES = {
     "virus_shares_dict": BLD / "data" / "virus_strains" / "virus_shares_dict.pkl",
     "calculate_moments.py": SRC / "calculate_moments.py",
     "vaccinations": BLD / "data" / "vaccinations" / "vaccination_shares_raw.pkl",
+    "r_effective": BLD / "data" / "processed_time_series" / "r_effective.pkl",
 }
 
 
@@ -73,6 +74,9 @@ def task_create_empirical_dataset(depends_on, produces):
     vacc_shares = pd.read_pickle(depends_on["vaccinations"]).cumsum()
     vacc_shares.name = "ever_vaccinated"
 
+    r_effective = pd.read_pickle(depends_on["r_effective"])["Schätzer_7_Tage_R_Wert"]
+    r_effective.name = "r_effective"
+
     df = pd.concat(
         [
             new_known_case,
@@ -81,8 +85,9 @@ def task_create_empirical_dataset(depends_on, produces):
             share_rapid_test_in_last_week,
             share_b117,
             vacc_shares,
+            r_effective,
         ],
         axis=1,
     )
     df.to_pickle(produces["pkl"])
-    df.to_csv(produces["csv"])
+    df.round(3).to_csv(produces["csv"])

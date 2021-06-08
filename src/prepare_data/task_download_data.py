@@ -48,6 +48,11 @@ PARAMETRIZED_DOWNLOADS = [
         "OxCGRT_latest.csv",
         BLD / "data" / "raw_time_series" / "stringency_data.csv",
     ),
+    (
+        "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/"
+        "Nowcasting_Zahlen_csv.csv?__blob=publicationFile",
+        BLD / "data" / "raw_time_series" / "reproduction_number.csv",
+    ),
 ]
 
 
