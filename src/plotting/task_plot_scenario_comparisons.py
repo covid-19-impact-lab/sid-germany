@@ -38,6 +38,7 @@ SCHOOL_SCENARIOS = [
     "spring_educ_open_after_easter_without_tests",
     "spring_educ_open_after_easter_with_tests",
     "spring_close_educ_after_easter",
+    "baseline",
 ]
 
 
@@ -98,6 +99,7 @@ PLOTS = {
             "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
         },
         "colors": [BLUE, RED, ORANGE, GREEN, PURPLE],
+        "plot_start": pd.Timestamp("2021-01-15"),
     },
     "one_off_and_combined": {
         "title": "The Effect of Each Channel on {outcome} Separately",
@@ -122,6 +124,7 @@ PLOTS = {
             "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
         },
         "colors": None,
+        "plot_start": pd.Timestamp("2021-01-15"),
     },
     "school_scenarios": {
         "title": "The Effect of Schools on {outcome}",
@@ -130,9 +133,10 @@ PLOTS = {
             "spring_educ_open_after_easter_without_tests": "open schools without tests",
             "spring_educ_open_after_easter_with_tests": "open schools with tests",
             "spring_close_educ_after_easter": "keep schools closed",
+            "spring_baseline": "enacted school policies",
         },
-        "colors": None,
-        "plot_start": AFTER_EASTER - pd.Timedelta(days=10),
+        "colors": [PURPLE, RED, BROWN, BLUE],
+        "plot_start": AFTER_EASTER - pd.Timedelta(days=14),
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
     # Other Fixed Plots
@@ -153,6 +157,7 @@ PLOTS = {
             "spring_without_private_rapid_tests": "without private rapid test demand",
         },
         "colors": [BROWN, RED, ORANGE, PURPLE, BLUE],
+        "plot_start": pd.Timestamp("2021-01-15"),
     },
     "explaining_the_decline": {
         "title": "Explaining the Puzzling Decline in\n{outcome}",
@@ -173,12 +178,14 @@ PLOTS = {
             "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
         },
         "colors": None,
+        "plot_start": pd.Timestamp("2021-01-15"),
     },
     # Variable Plots
     "pessimistic_scenario": {
         "title": "Replicating the Pessimistic Scenarios of March",
         "scenarios": ["spring_no_effects"],
         "colors": None,
+        "plot_start": pd.Timestamp("2021-01-15"),
     },
     "vaccine_scenarios": {
         "title": "Effect of Different Vaccination Scenarios on {outcome}",
@@ -194,6 +201,7 @@ PLOTS = {
             "spring_without_vaccines": "stop vaccinations on February 10th",
         },
         "colors": [BLUE, GREEN, RED],
+        "plot_start": AFTER_EASTER - pd.Timedelta(days=14),
         "scenario_starts": ([(AFTER_EASTER, "start of increased vaccinations")]),
     },
     "illustrate_rapid_tests": {
@@ -209,6 +217,7 @@ PLOTS = {
             "spring_start_all_rapid_tests_after_easter": "start rapid tests at Easter",
         },
         "colors": [BLUE, PURPLE, RED],
+        "plot_start": AFTER_EASTER - pd.Timedelta(days=14),
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
     "work_scenarios": {

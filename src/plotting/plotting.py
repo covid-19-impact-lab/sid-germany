@@ -123,7 +123,7 @@ def plot_incidences(
             ax=ax,
             color=color,
             label=name_to_label[name] if name in name_to_label else name,
-            linewidth=2.0,
+            linewidth=3.0,
             alpha=0.6,
         )
         # plot individual runs to visualize statistical uncertainty
