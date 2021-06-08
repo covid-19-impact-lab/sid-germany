@@ -57,7 +57,7 @@ _ORDERED_CHANNELS = ["Rapid Tests", "Seasonality", "Vaccinations"]
         "area_plot": BLD / "figures" / f"{FAST_FLAG}_decomposition_area.pdf",
     }
 )
-def task_plot_decomposition(depends_on, produces):
+def task_plot_decomposition_of_infection_channels_in_spring(depends_on, produces):
     scenarios = {name: pd.read_pickle(path) for name, path in depends_on.items()}
 
     df = pd.DataFrame()
