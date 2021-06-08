@@ -233,6 +233,24 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
+        "spring_without_school_and_work_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_rapid_tests_at_schools_and_work",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_school_and_private_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_rapid_tests_at_schools_and_private",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_work_and_private_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_rapid_tests_at_work_and_private",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
         "spring_without_rapid_tests_and_no_vaccinations": {
             "sim_input_scenario": "just_seasonality",
             "params_scenario": "baseline",
