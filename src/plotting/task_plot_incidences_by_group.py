@@ -17,7 +17,7 @@ from src.simulation.scenario_config import (
 
 _DEPENDENCIES = {
     "calculate_moments.py": SRC / "calculate_moments.py",
-    # "plotting.py": SRC / "plotting" / "plotting.py",
+    "plotting.py": SRC / "plotting" / "plotting.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
     "load_simulation_inputs": SRC / "simulation" / "load_simulation_inputs.py",
 }

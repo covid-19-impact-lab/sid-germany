@@ -262,7 +262,8 @@ def plot_group_time_series(df, title, rki=None):
                 color="k",
                 label="official case numbers",
             )
-
+    for ax in axes:
+        ax.legend(loc="upper left", ncol=1)
     return fig, axes
 
 
