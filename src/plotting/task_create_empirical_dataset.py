@@ -18,6 +18,7 @@ _DEPENDENCIES = {
     / "cosmo_selftest_frequency_last_four_weeks.csv",
     "virus_shares_dict": BLD / "data" / "virus_strains" / "virus_shares_dict.pkl",
     "calculate_moments.py": SRC / "calculate_moments.py",
+    "vaccinations": BLD / "data" / "vaccinations" / "vaccination_shares_raw.pkl",
 }
 
 
@@ -69,6 +70,9 @@ def task_create_empirical_dataset(depends_on, produces):
     share_b117 = pd.read_pickle(depends_on["virus_shares_dict"])["b117"]
     share_b117.name = "share_b117"
 
+    vacc_shares = pd.read_pickle(depends_on["vaccinations"]).cumsum()
+    vacc_shares.name = "ever_vaccinated"
+
     df = pd.concat(
         [
             new_known_case,
@@ -76,6 +80,7 @@ def task_create_empirical_dataset(depends_on, produces):
             share_ever_rapid_test,
             share_rapid_test_in_last_week,
             share_b117,
+            vacc_shares,
         ],
         axis=1,
     )
