@@ -1,4 +1,5 @@
 """This module holds the code to compute marginal contributions and shapley values."""
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -7,6 +8,9 @@ import pytask
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.plotting.plotting import format_date_axis
+from src.plotting.plotting import ORANGE
+from src.plotting.plotting import RED
+from src.plotting.plotting import TEAL
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
@@ -25,23 +29,22 @@ _SCENARIO_TO_MEMBERS = {
 
 _SCENARIOS = list(_SCENARIO_TO_MEMBERS)
 
-
 _AVAILABLE_SCENARIOS = get_available_scenarios(get_named_scenarios())
 
-
 _ARE_ALL_SCENARIOS_AVAILABLE = all(i in _AVAILABLE_SCENARIOS for i in _SCENARIOS)
-
 
 _DEPENDS_ON = {
     name: create_path_to_scenario_outcome_time_series(name, "newly_infected")
     for name in _SCENARIOS
 }
 
-MATPLOTLIB_RC_CONTEXT = {
+_MATPLOTLIB_RC_CONTEXT = {
     "axes.spines.right": False,
     "axes.spines.top": False,
     "legend.frameon": False,
 }
+
+_ORDERED_CHANNELS = ["Rapid Tests", "Seasonality", "Vaccinations"]
 
 
 @pytask.mark.skipif(
@@ -70,15 +73,15 @@ def task_plot_decomposition(depends_on, produces):
 
 
 def _create_bar_plot(df):
-    ratios = _compute_shapley_values(df.sum())
+    ratios = _compute_ratios_based_on_shapley_values(df.sum())
     ratios = ratios.rename(
-        index=lambda x: x.replace("shapley_value", "").replace("_", "").title()
-    )
+        index=lambda x: x.replace("shapley_value_", "").replace("_", " ").title()
+    ).reindex(index=_ORDERED_CHANNELS)
 
-    with plt.rc_context(MATPLOTLIB_RC_CONTEXT):
+    with plt.rc_context(_MATPLOTLIB_RC_CONTEXT):
         fig, ax = plt.subplots()
 
-        ratios.plot(kind="barh", ax=ax)
+        ratios.plot(kind="barh", ax=ax, color=[RED, ORANGE, TEAL], alpha=0.6)
 
         ax.set_xlabel("Contribution to Reduction")
 
@@ -86,22 +89,38 @@ def _create_bar_plot(df):
 
 
 def _create_area_plot(df):
-    ratios = df.cumsum().apply(_compute_shapley_values, axis=1)
+    ratios = df.cumsum().apply(_compute_ratios_based_on_shapley_values, axis=1)
     prevented_infections = df["spring_no_effects"] - df["spring_baseline"]
 
     # Clipping is necessary for the area plot and only small numbers in the beginning
     # are clipped which do not change the results.
     prevented_infections_by_channel = (
-        ratios.multiply(prevented_infections.cumsum(), axis=0).diff().clip(0)
+        (ratios.multiply(prevented_infections.cumsum(), axis=0).diff().clip(0))
+        .rename(
+            columns=lambda x: x.replace("shapley_value_", "").replace("_", " ").title()
+        )
+        .reindex(columns=_ORDERED_CHANNELS)
     )
 
-    with plt.rc_context(MATPLOTLIB_RC_CONTEXT):
+    with plt.rc_context(_MATPLOTLIB_RC_CONTEXT):
         fig, ax = plt.subplots()
-        prevented_infections_by_channel.plot(kind="area", ax=ax)
+        prevented_infections_by_channel.plot(
+            kind="area", ax=ax, color=[RED, ORANGE, TEAL], alpha=0.6
+        )
 
         ax = format_date_axis(ax)
 
         ax.set_ylabel("smoothed weekly incidence")
+        ax.set_xlabel(None)
+        ax.grid(axis="y")
+        ax.get_yaxis().set_major_formatter(
+            matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ","))
+        )
+
+        x, y, width, height = 0, -0.3, 1, 0.15
+        ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=3)
+
+        fig.tight_layout()
 
     return fig
 
