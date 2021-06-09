@@ -1,4 +1,6 @@
 """This module holds the code to compute marginal contributions and shapley values."""
+from typing import Dict
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,7 +18,7 @@ from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
 
 
-_SCENARIO_TO_MEMBERS = {
+_CHANNEL_SCENARIOS_TO_MEMBERS = {
     "spring_baseline": frozenset(["rapid_tests", "vaccinations", "seasonality"]),
     "spring_without_rapid_tests_and_no_vaccinations": frozenset(["seasonality"]),
     "spring_without_vaccinations_without_seasonality": frozenset(["rapid_tests"]),
@@ -27,16 +29,18 @@ _SCENARIO_TO_MEMBERS = {
     "spring_no_effects": frozenset([]),
 }
 
-_SCENARIOS = list(_SCENARIO_TO_MEMBERS)
+_RAPID_TEST_SCENARIOS_TO_MEMBERS = {
+    "spring_baseline": frozenset(["private", "school", "work"]),
+    "spring_without_school_and_work_rapid_tests": frozenset(["private"]),
+    "spring_without_school_and_private_rapid_tests": frozenset(["work"]),
+    "spring_without_work_and_private_rapid_tests": frozenset(["school"]),
+    "spring_without_work_rapid_tests": frozenset(["school", "private"]),
+    "spring_without_school_rapid_tests": frozenset(["work", "private"]),
+    "spring_without_private_rapid_tests": frozenset(["school", "work"]),
+    "spring_without_rapid_tests": frozenset([]),
+}
 
 _AVAILABLE_SCENARIOS = get_available_scenarios(get_named_scenarios())
-
-_ARE_ALL_SCENARIOS_AVAILABLE = all(i in _AVAILABLE_SCENARIOS for i in _SCENARIOS)
-
-_DEPENDS_ON = {
-    name: create_path_to_scenario_outcome_time_series(name, "newly_infected")
-    for name in _SCENARIOS
-}
 
 _MATPLOTLIB_RC_CONTEXT = {
     "axes.spines.right": False,
@@ -45,16 +49,23 @@ _MATPLOTLIB_RC_CONTEXT = {
 }
 
 _ORDERED_CHANNELS = ["Rapid Tests", "Seasonality", "Vaccinations"]
+_ORDERED_RAPID_TEST_CHANNELS = ["Private", "Work", "School"]
 
 
 @pytask.mark.skipif(
-    not _ARE_ALL_SCENARIOS_AVAILABLE, reason="required scenarios are not available"
+    not all(i in _AVAILABLE_SCENARIOS for i in _CHANNEL_SCENARIOS_TO_MEMBERS),
+    reason="required scenarios are not available",
 )
-@pytask.mark.depends_on(_DEPENDS_ON)
+@pytask.mark.depends_on(
+    {
+        name: create_path_to_scenario_outcome_time_series(name, "newly_infected")
+        for name in _CHANNEL_SCENARIOS_TO_MEMBERS
+    }
+)
 @pytask.mark.produces(
     {
-        "bar_plot": BLD / "figures" / f"{FAST_FLAG}_decomposition_bar.pdf",
-        "area_plot": BLD / "figures" / f"{FAST_FLAG}_decomposition_area.pdf",
+        "bar_plot": BLD / "figures" / f"{FAST_FLAG}_decomposition_channels_bar.pdf",
+        "area_plot": BLD / "figures" / f"{FAST_FLAG}_decomposition_channels_area.pdf",
     }
 )
 def task_plot_decomposition_of_infection_channels_in_spring(depends_on, produces):
@@ -65,32 +76,98 @@ def task_plot_decomposition_of_infection_channels_in_spring(depends_on, produces
         cumulative_outcomes = s.mean(axis=1)
         df[name] = cumulative_outcomes
 
-    fig = _create_bar_plot(df)
+    fig = _create_bar_plot(
+        df,
+        scenario_to_members=_CHANNEL_SCENARIOS_TO_MEMBERS,
+        no_effects_scenario="spring_no_effects",
+        ordering=_ORDERED_CHANNELS,
+        color=[RED, ORANGE, TEAL],
+    )
     fig.savefig(produces["bar_plot"])
 
-    fig = _create_area_plot(df)
+    fig = _create_area_plot(
+        df,
+        scenario_to_members=_CHANNEL_SCENARIOS_TO_MEMBERS,
+        no_effects_scenario="spring_no_effects",
+        ordering=_ORDERED_CHANNELS,
+        color=[RED, ORANGE, TEAL],
+    )
     fig.savefig(produces["area_plot"])
 
 
-def _create_bar_plot(df):
-    ratios = _compute_ratios_based_on_shapley_values(df.sum())
+@pytask.mark.skipif(
+    not all(i in _AVAILABLE_SCENARIOS for i in _RAPID_TEST_SCENARIOS_TO_MEMBERS),
+    reason="required scenarios are not available",
+)
+@pytask.mark.depends_on(
+    {
+        name: create_path_to_scenario_outcome_time_series(name, "newly_infected")
+        for name in _RAPID_TEST_SCENARIOS_TO_MEMBERS
+    }
+)
+@pytask.mark.produces(
+    {
+        "bar_plot": BLD / "figures" / f"{FAST_FLAG}_decomposition_rapid_tests_bar.pdf",
+        "area_plot": BLD
+        / "figures"
+        / f"{FAST_FLAG}_decomposition_rapid_tests_area.pdf",
+    }
+)
+def task_plot_decomposition_of_rapid_tests_in_spring(depends_on, produces):
+    scenarios = {name: pd.read_pickle(path) for name, path in depends_on.items()}
+
+    df = pd.DataFrame()
+    for name, s in scenarios.items():
+        cumulative_outcomes = s.mean(axis=1)
+        df[name] = cumulative_outcomes
+
+    fig = _create_bar_plot(
+        df,
+        scenario_to_members=_RAPID_TEST_SCENARIOS_TO_MEMBERS,
+        no_effects_scenario="spring_without_rapid_tests",
+        ordering=_ORDERED_RAPID_TEST_CHANNELS,
+        color=[RED, ORANGE, TEAL],
+    )
+    fig.savefig(produces["bar_plot"])
+
+    fig = _create_area_plot(
+        df,
+        scenario_to_members=_RAPID_TEST_SCENARIOS_TO_MEMBERS,
+        no_effects_scenario="spring_without_rapid_tests",
+        ordering=_ORDERED_RAPID_TEST_CHANNELS,
+        color=[RED, ORANGE, TEAL],
+    )
+    fig.savefig(produces["area_plot"])
+
+
+def _create_bar_plot(df, scenario_to_members, no_effects_scenario, ordering, color):
+    ratios = _compute_ratios_based_on_shapley_values(
+        df.sum(),
+        scenario_to_members=scenario_to_members,
+        no_effects_scenario=no_effects_scenario,
+    )
     ratios = ratios.rename(
         index=lambda x: x.replace("shapley_value_", "").replace("_", " ").title()
-    ).reindex(index=_ORDERED_CHANNELS)
+    ).reindex(index=ordering)
 
     with plt.rc_context(_MATPLOTLIB_RC_CONTEXT):
         fig, ax = plt.subplots()
 
-        ratios.plot(kind="barh", ax=ax, color=[RED, ORANGE, TEAL], alpha=0.6)
+        ratios.plot(kind="barh", ax=ax, color=color, alpha=0.6)
 
         ax.set_xlabel("Contribution to Reduction")
 
     return fig
 
 
-def _create_area_plot(df):
-    ratios = df.cumsum().apply(_compute_ratios_based_on_shapley_values, axis=1)
-    prevented_infections = df["spring_no_effects"] - df["spring_baseline"]
+def _create_area_plot(df, scenario_to_members, no_effects_scenario, ordering, color):
+    ratios = df.cumsum().apply(
+        _compute_ratios_based_on_shapley_values,
+        scenario_to_members=scenario_to_members,
+        no_effects_scenario=no_effects_scenario,
+        axis=1,
+    )
+    prevented_infections = df[no_effects_scenario] - df["spring_baseline"]
 
     # Clipping is necessary for the area plot and only small numbers in the beginning
     # are clipped which do not change the results.
@@ -99,14 +176,12 @@ def _create_area_plot(df):
         .rename(
             columns=lambda x: x.replace("shapley_value_", "").replace("_", " ").title()
         )
-        .reindex(columns=_ORDERED_CHANNELS)
+        .reindex(columns=ordering)
     )
 
     with plt.rc_context(_MATPLOTLIB_RC_CONTEXT):
         fig, ax = plt.subplots()
-        prevented_infections_by_channel.plot(
-            kind="area", ax=ax, color=[RED, ORANGE, TEAL], alpha=0.6
-        )
+        prevented_infections_by_channel.plot(kind="area", ax=ax, color=color, alpha=0.6)
 
         ax = format_date_axis(ax)
 
@@ -125,13 +200,15 @@ def _create_area_plot(df):
     return fig
 
 
-def _compute_ratios_based_on_shapley_values(s):
+def _compute_ratios_based_on_shapley_values(
+    s, scenario_to_members: Dict[str, frozenset], no_effects_scenario: str
+):
     df = s.to_frame(name="cumulative_infections")
-    df["members"] = df.index.map(_SCENARIO_TO_MEMBERS.get)
+    df["members"] = df.index.map(scenario_to_members.get)
 
     df["payoff"] = (
         df["cumulative_infections"]
-        - df.loc["spring_no_effects", "cumulative_infections"]
+        - df.loc[no_effects_scenario, "cumulative_infections"]
     ) * -1
     df = df.reset_index()
     shapley_values = _compute_shapley_values(df)
