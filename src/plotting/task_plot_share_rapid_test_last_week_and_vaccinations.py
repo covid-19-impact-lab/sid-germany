@@ -8,11 +8,9 @@ from src.config import FAST_FLAG
 from src.config import PLOT_SIZE
 from src.config import SRC
 from src.plotting.plotting import BLUE
-from src.plotting.plotting import ORANGE
 from src.plotting.plotting import OUTCOME_TO_EMPIRICAL_LABEL
 from src.plotting.plotting import RED
 from src.plotting.plotting import style_plot
-from src.plotting.plotting import TEAL
 from src.simulation.scenario_config import create_path_for_weekly_outcome_of_scenario
 from src.simulation.scenario_config import (
     create_path_to_scenario_outcome_time_series as get_dependency,
@@ -53,18 +51,20 @@ def task_plot_share_rapid_test_last_week_and_vaccinations(depends_on, produces):
         (
             empirical_df[["ever_vaccinated"]],
             OUTCOME_TO_EMPIRICAL_LABEL["ever_vaccinated"],
-            BLUE,
+            "k",
+            None,
         ),
         (
             empirical_df[["share_rapid_test_in_last_week"]],
             OUTCOME_TO_EMPIRICAL_LABEL["share_rapid_test_in_last_week"],
-            RED,
+            "k",
+            "--",
         ),
-        (vaccinated, "simulated share of vaccinated individuals", TEAL),
-        (rapid_test_share, rapid_test_label, ORANGE),
+        (vaccinated, "simulated share of vaccinated individuals", BLUE, None),
+        (rapid_test_share, rapid_test_label, RED, None),
     ]
 
-    for df, label, color in plot_spec:
+    for df, label, color, linestyle in plot_spec:
         sns.lineplot(
             x=df.index,
             y=df.mean(axis=1),
@@ -73,6 +73,7 @@ def task_plot_share_rapid_test_last_week_and_vaccinations(depends_on, produces):
             label=label,
             linewidth=3.0,
             alpha=0.6,
+            linestyle=linestyle,
         )
 
     x, y, width, height = 0.0, -0.3, 1, 0.2

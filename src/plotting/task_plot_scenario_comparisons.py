@@ -26,7 +26,7 @@ from src.simulation.scenario_config import get_named_scenarios
 
 
 _MODULE_DEPENDENCIES = {
-    # "plotting.py": SRC / "plotting" / "plotting.py",
+    "plotting.py": SRC / "plotting" / "plotting.py",
     "policy_tools.py": SRC / "policies" / "policy_tools.py",
     "scenario_config.py": SRC / "simulation" / "scenario_config.py",
     "empirical": BLD / "data" / "empirical_data_for_plotting.pkl",
@@ -138,8 +138,7 @@ PLOTS = {
             "spring_baseline": "enacted school policies",
         },
         "colors": [PURPLE, RED, BROWN, BLUE],
-        "plot_start": AFTER_EASTER - pd.Timedelta(days=2),
-        "scenario_starts": ([(AFTER_EASTER, "Easter")]),
+        "plot_start": AFTER_EASTER,
     },
     # Other Fixed Plots
     "effect_of_rapid_tests": {
@@ -232,6 +231,22 @@ PLOTS = {
         ],
         "colors": [BLUE, GREEN, ORANGE, RED],
         "scenario_starts": [(SUMMER_SCENARIO_START, "scenario start")],
+    },
+    "add_single_rapid_test_chanel_to_pessimistic": {
+        "title": "",
+        "scenarios": [
+            "spring_without_rapid_tests",
+            "spring_without_school_and_work_rapid_tests",  # just private
+            "spring_without_school_and_private_rapid_tests",  # just work
+            "spring_without_work_and_private_rapid_tests",  # just school
+        ],
+        "colors": [PURPLE, GREEN, RED, ORANGE],
+        "name_to_label": {
+            "spring_without_rapid_tests": "no rapid tests at all",
+            "spring_without_school_and_work_rapid_tests": "just private rapid tests",
+            "spring_without_school_and_private_rapid_tests": "just work rapid tests",
+            "spring_without_work_and_private_rapid_tests": "just school rapid tests",
+        },
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
