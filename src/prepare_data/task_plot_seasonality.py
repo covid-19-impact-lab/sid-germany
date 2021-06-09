@@ -5,6 +5,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
@@ -29,7 +30,7 @@ def task_plot_seasonality(depends_on, produces):
     weak_seasonality_series = create_seasonality_series(dates, weak_seasonality)
     strong_seasonality_series = create_seasonality_series(dates, strong_seasonality)
 
-    fig, ax = plt.subplots(figsize=(10, 4))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sns.lineplot(
         x=weak_seasonality_series.index,
         y=weak_seasonality_series,

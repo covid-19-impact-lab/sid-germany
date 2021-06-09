@@ -7,6 +7,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
@@ -42,7 +43,7 @@ def task_plot_share_of_educ_participants_with_rapid_test(depends_on, produces):
     share_students = get_piecewise_linear_interpolation(students_params)
     share_students = share_students.loc[PLOT_START_DATE:PLOT_END_DATE]
 
-    fig, ax = plt.subplots(figsize=(8, 3))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sns.lineplot(
         x=share_educ_workers.index,
         y=share_educ_workers,

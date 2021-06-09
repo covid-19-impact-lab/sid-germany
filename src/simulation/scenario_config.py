@@ -12,6 +12,7 @@ NON_INCIDENCE_OUTCOMES = [
     "share_ever_rapid_test",
     "share_rapid_test_in_last_week",
     "share_b117",
+    "share_doing_rapid_test_today",
 ]
 
 
@@ -58,6 +59,19 @@ def create_path_to_group_incidence_plot(name, outcome, groupby):
     return BLD / "figures" / "incidences_by_group" / groupby / fig_name
 
 
+def create_path_for_weekly_outcome_of_scenario(
+    comparison_name, fast_flag, outcome, suffix
+):
+    file_name = f"{fast_flag}_{outcome}.{suffix}"
+    if suffix == "pdf":
+        path = BLD / "figures" / "scenario_comparisons" / comparison_name / file_name
+    elif suffix == "csv":
+        path = BLD / "tables" / "scenario_comparisons" / comparison_name / file_name
+    else:
+        raise ValueError(f"Unknown suffix {suffix}. Only 'pdf' and 'csv' supported")
+    return path
+
+
 # =============================================================================
 
 
@@ -96,16 +110,22 @@ def get_named_scenarios():
             "start_date": fall_dates["start_date"],
             "end_date": spring_dates["end_date"],
         }
+        summer_dates = {"start_date": "2021-06-01", "end_date": "2021-07-25"}
     else:
+        # for the plotting we need that combined and spring have dates after 2021-01-15
+        combined_dates = {"start_date": "2020-12-30", "end_date": "2021-01-18"}
         fall_dates = {
             "start_date": "2020-12-25",
             "end_date": "2020-12-31",
         }
         spring_dates = {
             "start_date": "2021-01-01",
-            "end_date": "2021-01-05",
+            "end_date": "2021-01-18",
         }
-        combined_dates = {"start_date": "2020-12-25", "end_date": "2021-01-05"}
+        summer_dates = {
+            "start_date": "2021-01-19",
+            "end_date": "2021-01-24",
+        }
 
     named_scenarios = {
         # Baseline Scenarios
@@ -113,6 +133,7 @@ def get_named_scenarios():
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
+            "save_last_states": True,
             "is_resumed": False,
             **combined_dates,
         },
@@ -128,7 +149,16 @@ def get_named_scenarios():
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
+            "save_last_states": True,
             **spring_dates,
+        },
+        "summer_baseline": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "baseline",
+            "n_seeds": n_main_seeds,
+            "save_last_states": True,
+            "is_resumed": "combined",
+            **summer_dates,
         },
         # Scenarios for the main plots
         "spring_no_effects": {
@@ -197,6 +227,30 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
+        "spring_without_private_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_private_rapid_test_demand",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_school_and_work_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_rapid_tests_at_schools_and_work",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_school_and_private_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_rapid_tests_at_schools_and_private",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_without_work_and_private_rapid_tests": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "no_rapid_tests_at_work_and_private",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
         "spring_without_rapid_tests_and_no_vaccinations": {
             "sim_input_scenario": "just_seasonality",
             "params_scenario": "baseline",
@@ -220,6 +274,27 @@ def get_named_scenarios():
             "params_scenario": "start_all_rapid_tests_after_easter",
             "n_seeds": n_other_seeds,
             **spring_dates,
+        },
+        "summer_strict_home_office_continue_testing": {
+            "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
+            "params_scenario": "baseline",
+            "n_seeds": n_other_seeds,
+            "is_resumed": "combined",
+            **summer_dates,
+        },
+        "summer_strict_home_office_reduce_testing": {
+            "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
+            "params_scenario": "reduce_work_rapid_test_demand_after_summer_scenario_start_by_half",  # noqa: E501
+            "n_seeds": n_other_seeds,
+            "is_resumed": "combined",
+            **summer_dates,
+        },
+        "summer_normal_home_office_reduce_testing": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "reduce_work_rapid_test_demand_after_summer_scenario_start_by_half",  # noqa: E501
+            "n_seeds": n_other_seeds,
+            "is_resumed": "combined",
+            **summer_dates,
         },
     }
     return named_scenarios

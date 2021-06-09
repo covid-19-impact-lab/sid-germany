@@ -1,6 +1,4 @@
 """For each available scenario plot the incidences in each of the age groups."""
-from itertools import product
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
@@ -15,8 +13,6 @@ from src.simulation.scenario_config import create_path_to_group_incidence_plot
 from src.simulation.scenario_config import (
     create_path_to_scenario_outcome_time_series,
 )
-from src.simulation.scenario_config import get_available_scenarios
-from src.simulation.scenario_config import get_named_scenarios
 
 
 _DEPENDENCIES = {
@@ -28,11 +24,6 @@ _DEPENDENCIES = {
 
 
 def create_parametrization():
-    named_scenarios = get_named_scenarios()
-    available_scenarios = get_available_scenarios(named_scenarios)
-    baseline_scenarios = [
-        scenario for scenario in available_scenarios if "baseline" in scenario
-    ]
     entries = [
         entry
         for entry in create_period_outputs()
@@ -40,11 +31,11 @@ def create_parametrization():
     ]
 
     parametrization = []
-    for scenario, entry in product(baseline_scenarios, entries):
+    for entry in entries:
         outcome, groupby = entry.split("_by_")
         depends_on = {
             "simulated": create_path_to_scenario_outcome_time_series(
-                scenario_name=scenario, entry=entry
+                scenario_name="combined_baseline", entry=entry
             ),
             "group_sizes_age_groups": (
                 BLD / "data" / "population_structure" / "age_groups_rki.pkl"
@@ -57,7 +48,7 @@ def create_parametrization():
             depends_on["rki"] = BLD / "data" / "processed_time_series" / "rki.pkl"
 
         produces = create_path_to_group_incidence_plot(
-            name=scenario, outcome=outcome, groupby=groupby
+            name="combined_baseline", outcome=outcome, groupby=groupby
         )
         parametrization.append((depends_on, produces, outcome, groupby))
 
