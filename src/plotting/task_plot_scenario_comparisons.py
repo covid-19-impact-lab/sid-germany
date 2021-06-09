@@ -138,7 +138,7 @@ PLOTS = {
             "spring_baseline": "enacted school policies",
         },
         "colors": [PURPLE, RED, BROWN, BLUE],
-        "plot_start": AFTER_EASTER - pd.Timedelta(days=14),
+        "plot_start": AFTER_EASTER - pd.Timedelta(days=2),
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
     # Other Fixed Plots

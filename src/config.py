@@ -18,7 +18,7 @@ PLOT_SIZE = (8, 4.5)
 
 SUMMER_SCENARIO_START = "2021-06-07"
 
-FAST_FLAG = "full"
+FAST_FLAG = "debug"
 """One of 'debug', 'verify', 'full'.
 
 If 'debug' only the debug initial states are used and only one run of every scenario
