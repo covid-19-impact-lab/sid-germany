@@ -269,7 +269,6 @@ not_plotted_scenarios = not_plotted_scenarios - {
 }
 if not_plotted_scenarios:
     raise ValueError(
-      
         "The following scenarios do not appear in any plots: "
         + "\n\t".join(not_plotted_scenarios)
     )
