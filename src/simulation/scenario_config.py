@@ -86,8 +86,8 @@ def get_named_scenarios():
 
     """
     if FAST_FLAG == "debug":
-        n_main_seeds = 1
-        n_other_seeds = 1
+        n_main_seeds = 0
+        n_other_seeds = 0
     elif FAST_FLAG == "verify":
         n_main_seeds = 1
         n_other_seeds = 1
@@ -275,6 +275,7 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
+        # ------------------------------------------------------
         "spring_strict_home_office_continue_testing": {
             "sim_input_scenario": "strict_home_office_after_easter",
             "params_scenario": "baseline",
@@ -290,6 +291,18 @@ def get_named_scenarios():
         "spring_normal_home_office_reduce_testing": {
             "sim_input_scenario": "baseline",
             "params_scenario": "reduce_work_rapid_test_demand_after_easter_by_half",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_plus_10_pct_home_office_after_easter": {
+            "sim_input_scenario": "plus_10_pct_home_office_after_easter",
+            "params_scenario": "baseline",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_minus_10_pct_home_office_after_easter": {
+            "sim_input_scenario": "minus_10_pct_home_office_after_easter",
+            "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },

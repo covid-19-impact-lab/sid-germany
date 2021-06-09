@@ -28,6 +28,7 @@ from src.policies.enacted_policies import get_school_options_for_strict_emergenc
 from src.policies.enacted_policies import HYGIENE_MULTIPLIER
 from src.policies.find_people_to_vaccinate import find_people_to_vaccinate
 from src.policies.policy_tools import combine_dictionaries
+from src.policies.policy_tools import filter_dictionary
 from src.policies.policy_tools import remove_educ_policies
 from src.policies.policy_tools import remove_work_policies
 from src.policies.policy_tools import shorten_policies
@@ -409,6 +410,91 @@ def _get_policies_with_different_work_attend_multiplier_after_date(
     """
     stays_same, to_change = split_policies(enacted_policies, split_date=split_date)
     after_split_without_work_policies = remove_work_policies(to_change)
+
+    block_info = {
+        "prefix": prefix,
+        "start_date": split_date,
+        "end_date": VERY_LATE,
+    }
+    new_work_policies = reduce_work_models(
+        contact_models=contact_models,
+        block_info=block_info,
+        attend_multiplier=new_attend_multiplier,
+        hygiene_multiplier=HYGIENE_MULTIPLIER,
+    )
+
+    new_policies = combine_dictionaries(
+        [stays_same, after_split_without_work_policies, new_work_policies]
+    )
+    return new_policies
+
+
+def minus_10_pct_home_office_after_easter(paths, fixed_inputs):
+    """Hypothetical scenario where there is 10 pct less home office after Easter."""
+    start_date = fixed_inputs["duration"]["start"]
+    end_date = fixed_inputs["duration"]["end"]
+    contact_models = fixed_inputs["contact_models"]
+    enacted_policies = get_enacted_policies(contact_models)
+
+    new_policies = _get_policies_with_multiplied_work_attend_multiplier_after_date(
+        enacted_policies=enacted_policies,
+        contact_models=contact_models,
+        multiplier=0.9,
+        split_date=AFTER_EASTER,
+        prefix="work_minus_10_pct_home_office_after_easter",
+    )
+    new_policies = shorten_policies(new_policies, start_date, end_date)
+
+    out = {
+        "contact_policies": new_policies,
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return out
+
+
+def plus_10_pct_home_office_after_easter(paths, fixed_inputs):
+    """Hypothetical scenario where there is 10 pct more home office after Easter."""
+    start_date = fixed_inputs["duration"]["start"]
+    end_date = fixed_inputs["duration"]["end"]
+    contact_models = fixed_inputs["contact_models"]
+    enacted_policies = get_enacted_policies(contact_models)
+
+    new_policies = _get_policies_with_multiplied_work_attend_multiplier_after_date(
+        enacted_policies=enacted_policies,
+        contact_models=contact_models,
+        multiplier=1.1,
+        split_date=AFTER_EASTER,
+        prefix="work_plus_10_pct_home_office_after_easter",
+    )
+    new_policies = shorten_policies(new_policies, start_date, end_date)
+
+    out = {
+        "contact_policies": new_policies,
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return out
+
+
+def _get_policies_with_multiplied_work_attend_multiplier_after_date(
+    enacted_policies, contact_models, multiplier, split_date, prefix
+):
+    """Multiply the attend work multiplier with *multiplier* after **date**."""
+    stays_same, to_change = split_policies(enacted_policies, split_date=split_date)
+    after_split_without_work_policies = remove_work_policies(to_change)
+
+    # get one attend multiplier and assume it was the same for all work models
+    old_work_policies = filter_dictionary(lambda x: "work" in x, to_change)
+    one_work_policy = list(old_work_policies.values())[0]
+    old_attend_multiplier = one_work_policy["policy"].keywords["attend_multiplier"]
+    new_attend_multiplier = (multiplier * old_attend_multiplier).clip(0, 1)
 
     block_info = {
         "prefix": prefix,
