@@ -1,10 +1,6 @@
 import datetime
 
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
-
-from src.plotting.plotting import style_plot
 
 
 def get_date_from_year_and_week(row):
@@ -45,15 +41,6 @@ def convert_weekly_to_daily(df, divide_by_7_cols):
     df = df.rename(columns={"index": "date"})
     df[divide_by_7_cols] = df[divide_by_7_cols] / 7
     return df
-
-
-def plot_time_series(df, y, title=""):
-    fig, ax = plt.subplots(figsize=(10, 3))
-    sns.lineplot(data=df, x="date", y=y)
-    ax.set_title(title)
-    fig, ax = style_plot(fig, ax)
-    fig.tight_layout()
-    return fig, ax
 
 
 def get_piecewise_linear_interpolation_for_one_day(date, params_slice):

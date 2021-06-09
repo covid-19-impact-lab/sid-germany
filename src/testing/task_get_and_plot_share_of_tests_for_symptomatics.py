@@ -6,6 +6,7 @@ from sid import get_colors
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
@@ -79,7 +80,7 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
     df = pd.concat(to_concat, axis=1)
 
     colors = get_colors("categorical", len(symptom_shares))
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
     for share, color in zip(symptom_shares, colors):
         extrapolated = f"{share}_extrapolated"
@@ -159,7 +160,7 @@ def _extrapolate_series_after_february(sr, end_date="2021-08-30"):
 def _plot_df_column(df, cols, title=None):
     if isinstance(cols, str):
         cols = [cols]
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     for col in cols:
         label = col.replace("_", " ").title()
         sns.lineplot(x=df["date"], y=df[col], ax=ax, label=label)

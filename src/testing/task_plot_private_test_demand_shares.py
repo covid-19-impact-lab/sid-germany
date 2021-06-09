@@ -7,6 +7,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
@@ -35,7 +36,7 @@ def task_plot_private_test_demand_shares(depends_on, produces):
     private_demand_shares = get_piecewise_linear_interpolation(params_slice)
     private_demand_shares = private_demand_shares.loc[PLOT_START_DATE:PLOT_END_DATE]
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sns.lineplot(
         x=private_demand_shares.index,
         y=private_demand_shares,

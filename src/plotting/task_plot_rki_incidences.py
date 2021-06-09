@@ -5,6 +5,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import POPULATION_GERMANY
 from src.config import SRC
@@ -32,7 +33,7 @@ def task_plot_spring_incidences(depends_on, produces):
 
     plot_data = smoothed_incidence.loc[PLOT_START_DATE:PLOT_END_DATE]
 
-    fig, ax = plt.subplots(figsize=(10, 4))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sns.lineplot(x=plot_data.index, y=plot_data, linewidth=2.5)
     fig, ax = style_plot(fig, ax)
     fig.savefig(produces["overall"])
