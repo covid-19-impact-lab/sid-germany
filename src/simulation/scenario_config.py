@@ -275,26 +275,23 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "summer_strict_home_office_continue_testing": {
-            "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
+        "spring_strict_home_office_continue_testing": {
+            "sim_input_scenario": "strict_home_office_after_easter",
             "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
-            "is_resumed": "combined",
-            **summer_dates,
+            **spring_dates,
         },
-        "summer_strict_home_office_reduce_testing": {
-            "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
-            "params_scenario": "reduce_work_rapid_test_demand_after_summer_scenario_start_by_half",  # noqa: E501
+        "spring_strict_home_office_reduce_testing": {
+            "sim_input_scenario": "strict_home_office_after_easter",
+            "params_scenario": "reduce_work_rapid_test_demand_after_easter_by_half",
             "n_seeds": n_other_seeds,
-            "is_resumed": "combined",
-            **summer_dates,
+            **spring_dates,
         },
-        "summer_normal_home_office_reduce_testing": {
+        "spring_normal_home_office_reduce_testing": {
             "sim_input_scenario": "baseline",
-            "params_scenario": "reduce_work_rapid_test_demand_after_summer_scenario_start_by_half",  # noqa: E501
+            "params_scenario": "reduce_work_rapid_test_demand_after_easter_by_half",
             "n_seeds": n_other_seeds,
-            "is_resumed": "combined",
-            **summer_dates,
+            **spring_dates,
         },
     }
     return named_scenarios

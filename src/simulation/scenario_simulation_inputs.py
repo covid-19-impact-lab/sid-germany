@@ -14,6 +14,7 @@ from functools import partial
 import pandas as pd
 import yaml
 
+from src.config import AFTER_EASTER
 from src.config import BLD
 from src.config import SUMMER_SCENARIO_START
 from src.config import VERY_LATE
@@ -59,9 +60,8 @@ def open_all_educ_after_summer_scenario_start(paths, fixed_inputs):
 
 def open_all_educ_after_easter(paths, fixed_inputs):
     # day after easter monday as the split date belongs to the 2nd dictionary
-    after_easter = "2021-04-06"
     out = _open_all_educ_after_date(
-        paths=paths, fixed_inputs=fixed_inputs, split_date=after_easter
+        paths=paths, fixed_inputs=fixed_inputs, split_date=AFTER_EASTER
     )
     return out
 
@@ -110,14 +110,12 @@ def only_strict_emergency_care_after_april_5(paths, fixed_inputs):
     contact_models = fixed_inputs["contact_models"]
     enacted_policies = get_enacted_policies(contact_models)
 
-    # day after easter monday as the split date belongs to the 2nd dictionary
-    after_easter = "2021-04-06"
-    stays_same, to_change = split_policies(enacted_policies, split_date=after_easter)
+    stays_same, to_change = split_policies(enacted_policies, split_date=AFTER_EASTER)
     keep = remove_educ_policies(to_change)
 
     block_info = {
         "prefix": "emergency_care_after_april_5",
-        "start_date": after_easter,
+        "start_date": AFTER_EASTER,
         "end_date": VERY_LATE,
     }
     new_young_educ_policies = apply_emergency_care_policies(
@@ -157,14 +155,12 @@ def close_educ_after_april_5(paths, fixed_inputs):
     contact_models = fixed_inputs["contact_models"]
     enacted_policies = get_enacted_policies(contact_models)
 
-    # day after easter monday as the split date belongs to the 2nd dictionary
-    after_easter = "2021-04-06"
-    stays_same, to_change = split_policies(enacted_policies, split_date=after_easter)
+    stays_same, to_change = split_policies(enacted_policies, split_date=AFTER_EASTER)
     keep = remove_educ_policies(to_change)
 
     block_info = {
         "prefix": "educ_closed_after_april_5",
-        "start_date": after_easter,
+        "start_date": AFTER_EASTER,
         "end_date": VERY_LATE,
     }
     new_educ_policies = shut_down_educ_models(
@@ -277,7 +273,7 @@ def vaccinations_after_easter_as_on_strongest_week_day(paths, fixed_inputs):
     vaccination_models = _get_vaccination_model_with_new_value_after_date(
         vaccination_shares,
         init_start,
-        change_date="2021-04-06",  # Tuesday after Easter Monday
+        change_date=AFTER_EASTER,
         new_val=max(vacc_shares.values()),
         model_name="highest_vacc_share_after_easter",
     )
@@ -307,7 +303,7 @@ def vaccinate_1_pct_per_day_after_easter(paths, fixed_inputs):
     vaccination_models = _get_vaccination_model_with_new_value_after_date(
         vaccination_shares,
         init_start,
-        change_date="2021-04-06",  # Tuesday after Easter Monday
+        change_date=AFTER_EASTER,
         new_val=0.01,
         model_name="vaccinate_1_pct_per_day_after_easter",
     )
@@ -337,6 +333,38 @@ def _get_vaccination_model_with_new_value_after_date(
 
 
 # ================================================================================
+
+
+def strict_home_office_after_easter(paths, fixed_inputs):
+    """Define strict home office after Easter.
+
+    The attendance multiplier is set to 0.54  which corresponds to the mean work
+    multiplier in April 2020.
+
+    """
+    start_date = fixed_inputs["duration"]["start"]
+    end_date = fixed_inputs["duration"]["end"]
+    contact_models = fixed_inputs["contact_models"]
+    enacted_policies = get_enacted_policies(contact_models)
+
+    new_policies = _get_policies_with_different_work_attend_multiplier_after_date(
+        enacted_policies=enacted_policies,
+        contact_models=contact_models,
+        new_attend_multiplier=0.54,
+        split_date=AFTER_EASTER,
+        prefix="work_strict_home_office_after_easter",
+    )
+    new_policies = shorten_policies(new_policies, start_date, end_date)
+
+    out = {
+        "contact_policies": new_policies,
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return out
 
 
 def strict_home_office_after_summer_scenario_start(paths, fixed_inputs):

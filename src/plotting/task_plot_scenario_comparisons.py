@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 
+from src.config import AFTER_EASTER
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.config import SRC
-from src.config import SUMMER_SCENARIO_START
 from src.plotting.plotting import BLUE
 from src.plotting.plotting import BROWN
 from src.plotting.plotting import create_automatic_labels
@@ -33,8 +33,6 @@ _MODULE_DEPENDENCIES = {
 }
 
 NAMED_SCENARIOS = get_named_scenarios()
-
-AFTER_EASTER = pd.Timestamp("2021-04-06")
 
 SCHOOL_SCENARIOS = [
     "spring_educ_open_after_easter_without_tests",
@@ -224,13 +222,18 @@ PLOTS = {
     "work_scenarios": {
         "title": "The Effect of Home Office and Work Rapid Tests on {outcome}",
         "scenarios": [
-            "summer_baseline",
-            "summer_strict_home_office_continue_testing",
-            "summer_strict_home_office_reduce_testing",
-            "summer_normal_home_office_reduce_testing",
+            "spring_baseline",
+            "spring_strict_home_office_continue_testing",
+            "spring_strict_home_office_reduce_testing",
+            "spring_normal_home_office_reduce_testing",
         ],
         "colors": [BLUE, GREEN, ORANGE, RED],
-        "scenario_starts": [(SUMMER_SCENARIO_START, "scenario start")],
+        "scenario_starts": [(AFTER_EASTER, "scenario start")],
+    },
+    "main_prediction": {
+        "title": "",
+        "scenarios": ["summer_baseline"],
+        "colors": [BLUE],
     },
     "add_single_rapid_test_chanel_to_pessimistic": {
         "title": "",

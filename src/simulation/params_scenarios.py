@@ -2,6 +2,7 @@ import warnings
 
 import pandas as pd
 
+from src.config import AFTER_EASTER
 from src.config import SUMMER_SCENARIO_START
 from src.testing.shared import get_piecewise_linear_interpolation
 from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
@@ -33,15 +34,38 @@ def start_all_rapid_tests_after_easter(params):
     return new
 
 
-def reduce_work_rapid_test_demand_after_summer_scenario_start_by_half(params):
-    """Reduce rapid tests of households and workers by half.
+def reduce_work_rapid_test_demand_after_easter_by_half(params):
+    """Reduce rapid tests of workers by half.
 
     Since only the offer share of workers' rapid tests is time variant we change the
     offer parameters rather than the demand even though the more intuitive
     interpretation would be that workers demand less tests.
 
     """
-    change_date = pd.Timestamp(SUMMER_SCENARIO_START)
+    params = _reduce_work_rapid_test_demand_after_date_start(
+        params=params, date=AFTER_EASTER, multiplier=0.5
+    )
+    return params
+
+
+def _reduce_work_rapid_test_demand_after_date_start(params, date, multiplier):
+    """Reduce rapid tests of workers by (1 - *multiplier*) after *date*.
+
+    Since only the offer share of workers' rapid tests is time variant we change the
+    offer parameters rather than the demand even though the more intuitive
+    interpretation would be that workers demand less tests.
+
+    Args:
+        params (pandas.DataFrame): params DataFrame with ("rapid_test_demand",
+            "share_workers_receiving_offer") entries.
+        date (str or pandas.Timestamp): date after which the workers' rapid tests are
+            reduced.
+        multiplier (float): multiplier with which the old work rapid test share will be
+            reduced. For example, to reduce the work rapid tests by 25%, set the
+            multiplier to 0.75.
+
+    """
+    change_date = pd.Timestamp(date)
 
     work_offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
     with warnings.catch_warnings():
@@ -52,7 +76,7 @@ def reduce_work_rapid_test_demand_after_summer_scenario_start_by_half(params):
             change_date, params.loc[work_offer_loc]
         )
 
-    new_work_offer_share = 0.5 * old_work_offer_share
+    new_work_offer_share = multiplier * old_work_offer_share
 
     params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params,
