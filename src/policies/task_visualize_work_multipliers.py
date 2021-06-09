@@ -6,6 +6,7 @@ from sid.colors import get_colors
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
@@ -114,7 +115,7 @@ def _plot_time_series(
     data = data[data[x].between(PLOT_START_DATE, PLOT_END_DATE)]
     y = [y] if isinstance(y, str) else y
     if ax is None:
-        fig, ax = plt.subplots(figsize=(15, 5))
+        fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
     for var in y:
         sns.lineplot(data=data, y=var, x=x, ax=ax, label=var)

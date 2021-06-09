@@ -7,6 +7,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
 from src.plotting.plotting import style_plot
@@ -41,7 +42,7 @@ def task_plot_share_of_workers_receiving_test_offer(depends_on, produces):
         PLOT_START_DATE:PLOT_END_DATE
     ]
 
-    fig, ax = plt.subplots(figsize=(8, 3))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sns.lineplot(
         x=share_workers_receiving_offer.index,
         y=share_workers_receiving_offer,

@@ -89,7 +89,7 @@ def reduce_work_model(
 
     threshold = 1 - attend_multiplier
     if isinstance(threshold, pd.Series):
-        threshold = states["state"].map(threshold.get)
+        threshold = states["state"].map(threshold.get).astype(float)
         # this assert could be skipped because we check in
         # task_check_initial_states that the federal state names overlap.
         assert threshold.notnull().all()

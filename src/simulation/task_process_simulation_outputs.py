@@ -45,6 +45,7 @@ def _create_incidence_parametrization():
 _SIGNATURE, _PARAMETRIZATION = _create_incidence_parametrization()
 
 
+@pytask.mark.persist
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_create_weekly_outcome_for_scenario(depends_on, produces):
@@ -117,6 +118,9 @@ _SIGNATURE, _PARAMETRIZATION = _create_scenario_share_known_cases_parametrizatio
 def task_create_share_known_cases(depends_on, produces):
     knows_currently_infected = pd.read_pickle(depends_on["knows_currently_infected"])
     currently_infected = pd.read_pickle(depends_on["currently_infected"])
+    # add small values to both Series to handle the case where both are 0
+    currently_infected = currently_infected + 1e-7
+    knows_currently_infected = knows_currently_infected + 1e-7
     share_known_cases = knows_currently_infected / currently_infected
     share_known_cases["mean"] = share_known_cases.mean(axis=1)
     assert not share_known_cases.index.duplicated().any()

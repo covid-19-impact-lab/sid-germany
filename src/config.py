@@ -12,20 +12,21 @@ from pathlib import Path
 import pandas as pd
 import sid
 
-PLOT_START_DATE = "2020-09-01"
+PLOT_START_DATE = "2020-09-15"
 PLOT_END_DATE = "2021-06-06"
+PLOT_SIZE = (8, 4.5)
 
-SUMMER_SCENARIO_START = "2021-05-17"
+SUMMER_SCENARIO_START = "2021-06-07"
 
 FAST_FLAG = "debug"
 """One of 'debug', 'verify', 'full'.
 
-If 'debug' only the debug initial states are used and only one run of every scenario
-is done. Do **not** interpret the results.
+If 'debug' only the debug initial states are used and only one run of every scenario is
+done. Do **not** interpret the results.
 
-If 'verify' only 10 seeds and the base scenario are done in the fall scenarios.
-In the main_predictions we use 5 seeds for each scenario.
-This means there 30 simulation runs overall.
+If 'verify' only 10 seeds and the base scenario are done in the fall scenarios. In the
+main_predictions we use 5 seeds for each scenario. This means there 30 simulation runs
+overall.
 
 If 'full' 20 seeds are used for each scenario.
 

@@ -22,14 +22,15 @@ def _create_simulation_parametrization():
 
     scenarios = []
     for name, specs in named_scenarios.items():
-        is_resumed = specs.get("is_resumed", True)
+        is_resumed = specs.get("is_resumed", "fall")
+        save_last_states = specs.get("save_last_states", False)
         for seed in range(specs["n_seeds"]):
             produces = {
                 "period_outputs": create_path_to_period_outputs_of_simulation(
                     name, seed
                 )
             }
-            if name == "fall_baseline":
+            if save_last_states:
                 produces["last_states"] = create_path_to_last_states_of_simulation(
                     name, seed
                 )
@@ -39,7 +40,7 @@ def _create_simulation_parametrization():
             )
             if is_resumed:
                 depends_on["initial_states"] = create_path_to_last_states_of_simulation(
-                    "fall_baseline", seed
+                    f"{is_resumed}_baseline", seed
                 )
 
             spec_tuple = (
@@ -48,7 +49,7 @@ def _create_simulation_parametrization():
                 specs["params_scenario"],
                 specs["start_date"],
                 specs["end_date"],
-                specs.get("save_last_states", False),
+                save_last_states,
                 produces,
                 500 + 100_000 * seed,
                 is_resumed,
@@ -65,6 +66,7 @@ def _create_simulation_parametrization():
 _SIGNATURE, _PARAMETRIZATION = _create_simulation_parametrization()
 
 
+@pytask.mark.persist
 @pytask.mark.parametrize(_SIGNATURE, _PARAMETRIZATION)
 def task_simulate_scenario(
     depends_on,

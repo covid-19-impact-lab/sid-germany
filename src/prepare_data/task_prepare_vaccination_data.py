@@ -7,6 +7,7 @@ from sid.colors import get_colors
 
 from src.config import BLD
 from src.config import PLOT_END_DATE
+from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import POPULATION_GERMANY
 from src.plotting.plotting import style_plot
@@ -54,7 +55,8 @@ def task_prepare_vaccination_data(depends_on, produces):
     df = pd.read_excel(depends_on["data"], sheet_name="Impfungen_proTag")
     df = _clean_vaccination_data(df)
     # this is for comparing with newspaper sites
-    fig, ax = _plot_series(df["share_with_first_dose"], "Share with 1st Dose")
+    fig, ax = _plot_series(df["share_with_first_dose"], "")
+    ax.set_xlim(pd.Timestamp(PLOT_START_DATE), pd.Timestamp(PLOT_END_DATE))
     fig.savefig(produces["fig_first_dose"])
     plt.close()
 
@@ -122,7 +124,7 @@ def _clean_vaccination_data(df):
 
 
 def _plot_series(sr, title, label=None):
-    fig, ax = plt.subplots(figsize=(15, 5))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sr = sr.loc[PLOT_START_DATE:PLOT_END_DATE]
     sns.lineplot(x=sr.index, y=sr, label=label)
     ax.set_title(title)
@@ -133,7 +135,7 @@ def _plot_series(sr, title, label=None):
 
 def _plot_labeled_series(labeled):
     title = "Actual and Extrapolated Share Receiving the Vaccination"
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
     colors = get_colors("categorical", len(labeled))
     for (label, sr), color in zip(labeled, colors):
         sns.lineplot(
