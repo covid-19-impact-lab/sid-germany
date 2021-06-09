@@ -260,11 +260,18 @@ create the collection.
 AVAILABLE_SCENARIOS = get_available_scenarios(NAMED_SCENARIOS)
 
 plotted_scenarios = {x for spec in PLOTS.values() for x in spec["scenarios"]}
-assert set(AVAILABLE_SCENARIOS).issubset(
-    plotted_scenarios.union(["fall_baseline"])
-), "The following scenarios do not appear in any plots:\n\t" + "\n\t".join(
-    list(set(AVAILABLE_SCENARIOS).difference(plotted_scenarios))
-)
+not_plotted_scenarios = set(AVAILABLE_SCENARIOS) - plotted_scenarios
+# Remove scenarios which are not directly used in plots.
+not_plotted_scenarios = not_plotted_scenarios - {
+    "spring_with_only_vaccinations",
+    "spring_with_only_rapid_tests",
+    "fall_baseline",
+}
+if not_plotted_scenarios:
+    raise ValueError(
+        "The following scenarios do not appear in any plots: "
+        + "\n\t".join(not_plotted_scenarios)
+    )
 
 
 def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
@@ -278,6 +285,10 @@ def create_parametrization(plots, named_scenarios, fast_flag, outcomes):
             scenarios = []
             colors = [] if plot_info["colors"] is not None else None
             for i, name in enumerate(plot_info["scenarios"]):
+                assert (
+                    name in named_scenarios
+                ), f"The scenario {name} is not a scenario that is ever run. Typo?"
+
                 if name in available_scenarios:
                     scenarios.append(name)
                     if colors is not None:

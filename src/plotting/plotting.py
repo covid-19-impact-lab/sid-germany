@@ -277,6 +277,9 @@ def style_plot(fig, axes):
         ax.set_xlabel("")
         ax.grid(axis="y")
         ax = format_date_axis(ax)
+        ax.get_yaxis().set_major_formatter(
+            ticker.FuncFormatter(lambda x, p: format(int(x), ","))
+        )
     sns.despine()
     return fig, ax
 
