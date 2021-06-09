@@ -12,7 +12,7 @@ from src.plotting.plotting import style_plot
 from src.prepare_data.task_prepare_virus_variant_data import STRAIN_FILES
 
 _MODULE_DEPENDENCIES = {
-    # "plotting.py": SRC / "plotting" / "plotting.py",
+    "plotting.py": SRC / "plotting" / "plotting.py",
 }
 
 
