@@ -196,6 +196,24 @@ def no_private_rapid_test_demand(params):
     return params
 
 
+def no_rapid_tests_at_schools_and_work(params):
+    params = no_rapid_tests_at_schools(params)
+    params = no_rapid_tests_at_work(params)
+    return params
+
+
+def no_rapid_tests_at_schools_and_private(params):
+    params = no_rapid_tests_at_schools(params)
+    params = no_private_rapid_test_demand(params)
+    return params
+
+
+def no_rapid_tests_at_work_and_private(params):
+    params = no_rapid_tests_at_work(params)
+    params = no_private_rapid_test_demand(params)
+    return params
+
+
 def no_rapid_tests_at_schools_after_easter(params):
     params = params.copy(deep=True)
     params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 1000
