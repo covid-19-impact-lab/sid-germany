@@ -1,5 +1,6 @@
 import warnings
 
+import numpy as np
 import pandas as pd
 
 from src.config import AFTER_EASTER
@@ -34,26 +35,69 @@ def start_all_rapid_tests_after_easter(params):
     return new
 
 
-def reduce_work_rapid_test_demand_after_easter_by_half(params):
-    """Reduce rapid tests of workers by half.
+def increase_work_rapid_test_demand_after_easter_by_50pct(params):
+    """Increase rapid tests of workers by half and keep it at that value.
+
+    Since only the offer share of workers' rapid tests is time variant we change the
+    offer parameters rather than the demand.
+
+    """
+    params = _set_to_multiple_of_work_rapid_test_demand_after_date_start(
+        params=params, date=AFTER_EASTER, multiplier=1.5
+    )
+    return params
+
+
+def reduce_work_rapid_test_demand_after_easter_by_50_pct(params):
+    """Reduce rapid tests of workers by half and keep it at that value.
 
     Since only the offer share of workers' rapid tests is time variant we change the
     offer parameters rather than the demand even though the more intuitive
     interpretation would be that workers demand less tests.
 
     """
-    params = _reduce_work_rapid_test_demand_after_date_start(
+    params = _set_to_multiple_of_work_rapid_test_demand_after_date_start(
         params=params, date=AFTER_EASTER, multiplier=0.5
     )
     return params
 
 
-def _reduce_work_rapid_test_demand_after_date_start(params, date, multiplier):
-    """Reduce rapid tests of workers by (1 - *multiplier*) after *date*.
+def keep_work_offer_share_at_23_pct_after_easter(params):
+    """Set work offer share to 23 percent (March 17th value) after Easter."""
+    work_offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    new_params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
+        params, loc=work_offer_loc, change_date=AFTER_EASTER, new_val=0.23
+    )
+    return new_params
+
+
+def mandatory_work_rapid_tests_after_easter(params):
+    """Assume work rapid tests are nearly universal after Easter.
+
+    We assume both 5% refusers on side of firms and 5% on the side of employees. Thus,
+    effectively ~90% of workers get tested.
+
+    """
+    work_offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    new_params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
+        params, loc=work_offer_loc, change_date=AFTER_EASTER, new_val=0.95
+    )
+    new_params.loc[
+        ("rapid_test_demand", "work", "share_accepting_offer"), "value"
+    ] = 0.95
+    return new_params
+
+
+def _set_to_multiple_of_work_rapid_test_demand_after_date_start(
+    params, date, multiplier
+):
+    """Have a constant *multiplier* x old work rapid test demand after *date*.
 
     Since only the offer share of workers' rapid tests is time variant we change the
     offer parameters rather than the demand even though the more intuitive
-    interpretation would be that workers demand less tests.
+    interpretation would be that workers demand less tests. Where the reduction takes
+    place is irrelevant because offer and demand shares are multiplied to get the
+    overall work rapid share multiplier.
 
     Args:
         params (pandas.DataFrame): params DataFrame with ("rapid_test_demand",
@@ -76,7 +120,7 @@ def _reduce_work_rapid_test_demand_after_date_start(params, date, multiplier):
             change_date, params.loc[work_offer_loc]
         )
 
-    new_work_offer_share = multiplier * old_work_offer_share
+    new_work_offer_share = np.clip(multiplier * old_work_offer_share, 0, 1)
 
     params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params,

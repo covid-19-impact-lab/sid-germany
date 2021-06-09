@@ -275,22 +275,16 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        # ------------------------------------------------------
-        "spring_strict_home_office_continue_testing": {
-            "sim_input_scenario": "strict_home_office_after_easter",
-            "params_scenario": "baseline",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_strict_home_office_reduce_testing": {
-            "sim_input_scenario": "strict_home_office_after_easter",
-            "params_scenario": "reduce_work_rapid_test_demand_after_easter_by_half",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_normal_home_office_reduce_testing": {
+        # Work Scenarios (Home Office and Testing)
+        "spring_reduce_work_test_offers_to_23_pct_after_easter": {
             "sim_input_scenario": "baseline",
-            "params_scenario": "reduce_work_rapid_test_demand_after_easter_by_half",
+            "params_scenario": "keep_work_offer_share_at_23_pct_after_easter",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_mandatory_work_rapid_tests_after_easter": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "mandatory_work_rapid_tests_after_easter",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },

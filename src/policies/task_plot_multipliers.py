@@ -79,6 +79,7 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
     ]:
         sns.lineplot(x=sr.index, y=sr, label=label, alpha=0.6, linewidth=4)
     fig, ax = style_plot(fig, ax)
+    fig.tight_layout()
     fig.savefig(produces["school_comparison"])
 
     our_stringency = pd.concat(

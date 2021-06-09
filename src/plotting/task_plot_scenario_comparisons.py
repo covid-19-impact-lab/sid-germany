@@ -219,21 +219,12 @@ PLOTS = {
         "plot_start": AFTER_EASTER - pd.Timedelta(days=14),
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
-    "old_work_scenarios": {
-        "title": "The Effect of Home Office and Work Rapid Tests on {outcome}",
-        "scenarios": [
-            "spring_baseline",
-            "spring_strict_home_office_continue_testing",
-            "spring_strict_home_office_reduce_testing",
-            "spring_normal_home_office_reduce_testing",
-        ],
-        "colors": [BLUE, GREEN, ORANGE, RED],
-        "plot_start": AFTER_EASTER,
-    },
     "new_work_scenarios": {
         "title": "The Effect of Home Office and Work Rapid Tests on {outcome}",
         "scenarios": [
             "spring_baseline",
+            "spring_reduce_work_test_offers_to_23_pct_after_easter",
+            "spring_mandatory_work_rapid_tests_after_easter",
             "spring_plus_10_pct_home_office_after_easter",
             "spring_minus_10_pct_home_office_after_easter",
         ],
