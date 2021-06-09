@@ -415,7 +415,8 @@ def _calculate_share_doing_rapid_test(df, groupby):
         groupby = [groupby]
 
     df = df[["date", "cd_received_rapid_test"] + groupby].copy(deep=True)
-    df["did_rapid_test_today"] = df["cd_received_rapid_test"] == 0
+    # has to be -1 because period outputs are done after countdowns are updated.
+    df["did_rapid_test_today"] = df["cd_received_rapid_test"] == -1
 
     out = (
         df.groupby([pd.Grouper(key="date", freq="D")] + groupby)["did_rapid_test_today"]

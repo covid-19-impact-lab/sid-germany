@@ -14,7 +14,7 @@ from src.plotting.plotting import style_plot
 @pytask.mark.depends_on(
     {
         "empirical": BLD / "data" / "empirical_data_for_plotting.pkl",
-        # "plotting.py": SRC / "plotting" / "plotting.py",
+        "plotting.py": SRC / "plotting" / "plotting.py",
     }
 )
 @pytask.mark.produces(
