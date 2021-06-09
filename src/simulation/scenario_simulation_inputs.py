@@ -439,7 +439,7 @@ def minus_10_pct_home_office_after_easter(paths, fixed_inputs):
     new_policies = _get_policies_with_multiplied_work_attend_multiplier_after_date(
         enacted_policies=enacted_policies,
         contact_models=contact_models,
-        multiplier=0.9,
+        multiplier=1.1,
         split_date=AFTER_EASTER,
         prefix="work_minus_10_pct_home_office_after_easter",
     )
@@ -466,7 +466,7 @@ def plus_10_pct_home_office_after_easter(paths, fixed_inputs):
     new_policies = _get_policies_with_multiplied_work_attend_multiplier_after_date(
         enacted_policies=enacted_policies,
         contact_models=contact_models,
-        multiplier=1.1,
+        multiplier=0.9,
         split_date=AFTER_EASTER,
         prefix="work_plus_10_pct_home_office_after_easter",
     )
