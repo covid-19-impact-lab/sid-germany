@@ -25,7 +25,7 @@ def _create_deps(scenarios, groupby):
     py_dependencies = {
         "config.py": SRC / "config.py",
         "scenario_config.py": SRC / "simulation" / "scenario_config.py",
-        # "plotting.py": SRC / "plotting" / "plotting.py",
+        "plotting.py": SRC / "plotting" / "plotting.py",
     }
 
     data_dependencies = {}
