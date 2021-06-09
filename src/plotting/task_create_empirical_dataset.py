@@ -68,7 +68,7 @@ def task_create_empirical_dataset(depends_on, produces):
     ].sum(axis=1)
     share_rapid_test_in_last_week.name = "share_rapid_test_in_last_week"
 
-    share_b117 = pd.read_pickle(depends_on["virus_shares_dict"])["b117"]
+    share_b117 = pd.read_pickle(depends_on["virus_shares_dict"])["b117"]["2021-01-15":]
     share_b117.name = "share_b117"
 
     vacc_shares = pd.read_pickle(depends_on["vaccinations"]).cumsum()
