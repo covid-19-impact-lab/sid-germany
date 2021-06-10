@@ -33,8 +33,11 @@ def rapid_test_demand(
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
-        params_slice = params.loc[
+        work_offer_params = params.loc[
             ("rapid_test_demand", "share_workers_receiving_offer")
+        ]
+        work_accept_params = params.loc[
+            ("rapid_test_demand", "share_accepting_work_offer")
         ]
         educ_workers_params = params.loc[("rapid_test_demand", "educ_worker_shares")]
         students_params = params.loc[("rapid_test_demand", "student_shares")]
@@ -42,10 +45,11 @@ def rapid_test_demand(
 
     # get work demand inputs
     share_of_workers_with_offer = get_piecewise_linear_interpolation_for_one_day(
-        date, params_slice
+        date, work_offer_params
     )
-    accept_share_loc = ("rapid_test_demand", "work", "share_accepting_offer")
-    share_workers_accepting_offer = params.loc[accept_share_loc]["value"]
+    share_workers_accepting_offer = get_piecewise_linear_interpolation_for_one_day(
+        date, work_accept_params
+    )
     work_compliance_multiplier = (
         share_of_workers_with_offer * share_workers_accepting_offer
     )

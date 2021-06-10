@@ -82,9 +82,11 @@ def mandatory_work_rapid_tests_after_easter(params):
     new_params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params, loc=work_offer_loc, change_date=AFTER_EASTER, new_val=0.95
     )
-    new_params.loc[
-        ("rapid_test_demand", "work", "share_accepting_offer"), "value"
-    ] = 0.95
+
+    work_accept_loc = ("rapid_test_demand", "share_accepting_work_offer")
+    new_params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
+        params, loc=work_accept_loc, change_date=AFTER_EASTER, new_val=0.95
+    )
     return new_params
 
 
@@ -253,7 +255,7 @@ def no_rapid_tests_at_schools(params):
 
 def no_rapid_tests_at_work(params):
     params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 0.0
+    params.loc[("rapid_test_demand", "share_accepting_work_offer"), "value"] = 0.0
     params.loc[("rapid_test_demand", "share_workers_receiving_offer"), "value"] = 0.0
     return params
 
@@ -304,11 +306,11 @@ def obligatory_rapid_tests_for_employees(params):
     """Assume every worker who is offered a test accepts the offer.
 
     Note that this does not mean that every worker gets regularly tested as only up to
-    70% of employers offer tests after the ordinance was passed.
+    80% of employers offer tests after the ordinance was passed.
 
     """
     params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1
+    params.loc[("rapid_test_demand", "share_accepting_work_offer"), "value"] = 1
     return params
 
 
@@ -321,7 +323,7 @@ def rapid_test_with_90pct_compliance_after_summer_scenario_start(params):
 def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
     """Implement a rapid test scheme where a certain share of workers get tested."""
     params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1
+    params.loc[("rapid_test_demand", "share_accepting_work_offer"), "value"] = 1
     loc = ("rapid_test_demand", "share_workers_receiving_offer")
     params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params, change_date=change_date, new_val=new_val, loc=loc
