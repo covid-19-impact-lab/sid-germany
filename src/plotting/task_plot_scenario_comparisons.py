@@ -231,14 +231,13 @@ PLOTS = {
         "colors": None,
         "name_to_label": {
             "spring_baseline": "baseline",
-            "spring_reduce_work_test_offers_to_23_pct_after_easter": "level of rapid "
-            "tests at the\nworkplace as in mid March",
-            "spring_mandatory_work_rapid_tests_after_easter": "mandatory rapid tests "
-            "at the workplace",
-            "spring_10_pct_less_work_in_person_after_easter": r"10% less work at the "
-            "workplace",
-            "spring_10_pct_more_work_in_person_after_easter": r"10% more work at the "
-            "workplace",
+            "spring_reduce_work_test_offers_to_23_pct_after_easter": "rapid tests as "
+            "in mid March",
+            "spring_mandatory_work_rapid_tests_after_easter": "mandatory rapid tests",
+            "spring_10_pct_less_work_in_person_after_easter": "10% less presence "
+            "at workplace",
+            "spring_10_pct_more_work_in_person_after_easter": "10% more presence\n"
+            "at workplace",
         },
         "plot_start": AFTER_EASTER,
     },
