@@ -230,15 +230,15 @@ PLOTS = {
         ],
         "colors": None,
         "name_to_label": {
-            "spring_baseline": "home office and work tests as enacted",
+            "spring_baseline": "baseline",
             "spring_reduce_work_test_offers_to_23_pct_after_easter": "level of rapid "
-            "tests at the workplace\nas in mid March",
+            "tests at the\nworkplace as in mid March",
             "spring_mandatory_work_rapid_tests_after_easter": "mandatory rapid tests "
             "at the workplace",
-            "spring_10_pct_less_work_in_person_after_easter": "10 percent less work"
-            "in person",
-            "spring_10_pct_more_work_in_person_after_easter": "10 percent more work"
-            "in person",
+            "spring_10_pct_less_work_in_person_after_easter": r"10% less work at the "
+            "workplace",
+            "spring_10_pct_more_work_in_person_after_easter": r"10% more work at the "
+            "workplace",
         },
         "plot_start": AFTER_EASTER,
     },
