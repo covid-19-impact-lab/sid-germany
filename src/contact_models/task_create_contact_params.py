@@ -9,6 +9,7 @@ from estimagic import minimize
 
 from src.config import BLD
 from src.config import PLOT_SIZE
+from src.plotting.plotting import BLUE
 
 
 def _create_parametrization():
@@ -119,10 +120,11 @@ def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
 
     pct_non_zero = (empirical_distribution / empirical_distribution.sum())[1:].sum()
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
-    sns.lineplot(x=approx_dist.index, y=approx_dist, ax=ax)
-    ax.set_title(name)
+    sns.barplot(x=approx_dist.index, y=approx_dist, ax=ax, color=BLUE)
+    ax.set_ylabel("number of individuals reporting\n a given number of contacts")
     ax.set_xlabel(
-        f"\n{int(100 * pct_non_zero)}% individuals reported non-zero contacts."
+        "reported number of contacts"
+        f"\n\n{int(100 * pct_non_zero)}% individuals reported non-zero contacts."
     )
     sns.despine()
     fig.tight_layout()
