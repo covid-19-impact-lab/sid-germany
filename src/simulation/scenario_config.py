@@ -288,13 +288,13 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "spring_plus_10_pct_home_office_after_easter": {
+        "spring_10_pct_less_work_in_person_after_easter": {
             "sim_input_scenario": "plus_10_pct_home_office_after_easter",
             "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "spring_minus_10_pct_home_office_after_easter": {
+        "spring_10_pct_more_work_in_person_after_easter": {
             "sim_input_scenario": "minus_10_pct_home_office_after_easter",
             "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
