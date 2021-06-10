@@ -439,6 +439,7 @@ def task_plot_scenario_comparison(
         n_single_runs=0,
     )
     ax.set_xlim(xlims)
+    plt.close()
     fig.savefig(fig_path)
 
     # save with single run lines
@@ -455,6 +456,7 @@ def task_plot_scenario_comparison(
     )
     ax_with_lines.set_xlim(xlims)
     fig_with_lines.savefig(with_single_runs_path)
+    plt.close()
 
     # crop if necessary
     min_y, max_y = ax.get_ylim()

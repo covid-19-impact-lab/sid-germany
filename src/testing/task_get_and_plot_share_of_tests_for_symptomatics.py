@@ -60,11 +60,13 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     fig.savefig(produces["mean_age"])
+    plt.close()
 
     fig, ax = _plot_df_column(plot_data, "share_with_symptom_status")
     fig, ax = style_plot(fig, ax)
     fig.tight_layout()
     fig.savefig(produces["share_with_symptom_status"])
+    plt.close()
 
     symptom_shares = [
         "share_symptomatic_lower_bound",
@@ -89,6 +91,7 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
     fig.tight_layout()
     fig, ax = style_plot(fig, ax)
     fig.savefig(produces["symptom_shares"])
+    plt.close()
 
     share_of_tests_for_symptomatics_series = df[
         [

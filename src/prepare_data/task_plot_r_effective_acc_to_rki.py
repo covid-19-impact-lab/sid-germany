@@ -19,3 +19,4 @@ def task_plot_r_effective_acc_to_rki(depends_on, produces):
     sns.lineplot(x=to_plot.index, y=to_plot)
     fig, ax = style_plot(fig, ax)
     fig.savefig(produces)
+    plt.close()

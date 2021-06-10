@@ -48,3 +48,4 @@ def task_plot_seasonality(depends_on, produces):
     ax.set_title("Strong and Weak Seasonality Effects Over Time")
     fig.tight_layout()
     fig.savefig(produces, bbox_inches="tight")
+    plt.close()

@@ -88,6 +88,7 @@ def task_plot_decomposition_of_infection_channels_in_spring(depends_on, produces
         color=[RED, ORANGE, TEAL],
     )
     fig.savefig(produces["bar_plot"])
+    plt.close()
 
     fig, ax = _create_area_plot(
         df,
@@ -98,6 +99,7 @@ def task_plot_decomposition_of_infection_channels_in_spring(depends_on, produces
     )
     ax.set_xlim(pd.Timestamp("2021-01-15"), None)
     fig.savefig(produces["area_plot"])
+    plt.close()
 
 
 @pytask.mark.skipif(
@@ -134,6 +136,7 @@ def task_plot_decomposition_of_rapid_tests_in_spring(depends_on, produces):
         color=[BLUE, GREEN, YELLOW],
     )
     fig.savefig(produces["bar_plot"])
+    plt.close()
 
     fig, ax = _create_area_plot(
         df,
@@ -144,6 +147,7 @@ def task_plot_decomposition_of_rapid_tests_in_spring(depends_on, produces):
     )
     ax.set_xlim(pd.Timestamp("2021-01-15"), None)
     fig.savefig(produces["area_plot"])
+    plt.close()
 
 
 def _create_bar_plot(df, scenario_to_members, no_effects_scenario, ordering, color):
