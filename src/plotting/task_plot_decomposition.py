@@ -8,11 +8,15 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
-from src.config import FAST_FLAG, PLOT_SIZE
+from src.config import FAST_FLAG
+from src.config import PLOT_SIZE
+from src.plotting.plotting import BLUE
 from src.plotting.plotting import format_date_axis
+from src.plotting.plotting import GREEN
 from src.plotting.plotting import ORANGE
 from src.plotting.plotting import RED
-from src.plotting.plotting import TEAL, YELLOW, GREEN, BLUE
+from src.plotting.plotting import TEAL
+from src.plotting.plotting import YELLOW
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
@@ -169,25 +173,30 @@ def _create_area_plot(df, scenario_to_members, no_effects_scenario, ordering, co
         no_effects_scenario=no_effects_scenario,
         axis=1,
     )
-    ratios.columns = [x.replace("shapley_value_", "").replace("_", " ").title() for x in ratios.columns]
-    
+    ratios.columns = [
+        x.replace("shapley_value_", "").replace("_", " ").title()
+        for x in ratios.columns
+    ]
+
     prevented_infections = df[no_effects_scenario] - df["spring_baseline"]
 
     # Clipping is necessary for the area plot and only small numbers in the beginning
     # are clipped which do not change the results.
     prevented_infections_by_channel = (
-        (ratios.multiply(prevented_infections.cumsum(), axis=0).diff().clip(0))
-        .reindex(columns=ordering)
-    )
-    prevented_infections_by_channel.columns = [x + f" ({ratios.iloc[-1][x]:.0%})" for x in prevented_infections_by_channel.columns]
-    
+        ratios.multiply(prevented_infections.cumsum(), axis=0).diff().clip(0)
+    ).reindex(columns=ordering)
+    prevented_infections_by_channel.columns = [
+        x + f" ({ratios.iloc[-1][x]:.0%})"
+        for x in prevented_infections_by_channel.columns
+    ]
+
     with plt.rc_context(_MATPLOTLIB_RC_CONTEXT):
         fig, ax = plt.subplots(figsize=PLOT_SIZE)
         prevented_infections_by_channel.plot(kind="area", ax=ax, color=color, alpha=0.6)
 
         ax = format_date_axis(ax)
 
-        ax.set_ylabel("saved points weekly total case incidence points")
+        ax.set_ylabel("contribution to difference in weekly incidence")
         ax.set_xlabel(None)
         ax.grid(axis="y")
         ax.get_yaxis().set_major_formatter(

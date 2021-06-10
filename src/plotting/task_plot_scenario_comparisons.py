@@ -229,6 +229,13 @@ PLOTS = {
             "spring_minus_10_pct_home_office_after_easter",
         ],
         "colors": None,
+        "name_to_label": {
+            "spring_baseline": "home office and work tests as enacted",
+            "spring_reduce_work_test_offers_to_23_pct_after_easter": "level of rapid tests at the\nworkplace as in mid March",  # noqa: E501
+            "spring_mandatory_work_rapid_tests_after_easter": "mandatory rapid tests at the workplace",  # noqa: E501
+            "spring_plus_10_pct_home_office_after_easter": "10 percent less work in person",  # noqa: E501
+            "spring_minus_10_pct_home_office_after_easter": "10 percent more work in person",  # noqa: E501
+        },
         "plot_start": AFTER_EASTER,
     },
     "main_prediction": {
