@@ -92,12 +92,25 @@ def _plot_columns(dfs, cols, color, plot_single_runs):
     )
     for col, ax in zip(cols, axes.flatten()):
         mean = pd.concat([df[col] for df in dfs.values()], axis=1).mean(axis=1)
-        sns.lineplot(x=mean.index, y=mean, ax=ax, linewidth=4, color=color, alpha=0.8)
+        smoothed_mean = mean.rolling(window=7, min_periods=1, center=False).mean()
+        sns.lineplot(
+            x=smoothed_mean.index,
+            y=smoothed_mean,
+            ax=ax,
+            linewidth=4,
+            color=color,
+            alpha=0.8,
+        )
 
         if plot_single_runs:
             for df in dfs.values():
                 sns.lineplot(
-                    x=df.index, y=df[col], ax=ax, linewidth=2.5, color=color, alpha=0.6
+                    x=df.index,
+                    y=df[col].rolling(window=7, min_periods=1, center=False).mean(),
+                    ax=ax,
+                    linewidth=2.5,
+                    color=color,
+                    alpha=0.6,
                 )
 
         ax.set_title(col.replace("_", " ").title())
