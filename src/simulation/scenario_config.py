@@ -21,6 +21,11 @@ def create_path_to_last_states_of_simulation(name, seed):
     return path
 
 
+def create_path_to_rapid_test_statistics(name, seed):
+    path = BLD / "tables" / f"{FAST_FLAG}_rapid_test_statistics_{name}_{seed}.csv"
+    return path
+
+
 def create_path_to_period_outputs_of_simulation(name, seed):
     """Return the path to the simulation results with the period outcomes."""
     path = BLD / "simulations" / "period_outputs" / f"{FAST_FLAG}_{name}_{seed}.pkl"
@@ -86,8 +91,8 @@ def get_named_scenarios():
 
     """
     if FAST_FLAG == "debug":
-        n_main_seeds = 1
-        n_other_seeds = 1
+        n_main_seeds = 0
+        n_other_seeds = 0
     elif FAST_FLAG == "verify":
         n_main_seeds = 1
         n_other_seeds = 1
@@ -130,11 +135,12 @@ def get_named_scenarios():
     named_scenarios = {
         # Baseline Scenarios
         "combined_baseline": {
-            "sim_input_scenario": "baseline",
+            "sim_input_scenario": "baseline_save_rapid_test_statistics",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
             "save_last_states": True,
             "is_resumed": False,
+            "save_rapid_test_statistics": True,
             **combined_dates,
         },
         "fall_baseline": {

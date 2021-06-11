@@ -49,6 +49,35 @@ def baseline(paths, fixed_inputs):
     return baseline_scenario_inputs
 
 
+# =================================================================================
+
+
+def baseline_save_rapid_test_statistics(paths, fixed_inputs):
+    scenario_inputs = {
+        "contact_policies": _baseline_policies(fixed_inputs),
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models_with_save_inputs(
+            paths, fixed_inputs
+        ),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return scenario_inputs
+
+
+def _baseline_rapid_test_models_with_save_inputs(paths, fixed_inputs):  # noqa: U100
+    save_path = paths["rapid_test_statistics_path"]
+    rapid_test_models = {
+        "standard_rapid_test_demand": {
+            "model": partial(rapid_test_demand, save_path=save_path),
+            "start": "2021-01-01",
+            "end": VERY_LATE,
+        }
+    }
+    return rapid_test_models
+
+
 # ================================================================================
 
 
