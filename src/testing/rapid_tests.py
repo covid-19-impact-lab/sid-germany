@@ -133,15 +133,17 @@ def rapid_test_demand(
                 ]["currently_infected"].mean(),
             }
         )
+        shares = shares.to_frame()
         shares.index.name = "index"
         if not save_path.exists():
             # with columns
-            to_add = shares.to_frame().T.to_csv()
+            to_add = shares.T.to_csv()
         else:
             # without columns
-            to_add = shares.to_frame().T.to_csv().split("\n", 1)[1]
+            to_add = shares.T.to_csv().split("\n", 1)[1]
         with open(save_path, "a") as f:
             f.write(to_add)
+
     return rapid_test_demand
 
 
