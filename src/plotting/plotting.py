@@ -107,7 +107,10 @@ def plot_incidences(
 
     """
     if fig is None and ax is None:
-        fig, ax = plt.subplots(figsize=PLOT_SIZE)
+        if len(incidences) <= 4:
+            fig, ax = plt.subplots(figsize=PLOT_SIZE)
+        else:
+            fig, ax = plt.subplots(figsize=(8, 6))
 
     if colors is None:
         colors = [BLUE, ORANGE, RED, TEAL, GREEN, YELLOW, PURPLE, BROWN]
@@ -155,11 +158,7 @@ def plot_incidences(
     elif "Effective" in title:
         ax.set_ylabel("$R_t$")
     x, y, width, height = 0.0, -0.3, 1, 0.2
-    ax.legend(
-        loc="upper center",
-        bbox_to_anchor=(x, y, width, height),
-        ncol=2 if len(incidences) < 5 else 3,
-    )
+    ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=2)
     fig.tight_layout()
     return fig, ax
 
