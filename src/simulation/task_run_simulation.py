@@ -8,6 +8,7 @@ from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
 from src.simulation.scenario_config import create_path_to_last_states_of_simulation
 from src.simulation.scenario_config import create_path_to_period_outputs_of_simulation
+from src.simulation.scenario_config import create_path_to_rapid_test_statistics
 from src.simulation.scenario_config import get_named_scenarios
 
 
@@ -30,13 +31,22 @@ def _create_simulation_parametrization():
                     name, seed
                 )
             }
+            if specs.get("save_rapid_test_statistics", False):
+                rapid_test_statistics_path = create_path_to_rapid_test_statistics(
+                    name, seed
+                )
+                produces["rapid_test_statistics"] = rapid_test_statistics_path
+            else:
+                rapid_test_statistics_path = None
+
             if save_last_states:
                 produces["last_states"] = create_path_to_last_states_of_simulation(
                     name, seed
                 )
 
             depends_on = get_simulation_dependencies(
-                debug=FAST_FLAG == "debug", is_resumed=is_resumed
+                debug=FAST_FLAG == "debug",
+                is_resumed=is_resumed,
             )
             if is_resumed:
                 depends_on["initial_states"] = create_path_to_last_states_of_simulation(
@@ -53,12 +63,14 @@ def _create_simulation_parametrization():
                 produces,
                 500 + 100_000 * seed,
                 is_resumed,
+                rapid_test_statistics_path,
             )
             scenarios.append(spec_tuple)
 
     signature = (
         "depends_on, sim_input_scenario, params_scenario, "
-        + "start_date, end_date, save_last_states, produces, seed, is_resumed"
+        + "start_date, end_date, save_last_states, produces, seed, "
+        + "is_resumed, rapid_test_statistics_path"
     )
     return signature, scenarios
 
@@ -77,6 +89,7 @@ def task_simulate_scenario(
     produces,
     seed,
     is_resumed,
+    rapid_test_statistics_path,
 ):
     simulation_kwargs = load_simulation_inputs(
         scenario=sim_input_scenario,
@@ -87,6 +100,7 @@ def task_simulate_scenario(
         period_outputs=True,
         initial_states_path=depends_on["initial_states"],
         is_resumed=is_resumed,
+        rapid_test_statistics_path=rapid_test_statistics_path,
     )
     params = load_params(params_scenario)
 
