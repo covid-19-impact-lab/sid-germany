@@ -442,7 +442,7 @@ def task_plot_scenario_comparison(
     if "new_work_scenarios" in str(produces):
         x, y, width, height = 0.0, -0.3, 1, 0.2
         ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=3)
-
+    fig.tight_layout()
     fig.savefig(fig_path)
 
     # save with single run lines
