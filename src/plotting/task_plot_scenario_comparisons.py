@@ -439,7 +439,11 @@ def task_plot_scenario_comparison(
         n_single_runs=0,
     )
     ax.set_xlim(xlims)
-    plt.close()
+
+    if "new_work_scenarios" in str(produces):
+        x, y, width, height = 0.0, -0.3, 1, 0.2
+        ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=3)
+
     fig.savefig(fig_path)
 
     # save with single run lines
@@ -455,8 +459,13 @@ def task_plot_scenario_comparison(
         n_single_runs=None,
     )
     ax_with_lines.set_xlim(xlims)
+    if "new_work_scenarios" in str(produces):
+        x, y, width, height = 0.0, -0.3, 1, 0.2
+        ax_with_lines.legend(
+            loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=3
+        )
+
     fig_with_lines.savefig(with_single_runs_path)
-    plt.close()
 
     # crop if necessary
     min_y, max_y = ax.get_ylim()
