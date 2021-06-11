@@ -39,7 +39,8 @@ def _create_simulation_parametrization():
 
                 # since we use "append" mode to build this we need to delete the
                 # present file with every run
-                rapid_test_statistics_path.unlink()
+                if rapid_test_statistics_path.exists():
+                    rapid_test_statistics_path.unlink()
             else:
                 rapid_test_statistics_path = None
 
