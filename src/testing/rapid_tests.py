@@ -114,11 +114,12 @@ def rapid_test_demand(
             }
         )
 
-        weights = df.div(df.sum(axis=1), axis=0)
+        weights = df.div(df.sum(axis=1), axis=0).fillna(0)
 
         shares = pd.Series(
             {
                 "date": date,
+                "n_individuals": len(states),
                 "private_demand_share": weights["private_demand"].mean(),
                 "work_demand_share": weights["work_demand"].mean(),
                 "educ_demand_share": weights["educ_demand"].mean(),
