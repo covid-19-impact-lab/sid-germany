@@ -88,7 +88,10 @@ def task_plot_rapid_test_statistics(depends_on, produces):
 def _plot_columns(dfs, cols, color, plot_single_runs):
     n_rows = int(np.ceil(len(cols) / 2))
     fig, axes = plt.subplots(
-        ncols=2, nrows=n_rows, figsize=(PLOT_SIZE[0] * n_rows, PLOT_SIZE[1] * 2)
+        ncols=2,
+        nrows=n_rows,
+        figsize=(PLOT_SIZE[0] * n_rows, PLOT_SIZE[1] * 2),
+        sharex=True,
     )
     for col, ax in zip(cols, axes.flatten()):
         mean = pd.concat([df[col] for df in dfs.values()], axis=1).mean(axis=1)
