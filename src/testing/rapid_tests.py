@@ -103,34 +103,53 @@ def rapid_test_demand(
     rapid_test_demand = work_demand | educ_demand | private_demand
 
     if save_path is not None:
+        df = pd.DataFrame(
+            {
+                "private_demand": private_demand,
+                "work_demand": work_demand,
+                "educ_demand": educ_demand,
+                "hh_demand": hh_demand,
+                "sym_without_pcr_demand": sym_without_pcr_demand,
+                "other_contact_demand": other_contact_demand,
+            }
+        )
+
+        weights = df.div(df.sum(axis=1), axis=0)
+
         shares = pd.Series(
             {
                 "date": date,
-                "private_demand_share": private_demand.mean(),
-                "work_demand_share": work_demand.mean(),
-                "educ_demand_share": educ_demand.mean(),
-                "hh_demand": hh_demand.mean(),
-                "sym_without_pcr_demand": sym_without_pcr_demand.mean(),
-                "other_contact_demand": other_contact_demand.mean(),
+                "private_demand_share": weights["private_demand"].mean(),
+                "work_demand_share": weights["work_demand"].mean(),
+                "educ_demand_share": weights["educ_demand"].mean(),
+                "hh_demand": weights["hh_demand"].mean(),
+                "sym_without_pcr_demand": weights["sym_without_pcr_demand"].mean(),
+                "other_contact_demand": weights["other_contact_demand"].mean(),
                 #
-                "share_infected_among_private_demand": states[private_demand][
-                    "currently_infected"
-                ].mean(),
-                "share_infected_among_work_demand": states[work_demand][
-                    "currently_infected"
-                ].mean(),
-                "share_infected_among_educ_demand": states[educ_demand][
-                    "currently_infected"
-                ].mean(),
-                "share_infected_among_hh_demand": states[hh_demand][
-                    "currently_infected"
-                ].mean(),
-                "share_infected_among_sym_without_pcr_demand": states[
-                    sym_without_pcr_demand
-                ]["currently_infected"].mean(),
-                "share_infected_among_other_contact_demand": states[
-                    other_contact_demand
-                ]["currently_infected"].mean(),
+                "share_infected_among_private_demand": (
+                    states[private_demand]["currently_infected"]
+                    * weights.loc[private_demand, "private_demand"]
+                ).mean(),
+                "share_infected_among_work_demand": (
+                    states[work_demand]["currently_infected"]
+                    * weights.loc[work_demand, "work_demand"]
+                ).mean(),
+                "share_infected_among_educ_demand": (
+                    states[educ_demand]["currently_infected"]
+                    * weights.loc[educ_demand, "educ_demand"]
+                ).mean(),
+                "share_infected_among_hh_demand": (
+                    states[hh_demand]["currently_infected"]
+                    * weights.loc[hh_demand, "hh_demand"]
+                ).mean(),
+                "share_infected_among_sym_without_pcr_demand": (
+                    states[sym_without_pcr_demand]["currently_infected"]
+                    * weights.loc[sym_without_pcr_demand, "sym_without_pcr_demand"]
+                ).mean(),
+                "share_infected_among_other_contact_demand": (
+                    states[other_contact_demand]["currently_infected"]
+                    * weights.loc[other_contact_demand, "other_contact_demand"]
+                ).mean(),
             }
         )
         shares = shares.to_frame()
