@@ -8,7 +8,7 @@ from src.config import BLD
 from src.simulation import params_scenarios
 
 
-def _get_parametrization():
+def get_params_scenarios():
     all_functions = getmembers(params_scenarios, isfunction)
     public_functions = [
         (name, func) for name, func in all_functions if not name.startswith("_")
@@ -17,18 +17,16 @@ def _get_parametrization():
         "get_piecewise_linear_interpolation",
         "get_piecewise_linear_interpolation_for_one_day",
     ]
-    public_scenarios = [
+    named_params_scenarios = [
         (name, func) for name, func in public_functions if name not in imported_funcs
     ]
-
-    parametrization = [
-        (func, BLD / "simulation" / "param_scenarios" / f"{name}.csv")
-        for name, func in public_scenarios
-    ]
-    return parametrization
+    return named_params_scenarios
 
 
-_PARAMETRIZATION = _get_parametrization()
+_PARAMETRIZATION = [
+    (func, BLD / "simulation" / "param_scenarios" / f"{name}.csv")
+    for name, func in get_params_scenarios()
+]
 
 
 @pytask.mark.depends_on(BLD / "params.pkl")
