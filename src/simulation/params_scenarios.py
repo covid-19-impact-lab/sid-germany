@@ -85,7 +85,10 @@ def mandatory_work_rapid_tests_after_easter(params):
 
     work_accept_loc = ("rapid_test_demand", "share_accepting_work_offer")
     new_params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
-        params, loc=work_accept_loc, change_date=AFTER_EASTER, new_val=0.95
+        params=new_params,
+        loc=work_accept_loc,
+        change_date=AFTER_EASTER,
+        new_val=0.95,
     )
     return new_params
 
@@ -299,18 +302,6 @@ def rapid_tests_at_school_every_other_day_after_april_5(params):
 def rapid_tests_at_school_every_day_after_april_5(params):
     params = params.copy(deep=True)
     params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 1
-    return params
-
-
-def obligatory_rapid_tests_for_employees(params):
-    """Assume every worker who is offered a test accepts the offer.
-
-    Note that this does not mean that every worker gets regularly tested as only up to
-    80% of employers offer tests after the ordinance was passed.
-
-    """
-    params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "share_accepting_work_offer"), "value"] = 1
     return params
 
 

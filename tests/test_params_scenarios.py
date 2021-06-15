@@ -11,6 +11,7 @@ from src.simulation.task_save_params_changes_of_params_scenarios import (
     get_params_scenarios,
 )
 
+
 SCENARIO_FUNCS = [func for name, func in get_params_scenarios()]
 
 
@@ -83,6 +84,21 @@ def test_no_rapid_tests_at_schools_after_easter(params):
             "name": ["after_easter"],
             "before": [before],
             "after": [1000.0],
+        }
+    ).set_index(["category", "subcategory", "name"])
+    assert comparison.equals(expected)
+
+
+def test_no_seasonality(params):
+    new_params = params_scenarios.no_seasonality(params)
+    comparison = create_comparison_df(new_params=new_params, old_params=params)
+    expected = pd.DataFrame(
+        {
+            "category": ["seasonality_effect", "seasonality_effect"],
+            "subcategory": ["seasonality_effect", "seasonality_effect"],
+            "name": ["strong", "weak"],
+            "before": [0.3, 0.2],
+            "after": [0.0, 0.0],
         }
     ).set_index(["category", "subcategory", "name"])
     assert comparison.equals(expected)
