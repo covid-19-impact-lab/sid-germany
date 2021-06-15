@@ -116,53 +116,24 @@ def rapid_test_demand(
 
         weights = df.div(df.sum(axis=1), axis=0).fillna(0)
 
-        shares = pd.Series(
-            {
-                "date": date,
-                "n_individuals": len(states),
-                "private_demand_share": weights["private_demand"].mean(),
-                "work_demand_share": weights["work_demand"].mean(),
-                "educ_demand_share": weights["educ_demand"].mean(),
-                "hh_demand": weights["hh_demand"].mean(),
-                "sym_without_pcr_demand": weights["sym_without_pcr_demand"].mean(),
-                "other_contact_demand": weights["other_contact_demand"].mean(),
-                #
-                "share_infected_among_private_demand": (
-                    states[private_demand]["currently_infected"]
-                    * weights.loc[private_demand, "private_demand"]
-                ).mean(),
-                "share_infected_among_work_demand": (
-                    states[work_demand]["currently_infected"]
-                    * weights.loc[work_demand, "work_demand"]
-                ).mean(),
-                "share_infected_among_educ_demand": (
-                    states[educ_demand]["currently_infected"]
-                    * weights.loc[educ_demand, "educ_demand"]
-                ).mean(),
-                "share_infected_among_hh_demand": (
-                    states[hh_demand]["currently_infected"]
-                    * weights.loc[hh_demand, "hh_demand"]
-                ).mean(),
-                "share_infected_among_sym_without_pcr_demand": (
-                    states[sym_without_pcr_demand]["currently_infected"]
-                    * weights.loc[sym_without_pcr_demand, "sym_without_pcr_demand"]
-                ).mean(),
-                "share_infected_among_other_contact_demand": (
-                    states[other_contact_demand]["currently_infected"]
-                    * weights.loc[other_contact_demand, "other_contact_demand"]
-                ).mean(),
-            }
-        )
-        shares = shares.to_frame()
-        shares.index.name = "index"
-        if not save_path.exists():
-            # with columns
-            to_add = shares.T.to_csv()
-        else:
-            # without columns
-            to_add = shares.T.to_csv().split("\n", 1)[1]
+        shares = weights.mean()
+        shares = shares.to_frame("demand_share")
+        shares["date"] = date
+        shares["n_individuals"] = len(states)
+
+        shares["share_demanded_by_infected"] = np.nan
+        for demand_type in shares.index:
+            infected_state_of_demanders = states[df[demand_type]]["currently_infected"]
+            weight_of_demanders = weights.loc[df[demand_type], demand_type]
+            weighted_share_thats_infected = (
+                infected_state_of_demanders * weight_of_demanders
+            ).mean()
+            shares.loc[
+                demand_type, "share_demanded_by_infected"
+            ] = weighted_share_thats_infected
+
         with open(save_path, "a") as f:
-            f.write(to_add)
+            f.write(shares.T.to_csv())
 
     return rapid_test_demand
 
