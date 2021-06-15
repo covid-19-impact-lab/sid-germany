@@ -277,10 +277,12 @@ def style_plot(fig, axes):
         ax.set_xlabel("")
         ax.grid(axis="y")
         ax = format_date_axis(ax)
-        ax.get_yaxis().set_major_formatter(
-            ticker.FuncFormatter(lambda x, p: format(int(x), ","))
-        )
-    sns.despine()
+        # format thousands as 3,456 if the y values are that large
+        if ax.yaxis.get_majorticklocs().max() > 1000:
+            ax.get_yaxis().set_major_formatter(
+                ticker.FuncFormatter(lambda x, p: format(int(x), ","))
+            )
+        sns.despine()
     return fig, ax
 
 
