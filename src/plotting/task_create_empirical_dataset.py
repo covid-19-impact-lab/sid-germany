@@ -71,10 +71,10 @@ def task_create_empirical_dataset(depends_on, produces):
     share_b117 = pd.read_pickle(depends_on["virus_shares_dict"])["b117"]["2021-01-15":]
     share_b117.name = "share_b117"
 
-    vacc_shares = pd.read_pickle(depends_on["vaccinations"]).cumsum()
+    vacc_shares = pd.read_pickle(depends_on["vaccinations"]).sort_index().cumsum()
     vacc_shares.name = "ever_vaccinated"
 
-    r_effective = pd.read_pickle(depends_on["r_effective"])["Schätzer_7_Tage_R_Wert"]
+    r_effective = pd.read_pickle(depends_on["r_effective"])
     r_effective.name = "r_effective"
 
     df = pd.concat(

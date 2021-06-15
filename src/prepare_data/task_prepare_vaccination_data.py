@@ -117,7 +117,8 @@ def _clean_vaccination_data(df):
     df["date"] = pd.to_datetime(df["Datum"])
     # check date conversion was correct
     assert df["date"].min() == pd.Timestamp(year=2020, month=12, day=27)
-    df = df.set_index("date")
+    # sort_index is super important here because of the cumsum below!
+    df = df.set_index("date").sort_index()
     try:
         df["received_first_dose"] = df["mindestens einmal geimpft"].cumsum()
     except KeyError:
