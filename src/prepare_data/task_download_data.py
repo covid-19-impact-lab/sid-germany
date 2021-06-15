@@ -50,8 +50,8 @@ PARAMETRIZED_DOWNLOADS = [
     ),
     (
         "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/"
-        "Nowcasting_Zahlen_csv.csv?__blob=publicationFile",
-        BLD / "data" / "raw_time_series" / "reproduction_number.csv",
+        "Nowcasting_Zahlen.xlsx?__blob=publicationFile",
+        BLD / "data" / "raw_time_series" / "reproduction_number.xlsx",
     ),
 ]
 

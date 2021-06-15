@@ -283,6 +283,7 @@ def style_plot(fig, axes):
                 ticker.FuncFormatter(lambda x, p: format(int(x), ","))
             )
     sns.despine()
+
     return fig, ax
 
 

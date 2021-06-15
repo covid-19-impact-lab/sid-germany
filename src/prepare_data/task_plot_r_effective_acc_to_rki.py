@@ -14,7 +14,7 @@ from src.plotting.plotting import style_plot
 @pytask.mark.produces(BLD / "figures" / "data" / "r_effective_acc_to_rki.pdf")
 def task_plot_r_effective_acc_to_rki(depends_on, produces):
     df = pd.read_pickle(depends_on)
-    to_plot = df.loc[PLOT_START_DATE:PLOT_END_DATE, "Schätzer_7_Tage_R_Wert"]
+    to_plot = df.loc[PLOT_START_DATE:PLOT_END_DATE]
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sns.lineplot(x=to_plot.index, y=to_plot)
     fig, ax = style_plot(fig, ax)

@@ -5,6 +5,7 @@ import seaborn as sns
 
 from src.config import BLD
 from src.config import PLOT_SIZE
+from src.plotting.plotting import BLUE
 
 _PRODUCT_PATH = (
     BLD
@@ -22,6 +23,6 @@ def task_plot_n_hh_contacts(depends_on, produces):
     hh_sizes = states.groupby("hh_id").size()
     n_hh_contacts = (hh_sizes - 1).value_counts(normalize=True)
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
-    ax.bar(x=n_hh_contacts.index, height=n_hh_contacts)
+    ax.bar(x=n_hh_contacts.index, height=n_hh_contacts, color=BLUE)
     sns.despine()
     fig.savefig(produces)
