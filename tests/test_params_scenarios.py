@@ -68,3 +68,21 @@ def test_rapid_tests_at_school_every_other_day_after_april_5(params):
         }
     ).set_index(["category", "subcategory", "name"])
     assert comparison.equals(expected)
+
+
+def test_no_rapid_tests_at_schools_after_easter(params):
+    new_params = params_scenarios.no_rapid_tests_at_schools_after_easter(params)
+    comparison = create_comparison_df(new_params=new_params, old_params=params)
+    before = params.loc[
+        ("rapid_test_demand", "educ_frequency", "after_easter"), "value"
+    ]
+    expected = pd.DataFrame(
+        {
+            "category": ["rapid_test_demand"],
+            "subcategory": ["educ_frequency"],
+            "name": ["after_easter"],
+            "before": [before],
+            "after": [1000.0],
+        }
+    ).set_index(["category", "subcategory", "name"])
+    assert comparison.equals(expected)
