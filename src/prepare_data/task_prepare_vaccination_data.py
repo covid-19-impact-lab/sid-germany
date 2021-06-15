@@ -114,17 +114,26 @@ def _clean_vaccination_data(df):
     # drop rows below the last date
     first_non_date_loc = df[df["Datum"] == "Gesamt"].index[0]
     df = df.loc[: first_non_date_loc - 1].copy(deep=True)
-    df["date"] = pd.to_datetime(df["Datum"])
+
+    df["date"] = pd.to_datetime(df["Datum"], dayfirst=True)
+
     # check date conversion was correct
     assert df["date"].min() == pd.Timestamp(year=2020, month=12, day=27)
+    assert df["date"].max() < pd.Timestamp(year=2021, month=12, day=31)
+
     # sort_index is super important here because of the cumsum below!
     df = df.set_index("date").sort_index()
+
     try:
         df["received_first_dose"] = df["mindestens einmal geimpft"].cumsum()
     except KeyError:
         df["received_first_dose"] = df["Erstimpfung"].cumsum()
 
     df["share_with_first_dose"] = df["received_first_dose"] / POPULATION_GERMANY
+
+    assert df["share_with_first_dose"].sort_index().is_monotonic_increasing
+    assert (df.loc["2021-05-01":, "received_first_dose"] > 0.25).all()
+
     return df
 
 
