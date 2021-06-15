@@ -270,7 +270,7 @@ def _add_educ_rapid_test_fade_in_params(params):
             => assume 90% of teachers and 40% of students do rapid tests
 
         - After Easter (2021-04-07):
-            - NRW: tests are mandatory for all
+            - NRW: tests are mandatory starting April 12th (https://bit.ly/3xqVbUn)
             - Bavaria: tests are mandatory for all (https://bit.ly/3nz5fXS,
               https://bit.ly/2QHilX3)
             - BW: voluntary tests for students (https://bit.ly/3vuetaD)

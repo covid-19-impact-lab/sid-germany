@@ -5,6 +5,7 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
+from src.config import SRC
 from src.simulation import params_scenarios
 
 
@@ -29,11 +30,16 @@ _PARAMETRIZATION = [
 ]
 
 
-@pytask.mark.depends_on(BLD / "params.pkl")
+@pytask.mark.depends_on(
+    {
+        "params": BLD / "params.pkl",
+        "params_scenarios.py": SRC / "simulation" / "params_scenarios.py",
+    }
+)
 @pytask.mark.parametrize("func, produces", _PARAMETRIZATION)
 def task_save_params_changes_of_params_scenarios(depends_on, func, produces):
-    old_params = pd.read_pickle(depends_on)
-    params = pd.read_pickle(depends_on)
+    old_params = pd.read_pickle(depends_on["params"])
+    params = pd.read_pickle(depends_on["params"])
 
     new_params = func(params)
 
