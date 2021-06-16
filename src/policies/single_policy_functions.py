@@ -12,6 +12,8 @@ Moreover, all public functions return a pandas.Series with the same index as sta
 All other arguments must be documented.
 
 """
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
@@ -111,12 +113,19 @@ def _process_multiplier(states, multiplier, name):
     if isinstance(multiplier, (pd.Series, pd.DataFrame)):
         date = get_date(states)
         multiplier = multiplier.loc[date]
-    msg = f"Work {name} multiplier not in [0, 1] on {get_date(states)}"
+    neg_multiplier_msg = f"Work {name} multiplier < 0 on {get_date(states)}"
+    larger_one_msg = (
+        f"Work {name} multiplier > 1. For recurrent models it is not possible to "
+        "increase contacts by more than 1 so these contact models won't be affected."
+    )
     if isinstance(multiplier, (float, int)):
-        assert 0 <= multiplier <= 1, msg
+        assert 0 <= multiplier, neg_multiplier_msg
+        if multiplier > 1:
+            warnings.warn(larger_one_msg)
     else:
-        assert (multiplier >= 0).all(), msg
-        assert (multiplier <= 1).all(), msg
+        assert (multiplier >= 0).all(), neg_multiplier_msg
+        if (multiplier > 1).any():
+            warnings.warn(larger_one_msg)
     return multiplier
 
 
