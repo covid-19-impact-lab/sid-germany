@@ -7,6 +7,7 @@ from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
 from src.config import SRC
 from src.plotting.plotting import make_nice_outcome
+from src.plotting.plotting import OUTCOME_TO_Y_LABEL
 from src.plotting.plotting import plot_group_time_series
 from src.simulation.load_simulation_inputs import create_period_outputs
 from src.simulation.scenario_config import create_path_to_group_incidence_plot
@@ -92,7 +93,33 @@ def task_plot_age_group_incidences_in_one_scenario(
 
     nice_outcome = make_nice_outcome(outcome)
     title = f"{nice_outcome} in " + "{group}"
-    fig, ax = plot_group_time_series(incidences, title, rki)
+    ylabel = _get_ylabel(outcome)
+    fig, ax = plot_group_time_series(
+        df=incidences,
+        title=title,
+        rki=rki,
+        ylabel=ylabel,
+    )
 
     fig.savefig(produces)
     plt.close()
+
+
+def _get_ylabel(outcome):
+    ylabel = OUTCOME_TO_Y_LABEL[outcome]
+    if len(ylabel) > 45:
+        split = ylabel.split()
+        third = int(len(split) / 3)
+        ylabel = (
+            " ".join(split[:third])
+            + "\n"
+            + " ".join(split[third : 2 * third])
+            + "\n"
+            + " ".join(split[2 * third :])
+        )
+
+    elif len(ylabel) > 24:
+        split = ylabel.split()
+        half = int(len(split) / 2)
+        ylabel = " ".join(split[:half]) + "\n" + " ".join(split[half:])
+    return ylabel

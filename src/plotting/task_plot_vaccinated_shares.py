@@ -81,6 +81,7 @@ def task_plot_overall_vaccination_shares_across_scenarios(depends_on, produces):
         name_to_label=name_to_label,
         colors=None,
         scenario_starts=None,
+        ylabel="share of the population that has been vaccinated",
     )
 
     # add the actual vaccination shares
@@ -92,11 +93,12 @@ def task_plot_overall_vaccination_shares_across_scenarios(depends_on, produces):
     sns.lineplot(
         x=actual_vacc_shares.index,
         y=actual_vacc_shares,
-        label="actual share of vaccinated people",
+        label="share of vaccinated people in the German population",
         ax=ax,
     )
     ax.set_ylabel("share of vaccinated individuals")
 
+    fig.tight_layout()
     plt.savefig(produces)
     plt.close()
 
@@ -123,5 +125,6 @@ def task_plot_groupby_vaccination_shares(name, depends_on, produces):
     for ax in axes:
         ax.set_ylabel("share of vaccinated individuals")
 
+    fig.tight_layout()
     fig.savefig(produces)
     plt.close()

@@ -13,6 +13,7 @@ from src.plotting.plotting import GREEN
 from src.plotting.plotting import make_nice_outcome
 from src.plotting.plotting import ORANGE
 from src.plotting.plotting import OUTCOME_TO_EMPIRICAL_LABEL
+from src.plotting.plotting import OUTCOME_TO_Y_LABEL
 from src.plotting.plotting import plot_incidences
 from src.plotting.plotting import PURPLE
 from src.plotting.plotting import RED
@@ -436,6 +437,7 @@ def task_plot_scenario_comparison(
         colors=colors,
         scenario_starts=scenario_starts,
         n_single_runs=0,
+        ylabel=OUTCOME_TO_Y_LABEL.get(outcome, None),
     )
     ax.set_xlim(xlims)
 
@@ -456,6 +458,7 @@ def task_plot_scenario_comparison(
         colors=colors,
         scenario_starts=scenario_starts,
         n_single_runs=None,
+        ylabel=OUTCOME_TO_Y_LABEL.get(outcome, None),
     )
     ax_with_lines.set_xlim(xlims)
     if "new_work_scenarios" in str(produces):

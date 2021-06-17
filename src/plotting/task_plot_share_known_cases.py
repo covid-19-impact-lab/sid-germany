@@ -34,6 +34,7 @@ def _create_parametrization():
             title = (
                 f"Share Known Cases {'By Age Group' if groupby else ''} in {nice_name}"
             )
+            title = None
             parametrization.append((depends_on, title, groupby, produces))
 
     return "depends_on, title, groupby, produces", parametrization
