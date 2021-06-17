@@ -25,7 +25,7 @@ def get_params_scenarios():
 
 
 _PARAMETRIZATION = [
-    (func, BLD / "simulation" / "param_scenarios" / f"{name}.csv")
+    (func, BLD / "simulations" / "param_scenarios" / f"{name}.csv")
     for name, func in get_params_scenarios()
 ]
 
