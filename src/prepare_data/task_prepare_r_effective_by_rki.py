@@ -14,6 +14,9 @@ def task_prepare_rki_r_effective_data(depends_on, produces):
     df = df.replace(".", np.nan)
     df = df.set_index("date").sort_index()
 
-    r_effective = df["Punktschätzer des 7-Tage-R Wertes"]
+    try:
+        r_effective = df["Punktschätzer des 7-Tage-R Wertes"]
+    except KeyError:
+        r_effective = df["Punktschätzer des 7-Tage-R-Wertes"]
     r_effective = r_effective.str.replace(",", ".").astype(float)
     r_effective.to_pickle(produces)
