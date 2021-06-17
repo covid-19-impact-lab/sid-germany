@@ -107,10 +107,7 @@ def plot_incidences(
 
     """
     if fig is None and ax is None:
-        if len(incidences) <= 4:
-            fig, ax = plt.subplots(figsize=PLOT_SIZE)
-        else:
-            fig, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
     if colors is None:
         colors = [BLUE, ORANGE, RED, TEAL, GREEN, YELLOW, PURPLE, BROWN]
@@ -282,7 +279,8 @@ def style_plot(fig, axes):
             ax.get_yaxis().set_major_formatter(
                 ticker.FuncFormatter(lambda x, p: format(int(x), ","))
             )
-        sns.despine()
+    sns.despine()
+
     return fig, ax
 
 

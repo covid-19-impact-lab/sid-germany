@@ -29,6 +29,21 @@ _DEPENDENCIES = {
     "params": BLD / "params.pkl",
 }
 
+
+@pytask.mark.depends_on(_DEPENDENCIES)
+@pytask.mark.produces(BLD / "figures" / "data" / "other_multiplier.pdf")
+def task_plot_other_multiplier(depends_on, produces):  # noqa: U100
+    other_multiplier = _get_other_multiplier(
+        PLOT_START_DATE, PLOT_END_DATE, OTHER_MULTIPLIER_SPECS
+    )
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
+    sns.lineplot(x=other_multiplier.index, y=other_multiplier)
+    fig, ax = style_plot(fig, ax)
+    fig.tight_layout()
+    fig.savefig(produces)
+    plt.close()
+
+
 _PRODUCTS = {
     "school_comparison": BLD / "figures" / "data" / "school_multiplier_comparison.pdf",
     "0_no_seasonality": BLD / "figures" / "data" / "stringency_no_seasonality.pdf",
@@ -79,6 +94,7 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
     ]:
         sns.lineplot(x=sr.index, y=sr, label=label, alpha=0.6, linewidth=4)
     fig, ax = style_plot(fig, ax)
+    fig.tight_layout()
     fig.savefig(produces["school_comparison"])
 
     our_stringency = pd.concat(

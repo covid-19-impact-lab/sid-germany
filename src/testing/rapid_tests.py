@@ -14,6 +14,7 @@ def rapid_test_demand(
     params,  # noqa: U100
     contacts,
     seed,  # noqa: U100
+    save_path=None,
 ):
     """Assign rapid tests to group.
 
@@ -33,8 +34,11 @@ def rapid_test_demand(
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
-        params_slice = params.loc[
+        work_offer_params = params.loc[
             ("rapid_test_demand", "share_workers_receiving_offer")
+        ]
+        work_accept_params = params.loc[
+            ("rapid_test_demand", "share_accepting_work_offer")
         ]
         educ_workers_params = params.loc[("rapid_test_demand", "educ_worker_shares")]
         students_params = params.loc[("rapid_test_demand", "student_shares")]
@@ -42,10 +46,11 @@ def rapid_test_demand(
 
     # get work demand inputs
     share_of_workers_with_offer = get_piecewise_linear_interpolation_for_one_day(
-        date, params_slice
+        date, work_offer_params
     )
-    accept_share_loc = ("rapid_test_demand", "work", "share_accepting_offer")
-    share_workers_accepting_offer = params.loc[accept_share_loc]["value"]
+    share_workers_accepting_offer = get_piecewise_linear_interpolation_for_one_day(
+        date, work_accept_params
+    )
     work_compliance_multiplier = (
         share_of_workers_with_offer * share_workers_accepting_offer
     )
@@ -96,6 +101,68 @@ def rapid_test_demand(
 
     private_demand = hh_demand | sym_without_pcr_demand | other_contact_demand
     rapid_test_demand = work_demand | educ_demand | private_demand
+
+    if save_path is not None:
+        df = pd.DataFrame(
+            {
+                "private_demand": private_demand,
+                "work_demand": work_demand,
+                "educ_demand": educ_demand,
+                "hh_demand": hh_demand,
+                "sym_without_pcr_demand": sym_without_pcr_demand,
+                "other_contact_demand": other_contact_demand,
+            }
+        )
+
+        weights = df.div(df.sum(axis=1), axis=0).fillna(0)
+
+        shares = pd.Series(
+            {
+                "date": date,
+                "n_individuals": len(states),
+                "private_demand_share": weights["private_demand"].mean(),
+                "work_demand_share": weights["work_demand"].mean(),
+                "educ_demand_share": weights["educ_demand"].mean(),
+                "hh_demand": weights["hh_demand"].mean(),
+                "sym_without_pcr_demand": weights["sym_without_pcr_demand"].mean(),
+                "other_contact_demand": weights["other_contact_demand"].mean(),
+                #
+                "share_infected_among_private_demand": (
+                    states[private_demand]["currently_infected"]
+                    * weights.loc[private_demand, "private_demand"]
+                ).mean(),
+                "share_infected_among_work_demand": (
+                    states[work_demand]["currently_infected"]
+                    * weights.loc[work_demand, "work_demand"]
+                ).mean(),
+                "share_infected_among_educ_demand": (
+                    states[educ_demand]["currently_infected"]
+                    * weights.loc[educ_demand, "educ_demand"]
+                ).mean(),
+                "share_infected_among_hh_demand": (
+                    states[hh_demand]["currently_infected"]
+                    * weights.loc[hh_demand, "hh_demand"]
+                ).mean(),
+                "share_infected_among_sym_without_pcr_demand": (
+                    states[sym_without_pcr_demand]["currently_infected"]
+                    * weights.loc[sym_without_pcr_demand, "sym_without_pcr_demand"]
+                ).mean(),
+                "share_infected_among_other_contact_demand": (
+                    states[other_contact_demand]["currently_infected"]
+                    * weights.loc[other_contact_demand, "other_contact_demand"]
+                ).mean(),
+            }
+        )
+        shares = shares.to_frame()
+        shares.index.name = "index"
+        if not save_path.exists():
+            # with columns
+            to_add = shares.T.to_csv()
+        else:
+            # without columns
+            to_add = shares.T.to_csv().split("\n", 1)[1]
+        with open(save_path, "a") as f:
+            f.write(to_add)
     return rapid_test_demand
 
 

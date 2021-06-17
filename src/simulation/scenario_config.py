@@ -21,6 +21,11 @@ def create_path_to_last_states_of_simulation(name, seed):
     return path
 
 
+def create_path_to_rapid_test_statistics(name, seed):
+    path = BLD / "tables" / f"{FAST_FLAG}_rapid_test_statistics_{name}_{seed}.csv"
+    return path
+
+
 def create_path_to_period_outputs_of_simulation(name, seed):
     """Return the path to the simulation results with the period outcomes."""
     path = BLD / "simulations" / "period_outputs" / f"{FAST_FLAG}_{name}_{seed}.pkl"
@@ -130,11 +135,12 @@ def get_named_scenarios():
     named_scenarios = {
         # Baseline Scenarios
         "combined_baseline": {
-            "sim_input_scenario": "baseline",
+            "sim_input_scenario": "baseline_save_rapid_test_statistics",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
             "save_last_states": True,
             "is_resumed": False,
+            "save_rapid_test_statistics": True,
             **combined_dates,
         },
         "fall_baseline": {
@@ -275,26 +281,30 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "summer_strict_home_office_continue_testing": {
-            "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
+        # Work Scenarios (Home Office and Testing)
+        "spring_reduce_work_test_offers_to_23_pct_after_easter": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "keep_work_offer_share_at_23_pct_after_easter",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_mandatory_work_rapid_tests_after_easter": {
+            "sim_input_scenario": "baseline",
+            "params_scenario": "mandatory_work_rapid_tests_after_easter",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_10_pct_less_work_in_person_after_easter": {
+            "sim_input_scenario": "plus_10_pct_home_office_after_easter",
             "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
-            "is_resumed": "combined",
-            **summer_dates,
+            **spring_dates,
         },
-        "summer_strict_home_office_reduce_testing": {
-            "sim_input_scenario": "strict_home_office_after_summer_scenario_start",
-            "params_scenario": "reduce_work_rapid_test_demand_after_summer_scenario_start_by_half",  # noqa: E501
+        "spring_10_pct_more_work_in_person_after_easter": {
+            "sim_input_scenario": "minus_10_pct_home_office_after_easter",
+            "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
-            "is_resumed": "combined",
-            **summer_dates,
-        },
-        "summer_normal_home_office_reduce_testing": {
-            "sim_input_scenario": "baseline",
-            "params_scenario": "reduce_work_rapid_test_demand_after_summer_scenario_start_by_half",  # noqa: E501
-            "n_seeds": n_other_seeds,
-            "is_resumed": "combined",
-            **summer_dates,
+            **spring_dates,
         },
     }
     return named_scenarios

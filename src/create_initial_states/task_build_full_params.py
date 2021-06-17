@@ -228,7 +228,12 @@ def _add_work_rapid_test_params(params):
     """
     params = params.copy(deep=True)
 
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 0.6
+    accept_loc = ("rapid_test_demand", "share_accepting_work_offer")
+    # constant by default
+    params.loc[(*accept_loc, "2020-01-01"), "value"] = 0.6
+    params.loc[(*accept_loc, "2021-01-01"), "value"] = 0.6
+    params.loc[(*accept_loc, "2021-04-06"), "value"] = 0.6
+    params.loc[(*accept_loc, "2025-12-31"), "value"] = 0.6
 
     offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
     params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
@@ -237,7 +242,7 @@ def _add_work_rapid_test_params(params):
     params.loc[(*offer_loc, "2021-04-05"), "value"] = 0.6
     params.loc[(*offer_loc, "2021-04-15"), "value"] = 0.66
     params.loc[(*offer_loc, "2021-06-15"), "value"] = 0.80
-    params.loc[(*offer_loc, "2025-12-13"), "value"] = 0.80
+    params.loc[(*offer_loc, "2025-12-31"), "value"] = 0.80
     return params
 
 
@@ -265,7 +270,7 @@ def _add_educ_rapid_test_fade_in_params(params):
             => assume 90% of teachers and 40% of students do rapid tests
 
         - After Easter (2021-04-07):
-            - NRW: tests are mandatory for all
+            - NRW: tests are mandatory starting April 12th (https://bit.ly/3xqVbUn)
             - Bavaria: tests are mandatory for all (https://bit.ly/3nz5fXS,
               https://bit.ly/2QHilX3)
             - BW: voluntary tests for students (https://bit.ly/3vuetaD)

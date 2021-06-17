@@ -128,7 +128,6 @@ def _clean_vaccination_data(df):
         df["received_first_dose"] = df["mindestens einmal geimpft"].cumsum()
     except KeyError:
         df["received_first_dose"] = df["Erstimpfung"].cumsum()
-
     df["share_with_first_dose"] = df["received_first_dose"] / POPULATION_GERMANY
 
     assert df["share_with_first_dose"].sort_index().is_monotonic_increasing

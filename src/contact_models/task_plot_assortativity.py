@@ -25,6 +25,7 @@ def task_create_assortativity_heatmap(depends_on, loc, produces):
     fig, ax = _create_heatmap(sr, loc)
     fig.tight_layout()
     fig.savefig(produces)
+    plt.close()
 
 
 def _create_heatmap(sr, loc):

@@ -43,6 +43,9 @@ def task_plot_combined_rapid_test_demand_params(depends_on, produces):
             ("rapid_test_demand", "share_workers_receiving_offer")
         ]
         private_demand_params = params.loc[("rapid_test_demand", "private_demand")]
+        work_accept_params = params.loc[
+            ("rapid_test_demand", "share_accepting_work_offer")
+        ]
 
     # educ demand
     share_educ_workers = get_piecewise_linear_interpolation(educ_workers_params)
@@ -57,10 +60,10 @@ def task_plot_combined_rapid_test_demand_params(depends_on, produces):
     share_workers_receiving_offer = share_workers_receiving_offer.loc[
         PLOT_START_DATE:PLOT_END_DATE
     ]
-    worker_demand = params.loc[
-        ("rapid_test_demand", "work", "share_accepting_offer"), "value"
-    ]
-    share_workers = share_workers_receiving_offer * worker_demand
+    share_workers_accepting_offer = get_piecewise_linear_interpolation(
+        work_accept_params
+    )
+    share_workers = share_workers_receiving_offer * share_workers_accepting_offer
 
     # private demand
     private_demand_shares = get_piecewise_linear_interpolation(private_demand_params)

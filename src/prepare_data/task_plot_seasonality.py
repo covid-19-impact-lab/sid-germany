@@ -36,15 +36,20 @@ def task_plot_seasonality(depends_on, produces):
         y=weak_seasonality_series,
         ax=ax,
         label="seasonality of household, work and school contacts",
+        linewidth=4,
+        alpha=0.6,
     )
     sns.lineplot(
         x=strong_seasonality_series.index,
         y=strong_seasonality_series,
         ax=ax,
         label="seasonality of other (including leisure) contacts",
+        linewidth=4,
+        alpha=0.6,
     )
 
     fig, ax = style_plot(fig, ax)
     ax.set_title("Strong and Weak Seasonality Effects Over Time")
     fig.tight_layout()
     fig.savefig(produces, bbox_inches="tight")
+    plt.close()

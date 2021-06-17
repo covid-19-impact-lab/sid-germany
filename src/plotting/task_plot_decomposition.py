@@ -9,10 +9,14 @@ import pytask
 
 from src.config import BLD
 from src.config import FAST_FLAG
+from src.config import PLOT_SIZE
+from src.plotting.plotting import BLUE
 from src.plotting.plotting import format_date_axis
+from src.plotting.plotting import GREEN
 from src.plotting.plotting import ORANGE
 from src.plotting.plotting import RED
 from src.plotting.plotting import TEAL
+from src.plotting.plotting import YELLOW
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
@@ -84,15 +88,18 @@ def task_plot_decomposition_of_infection_channels_in_spring(depends_on, produces
         color=[RED, ORANGE, TEAL],
     )
     fig.savefig(produces["bar_plot"])
+    plt.close()
 
-    fig = _create_area_plot(
+    fig, ax = _create_area_plot(
         df,
         scenario_to_members=_CHANNEL_SCENARIOS_TO_MEMBERS,
         no_effects_scenario="spring_no_effects",
         ordering=_ORDERED_CHANNELS,
         color=[RED, ORANGE, TEAL],
     )
+    ax.set_xlim(pd.Timestamp("2021-01-15"), None)
     fig.savefig(produces["area_plot"])
+    plt.close()
 
 
 @pytask.mark.skipif(
@@ -126,18 +133,21 @@ def task_plot_decomposition_of_rapid_tests_in_spring(depends_on, produces):
         scenario_to_members=_RAPID_TEST_SCENARIOS_TO_MEMBERS,
         no_effects_scenario="spring_without_rapid_tests",
         ordering=_ORDERED_RAPID_TEST_CHANNELS,
-        color=[RED, ORANGE, TEAL],
+        color=[BLUE, GREEN, YELLOW],
     )
     fig.savefig(produces["bar_plot"])
+    plt.close()
 
-    fig = _create_area_plot(
+    fig, ax = _create_area_plot(
         df,
         scenario_to_members=_RAPID_TEST_SCENARIOS_TO_MEMBERS,
         no_effects_scenario="spring_without_rapid_tests",
         ordering=_ORDERED_RAPID_TEST_CHANNELS,
-        color=[RED, ORANGE, TEAL],
+        color=[BLUE, GREEN, YELLOW],
     )
+    ax.set_xlim(pd.Timestamp("2021-01-15"), None)
     fig.savefig(produces["area_plot"])
+    plt.close()
 
 
 def _create_bar_plot(df, scenario_to_members, no_effects_scenario, ordering, color):
@@ -151,12 +161,12 @@ def _create_bar_plot(df, scenario_to_members, no_effects_scenario, ordering, col
     ).reindex(index=ordering)
 
     with plt.rc_context(_MATPLOTLIB_RC_CONTEXT):
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
         ratios.plot(kind="barh", ax=ax, color=color, alpha=0.6)
 
         ax.set_xlabel("Contribution to Reduction")
-
+    fig.tight_layout()
     return fig
 
 
@@ -167,25 +177,30 @@ def _create_area_plot(df, scenario_to_members, no_effects_scenario, ordering, co
         no_effects_scenario=no_effects_scenario,
         axis=1,
     )
+    ratios.columns = [
+        x.replace("shapley_value_", "").replace("_", " ").title()
+        for x in ratios.columns
+    ]
+
     prevented_infections = df[no_effects_scenario] - df["spring_baseline"]
 
     # Clipping is necessary for the area plot and only small numbers in the beginning
     # are clipped which do not change the results.
     prevented_infections_by_channel = (
-        (ratios.multiply(prevented_infections.cumsum(), axis=0).diff().clip(0))
-        .rename(
-            columns=lambda x: x.replace("shapley_value_", "").replace("_", " ").title()
-        )
-        .reindex(columns=ordering)
-    )
+        ratios.multiply(prevented_infections.cumsum(), axis=0).diff().clip(0)
+    ).reindex(columns=ordering)
+    prevented_infections_by_channel.columns = [
+        x + f" ({ratios.iloc[-1][x]:.0%})"
+        for x in prevented_infections_by_channel.columns
+    ]
 
     with plt.rc_context(_MATPLOTLIB_RC_CONTEXT):
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=PLOT_SIZE)
         prevented_infections_by_channel.plot(kind="area", ax=ax, color=color, alpha=0.6)
 
         ax = format_date_axis(ax)
 
-        ax.set_ylabel("smoothed weekly incidence")
+        ax.set_ylabel("contribution to difference in weekly incidence")
         ax.set_xlabel(None)
         ax.grid(axis="y")
         ax.get_yaxis().set_major_formatter(
@@ -197,7 +212,7 @@ def _create_area_plot(df, scenario_to_members, no_effects_scenario, ordering, co
 
         fig.tight_layout()
 
-    return fig
+    return fig, ax
 
 
 def _compute_ratios_based_on_shapley_values(
