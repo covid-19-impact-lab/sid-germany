@@ -39,6 +39,7 @@ def task_plot_other_multiplier(depends_on, produces):  # noqa: U100
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
     sns.lineplot(x=other_multiplier.index, y=other_multiplier)
     fig, ax = style_plot(fig, ax)
+    ax.set_ylabel("share of other pre-pandemic contacts taking place")
     fig.tight_layout()
     fig.savefig(produces)
     plt.close()
@@ -94,6 +95,7 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
     ]:
         sns.lineplot(x=sr.index, y=sr, label=label, alpha=0.6, linewidth=4)
     fig, ax = style_plot(fig, ax)
+    ax.set_ylabel("share of school contacts taking place")
     fig.tight_layout()
     fig.savefig(produces["school_comparison"])
 
@@ -112,6 +114,7 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
             other_multiplier=scaled_other_multiplier,
             school_multiplier=school_multiplier_with_vacations,
             our_stringency=our_stringency,
+            ylabel="share of pre-pandemic contacts\ntaking place for each contact type",
         )
         fig.savefig(produces[f"{i}_no_seasonality"])
 
@@ -133,6 +136,8 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
             other_multiplier=other_multiplier_seasonal,
             school_multiplier=school_multiplier_seasonal,
             our_stringency=our_stringency_seasonal,
+            ylabel="share of pre-pandemic risk contacts taking place\nfor each contact "
+            "type (adjusting for seasonality)",
         )
         fig.savefig(produces[f"{i}_with_seasonality"])
     plt.close()
@@ -311,6 +316,7 @@ def _create_multiplier_plot(
     other_multiplier,
     school_multiplier,
     our_stringency,  # noqa: U100
+    ylabel=None,
 ):
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
@@ -333,6 +339,7 @@ def _create_multiplier_plot(
         )
 
     style_plot(fig, ax)
+    ax.set_ylabel(ylabel)
     fig.tight_layout()
     return fig
 
