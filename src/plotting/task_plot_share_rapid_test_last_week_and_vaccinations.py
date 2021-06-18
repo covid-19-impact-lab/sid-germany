@@ -78,6 +78,10 @@ def task_plot_share_rapid_test_last_week_and_vaccinations(depends_on, produces):
 
     x, y, width, height = 0.0, -0.3, 1, 0.2
     ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=2)
+    ax.set_ylabel(
+        "share of vaccinated people or people who have done a"
+        "\nrapid test within the last week, respectively"
+    )
     fig.tight_layout()
 
     fig, ax = style_plot(fig, ax)
