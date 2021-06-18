@@ -114,7 +114,8 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
             other_multiplier=scaled_other_multiplier,
             school_multiplier=school_multiplier_with_vacations,
             our_stringency=our_stringency,
-            ylabel="share of pre-pandemic contacts\ntaking place for each contact type",
+            ylabel="Oxford Response Stringency Index / \n"
+            "Infectiousness of contacts relative to Sept 2020",
         )
         fig.savefig(produces[f"{i}_no_seasonality"])
 

@@ -49,7 +49,7 @@ OUTCOME_TO_EMPIRICAL_LABEL = {
 
 OUTCOME_TO_Y_LABEL = {
     "newly_infected": "weekly total new cases per 100,000 inhabitants",
-    "new_known_case": "weekly detected new cases per 100,000 inhabitants",
+    "new_known_case": "weekly reported new cases per 100,000 inhabitants",
     "newly_deceased": "weekly deaths per 100,000 inhabitants",
     "share_ever_rapid_test": "share of the population that has \n"
     "ever done a rapid test",
