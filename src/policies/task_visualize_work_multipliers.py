@@ -67,6 +67,7 @@ def task_visualize_work_multipliers(depends_on, produces):
         work_multiplier["date"].between(PLOT_START_DATE, PLOT_END_DATE)
     ]
     fig, ax = _plot_time_series(since_sep, title="")
+    ax.set_ylabel("mobility relative to pre-pandemic level")
     fig.savefig(produces["since_sep"])
     plt.close()
 
