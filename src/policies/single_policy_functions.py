@@ -111,12 +111,11 @@ def _process_multiplier(states, multiplier, name):
     if isinstance(multiplier, (pd.Series, pd.DataFrame)):
         date = get_date(states)
         multiplier = multiplier.loc[date]
-    msg = f"Work {name} multiplier not in [0, 1] on {get_date(states)}"
+    neg_multiplier_msg = f"Work {name} multiplier < 0 on {get_date(states)}"
     if isinstance(multiplier, (float, int)):
-        assert 0 <= multiplier <= 1, msg
+        assert 0 <= multiplier, neg_multiplier_msg
     else:
-        assert (multiplier >= 0).all(), msg
-        assert (multiplier <= 1).all(), msg
+        assert (multiplier >= 0).all(), neg_multiplier_msg
     return multiplier
 
 

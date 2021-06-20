@@ -1,10 +1,84 @@
 import warnings
 
+import numpy as np
 import pandas as pd
 
-from src.config import SUMMER_SCENARIO_START
+from src.config import AFTER_EASTER
 from src.testing.shared import get_piecewise_linear_interpolation
 from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
+
+
+def baseline(params):
+    return params
+
+
+def no_rapid_tests_at_schools(params):
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "educ_worker_shares"), "value"] = 0.0
+    params.loc[("rapid_test_demand", "student_shares"), "value"] = 0.0
+    return params
+
+
+def no_rapid_tests_at_work(params):
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "share_accepting_work_offer"), "value"] = 0.0
+    params.loc[("rapid_test_demand", "share_workers_receiving_offer"), "value"] = 0.0
+    return params
+
+
+def no_private_rapid_test_demand(params):
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "private_demand"), "value"] = 0.0
+    return params
+
+
+def no_rapid_tests_at_schools_and_work(params):
+    params = no_rapid_tests_at_schools(params)
+    params = no_rapid_tests_at_work(params)
+    return params
+
+
+def no_rapid_tests_at_schools_and_private(params):
+    params = no_rapid_tests_at_schools(params)
+    params = no_private_rapid_test_demand(params)
+    return params
+
+
+def no_rapid_tests_at_work_and_private(params):
+    params = no_rapid_tests_at_work(params)
+    params = no_private_rapid_test_demand(params)
+    return params
+
+
+def no_rapid_tests_at_schools_after_easter(params):
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 1000
+    return params
+
+
+def rapid_tests_at_school_every_other_day_after_april_5(params):
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 2
+    return params
+
+
+def rapid_tests_at_school_every_day_after_april_5(params):
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 1
+    return params
+
+
+def no_seasonality(params):
+    """Set the seasonality to 1 everywhere.
+
+    This induces a jump in the seasonality compared to scenarios with seasonality almost
+    everywhere.
+
+    """
+    params = params.copy(deep=True)
+    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.0
+    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.0
+    return params
 
 
 def start_all_rapid_tests_after_easter(params):
@@ -14,6 +88,7 @@ def start_all_rapid_tests_after_easter(params):
         "educ_worker_shares",
         "student_shares",
         "private_demand",
+        "share_accepting_work_offer",
     ]
     new = params.copy(deep=True)
 
@@ -33,69 +108,85 @@ def start_all_rapid_tests_after_easter(params):
     return new
 
 
-def reduce_work_rapid_test_demand_after_summer_scenario_start_by_half(params):
-    """Reduce rapid tests of households and workers by half.
+def keep_work_offer_share_at_23_pct_after_easter(params):
+    """Set work offer share to 23 percent (March 17th value) after Easter."""
+    work_offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    new_params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
+        params, loc=work_offer_loc, change_date=AFTER_EASTER, new_val=0.23
+    )
+    return new_params
 
-    Since only the offer share of workers' rapid tests is time variant we change the
-    offer parameters rather than the demand even though the more intuitive
-    interpretation would be that workers demand less tests.
+
+def mandatory_work_rapid_tests_after_easter(params):
+    """Assume work rapid tests are nearly universal after Easter.
+
+    We assume both 5% refusers on side of firms and 5% on the side of employees. Thus,
+    effectively ~90% of workers get tested.
 
     """
-    change_date = pd.Timestamp(SUMMER_SCENARIO_START)
-
     work_offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore", message="indexing past lexsort depth may impact performance."
-        )
-        old_work_offer_share = get_piecewise_linear_interpolation_for_one_day(
-            change_date, params.loc[work_offer_loc]
-        )
-
-    new_work_offer_share = 0.5 * old_work_offer_share
-
-    params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
-        params=params,
-        loc=work_offer_loc,
-        change_date=change_date,
-        new_val=new_work_offer_share,
+    new_params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
+        params, loc=work_offer_loc, change_date=AFTER_EASTER, new_val=0.95
     )
 
+    work_accept_loc = ("rapid_test_demand", "share_accepting_work_offer")
+    new_params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
+        params=new_params,
+        loc=work_accept_loc,
+        change_date=AFTER_EASTER,
+        new_val=0.95,
+    )
+    return new_params
+
+
+# ======================================================================================
+
+
+def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
+    """Implement a rapid test scheme where a certain share of workers get tested."""
+    params = params.copy(deep=True)
+    params.loc[("rapid_test_demand", "share_accepting_work_offer"), "value"] = 1
+    loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
+        params=params, change_date=change_date, new_val=new_val, loc=loc
+    )
     return params
 
 
-def reduce_rapid_test_demand_after_summer_scenario_start_by_half(params):
-    """Reduce rapid tests of households and workers by half.
+def _set_to_multiple_of_work_rapid_test_demand_after_date_start(
+    params, date, multiplier
+):
+    """Have a constant *multiplier* x old work rapid test demand after *date*.
 
     Since only the offer share of workers' rapid tests is time variant we change the
     offer parameters rather than the demand even though the more intuitive
-    interpretation would be that workers demand less tests.
+    interpretation would be that workers demand less tests. Where the reduction takes
+    place is irrelevant because offer and demand shares are multiplied to get the
+    overall work rapid share multiplier.
+
+    Args:
+        params (pandas.DataFrame): params DataFrame with ("rapid_test_demand",
+            "share_workers_receiving_offer") entries.
+        date (str or pandas.Timestamp): date after which the workers' rapid tests are
+            reduced.
+        multiplier (float): multiplier with which the old work rapid test share will be
+            reduced. For example, to reduce the work rapid tests by 25%, set the
+            multiplier to 0.75.
 
     """
-    change_date = pd.Timestamp(SUMMER_SCENARIO_START)
+    change_date = pd.Timestamp(date)
 
-    private_loc = ("rapid_test_demand", "private_demand")
     work_offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
         )
-        old_hh_val = get_piecewise_linear_interpolation_for_one_day(
-            change_date, params.loc[private_loc]
-        )
         old_work_offer_share = get_piecewise_linear_interpolation_for_one_day(
             change_date, params.loc[work_offer_loc]
         )
 
-    new_hh_val = 0.5 * old_hh_val
-    new_work_offer_share = 0.5 * old_work_offer_share
+    new_work_offer_share = np.clip(multiplier * old_work_offer_share, 0, 1)
 
-    params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
-        params=params,
-        loc=private_loc,
-        change_date=change_date,
-        new_val=new_hh_val,
-    )
     params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
         params=params,
         loc=work_offer_loc,
@@ -167,108 +258,3 @@ def _build_new_date_params(before_params_slice, change_date, new_val):
     new_params_slice.loc[pd.Timestamp("2025-12-31")] = new_val
     new_params_slice = new_params_slice.sort_index()
     return new_params_slice
-
-
-# -------------------------------------------------------------------------------------
-
-
-def baseline(params):
-    return params
-
-
-def no_rapid_tests_at_schools(params):
-    params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "educ_worker_shares"), "value"] = 0.0
-    params.loc[("rapid_test_demand", "student_shares"), "value"] = 0.0
-    return params
-
-
-def no_rapid_tests_at_work(params):
-    params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 0.0
-    params.loc[("rapid_test_demand", "share_workers_receiving_offer"), "value"] = 0.0
-    return params
-
-
-def no_private_rapid_test_demand(params):
-    params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "private_demand"), "value"] = 0.0
-    return params
-
-
-def no_rapid_tests_at_schools_and_work(params):
-    params = no_rapid_tests_at_schools(params)
-    params = no_rapid_tests_at_work(params)
-    return params
-
-
-def no_rapid_tests_at_schools_and_private(params):
-    params = no_rapid_tests_at_schools(params)
-    params = no_private_rapid_test_demand(params)
-    return params
-
-
-def no_rapid_tests_at_work_and_private(params):
-    params = no_rapid_tests_at_work(params)
-    params = no_private_rapid_test_demand(params)
-    return params
-
-
-def no_rapid_tests_at_schools_after_easter(params):
-    params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 1000
-    return params
-
-
-def rapid_tests_at_school_every_other_day_after_april_5(params):
-    params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 2
-    return params
-
-
-def rapid_tests_at_school_every_day_after_april_5(params):
-    params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "educ_frequency", "after_easter"), "value"] = 1
-    return params
-
-
-def obligatory_rapid_tests_for_employees(params):
-    """Assume every worker who is offered a test accepts the offer.
-
-    Note that this does not mean that every worker gets regularly tested as only up to
-    70% of employers offer tests after the ordinance was passed.
-
-    """
-    params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1
-    return params
-
-
-def rapid_test_with_90pct_compliance_after_summer_scenario_start(params):
-    return _rapid_test_with_fixed_compliance_after_date(
-        params, change_date=SUMMER_SCENARIO_START, new_val=0.9
-    )
-
-
-def _rapid_test_with_fixed_compliance_after_date(params, change_date, new_val):
-    """Implement a rapid test scheme where a certain share of workers get tested."""
-    params = params.copy(deep=True)
-    params.loc[("rapid_test_demand", "work", "share_accepting_offer"), "value"] = 1
-    loc = ("rapid_test_demand", "share_workers_receiving_offer")
-    params = _change_piecewise_linear_parameter_to_fixed_value_after_date(
-        params=params, change_date=change_date, new_val=new_val, loc=loc
-    )
-    return params
-
-
-def no_seasonality(params):
-    """Set the seasonality to 1 everywhere.
-
-    This induces a jump in the seasonality compared to scenarios with seasonality almost
-    everywhere.
-
-    """
-    params = params.copy(deep=True)
-    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.0
-    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.0
-    return params

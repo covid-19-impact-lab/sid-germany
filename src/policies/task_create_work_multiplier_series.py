@@ -8,6 +8,7 @@ Notes:
       people still go to work.
 
 """
+import warnings
 from zipfile import ZipFile
 
 import numpy as np
@@ -65,6 +66,19 @@ def task_process_mobility_and_hygiene_data(depends_on, produces):
     mobility_data.to_pickle(produces["mobility_data"])
 
     work_multiplier = _create_work_multiplier(mobility_data)
+    above_one = work_multiplier.loc["2020-03-15":] > 1
+    if above_one.any().any():
+        states = above_one.any()[above_one.any()].index.tolist()
+        dates = [
+            str(x.date()) for x in above_one.any(axis=1)[above_one.any(axis=1)].index
+        ]
+        warnings.warn(
+            f"\n\nThe work multiplier is above one at {above_one.sum().sum()} points. "
+            "Recurrent meetings can only be reduced and so this won't affect them. "
+            "Unless the number of occurences is large you can ignore this. "
+            f"The work multiplier exceeded one in {', '.join(states)}. Dates on which "
+            f"the work multiplier exceeded one: {', '.join(dates)}.\n\n"
+        )
     work_multiplier.to_csv(produces["work_multiplier"])
 
 

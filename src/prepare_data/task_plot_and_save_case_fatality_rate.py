@@ -34,6 +34,7 @@ def task_create_and_plot_the_case_fatality_rate(depends_on, produces):
     sns.lineplot(x=case_fatality_rate.index, y=case_fatality_rate)
     fig, ax = style_plot(fig, ax)
     fig.savefig(produces["fig"])
+    plt.close()
     case_fatality_rate.round(4).to_csv(produces["data"])
 
     mean_cfrs = pd.Series(

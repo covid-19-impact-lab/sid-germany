@@ -33,6 +33,7 @@ def load_simulation_inputs(
     return_last_states=False,
     initial_states_path=None,
     is_resumed=False,
+    rapid_test_statistics_path=None,
 ):
     """Load the simulation inputs.
 
@@ -56,6 +57,8 @@ def load_simulation_inputs(
             If not given the standard initial states are used.
         is_resumed (bool, optional): if True, the initial_states_path must be given. In
             that case no initial conditions are created
+        rapid_test_statistics_path (Path, optional): where to save rapid test
+            statistics.
 
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
@@ -90,7 +93,12 @@ def load_simulation_inputs(
     start_date = pd.Timestamp(start_date)
     end_date = pd.Timestamp(end_date)
 
-    paths = get_simulation_dependencies(debug=debug, is_resumed=is_resumed)
+    paths = get_simulation_dependencies(
+        debug=debug,
+        is_resumed=is_resumed,
+    )
+    if rapid_test_statistics_path is not None:
+        paths["rapid_test_statistics_path"] = rapid_test_statistics_path
 
     if initial_states_path is None:
         initial_states_path = paths["initial_states"]

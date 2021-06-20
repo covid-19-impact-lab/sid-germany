@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
 
+from src.config import AFTER_EASTER
 from src.config import BLD
 from src.config import FAST_FLAG
 from src.config import SRC
-from src.config import SUMMER_SCENARIO_START
 from src.plotting.plotting import BLUE
 from src.plotting.plotting import BROWN
 from src.plotting.plotting import create_automatic_labels
@@ -33,8 +33,6 @@ _MODULE_DEPENDENCIES = {
 }
 
 NAMED_SCENARIOS = get_named_scenarios()
-
-AFTER_EASTER = pd.Timestamp("2021-04-06")
 
 SCHOOL_SCENARIOS = [
     "spring_educ_open_after_easter_without_tests",
@@ -221,16 +219,32 @@ PLOTS = {
         "plot_start": AFTER_EASTER - pd.Timedelta(days=14),
         "scenario_starts": ([(AFTER_EASTER, "Easter")]),
     },
-    "work_scenarios": {
+    "new_work_scenarios": {
         "title": "The Effect of Home Office and Work Rapid Tests on {outcome}",
         "scenarios": [
-            "summer_baseline",
-            "summer_strict_home_office_continue_testing",
-            "summer_strict_home_office_reduce_testing",
-            "summer_normal_home_office_reduce_testing",
+            "spring_baseline",
+            "spring_reduce_work_test_offers_to_23_pct_after_easter",
+            "spring_mandatory_work_rapid_tests_after_easter",
+            "spring_10_pct_less_work_in_person_after_easter",
+            "spring_10_pct_more_work_in_person_after_easter",
         ],
-        "colors": [BLUE, GREEN, ORANGE, RED],
-        "scenario_starts": [(SUMMER_SCENARIO_START, "scenario start")],
+        "colors": None,
+        "name_to_label": {
+            "spring_baseline": "baseline",
+            "spring_reduce_work_test_offers_to_23_pct_after_easter": "rapid tests as "
+            "in mid March",
+            "spring_mandatory_work_rapid_tests_after_easter": "mandatory rapid tests",
+            "spring_10_pct_less_work_in_person_after_easter": "10% less presence "
+            "at workplace",
+            "spring_10_pct_more_work_in_person_after_easter": "10% more presence\n"
+            "at workplace",
+        },
+        "plot_start": AFTER_EASTER,
+    },
+    "main_prediction": {
+        "title": "",
+        "scenarios": ["summer_baseline"],
+        "colors": [BLUE],
     },
     "add_single_rapid_test_chanel_to_pessimistic": {
         "title": "",
@@ -424,6 +438,11 @@ def task_plot_scenario_comparison(
         n_single_runs=0,
     )
     ax.set_xlim(xlims)
+
+    if "new_work_scenarios" in str(produces):
+        x, y, width, height = 0.0, -0.3, 1, 0.2
+        ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=3)
+    fig.tight_layout()
     fig.savefig(fig_path)
 
     # save with single run lines
@@ -439,6 +458,12 @@ def task_plot_scenario_comparison(
         n_single_runs=None,
     )
     ax_with_lines.set_xlim(xlims)
+    if "new_work_scenarios" in str(produces):
+        x, y, width, height = 0.0, -0.3, 1, 0.2
+        ax_with_lines.legend(
+            loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=3
+        )
+
     fig_with_lines.savefig(with_single_runs_path)
 
     # crop if necessary

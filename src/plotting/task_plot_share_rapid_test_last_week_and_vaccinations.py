@@ -82,3 +82,4 @@ def task_plot_share_rapid_test_last_week_and_vaccinations(depends_on, produces):
 
     fig, ax = style_plot(fig, ax)
     fig.savefig(produces)
+    plt.close()
