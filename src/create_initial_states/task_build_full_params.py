@@ -106,8 +106,8 @@ def task_create_full_params(depends_on, produces):
     params = _add_event_params(params)
 
     # seasonality parameter
-    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.2
-    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.3
+    params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.21
+    params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.42
 
     params = _convert_index_to_int_where_possible(params)
     assert params["value"].notnull().all(), "Params contains NaNs."
@@ -338,8 +338,8 @@ def _add_private_rapid_test_demand_fade_in_params(params):
     params.loc[(*loc, "2020-01-01"), "value"] = 0
     params.loc[(*loc, "2021-02-28"), "value"] = 0
     params.loc[(*loc, "2021-03-20"), "value"] = 0.1
-    params.loc[(*loc, "2021-03-31"), "value"] = 0.25
-    params.loc[(*loc, "2021-04-06"), "value"] = 0.25
+    params.loc[(*loc, "2021-03-31"), "value"] = 0.225
+    params.loc[(*loc, "2021-04-06"), "value"] = 0.225
     params.loc[(*loc, "2021-05-04"), "value"] = 0.63
     params.loc[(*loc, "2025-12-31"), "value"] = 0.63
 
@@ -424,5 +424,5 @@ def _add_event_params(params):
     params.loc[("events", "b117_cases_per_100_000", "2021-01-01"), "value"] = 0
     params.loc[
         ("events", "b117_cases_per_100_000", "2021-01-31"), "value"
-    ] = 0.985
+    ] = 0.986
     return params
