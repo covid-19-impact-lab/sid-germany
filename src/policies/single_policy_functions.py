@@ -81,7 +81,7 @@ def reduce_work_model(
             which contacts at work can still lead to infection.
             Must be smaller or equal to one. If a Series is supplied
             the index must be dates.
-        is_recurrent (bool): True if the contact model is recurernt
+        is_recurrent (bool): True if the contact model is recurrent
 
     """
     attend_multiplier = _process_multiplier(states, attend_multiplier, "attend")

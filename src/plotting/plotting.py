@@ -47,6 +47,21 @@ OUTCOME_TO_EMPIRICAL_LABEL = {
     "r_effective": "effective reproduction number as estimated by the RKI",
 }
 
+OUTCOME_TO_Y_LABEL = {
+    "newly_infected": "weekly total new cases per 100,000 inhabitants",
+    "new_known_case": "weekly reported new cases per 100,000 inhabitants",
+    "newly_deceased": "weekly deaths per 100,000 inhabitants",
+    "share_ever_rapid_test": "share of the population that has \n"
+    "ever done a rapid test",
+    "share_rapid_test_in_last_week": "share of the population that has done \na rapid "
+    "test within the last seven days",
+    "share_b117": "share of B.1.1.7 among new infections",
+    "share_doing_rapid_test_today": "share of the population doing "
+    "a rapid test per day",
+    "ever_vaccinated": "share of the population that has been vaccinated",
+    "r_effective": "effective reproduction number $R_t$",
+}
+
 
 def calculate_virus_strain_shares(results):
     """Create the weekly incidences from a list of simulation runs.
@@ -87,6 +102,7 @@ def plot_incidences(
     scenario_starts=None,
     fig=None,
     ax=None,
+    ylabel=None,
 ):
     """Plot incidences.
 
@@ -101,6 +117,7 @@ def plot_incidences(
             will plot all runs.
         scenario_starts (list, optional): the scenario start points. Each consists of a
             tuple of the date and a label.
+        ylabel (str, optional): Label of the y axis.
 
     Returns:
         fig, ax
@@ -148,12 +165,10 @@ def plot_incidences(
 
     fig, ax = style_plot(fig, ax)
     ax.set_title(title)
-    if "New Cases" in title or "New Deaths" in title:
-        ax.set_ylabel("smoothed weekly incidence")
-    elif "share" in title.lower():
-        ax.set_ylabel("share")
-    elif "Effective" in title:
-        ax.set_ylabel("$R_t$")
+
+    if ylabel is not None:
+        ax.set_ylabel(ylabel)
+
     x, y, width, height = 0.0, -0.3, 1, 0.2
     ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=2)
     fig.tight_layout()
@@ -189,6 +204,7 @@ def plot_share_known_cases(share_known_cases, title, groupby, plot_single_runs=F
 
     fig, ax = style_plot(fig, ax)
     ax.set_title(title)
+    ax.set_ylabel("share of infections that is confirmed\nthrough PCR tests")
 
     # Reduce legend to have each age group only once and move it to below the plot
     x, y, width, height = 0.0, -0.3, 1, 0.2
@@ -214,7 +230,7 @@ def plot_share_known_cases(share_known_cases, title, groupby, plot_single_runs=F
     return fig, ax
 
 
-def plot_group_time_series(df, title, rki=None):
+def plot_group_time_series(df, title, rki=None, ylabel=None):
     """Plot a time series by group with more than one run.
 
     Args:
@@ -223,6 +239,7 @@ def plot_group_time_series(df, title, rki=None):
         title (str): the title of the plot
         rki (pandas.Series, optional): Series with the RKI data. Must have the same
             index as df.
+        ylabel (str, optional): label of the y axis.
 
     """
     df = df.swaplevel().copy(deep=True)
@@ -249,6 +266,7 @@ def plot_group_time_series(df, title, rki=None):
             scenario_starts=None,
             fig=fig,
             ax=ax,
+            ylabel=ylabel,
         )
 
         if rki is not None:

@@ -115,5 +115,6 @@ def _plot_rapid_test_demand_shares(
             linewidth=3,
         )
     fig, ax = style_plot(fig, ax)
+    ax.set_ylabel("share of individuals complying with\nrapid test recommendation")
     fig.tight_layout()
     return fig

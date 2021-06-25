@@ -55,9 +55,16 @@ _MATPLOTLIB_RC_CONTEXT = {
 _ORDERED_CHANNELS = ["Rapid Tests", "Seasonality", "Vaccinations"]
 _ORDERED_RAPID_TEST_CHANNELS = ["Private", "Work", "School"]
 
+_ALL_CHANNEL_SCENARIOS_AVAILABLE = all(
+    i in _AVAILABLE_SCENARIOS for i in _CHANNEL_SCENARIOS_TO_MEMBERS
+)
+_ALL_RAPID_TEST_SCENARIOS_AVAILABLE = all(
+    i in _AVAILABLE_SCENARIOS for i in _RAPID_TEST_SCENARIOS_TO_MEMBERS
+)
+
 
 @pytask.mark.skipif(
-    not all(i in _AVAILABLE_SCENARIOS for i in _CHANNEL_SCENARIOS_TO_MEMBERS),
+    not _ALL_CHANNEL_SCENARIOS_AVAILABLE,
     reason="required scenarios are not available",
 )
 @pytask.mark.depends_on(
@@ -103,7 +110,7 @@ def task_plot_decomposition_of_infection_channels_in_spring(depends_on, produces
 
 
 @pytask.mark.skipif(
-    not all(i in _AVAILABLE_SCENARIOS for i in _RAPID_TEST_SCENARIOS_TO_MEMBERS),
+    not _ALL_RAPID_TEST_SCENARIOS_AVAILABLE,
     reason="required scenarios are not available",
 )
 @pytask.mark.depends_on(

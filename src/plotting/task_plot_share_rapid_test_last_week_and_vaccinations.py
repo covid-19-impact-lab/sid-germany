@@ -78,8 +78,9 @@ def task_plot_share_rapid_test_last_week_and_vaccinations(depends_on, produces):
 
     x, y, width, height = 0.0, -0.3, 1, 0.2
     ax.legend(loc="upper center", bbox_to_anchor=(x, y, width, height), ncol=2)
-    fig.tight_layout()
 
     fig, ax = style_plot(fig, ax)
+    ax.set_ylabel("population share")
+    fig.tight_layout()
     fig.savefig(produces)
     plt.close()

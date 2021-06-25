@@ -49,7 +49,7 @@ def task_plot_seasonality(depends_on, produces):
     )
 
     fig, ax = style_plot(fig, ax)
-    ax.set_title("Strong and Weak Seasonality Effects Over Time")
+    ax.set_ylabel("degree of infectiousness due to seasonality")
     fig.tight_layout()
     fig.savefig(produces, bbox_inches="tight")
     plt.close()
