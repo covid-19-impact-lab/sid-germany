@@ -23,18 +23,14 @@ DEMAND_SHARE_COLS = [
     "private_demand_share",
     "work_demand_share",
     "educ_demand_share",
+    # parts of the private demand share:
     "hh_demand",
     "sym_without_pcr_demand",
     "other_contact_demand",
 ]
 
 SHARE_INFECTED_COLS = [
-    "share_infected_among_private_demand",
-    "share_infected_among_work_demand",
-    "share_infected_among_educ_demand",
-    "share_infected_among_hh_demand",
-    "share_infected_among_sym_without_pcr_demand",
-    "share_infected_among_other_contact_demand",
+    f"share_infected_among_{col.replace('_share', '')}" for col in DEMAND_SHARE_COLS
 ]
 
 TABLE_PATH = BLD / "tables" / "rapid_test_statistics"

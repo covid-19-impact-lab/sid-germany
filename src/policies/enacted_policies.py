@@ -155,7 +155,7 @@ def _get_enacted_young_educ_policies(contact_models):
             => assume generous emergency care. This is errs on the side of reducing
                contacts too much.
 
-    - "end_april_until_pentecoast" (last updated 2021-05-22):
+    - "summer" (last updated 2021-05-22):
         - BY (https://bit.ly/3oF6Go3): normal until 165. emergency care above.
 
             Over the time frame the share of counties above 165 drops from 48% to 4%.
@@ -203,7 +203,7 @@ def _get_enacted_young_educ_policies(contact_models):
             generous_emergency_care_kwargs,
         ),
         (
-            "end_april_until_pentecoast",
+            "summer",
             VERY_LATE,
             reduce_educ_models,
             HYGIENE_MULTIPLIER,
@@ -349,8 +349,6 @@ def _get_enacted_school_policies(contact_models):
            to 2.5% between April 25th and May 15th. We assume A/B for everyone.
 
     - "june2021": (last updated May 22nd)
-        This period goes until the 20th of June where BW changes its policies.
-
         - BW: normal <50, A/B above primary from 50-100, A/B from 100-165
           (source: https://bit.ly/3hYtbDt).
         - BY: normal <50, A/B from 50 to 165 (https://bit.ly/2T6uupf).
