@@ -39,8 +39,8 @@ OUTCOME_TO_EMPIRICAL_LABEL = {
     "ever done a rapid test",
     "share_rapid_test_in_last_week": (
         "share of Germans reporting to have\n"
-        "done at least one self-administered\n"
-        "rapid test per week within the last 4 weeks"
+        "done at least one rapid test per week\n"
+        "within the last 4 weeks"
     ),
     "share_b117": "officially reported share of B.1.1.7",
     "ever_vaccinated": "share of Germans with first vaccination dose",
