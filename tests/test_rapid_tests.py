@@ -4,9 +4,12 @@ import pytest
 from src.testing.rapid_tests import _calculate_educ_rapid_test_demand
 from src.testing.rapid_tests import _calculate_other_meeting_rapid_test_demand
 from src.testing.rapid_tests import _calculate_own_symptom_rapid_test_demand
+from src.testing.rapid_tests import _calculate_weights
 from src.testing.rapid_tests import _calculate_work_rapid_test_demand
+from src.testing.rapid_tests import _create_rapid_test_statistics
 from src.testing.rapid_tests import _determine_if_hh_had_event
 from src.testing.rapid_tests import _get_eligible_educ_participants
+from src.testing.rapid_tests import _share_demanded_by_infected
 
 
 @pytest.fixture
@@ -244,3 +247,72 @@ def test_calculate_other_meeting_rapid_test_demand():
     # 0: non-complier, 1: recently tested, 2: no relevant contact, 3: test
     expected = pd.Series([False, False, False, True])
     pd.testing.assert_series_equal(res, expected)
+
+
+def test_share_demanded_by_infected():
+    # 1st: not infected. does not demand test -> should be ignored
+    # 2nd: not infected and demands a test -> enters denominator
+    # 3rd: infected and does not demand a test -> should be ignored
+    # 4th and 5th: infected and demand a test -> enter numerator and denominator
+    states = pd.DataFrame({"currently_infected": [False, False, True, True, True]})
+    weights = pd.DataFrame({"channel": [0, 0.5, 0.2, 1, 0.5]})
+    demand_by_channel = pd.DataFrame({"channel": [False, True, False, True, True]})
+    res = _share_demanded_by_infected(
+        demand_by_channel=demand_by_channel,
+        states=states,
+        weights=weights,
+        channel="channel",
+    )
+    expected = 1.5 / (0.5 + 1.5)
+    assert res == expected
+
+
+def test_calculate_weights():
+    demand_by_channel = pd.DataFrame(
+        {
+            "a": [False, False, True, True],
+            "b": [False, True, False, True],
+        }
+    )
+    expected = pd.DataFrame(
+        {
+            "a": [0, 0, 1, 0.5],
+            "b": [0, 1, 0, 0.5],
+        }
+    )
+    res = _calculate_weights(demand_by_channel)
+    assert expected.equals(res)
+
+
+def test_create_rapid_test_statistics():
+    date = pd.Timestamp("2021-04-26")
+    demand_by_channel = pd.DataFrame(
+        {
+            "a": [False, False, True, True, False, False, True, True],
+            "b": [False, True, False, True, False, True, False, True],
+        }
+    )
+    states = pd.DataFrame(
+        {
+            "currently_infected": [False, False, True, True, False, False, False, True],
+        }
+    )
+    res = _create_rapid_test_statistics(demand_by_channel, states, date)
+
+    # weights:
+    # a: 0, 0, 1, 0.5, 0, 0, 1, 0.5
+    # b: 0, 1, 0, 0.5, 0, 1, 0, 0.5
+
+    expected = pd.DataFrame(
+        {
+            0: {
+                "date": date,
+                "n_individuals": 8,
+                "share_with_rapid_test_through_a": 3 / 8,
+                "share_of_a_rapid_tests_demanded_by_infected": 2 / 3,
+                "share_with_rapid_test_through_b": 3 / 8,
+                "share_of_b_rapid_tests_demanded_by_infected": 1 / 3,
+            }
+        }
+    )
+    pd.testing.assert_frame_equal(expected, res, check_like=True)

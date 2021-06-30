@@ -19,18 +19,13 @@ _CSV_DEPENDENCIES = {
     for seed in range(SEEDS)
 }
 
-DEMAND_SHARE_COLS = [
-    "private_demand_share",
-    "work_demand_share",
-    "educ_demand_share",
-    # parts of the private demand share:
-    "hh_demand",
-    "sym_without_pcr_demand",
-    "other_contact_demand",
-]
+CHANNELS = ["private", "work", "educ", "hh", "sym_without_pcr", "other_contact"]
+
+
+DEMAND_SHARE_COLS = [f"share_with_rapid_test_through_{c}" for c in CHANNELS]
 
 SHARE_INFECTED_COLS = [
-    f"share_infected_among_{col.replace('_share', '')}" for col in DEMAND_SHARE_COLS
+    f"share_of_{c}_rapid_tests_demanded_by_infected" for c in CHANNELS
 ]
 
 TABLE_PATH = BLD / "tables" / "rapid_test_statistics"

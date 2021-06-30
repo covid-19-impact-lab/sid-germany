@@ -103,63 +103,24 @@ def rapid_test_demand(
     rapid_test_demand = work_demand | educ_demand | private_demand
 
     if save_path is not None:
-        df = pd.DataFrame(
+        demand_by_channel = pd.DataFrame(
             {
-                "private_demand": private_demand,
-                "work_demand": work_demand,
-                "educ_demand": educ_demand,
-                "hh_demand": hh_demand,
-                "sym_without_pcr_demand": sym_without_pcr_demand,
-                "other_contact_demand": other_contact_demand,
+                "private": private_demand,
+                "work": work_demand,
+                "educ": educ_demand,
+                "hh": hh_demand,
+                "sym_without_pcr": sym_without_pcr_demand,
+                "other_contact": other_contact_demand,
             }
         )
 
-        weights = df.div(df.sum(axis=1), axis=0).fillna(0)
-
-        shares = pd.Series(
-            {
-                "date": date,
-                "n_individuals": len(states),
-                "private_demand_share": weights["private_demand"].mean(),
-                "work_demand_share": weights["work_demand"].mean(),
-                "educ_demand_share": weights["educ_demand"].mean(),
-                "hh_demand": weights["hh_demand"].mean(),
-                "sym_without_pcr_demand": weights["sym_without_pcr_demand"].mean(),
-                "other_contact_demand": weights["other_contact_demand"].mean(),
-                #
-                "share_infected_among_private_demand": (
-                    states[private_demand]["currently_infected"]
-                    * weights.loc[private_demand, "private_demand"]
-                ).mean(),
-                "share_infected_among_work_demand": (
-                    states[work_demand]["currently_infected"]
-                    * weights.loc[work_demand, "work_demand"]
-                ).mean(),
-                "share_infected_among_educ_demand": (
-                    states[educ_demand]["currently_infected"]
-                    * weights.loc[educ_demand, "educ_demand"]
-                ).mean(),
-                "share_infected_among_hh_demand": (
-                    states[hh_demand]["currently_infected"]
-                    * weights.loc[hh_demand, "hh_demand"]
-                ).mean(),
-                "share_infected_among_sym_without_pcr_demand": (
-                    states[sym_without_pcr_demand]["currently_infected"]
-                    * weights.loc[sym_without_pcr_demand, "sym_without_pcr_demand"]
-                ).mean(),
-                "share_infected_among_other_contact_demand": (
-                    states[other_contact_demand]["currently_infected"]
-                    * weights.loc[other_contact_demand, "other_contact_demand"]
-                ).mean(),
-            }
+        shares = _create_rapid_test_statistics(
+            demand_by_channel=demand_by_channel, states=states, date=date
         )
-        shares = shares.to_frame()
-        shares.index.name = "index"
-        if not save_path.exists():
-            # with columns
+
+        if not save_path.exists():  # want to save with columns
             to_add = shares.T.to_csv()
-        else:
-            # without columns
+        else:  # want to save without columns
             to_add = shares.T.to_csv().split("\n", 1)[1]
         with open(save_path, "a") as f:
             f.write(to_add)
@@ -325,3 +286,89 @@ def _determine_if_hh_had_event(states):
     had_event_in_hh = is_event.groupby(states["hh_id"]).transform(np.any)
 
     return had_event_in_hh
+
+
+def _create_rapid_test_statistics(demand_by_channel, states, date):
+    """Calculate the rapid test statistics.
+
+    Args:
+        demand_by_channel (pandas.DataFrame): same index as states. Each column is one
+            channel through which rapid tests can be demanded.
+        states (pandas.DataFrame): sid states DataFrame.
+
+
+    Returns:
+        statistics (pandas.DataFrame): DataFrame with just one column named 0. The
+            index contains the date, the number of individuals and for each channel
+            the share of the population that demand a test through this channel, the
+            share of tests in each channel that are demanded by infected individuals.
+
+    """
+    weights = _calculate_weights(demand_by_channel)
+
+    statistics = {
+        "date": date,
+        "n_individuals": len(states),
+    }
+
+    for channel in demand_by_channel.columns:
+        statistics[f"share_with_rapid_test_through_{channel}"] = weights[channel].mean()
+        statistics[
+            f"share_of_{channel}_rapid_tests_demanded_by_infected"
+        ] = _share_demanded_by_infected(
+            demand_by_channel=demand_by_channel,
+            states=states,
+            weights=weights,
+            channel=channel,
+        )
+    statistics = pd.Series(statistics).to_frame()
+    statistics.index.name = "index"
+    return statistics
+
+
+def _share_demanded_by_infected(demand_by_channel, states, weights, channel):
+    """Calculate the share of *channel* tests that are demanded by infected individuals.
+
+    Args:
+        demand_by_channel (pandas.DataFrame): each individual is a row, each column is
+            a channel through which an individual may demand a rapid test. Cells are
+            True if the individual demanded a rapid test through this channel.
+        states (pandas.DataFrame): sid states DataFrame.
+        weights (pandas.DataFrame): columns and index are the same as in
+            demand_by_channel. Each cell is the share to which this individual demanded
+            a test through the particular channel.
+        channel (str): column name for which to calculate the share that is demanded by
+            infected individuals.
+
+    Returns:
+        share_demanded_by_infected (float): share of the rapid tests of a channel that
+            are demanded by infected individuals.
+
+    """
+    demanders = demand_by_channel[channel]
+    infected_demanders = demanders & states["currently_infected"]
+    total_demand = weights.loc[demanders, channel].sum()
+    infected_demand = weights.loc[infected_demanders, channel].sum()
+    share_demanded_by_infected = infected_demand / total_demand
+    return share_demanded_by_infected
+
+
+def _calculate_weights(demand_by_channel):
+    """Calculate to which share
+
+    Args:
+        demand_by_channel (pandas.DataFrame): each individual is a row, each column is
+            a channel through which an individual may demand a rapid test. Cells are
+            True if the individual demanded a rapid test through this channel.
+
+    Returns:
+        weights (pandas.DataFrame): columns and index are the same as in
+            demand_by_channel. Each cell is the share to which this individual demanded
+            a test through the particular channel. For example, if an individual has a
+            rapid test demand through both work and the household her weight in each of
+            the two channels is 0.5. If an individual does not a rapid test because of a
+            channel, her weight is 0.
+
+    """
+    weights = demand_by_channel.div(demand_by_channel.sum(axis=1), axis=0).fillna(0)
+    return weights
