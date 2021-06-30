@@ -27,7 +27,6 @@ dependencies:
   - pre-commit
   - pytask>=0.0.14
   - pytask-parallel
-  - pytask-latex
   - pytest
   - python-snappy
   - scipy
