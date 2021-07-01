@@ -317,6 +317,7 @@ def _create_rapid_test_statistics(demand_by_channel, states, date, params):
 
     for channel in demand_by_channel.columns:
         statistics[f"share_with_rapid_test_through_{channel}"] = weights[channel].mean()
+        statistics[f"n_rapid_tests_through_{channel}"] = weights[channel].sum()
         statistics[
             f"share_of_{channel}_rapid_tests_demanded_by_infected"
         ] = _share_demanded_by_infected(
@@ -353,6 +354,7 @@ def _create_rapid_test_statistics(demand_by_channel, states, date, params):
     # overall results
     receives_rapid_test = demand_by_channel.any(axis=1)
     statistics["share_with_rapid_test_for_any_reason"] = receives_rapid_test.mean()
+    statistics["n_rapid_tests_overall"] = receives_rapid_test.sum()
 
     # because we don't know the seed with which sample_test_outcome will be called
     # with, these results will not be exactly equal to the test outcomes in sid but the
@@ -445,7 +447,7 @@ def _calculate_true_positive_and_false_negatives(
     Returns:
         share_true_positive (float): share of the positive tests that are given to
             infected individuals.
-        share_false_negatives (float): share of the negative tests that are given to
+        share_false_negative (float): share of the negative tests that are given to
             infected individuals.
 
     """

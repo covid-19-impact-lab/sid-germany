@@ -346,6 +346,9 @@ def test_create_rapid_test_statistics(monkeypatch):
                 "share_with_rapid_test_through_b": 3 / 8,
                 "share_of_b_rapid_tests_demanded_by_infected": 1 / 3,
                 "share_with_rapid_test_for_any_reason": 0.75,
+                "n_rapid_tests_overall": 6,
+                "n_rapid_tests_through_a": 3,
+                "n_rapid_tests_through_b": 3,
                 # overall shares
                 "share_of_rapid_tests_that_are_true_positive": 0.5,
                 "share_of_rapid_tests_that_are_true_negative": 0.5,
