@@ -1,8 +1,10 @@
 """Functions for rapid tests."""
+import itertools
 import warnings
 
 import numpy as np
 import pandas as pd
+from sid.rapid_tests import _sample_test_outcome
 from sid.time import get_date
 
 from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
@@ -115,7 +117,7 @@ def rapid_test_demand(
         )
 
         shares = _create_rapid_test_statistics(
-            demand_by_channel=demand_by_channel, states=states, date=date
+            demand_by_channel=demand_by_channel, states=states, date=date, params=params
         )
 
         if not save_path.exists():  # want to save with columns
@@ -288,14 +290,16 @@ def _determine_if_hh_had_event(states):
     return had_event_in_hh
 
 
-def _create_rapid_test_statistics(demand_by_channel, states, date):
+def _create_rapid_test_statistics(demand_by_channel, states, date, params):
     """Calculate the rapid test statistics.
 
     Args:
         demand_by_channel (pandas.DataFrame): same index as states. Each column is one
             channel through which rapid tests can be demanded.
         states (pandas.DataFrame): sid states DataFrame.
-
+        date (pandas.Timestamp or str): date
+        params (pandas.DataFrame): parameter DataFrame that contains the sensitivity
+            and specificity of the rapid tests
 
     Returns:
         statistics (pandas.DataFrame): DataFrame with just one column named 0. The
@@ -321,6 +325,59 @@ def _create_rapid_test_statistics(demand_by_channel, states, date):
             weights=weights,
             channel=channel,
         )
+
+        # because we don't know the seed with which sample_test_outcome will be called
+        # with, these results will not be exactly equal to the test outcomes in sid but
+        # the differences should be negligible given our population size.
+        rapid_test_results = _sample_test_outcome(
+            states=states,
+            receives_rapid_test=demand_by_channel[channel],
+            params=params,
+            seed=itertools.count(93894),
+        )
+
+        (
+            share_true_positive,
+            share_false_negative,
+        ) = _calculate_true_positive_and_false_negatives(
+            states=states,
+            receives_rapid_test=demand_by_channel[channel],
+            rapid_test_results=rapid_test_results,
+        )
+        prefix = f"share_of_{channel}_rapid_tests_that_are_"
+        statistics[prefix + "true_positive"] = share_true_positive
+        statistics[prefix + "false_positive"] = 1 - share_true_positive
+        statistics[prefix + "true_negative"] = 1 - share_false_negative
+        statistics[prefix + "false_negative"] = share_false_negative
+
+    # overall results
+    receives_rapid_test = demand_by_channel.any(axis=1)
+    statistics["share_with_rapid_test_for_any_reason"] = receives_rapid_test.mean()
+
+    # because we don't know the seed with which sample_test_outcome will be called
+    # with, these results will not be exactly equal to the test outcomes in sid but the
+    # differences should be negligible given our population size.
+    rapid_test_results = _sample_test_outcome(
+        states=states,
+        receives_rapid_test=receives_rapid_test,
+        params=params,
+        seed=itertools.count(93894),
+    )
+
+    (
+        share_true_positive,
+        share_false_negative,
+    ) = _calculate_true_positive_and_false_negatives(
+        states=states,
+        receives_rapid_test=receives_rapid_test,
+        rapid_test_results=rapid_test_results,
+    )
+    prefix = "share_of_rapid_tests_that_are_"
+    statistics[prefix + "true_positive"] = share_true_positive
+    statistics[prefix + "false_positive"] = 1 - share_true_positive
+    statistics[prefix + "true_negative"] = 1 - share_false_negative
+    statistics[prefix + "false_negative"] = share_false_negative
+
     statistics = pd.Series(statistics).to_frame()
     statistics.index.name = "index"
     return statistics
@@ -372,3 +429,32 @@ def _calculate_weights(demand_by_channel):
     """
     weights = demand_by_channel.div(demand_by_channel.sum(axis=1), axis=0).fillna(0)
     return weights
+
+
+def _calculate_true_positive_and_false_negatives(
+    states, rapid_test_results, receives_rapid_test
+):
+    """Calculate the share that is tested true positive and false negative.
+
+    Args:
+        states (pandas.DataFrame): sid states DataFrame.
+        receives_rapid_test (pandas.Series): boolean Series with the same index as
+            states.
+        rapid_test_result (pandas.Series): boolean Series with
+
+    Returns:
+        share_true_positive (float): share of the positive tests that are given to
+            infected individuals.
+        share_false_negatives (float): share of the negative tests that are given to
+            infected individuals.
+
+    """
+    # reduce to the test takers
+    test_takers = states[receives_rapid_test]
+    tested_positive = rapid_test_results[receives_rapid_test]
+    tested_negative = ~rapid_test_results[receives_rapid_test]
+
+    share_true_positive = test_takers[tested_positive]["currently_infected"].mean()
+    share_false_negative = (test_takers[tested_negative]["currently_infected"]).mean()
+
+    return share_true_positive, share_false_negative
