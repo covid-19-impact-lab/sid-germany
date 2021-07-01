@@ -7,99 +7,89 @@ from src.config import BLD
 from src.config import PLOT_END_DATE
 from src.config import PLOT_SIZE
 from src.plotting.plotting import BLUE
+from src.plotting.plotting import GREEN
+from src.plotting.plotting import PURPLE
 from src.plotting.plotting import RED
 from src.plotting.plotting import style_plot
-from src.simulation.scenario_config import create_path_to_rapid_test_statistics
-from src.simulation.scenario_config import get_named_scenarios
-
-SEEDS = get_named_scenarios()["combined_baseline"]["n_seeds"]
-
-_CSV_DEPENDENCIES = {
-    seed: create_path_to_rapid_test_statistics("combined_baseline", seed)
-    for seed in range(SEEDS)
-}
-
-CHANNELS = ["private", "work", "educ", "hh", "sym_without_pcr", "other_contact"]
+from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
+from src.simulation.task_process_rapid_test_statistics import ALL_CHANNELS
+from src.simulation.task_process_rapid_test_statistics import DEMAND_SHARE_COLS
+from src.simulation.task_process_rapid_test_statistics import OTHER_COLS
+from src.simulation.task_process_rapid_test_statistics import SHARE_INFECTED_COLS
+from src.simulation.task_process_rapid_test_statistics import TYPES
 
 
-DEMAND_SHARE_COLS = [f"share_with_rapid_test_through_{c}" for c in CHANNELS]
+def _create_rapid_test_plot_parametrization():
+    signature = "depends_on, column, color, plot_single_runs, ylabel, produces"
 
-SHARE_INFECTED_COLS = [
-    f"share_of_{c}_rapid_tests_demanded_by_infected" for c in CHANNELS
-]
-
-TABLE_PATH = BLD / "tables" / "rapid_test_statistics"
-
-
-_CSV_PARAMETRIZATION = [
-    (column, TABLE_PATH / f"{column}.csv")
-    for column in DEMAND_SHARE_COLS + SHARE_INFECTED_COLS
-]
-
-
-@pytask.mark.skipif(SEEDS == 0, reason="combined_baseline did not run.")
-@pytask.mark.depends_on(_CSV_DEPENDENCIES)
-@pytask.mark.parametrize("column, produces", _CSV_PARAMETRIZATION)
-def task_process_rapid_test_statistics(depends_on, column, produces):
-    dfs = {
-        seed: pd.read_csv(path, parse_dates=["date"], index_col="date")
-        for seed, path in depends_on.items()
-    }
-    for df in dfs.values():
-        assert not df.index.duplicated().any(), (
-            "Duplicates in a rapid test statistic DataFrame's index. "
-            "The csv file must be deleted before every run."
-        )
-    df = pd.concat({seed: df[column] for seed, df in dfs.items()}, axis=1)
-    df["smoothed_mean"] = (
-        df.mean(axis=1).rolling(window=7, min_periods=1, center=False).mean()
-    )
-    df.to_csv(produces)
-
-
-_PLOT_PARAMETRIZATION = []
-for column in DEMAND_SHARE_COLS:
-    for plot_single_runs in [True, False]:
-        depends_on = TABLE_PATH / f"{column}.csv"
+    column_color_label = []
+    for column in DEMAND_SHARE_COLS:
         ylabel = "share of the population demanding a rapid test"
-        file_name = (
-            f"{column}_with_single_runs.pdf" if plot_single_runs else f"{column}.pdf"
-        )
-        produces = BLD / "figures" / "rapid_test_statistics" / file_name
-        spec = (depends_on, BLUE, plot_single_runs, ylabel, produces)
-        _PLOT_PARAMETRIZATION.append(spec)
-
-for column in SHARE_INFECTED_COLS:
-    for plot_single_runs in [True, False]:
-        depends_on = TABLE_PATH / f"{column}.csv"
+        column_color_label.append((column, BLUE, ylabel))
+    for column in SHARE_INFECTED_COLS:
         ylabel = "share of rapid tests demanded by infected individuals"
-        file_name = (
-            f"{column}_with_single_runs.pdf" if plot_single_runs else f"{column}.pdf"
-        )
+        column_color_label.append((column, RED, ylabel))
+    for typ in TYPES:
+        columns = [f"{typ}_rate_overall"] + [f"{typ}_rate_in_{c}" for c in ALL_CHANNELS]
+        for column in columns:
+            color = GREEN if "true" in typ else PURPLE
+            column_color_label.append((column, color, None))
+    for column in OTHER_COLS:
+        column_color_label.append((column, "k", None))
 
-        produces = BLD / "figures" / "rapid_test_statistics" / file_name
-        spec = (depends_on, RED, plot_single_runs, ylabel, produces)
-        _PLOT_PARAMETRIZATION.append(spec)
+    parametrization = []
+    for column, color, ylabel in column_color_label:
+        for plot_single_runs in [True, False]:
+            spec = _create_spec(
+                column=column,
+                plot_single_runs=plot_single_runs,
+                color=color,
+                ylabel=ylabel,
+            )
+            parametrization.append(spec)
+
+    return signature, parametrization
 
 
-@pytask.mark.parametrize(
-    "depends_on, color, plot_single_runs, ylabel, produces", _PLOT_PARAMETRIZATION
-)
+def _create_spec(column, plot_single_runs, color, ylabel=None):
+    depends_on = create_path_to_scenario_outcome_time_series(
+        "combined_baseline", column
+    )
+    if ylabel is None:
+        ylabel = column.replace("_", " ")
+    file_name = (
+        f"{column}_with_single_runs.pdf" if plot_single_runs else f"{column}.pdf"
+    )
+    produces = BLD / "figures" / "rapid_test_statistics" / file_name
+    spec = (depends_on, column, color, plot_single_runs, ylabel, produces)
+    return spec
+
+
+_PARAMETRIZATION = _create_rapid_test_plot_parametrization()
+
+
+@pytask.mark.parametrize(*_PARAMETRIZATION)
 def task_plot_rapid_test_statistics(
-    depends_on, color, plot_single_runs, ylabel, produces
+    depends_on, column, color, plot_single_runs, ylabel, produces
 ):
-    df = pd.read_csv(depends_on, index_col="date", parse_dates=["date"])
-    fig = _plot_df(df=df, color=color, plot_single_runs=plot_single_runs, ylabel=ylabel)
+    df = pd.read_pickle(depends_on)
+    fig = _plot_df(
+        df=df,
+        column=column,
+        color=color,
+        plot_single_runs=plot_single_runs,
+        ylabel=ylabel,
+    )
     fig.savefig(produces)
     plt.close()
 
 
-def _plot_df(df, color, plot_single_runs, ylabel):
+def _plot_df(df, column, color, plot_single_runs, ylabel):
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
     sns.lineplot(
-        x=df["smoothed_mean"].index,
-        y=df["smoothed_mean"],
+        x=df[column].index,
+        y=df[column],
         ax=ax,
         linewidth=4,
         color=color,
@@ -108,7 +98,7 @@ def _plot_df(df, color, plot_single_runs, ylabel):
 
     if plot_single_runs:
         for col in df.columns:
-            if col != "smoothed_mean":
+            if col != column:
                 sns.lineplot(
                     x=df.index,
                     y=df[col].rolling(window=7, min_periods=1, center=False).mean(),

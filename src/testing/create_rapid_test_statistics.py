@@ -59,15 +59,14 @@ def create_rapid_test_statistics(demand_by_channel, states, date, params):
             receives_rapid_test=demand_by_channel[channel],
             rapid_test_results=rapid_test_results,
         )
-        prefix = f"share_of_{channel}_rapid_tests_that_are_"
-        statistics[prefix + "true_positive"] = share_true_positive
-        statistics[prefix + "false_positive"] = 1 - share_true_positive
-        statistics[prefix + "true_negative"] = 1 - share_false_negative
-        statistics[prefix + "false_negative"] = share_false_negative
+        statistics[f"true_positive_rate_in_{channel}"] = share_true_positive
+        statistics[f"false_positive_rate_in_{channel}"] = 1 - share_true_positive
+        statistics[f"true_negative_rate_in_{channel}"] = 1 - share_false_negative
+        statistics[f"false_negative_rate_in_{channel}"] = share_false_negative
 
     # overall results
     receives_rapid_test = demand_by_channel.any(axis=1)
-    statistics["share_with_rapid_test_for_any_reason"] = receives_rapid_test.mean()
+    statistics["share_with_rapid_test"] = receives_rapid_test.mean()
     statistics["n_rapid_tests_overall"] = receives_rapid_test.sum()
 
     # because we don't know the seed with which sample_test_outcome will be called
@@ -88,11 +87,10 @@ def create_rapid_test_statistics(demand_by_channel, states, date, params):
         receives_rapid_test=receives_rapid_test,
         rapid_test_results=rapid_test_results,
     )
-    prefix = "share_of_rapid_tests_that_are_"
-    statistics[prefix + "true_positive"] = share_true_positive
-    statistics[prefix + "false_positive"] = 1 - share_true_positive
-    statistics[prefix + "true_negative"] = 1 - share_false_negative
-    statistics[prefix + "false_negative"] = share_false_negative
+    statistics["true_positive_rate_overall"] = share_true_positive
+    statistics["false_positive_rate_overall"] = 1 - share_true_positive
+    statistics["true_negative_rate_overall"] = 1 - share_false_negative
+    statistics["false_negative_rate_overall"] = share_false_negative
 
     statistics = pd.Series(statistics).to_frame()
     statistics.index.name = "index"

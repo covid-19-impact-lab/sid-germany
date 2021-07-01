@@ -21,8 +21,9 @@ def create_path_to_last_states_of_simulation(name, seed):
     return path
 
 
-def create_path_to_rapid_test_statistics(name, seed):
-    path = BLD / "tables" / f"{FAST_FLAG}_rapid_test_statistics_{name}_{seed}.csv"
+def create_path_to_raw_rapid_test_statistics(name, seed):
+    csv_name = f"{FAST_FLAG}_{name}_{seed}.csv"
+    path = BLD / "simulations" / "period_outputs" / "rapid_test_statistics" / csv_name
     return path
 
 
@@ -91,7 +92,7 @@ def get_named_scenarios():
 
     """
     if FAST_FLAG == "debug":
-        n_main_seeds = 1
+        n_main_seeds = 2
         n_other_seeds = 0
     elif FAST_FLAG == "verify":
         n_main_seeds = 30

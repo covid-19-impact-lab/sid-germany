@@ -8,7 +8,7 @@ from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
 from src.simulation.scenario_config import create_path_to_last_states_of_simulation
 from src.simulation.scenario_config import create_path_to_period_outputs_of_simulation
-from src.simulation.scenario_config import create_path_to_rapid_test_statistics
+from src.simulation.scenario_config import create_path_to_raw_rapid_test_statistics
 from src.simulation.scenario_config import get_named_scenarios
 
 
@@ -32,7 +32,7 @@ def _create_simulation_parametrization():
                 )
             }
             if specs.get("save_rapid_test_statistics", False):
-                rapid_test_statistics_path = create_path_to_rapid_test_statistics(
+                rapid_test_statistics_path = create_path_to_raw_rapid_test_statistics(
                     name, seed
                 )
                 produces["rapid_test_statistics"] = rapid_test_statistics_path
