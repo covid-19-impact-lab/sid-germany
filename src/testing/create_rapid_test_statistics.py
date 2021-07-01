@@ -44,7 +44,7 @@ def create_rapid_test_statistics(demand_by_channel, states, date, params):
 
         # because we don't know the seed with which sample_test_outcome will be called
         # with, these results will not be exactly equal to the test outcomes in sid but
-        # the differences should be negligible given our population size.
+        # most channels easily exceed the number of tests for randomness to be relevant
         rapid_test_results = _sample_test_outcome(
             states=states,
             receives_rapid_test=demand_by_channel[channel],
@@ -70,9 +70,8 @@ def create_rapid_test_statistics(demand_by_channel, states, date, params):
     statistics["share_with_rapid_test"] = receives_rapid_test.mean()
     statistics["n_rapid_tests_overall"] = receives_rapid_test.sum()
 
-    # because we don't know the seed with which sample_test_outcome will be called
-    # with, these results will not be exactly equal to the test outcomes in sid but the
-    # differences should be negligible given our population size.
+    # no need to worry about the impact of the seed. After Feb 2021 the number of tests
+    # always 1000 every day and exceeds 100,000 per day after mid April
     rapid_test_results = _sample_test_outcome(
         states=states,
         receives_rapid_test=receives_rapid_test,

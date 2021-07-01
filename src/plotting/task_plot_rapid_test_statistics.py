@@ -107,7 +107,7 @@ def _plot_df(df, column, color, plot_single_runs, ylabel):
                     color=color,
                     alpha=0.6,
                 )
-    ax.set_xlim(pd.Timestamp("2021-03-15"), pd.Timestamp(PLOT_END_DATE))
+    ax.set_xlim(pd.Timestamp("2021-03-01"), pd.Timestamp(PLOT_END_DATE))
     fig, ax = style_plot(fig, ax)
 
     ax.set_ylabel(ylabel)
