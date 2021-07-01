@@ -104,25 +104,25 @@ def test_create_rapid_test_statistics(monkeypatch):
                 "share_of_a_rapid_tests_demanded_by_infected": 2 / 3,
                 "share_with_rapid_test_through_b": 3 / 8,
                 "share_of_b_rapid_tests_demanded_by_infected": 1 / 3,
-                "share_with_rapid_test_for_any_reason": 0.75,
+                "share_with_rapid_test": 0.75,
                 "n_rapid_tests_overall": 6,
                 "n_rapid_tests_through_a": 3,
                 "n_rapid_tests_through_b": 3,
                 # overall shares
-                "share_of_rapid_tests_that_are_true_positive": 0.5,
-                "share_of_rapid_tests_that_are_true_negative": 0.5,
-                "share_of_rapid_tests_that_are_false_negative": 0.5,
-                "share_of_rapid_tests_that_are_false_positive": 0.5,
+                "true_positive_rate_overall": 0.5,
+                "true_negative_rate_overall": 0.5,
+                "false_negative_rate_overall": 0.5,
+                "false_positive_rate_overall": 0.5,
                 # shares in a
-                "share_of_a_rapid_tests_that_are_true_positive": 0.5,
-                "share_of_a_rapid_tests_that_are_true_negative": 0.0,
-                "share_of_a_rapid_tests_that_are_false_negative": 1.0,
-                "share_of_a_rapid_tests_that_are_false_positive": 0.5,
+                "true_positive_rate_in_a": 0.5,
+                "true_negative_rate_in_a": 0.0,
+                "false_negative_rate_in_a": 1.0,
+                "false_positive_rate_in_a": 0.5,
                 # shares in b
-                "share_of_b_rapid_tests_that_are_true_positive": np.nan,
-                "share_of_b_rapid_tests_that_are_true_negative": 0.5,
-                "share_of_b_rapid_tests_that_are_false_negative": 0.5,
-                "share_of_b_rapid_tests_that_are_false_positive": np.nan,
+                "true_positive_rate_in_b": np.nan,
+                "true_negative_rate_in_b": 0.5,
+                "false_negative_rate_in_b": 0.5,
+                "false_positive_rate_in_b": np.nan,
             }
         }
     )

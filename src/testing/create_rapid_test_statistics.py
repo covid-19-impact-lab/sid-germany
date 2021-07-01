@@ -1,5 +1,6 @@
 import itertools
 
+import numpy as np
 import pandas as pd
 from sid.rapid_tests import _sample_test_outcome
 
@@ -120,7 +121,10 @@ def _share_demanded_by_infected(demand_by_channel, states, weights, channel):
     infected_demanders = demanders & states["currently_infected"]
     total_demand = weights.loc[demanders, channel].sum()
     infected_demand = weights.loc[infected_demanders, channel].sum()
-    share_demanded_by_infected = infected_demand / total_demand
+    if total_demand > 0:
+        share_demanded_by_infected = infected_demand / total_demand
+    else:
+        share_demanded_by_infected = np.nan
     return share_demanded_by_infected
 
 
