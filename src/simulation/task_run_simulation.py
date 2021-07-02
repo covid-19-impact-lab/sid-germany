@@ -25,6 +25,9 @@ def _create_simulation_parametrization():
     for name, specs in named_scenarios.items():
         is_resumed = specs.get("is_resumed", "fall")
         save_last_states = specs.get("save_last_states", False)
+        rapid_test_statistics_input_path = specs.get(
+            "rapid_test_statistics_input_path", None
+        )
         for seed in range(specs["n_seeds"]):
             produces = {
                 "period_outputs": create_path_to_period_outputs_of_simulation(
@@ -52,6 +55,7 @@ def _create_simulation_parametrization():
             depends_on = get_simulation_dependencies(
                 debug=FAST_FLAG == "debug",
                 is_resumed=is_resumed,
+                rapid_test_statistics_input_path=rapid_test_statistics_input_path,
             )
             if is_resumed:
                 depends_on["initial_states"] = create_path_to_last_states_of_simulation(

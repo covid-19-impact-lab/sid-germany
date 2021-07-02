@@ -34,6 +34,7 @@ def load_simulation_inputs(
     initial_states_path=None,
     is_resumed=False,
     rapid_test_statistics_path=None,
+    rapid_test_statistics_input_path=None,
 ):
     """Load the simulation inputs.
 
@@ -59,6 +60,10 @@ def load_simulation_inputs(
             that case no initial conditions are created
         rapid_test_statistics_path (Path, optional): where to save rapid test
             statistics.
+        rapid_test_statistics_input_path (pathlib.Path, str or None): Path to the rapid
+            test statistics that are used by the rapid test model. None if no rapid test
+            statistics are used.
+
 
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
@@ -96,6 +101,7 @@ def load_simulation_inputs(
     paths = get_simulation_dependencies(
         debug=debug,
         is_resumed=is_resumed,
+        rapid_test_statistics_input_path=rapid_test_statistics_input_path,
     )
     if rapid_test_statistics_path is not None:
         paths["rapid_test_statistics_path"] = rapid_test_statistics_path
@@ -238,7 +244,7 @@ def load_simulation_inputs(
     return simulation_inputs
 
 
-def get_simulation_dependencies(debug, is_resumed):
+def get_simulation_dependencies(debug, is_resumed, rapid_test_statistics_input_path):
     """Collect paths on which the simulation depends.
 
     This contains both paths to python modules and data paths.
@@ -249,8 +255,11 @@ def get_simulation_dependencies(debug, is_resumed):
 
     Returns:
         paths (dict): Dictionary with the dependencies for the simulation.
-        is_resumed (bool, optional): Whether the simulation is a resumed simulation.
-            If False the path to the initial states from BLD / "data" are given.
+        is_resumed (bool): Whether the simulation is a resumed simulation. If False the
+            path to the initial states from BLD / "data" are given.
+        rapid_test_statistics_input_path (pathlib.Path, str or None): Path to the
+            rapid test statistics that are used by the rapid test model. None if no
+            rapid test statistics are used.
 
     """
     out = {
@@ -312,6 +321,9 @@ def get_simulation_dependencies(debug, is_resumed):
             out["initial_states"] = BLD / "data" / "debug_initial_states.parquet"
         else:
             out["initial_states"] = BLD / "data" / "initial_states.parquet"
+
+    if rapid_test_statistics_input_path is not None:
+        out["rapid_test_statistics_input_path"] = rapid_test_statistics_input_path
 
     return out
 
