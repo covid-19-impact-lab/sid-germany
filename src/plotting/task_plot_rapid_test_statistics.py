@@ -11,7 +11,9 @@ from src.plotting.plotting import GREEN
 from src.plotting.plotting import PURPLE
 from src.plotting.plotting import RED
 from src.plotting.plotting import style_plot
-from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
+from src.simulation.scenario_config import (
+    create_path_to_rapid_test_statistic_time_series,
+)
 from src.simulation.task_process_rapid_test_statistics import ALL_CHANNELS
 from src.simulation.task_process_rapid_test_statistics import DEMAND_SHARE_COLS
 from src.simulation.task_process_rapid_test_statistics import OTHER_COLS
@@ -52,7 +54,7 @@ def _create_rapid_test_plot_parametrization():
 
 
 def _create_spec(column, plot_single_runs, color, ylabel=None):
-    depends_on = create_path_to_scenario_outcome_time_series(
+    depends_on = create_path_to_rapid_test_statistic_time_series(
         "combined_baseline", column
     )
     if ylabel is None:

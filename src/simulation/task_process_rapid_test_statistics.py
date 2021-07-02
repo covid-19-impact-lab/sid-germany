@@ -2,8 +2,10 @@ import pandas as pd
 import pytask
 
 from src.config import BLD
+from src.simulation.scenario_config import (
+    create_path_to_rapid_test_statistic_time_series,
+)
 from src.simulation.scenario_config import create_path_to_raw_rapid_test_statistics
-from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_named_scenarios
 
 _N_SEEDS = get_named_scenarios()["combined_baseline"]["n_seeds"]
@@ -36,12 +38,15 @@ OTHER_COLS = [f"n_rapid_tests_through_{c}" for c in ALL_CHANNELS] + [
 ]
 
 
-ALL_COLUMNS = (
+RAPID_TEST_STATISTICS = (
     DEMAND_SHARE_COLS + SHARE_INFECTED_COLS + SHARE_CORRECT_AND_FALSE_COLS + OTHER_COLS
 )
 _PARAMETRIZATION = [
-    (column, create_path_to_scenario_outcome_time_series("combined_baseline", column))
-    for column in ALL_COLUMNS
+    (
+        column,
+        create_path_to_rapid_test_statistic_time_series("combined_baseline", column),
+    )
+    for column in RAPID_TEST_STATISTICS
 ]
 
 
@@ -69,7 +74,7 @@ def task_check_that_a_table_was_created_for_each_rapid_test_statistic(depends_on
     to_skip = ["date", "n_individuals", "Unnamed: 0"]
     should_have_a_table = [x for x in statistics_saved_by_sid if x not in to_skip]
     assert set(should_have_a_table) == set(
-        ALL_COLUMNS
+        RAPID_TEST_STATISTICS
     ), "Some rapid test statistic columns that should have a table do not."
 
 

@@ -52,6 +52,11 @@ def create_path_to_scenario_outcome_time_series(scenario_name, entry):
     return BLD / "simulations" / "time_series" / scenario_name / file_name
 
 
+def create_path_to_rapid_test_statistic_time_series(scenario_name, entry):
+    file_name = f"{FAST_FLAG}_{entry}.pkl"
+    return BLD / "simulations" / "time_series" / scenario_name / file_name
+
+
 def create_path_to_share_known_cases_plot(name, groupby):
     if groupby is not None:
         fig_name = f"{FAST_FLAG}_{name}_by_{groupby}.pdf"
