@@ -9,6 +9,53 @@ from src.testing.create_rapid_test_statistics import create_rapid_test_statistic
 from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
 
 
+def random_rapid_test_demand(
+    receives_rapid_test,  # noqa: U100
+    states,
+    params,
+    contacts,  # noqa: U100
+    seed,
+    rapid_test_shares,
+    refuser_share,
+    save_path=None,
+):
+    """Distribute rapid tests among the non refusers completely randomly."""
+    np.random.seed(seed)
+    date = get_date(states)
+
+    willing_to_be_tested = states[states["rapid_test_compliance"] >= refuser_share]
+    # upscale the rapid_test_share to reach the target despite refusers
+    share_to_be_tested = rapid_test_shares[date] / (1 - refuser_share)
+    to_be_tested = np.random.choice(
+        a=[True, False],
+        size=len(willing_to_be_tested),
+        p=[share_to_be_tested, 1 - share_to_be_tested],
+    )
+    to_test_indices = willing_to_be_tested[to_be_tested].index
+    rapid_test_demand = pd.Series(False, index=states.index)
+    rapid_test_demand[to_test_indices] = True
+
+    if save_path is not None:
+        demand_by_channel = pd.DataFrame(
+            {
+                "random": rapid_test_demand,
+            }
+        )
+
+        shares = create_rapid_test_statistics(
+            demand_by_channel=demand_by_channel, states=states, date=date, params=params
+        )
+
+        if not save_path.exists():  # want to save with columns
+            to_add = shares.T.to_csv()
+        else:  # want to save without columns
+            to_add = shares.T.to_csv().split("\n", 1)[1]
+        with open(save_path, "a") as f:
+            f.write(to_add)
+
+    return rapid_test_demand
+
+
 def rapid_test_demand(
     receives_rapid_test,  # noqa: U100
     states,
