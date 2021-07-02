@@ -14,11 +14,12 @@ from src.plotting.plotting import style_plot
 from src.simulation.scenario_config import (
     create_path_to_rapid_test_statistic_time_series,
 )
-from src.simulation.task_process_rapid_test_statistics import ALL_CHANNELS
 from src.simulation.task_process_rapid_test_statistics import DEMAND_SHARE_COLS
 from src.simulation.task_process_rapid_test_statistics import OTHER_COLS
+from src.simulation.task_process_rapid_test_statistics import (
+    SHARE_CORRECT_AND_FALSE_COLS,
+)
 from src.simulation.task_process_rapid_test_statistics import SHARE_INFECTED_COLS
-from src.simulation.task_process_rapid_test_statistics import TYPES
 
 
 def _create_rapid_test_plot_parametrization():
@@ -31,11 +32,9 @@ def _create_rapid_test_plot_parametrization():
     for column in SHARE_INFECTED_COLS:
         ylabel = "share of rapid tests demanded by infected individuals"
         column_color_label.append((column, RED, ylabel))
-    for typ in TYPES:
-        columns = [f"{typ}_rate_overall"] + [f"{typ}_rate_in_{c}" for c in ALL_CHANNELS]
-        for column in columns:
-            color = GREEN if "true" in typ else PURPLE
-            column_color_label.append((column, color, None))
+    for column in SHARE_CORRECT_AND_FALSE_COLS:
+        color = GREEN if "true" in column else PURPLE
+        column_color_label.append((column, color, None))
     for column in OTHER_COLS:
         column_color_label.append((column, "k", None))
 
