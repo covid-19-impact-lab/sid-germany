@@ -315,9 +315,12 @@ def get_named_scenarios():
         "spring_with_completely_random_rapid_tests": {
             "sim_input_scenario": "completely_random_rapid_tests",
             "params_scenario": "baseline",
-            "rapid_test_statistics_input_path": create_path_to_rapid_test_statistic_time_series(  # noqa: E501
-                "combined_baseline", "share_with_rapid_test"
-            ),
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_with_random_rapid_tests_with_30pct_refusers": {
+            "sim_input_scenario": "random_rapid_tests_with_30pct_refusers",
+            "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },

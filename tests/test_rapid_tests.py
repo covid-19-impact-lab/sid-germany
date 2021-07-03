@@ -8,7 +8,7 @@ from src.testing.rapid_tests import _calculate_own_symptom_rapid_test_demand
 from src.testing.rapid_tests import _calculate_work_rapid_test_demand
 from src.testing.rapid_tests import _determine_if_hh_had_event
 from src.testing.rapid_tests import _get_eligible_educ_participants
-from src.testing.rapid_tests import random_rapid_test_demand
+from src.testing.rapid_tests import _randomize_rapid_tests
 
 
 @pytest.fixture
@@ -251,17 +251,13 @@ def test_calculate_other_meeting_rapid_test_demand():
 def test_random_rapid_test_demand():
     states = pd.DataFrame({"rapid_test_compliance": [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]})
     states["date"] = pd.Timestamp("2021-07-01")
-    rapid_test_shares = pd.Series(0.8, index=[pd.Timestamp("2021-07-01")])
+    target_share = 0.8
 
-    res = random_rapid_test_demand(
+    res = _randomize_rapid_tests(
         states=states,
-        rapid_test_shares=rapid_test_shares,
-        params=None,
-        receives_rapid_test=None,
-        contacts=None,
+        target_share_to_be_tested=target_share,
         seed=333,
-        refuser_share=0.2,
-        save_path=None,
+        share_refuser=0.2,
     )
 
     expected = pd.Series([False, True, True, True, True, True])
@@ -271,18 +267,12 @@ def test_random_rapid_test_demand():
 def test_random_rapid_test_demand_lln():
     np.random.seed(11484)
     states = pd.DataFrame({"rapid_test_compliance": np.random.uniform(size=100_000)})
-    states["date"] = pd.Timestamp("2021-07-01")
-    rapid_test_shares = pd.Series(0.6, index=[pd.Timestamp("2021-07-01")])
 
-    res = random_rapid_test_demand(
+    res = _randomize_rapid_tests(
         states=states,
-        rapid_test_shares=rapid_test_shares,
-        params=None,
-        receives_rapid_test=None,
-        contacts=None,
+        target_share_to_be_tested=0.6,
         seed=333,
-        refuser_share=0.15,
-        save_path=None,
+        share_refuser=0.15,
     )
     assert not res[states["rapid_test_compliance"] < 0.15].any()
     assert res.mean() == pytest.approx(0.6, abs=0.001)

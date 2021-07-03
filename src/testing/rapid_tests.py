@@ -9,60 +9,15 @@ from src.testing.create_rapid_test_statistics import create_rapid_test_statistic
 from src.testing.shared import get_piecewise_linear_interpolation_for_one_day
 
 
-def random_rapid_test_demand(
-    receives_rapid_test,  # noqa: U100
-    states,
-    params,
-    contacts,  # noqa: U100
-    seed,
-    rapid_test_shares,
-    refuser_share,
-    save_path=None,
-):
-    """Distribute rapid tests among the non refusers completely randomly."""
-    np.random.seed(seed)
-    date = get_date(states)
-
-    willing_to_be_tested = states[states["rapid_test_compliance"] >= refuser_share]
-    # upscale the rapid_test_share to reach the target despite refusers
-    share_to_be_tested = rapid_test_shares[date] / (1 - refuser_share)
-    to_be_tested = np.random.choice(
-        a=[True, False],
-        size=len(willing_to_be_tested),
-        p=[share_to_be_tested, 1 - share_to_be_tested],
-    )
-    to_test_indices = willing_to_be_tested[to_be_tested].index
-    rapid_test_demand = pd.Series(False, index=states.index)
-    rapid_test_demand[to_test_indices] = True
-
-    if save_path is not None:
-        demand_by_channel = pd.DataFrame(
-            {
-                "random": rapid_test_demand,
-            }
-        )
-
-        shares = create_rapid_test_statistics(
-            demand_by_channel=demand_by_channel, states=states, date=date, params=params
-        )
-
-        if not save_path.exists():  # want to save with columns
-            to_add = shares.T.to_csv()
-        else:  # want to save without columns
-            to_add = shares.T.to_csv().split("\n", 1)[1]
-        with open(save_path, "a") as f:
-            f.write(to_add)
-
-    return rapid_test_demand
-
-
 def rapid_test_demand(
     receives_rapid_test,  # noqa: U100
     states,
-    params,  # noqa: U100
+    params,
     contacts,
-    seed,  # noqa: U100
+    seed,
     save_path=None,
+    randomize=False,
+    share_refuser=None,
 ):
     """Assign rapid tests to group.
 
@@ -73,6 +28,9 @@ def rapid_test_demand(
 
     Lastly, household members of individuals with symptoms, a positive PCR test
     or a positive rapid test demand a rapid test with 85% probability.
+
+    If randomize is True the calculated demand is distributed randomly in the entire
+    population (excluding a share of refusers).
 
     """
     date = get_date(states)
@@ -150,6 +108,19 @@ def rapid_test_demand(
     private_demand = hh_demand | sym_without_pcr_demand | other_contact_demand
     rapid_test_demand = work_demand | educ_demand | private_demand
 
+    if randomize:
+        assert (
+            share_refuser is not None
+        ), "You must specify a share of individuals that refuse to take a rapid test"
+
+        target_share_to_be_tested = rapid_test_demand.mean()
+        rapid_test_demand = _randomize_rapid_tests(
+            states=states,
+            target_share_to_be_tested=target_share_to_be_tested,
+            share_refuser=share_refuser,
+            seed=seed,
+        )
+
     if save_path is not None:
         demand_by_channel = pd.DataFrame(
             {
@@ -161,6 +132,8 @@ def rapid_test_demand(
                 "other_contact": other_contact_demand,
             }
         )
+        if randomize:
+            demand_by_channel["random"] = rapid_test_demand
 
         shares = create_rapid_test_statistics(
             demand_by_channel=demand_by_channel, states=states, date=date, params=params
@@ -172,6 +145,7 @@ def rapid_test_demand(
             to_add = shares.T.to_csv().split("\n", 1)[1]
         with open(save_path, "a") as f:
             f.write(to_add)
+
     return rapid_test_demand
 
 
@@ -334,3 +308,22 @@ def _determine_if_hh_had_event(states):
     had_event_in_hh = is_event.groupby(states["hh_id"]).transform(np.any)
 
     return had_event_in_hh
+
+
+def _randomize_rapid_tests(states, target_share_to_be_tested, share_refuser, seed):
+    np.random.seed(seed)
+    # upscale the rapid_test_share to reach the target despite refusers
+    willing_to_be_tested = states[states["rapid_test_compliance"] >= share_refuser]
+    test_share_among_compliers = target_share_to_be_tested / (1 - share_refuser)
+    to_be_tested = np.random.choice(
+        a=[True, False],
+        size=len(willing_to_be_tested),
+        p=[
+            test_share_among_compliers,
+            1 - test_share_among_compliers,
+        ],
+    )
+    to_test_indices = willing_to_be_tested[to_be_tested].index
+    rapid_test_demand = pd.Series(False, index=states.index)
+    rapid_test_demand[to_test_indices] = True
+    return rapid_test_demand

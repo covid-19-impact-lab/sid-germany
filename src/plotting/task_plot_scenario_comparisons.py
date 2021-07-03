@@ -265,8 +265,12 @@ PLOTS = {
     },
     "random_rapid_tests_vs_baseline": {
         "title": "",
-        "scenarios": ["spring_baseline", "spring_with_completely_random_rapid_tests"],
-        "colors": [BLUE, RED],
+        "scenarios": [
+            "spring_baseline",
+            "spring_with_completely_random_rapid_tests",
+            "spring_with_random_rapid_tests_with_30pct_refusers",
+        ],
+        "colors": [BLUE, RED, PURPLE],
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
