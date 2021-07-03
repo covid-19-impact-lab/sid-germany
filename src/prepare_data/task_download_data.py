@@ -49,9 +49,9 @@ PARAMETRIZED_DOWNLOADS = [
         BLD / "data" / "raw_time_series" / "stringency_data.csv",
     ),
     (
-        "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/"
-        "Nowcasting_Zahlen.xlsx?__blob=publicationFile",
-        BLD / "data" / "raw_time_series" / "reproduction_number.xlsx",
+        "https://raw.githubusercontent.com/robert-koch-institut/SARS-CoV-2-Nowcasting_"
+        "und_-R-Schaetzung/main/Nowcast_R_aktuell.csv",
+        BLD / "data" / "raw_time_series" / "reproduction_number.csv",
     ),
 ]
 
