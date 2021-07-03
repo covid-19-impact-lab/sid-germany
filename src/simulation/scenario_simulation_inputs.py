@@ -34,6 +34,7 @@ from src.policies.policy_tools import remove_work_policies
 from src.policies.policy_tools import shorten_policies
 from src.policies.policy_tools import split_policies
 from src.testing.rapid_test_reactions import rapid_test_reactions
+from src.testing.rapid_tests import random_rapid_test_demand
 from src.testing.rapid_tests import rapid_test_demand
 
 
@@ -76,6 +77,42 @@ def _baseline_rapid_test_models_with_save_inputs(paths, fixed_inputs):  # noqa: 
         }
     }
     return rapid_test_models
+
+
+# ================================================================================
+
+
+def completely_random_rapid_tests(paths, fixed_inputs):
+    scenario_inputs = _scenario_with_random_rapid_tests(
+        paths=paths, fixed_inputs=fixed_inputs, refuser_share=0.0
+    )
+    return scenario_inputs
+
+
+def _scenario_with_random_rapid_tests(paths, fixed_inputs, refuser_share):
+    save_path = paths.get("rapid_test_statistics_path", None)
+    rapid_test_path = paths["rapid_test_statistics_input_path"]
+    rapid_test_shares = pd.read_pickle(rapid_test_path)["share_with_rapid_test"]
+    scenario_inputs = {
+        "contact_policies": _baseline_policies(fixed_inputs),
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    scenario_inputs["rapid_test_models"] = {
+        "random_rapid_test_demand": {
+            "model": partial(
+                random_rapid_test_demand,
+                save_path=save_path,
+                rapid_test_shares=rapid_test_shares,
+                refuser_share=refuser_share,
+            ),
+            "start": "2021-01-01",
+            "end": VERY_LATE,
+        }
+    }
+    return scenario_inputs
 
 
 # ================================================================================

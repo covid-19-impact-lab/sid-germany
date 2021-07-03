@@ -263,6 +263,11 @@ PLOTS = {
             "spring_without_work_and_private_rapid_tests": "just school rapid tests",
         },
     },
+    "random_rapid_tests_vs_baseline": {
+        "title": "",
+        "scenarios": ["spring_baseline", "spring_with_completely_random_rapid_tests"],
+        "colors": [BLUE, RED],
+    },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
 

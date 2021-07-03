@@ -73,13 +73,14 @@ def _create_simulation_parametrization():
                 500 + 100_000 * seed,
                 is_resumed,
                 rapid_test_statistics_path,
+                rapid_test_statistics_input_path,
             )
             scenarios.append(spec_tuple)
 
     signature = (
         "depends_on, sim_input_scenario, params_scenario, "
         + "start_date, end_date, save_last_states, produces, seed, "
-        + "is_resumed, rapid_test_statistics_path"
+        + "is_resumed, rapid_test_statistics_path, rapid_test_statistics_input_path"
     )
     return signature, scenarios
 
@@ -99,6 +100,7 @@ def task_simulate_scenario(
     seed,
     is_resumed,
     rapid_test_statistics_path,
+    rapid_test_statistics_input_path,
 ):
     simulation_kwargs = load_simulation_inputs(
         scenario=sim_input_scenario,
@@ -110,6 +112,7 @@ def task_simulate_scenario(
         initial_states_path=depends_on["initial_states"],
         is_resumed=is_resumed,
         rapid_test_statistics_path=rapid_test_statistics_path,
+        rapid_test_statistics_input_path=rapid_test_statistics_input_path,
     )
     params = load_params(params_scenario)
 

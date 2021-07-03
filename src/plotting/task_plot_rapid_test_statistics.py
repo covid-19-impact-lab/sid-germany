@@ -31,9 +31,9 @@ def _create_rapid_test_plot_parametrization():
         column_color_label.append((column, BLUE, ylabel))
     for column in SHARE_INFECTED_COLS:
         ylabel = "share of rapid tests demanded by infected individuals"
-        column_color_label.append((column, RED, ylabel))
+        column_color_label.append((column, PURPLE, ylabel))
     for column in SHARE_CORRECT_AND_FALSE_COLS:
-        color = GREEN if "true" in column else PURPLE
+        color = GREEN if "true" in column else RED
         column_color_label.append((column, color, None))
     for column in OTHER_COLS:
         column_color_label.append((column, "k", None))
