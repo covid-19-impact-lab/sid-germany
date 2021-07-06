@@ -108,6 +108,7 @@ def test_create_rapid_test_statistics(monkeypatch):
                 "n_rapid_tests_overall": 6,
                 "n_rapid_tests_through_a": 3,
                 "n_rapid_tests_through_b": 3,
+                "false_positive_rate_in_population": 1 / 8,
                 # overall shares
                 "true_positive_rate_overall": 0.5,
                 "true_negative_rate_overall": 0.5,
@@ -147,6 +148,7 @@ def test_calculate_true_positive_and_false_negatives():
     (
         res_share_true_positive,
         res_share_false_negative,
+        res_false_positive_rate_in_population,
     ) = _calculate_true_positive_and_false_negatives(
         states=states,
         rapid_test_results=rapid_test_results,
@@ -155,3 +157,4 @@ def test_calculate_true_positive_and_false_negatives():
 
     assert res_share_true_positive == 1 / 2  # 1 and 3 tested positive, 1 is infected
     assert res_share_false_negative == 2 / 3  # 2,4,5 tested negative, 4, 5 infected
+    assert res_false_positive_rate_in_population == 1 / 6

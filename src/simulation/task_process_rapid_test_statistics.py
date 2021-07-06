@@ -31,6 +31,7 @@ for typ in _TYPES:
 OTHER_COLS = [f"n_rapid_tests_through_{c}" for c in _CHANNELS] + [
     "share_with_rapid_test",
     "n_rapid_tests_overall",
+    "false_positive_rate_in_population",
 ]
 
 
