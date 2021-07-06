@@ -108,7 +108,7 @@ def rapid_test_demand(
     private_demand = hh_demand | sym_without_pcr_demand | other_contact_demand
     rapid_test_demand = work_demand | educ_demand | private_demand
 
-    if randomize:
+    if randomize and date > pd.Timestamp("2021-04-05"):  # only randomize after Easter
         assert (
             share_refuser is not None
         ), "You must specify a share of individuals that refuse to take a rapid test"
@@ -127,9 +127,7 @@ def rapid_test_demand(
                 "private": private_demand,
                 "work": work_demand,
                 "educ": educ_demand,
-                "hh": hh_demand,
-                "sym_without_pcr": sym_without_pcr_demand,
-                "other_contact": other_contact_demand,
+                # could also include "hh", "sym_without_pcr", "other_contact"
             }
         )
         if randomize:

@@ -55,6 +55,7 @@ def create_rapid_test_statistics(demand_by_channel, states, date, params):
         (
             share_true_positive,
             share_false_negative,
+            _,
         ) = _calculate_true_positive_and_false_negatives(
             states=states,
             receives_rapid_test=demand_by_channel[channel],
@@ -82,6 +83,7 @@ def create_rapid_test_statistics(demand_by_channel, states, date, params):
     (
         share_true_positive,
         share_false_negative,
+        share_false_positive_in_population,
     ) = _calculate_true_positive_and_false_negatives(
         states=states,
         receives_rapid_test=receives_rapid_test,
@@ -91,6 +93,9 @@ def create_rapid_test_statistics(demand_by_channel, states, date, params):
     statistics["false_positive_rate_overall"] = 1 - share_true_positive
     statistics["true_negative_rate_overall"] = 1 - share_false_negative
     statistics["false_negative_rate_overall"] = share_false_negative
+    statistics[
+        "false_positive_rate_in_the_population"
+    ] = share_false_positive_in_population
 
     statistics = pd.Series(statistics).to_frame()
     statistics.index.name = "index"
@@ -160,10 +165,9 @@ def _calculate_true_positive_and_false_negatives(
         rapid_test_result (pandas.Series): boolean Series with
 
     Returns:
-        share_true_positive (float): share of the positive tests that are given to
-            infected individuals.
-        share_false_negative (float): share of the negative tests that are given to
-            infected individuals.
+        float: share of the positive tests that are given to infected individuals.
+        float: share of the negative tests that are given to infected individuals.
+        float: share of the general population receiving a false positive rapid test.
 
     """
     # reduce to the test takers
@@ -172,6 +176,9 @@ def _calculate_true_positive_and_false_negatives(
     tested_negative = ~rapid_test_results[receives_rapid_test]
 
     share_true_positive = test_takers[tested_positive]["currently_infected"].mean()
-    share_false_negative = (test_takers[tested_negative]["currently_infected"]).mean()
+    share_false_negative = test_takers[tested_negative]["currently_infected"].mean()
 
-    return share_true_positive, share_false_negative
+    false_positive_in_population = tested_positive & states["currently_infected"]
+    share_false_positive_in_population = false_positive_in_population.mean()
+
+    return share_true_positive, share_false_negative, share_false_positive_in_population

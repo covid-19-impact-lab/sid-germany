@@ -8,43 +8,42 @@ from src.config import PLOT_END_DATE
 from src.config import PLOT_SIZE
 from src.plotting.plotting import BLUE
 from src.plotting.plotting import GREEN
-from src.plotting.plotting import PURPLE
 from src.plotting.plotting import RED
 from src.plotting.plotting import style_plot
 from src.simulation.scenario_config import (
     create_path_to_rapid_test_statistic_time_series,
 )
+from src.simulation.task_process_rapid_test_statistics import CHANNELS
 from src.simulation.task_process_rapid_test_statistics import DEMAND_SHARE_COLS
-from src.simulation.task_process_rapid_test_statistics import OTHER_COLS
-from src.simulation.task_process_rapid_test_statistics import (
-    SHARE_CORRECT_AND_FALSE_COLS,
-)
 from src.simulation.task_process_rapid_test_statistics import SHARE_INFECTED_COLS
+from src.simulation.task_process_rapid_test_statistics import TYPES
 
 
 def _create_rapid_test_plot_parametrization():
-    signature = "depends_on, column, color, plot_single_runs, ylabel, produces"
+    signature = "depends_on, plot_single_runs, ylabel, produces"
 
-    column_color_label = []
-    for column in DEMAND_SHARE_COLS:
-        ylabel = "share of the population demanding a rapid test"
-        column_color_label.append((column, BLUE, ylabel))
-    for column in SHARE_INFECTED_COLS:
-        ylabel = "share of rapid tests demanded by infected individuals"
-        column_color_label.append((column, PURPLE, ylabel))
-    for column in SHARE_CORRECT_AND_FALSE_COLS:
-        color = GREEN if "true" in column else RED
-        column_color_label.append((column, color, None))
-    for column in OTHER_COLS:
-        column_color_label.append((column, "k", None))
+    columns_and_label = [
+        (
+            DEMAND_SHARE_COLS + ["share_with_rapid_test"],
+            "share of the population demanding a rapid test",
+        ),
+        (SHARE_INFECTED_COLS, "share of rapid tests demanded by infected individuals"),
+        (
+            ["false_positive_rate_in_the_population"],
+            "false positive rate in the population",
+        ),
+        (["n_rapid_tests_overall"], "number of rapid tests in the population per day"),
+    ]
+    for typ in TYPES:
+        column_names = [f"{typ}_rate_in_{channel}" for channel in CHANNELS]
+        columns_and_label.append((column_names, f"{typ.replace('_', ' ')} rate"))
 
     parametrization = []
-    for column, color, ylabel in column_color_label:
+    for columns, ylabel in columns_and_label:
         for plot_single_runs in [True, False]:
             spec = _create_spec(
-                column=column,
+                columns=columns,
                 plot_single_runs=plot_single_runs,
-                color=color,
                 ylabel=ylabel,
             )
             parametrization.append(spec)
@@ -52,17 +51,17 @@ def _create_rapid_test_plot_parametrization():
     return signature, parametrization
 
 
-def _create_spec(column, plot_single_runs, color, ylabel=None):
-    depends_on = create_path_to_rapid_test_statistic_time_series(
-        "combined_baseline", column
-    )
-    if ylabel is None:
-        ylabel = column.replace("_", " ")
-    file_name = (
-        f"{column}_with_single_runs.pdf" if plot_single_runs else f"{column}.pdf"
-    )
+def _create_spec(columns, plot_single_runs, ylabel):
+    depends_on = {
+        col: create_path_to_rapid_test_statistic_time_series("combined_baseline", col)
+        for col in columns
+    }
+    if plot_single_runs:
+        file_name = f"{ylabel.replace(' ', '_')}_with_single_runs.pdf"
+    else:
+        file_name = f"{ylabel.replace(' ', '_')}.pdf"
     produces = BLD / "figures" / "rapid_test_statistics" / file_name
-    spec = (depends_on, column, color, plot_single_runs, ylabel, produces)
+    spec = (depends_on, plot_single_runs, ylabel, produces)
     return spec
 
 
@@ -70,30 +69,44 @@ _PARAMETRIZATION = _create_rapid_test_plot_parametrization()
 
 
 @pytask.mark.parametrize(*_PARAMETRIZATION)
-def task_plot_rapid_test_statistics(
-    depends_on, column, color, plot_single_runs, ylabel, produces
-):
-    df = pd.read_pickle(depends_on)
-    fig = _plot_df(
-        df=df,
-        column=column,
-        color=color,
-        plot_single_runs=plot_single_runs,
-        ylabel=ylabel,
-    )
+def task_plot_rapid_test_statistics(depends_on, plot_single_runs, ylabel, produces):
+    dfs = {col: pd.read_pickle(path) for col, path in depends_on.items()}
+
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
+    for col, df in dfs.items():
+        color, label = _get_channel_color_and_label(col)
+        ax = _plot_df(
+            df=df,
+            column=col,
+            color=color,
+            plot_single_runs=plot_single_runs,
+            ax=ax,
+            label=label,
+        )
+
+    ax.set_xlim(pd.Timestamp("2021-03-01"), pd.Timestamp(PLOT_END_DATE))
+    fig, ax = style_plot(fig, ax)
+    ax.set_ylabel(ylabel)
+    fig.tight_layout()
     fig.savefig(produces)
     plt.close()
 
 
-def _plot_df(df, column, color, plot_single_runs, ylabel):
-    fig, ax = plt.subplots(figsize=PLOT_SIZE)
-
+def _plot_df(
+    df,
+    column,
+    color,
+    label,
+    ax,
+    plot_single_runs,
+):
     sns.lineplot(
         x=df[column].index,
         y=df[column],
         ax=ax,
         linewidth=4,
         color=color,
+        label=label,
         alpha=0.8,
     )
 
@@ -108,9 +121,20 @@ def _plot_df(df, column, color, plot_single_runs, ylabel):
                     color=color,
                     alpha=0.6,
                 )
-    ax.set_xlim(pd.Timestamp("2021-03-01"), pd.Timestamp(PLOT_END_DATE))
-    fig, ax = style_plot(fig, ax)
+    return ax
 
-    ax.set_ylabel(ylabel)
-    fig.tight_layout()
-    return fig
+
+def _get_channel_color_and_label(col):
+    if "work" in col:
+        color = BLUE
+        label = "work"
+    elif "educ" in col:
+        color = GREEN
+        label = "educ"
+    elif "private" in col:
+        color = RED
+        label = "private"
+    else:
+        color = "k"
+        label = None
+    return color, label
