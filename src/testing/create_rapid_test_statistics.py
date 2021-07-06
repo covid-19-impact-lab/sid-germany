@@ -93,7 +93,9 @@ def create_rapid_test_statistics(demand_by_channel, states, date, params):
     statistics["false_positive_rate_overall"] = 1 - share_true_positive
     statistics["true_negative_rate_overall"] = 1 - share_false_negative
     statistics["false_negative_rate_overall"] = share_false_negative
-    statistics["false_positive_rate_in_population"] = share_false_positive_in_population
+    statistics[
+        "false_positive_rate_in_the_population"
+    ] = share_false_positive_in_population
 
     statistics = pd.Series(statistics).to_frame()
     statistics.index.name = "index"

@@ -15,28 +15,30 @@ _DEPENDENCIES = {
     for seed in range(_N_SEEDS)
 }
 
-_CHANNELS = ["private", "work", "educ", "hh", "sym_without_pcr", "other_contact"]
-_TYPES = ["true_positive", "false_positive", "true_negative", "false_negative"]
+# private could additionally be split in "hh", "sym_without_pcr", "other_contact"
+CHANNELS = ["private", "work", "educ"]
+TYPES = ["true_positive", "false_positive", "true_negative", "false_negative"]
 
-DEMAND_SHARE_COLS = [f"share_with_rapid_test_through_{c}" for c in _CHANNELS]
-SHARE_INFECTED_COLS = [
-    f"share_of_{c}_rapid_tests_demanded_by_infected" for c in _CHANNELS
+DEMAND_SHARE_COLS = [f"share_with_rapid_test_through_{c}" for c in CHANNELS] + [
+    "share_with_rapid_test"
 ]
-SHARE_CORRECT_AND_FALSE_COLS = []
-for typ in _TYPES:
-    SHARE_CORRECT_AND_FALSE_COLS.append(f"{typ}_rate_overall")
-    for channel in _CHANNELS:
+SHARE_INFECTED_COLS = [
+    f"share_of_{c}_rapid_tests_demanded_by_infected" for c in CHANNELS
+]
+_SHARE_CORRECT_AND_FALSE_COLS = []
+for typ in TYPES:
+    _SHARE_CORRECT_AND_FALSE_COLS.append(f"{typ}_rate_overall")
+    for channel in CHANNELS:
         col = f"{typ}_rate_in_{channel}"
-        SHARE_CORRECT_AND_FALSE_COLS.append(col)
-OTHER_COLS = [f"n_rapid_tests_through_{c}" for c in _CHANNELS] + [
-    "share_with_rapid_test",
+        _SHARE_CORRECT_AND_FALSE_COLS.append(col)
+OTHER_COLS = [f"n_rapid_tests_through_{c}" for c in CHANNELS] + [
     "n_rapid_tests_overall",
-    "false_positive_rate_in_population",
+    "false_positive_rate_in_the_population",
 ]
 
 
 RAPID_TEST_STATISTICS = (
-    DEMAND_SHARE_COLS + SHARE_INFECTED_COLS + SHARE_CORRECT_AND_FALSE_COLS + OTHER_COLS
+    DEMAND_SHARE_COLS + SHARE_INFECTED_COLS + _SHARE_CORRECT_AND_FALSE_COLS + OTHER_COLS
 )
 _PARAMETRIZATION = [
     (

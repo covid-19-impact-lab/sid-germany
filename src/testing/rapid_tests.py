@@ -127,6 +127,7 @@ def rapid_test_demand(
                 "private": private_demand,
                 "work": work_demand,
                 "educ": educ_demand,
+                # could also include "hh", "sym_without_pcr", "other_contact"
             }
         )
         if randomize:
