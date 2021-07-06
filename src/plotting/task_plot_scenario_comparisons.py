@@ -269,8 +269,9 @@ PLOTS = {
             "spring_baseline",
             "spring_with_completely_random_rapid_tests",
             "spring_with_random_rapid_tests_with_30pct_refusers",
+            "spring_without_rapid_tests",
         ],
-        "colors": [BLUE, RED, PURPLE],
+        "colors": [BLUE, RED, PURPLE, "k"],
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
