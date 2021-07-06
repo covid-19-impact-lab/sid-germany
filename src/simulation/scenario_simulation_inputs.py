@@ -406,6 +406,42 @@ def _get_vaccination_model_with_new_value_after_date(
 # ================================================================================
 
 
+def out_of_sample_validation(paths, fixed_inputs):
+    start_date = fixed_inputs["duration"]["start"]
+    end_date = fixed_inputs["duration"]["end"]
+    contact_models = fixed_inputs["contact_models"]
+    enacted_policies = get_enacted_policies(contact_models)
+
+    policies_with_fixed_work_multiplier = (
+        _get_policies_with_different_work_attend_multiplier_after_date(
+            enacted_policies=enacted_policies,
+            contact_models=contact_models,
+            new_attend_multiplier=0.75,
+            split_date=pd.Timestamp("2021-03-01"),
+            prefix="work_fixed_work_multiplier_after_easter",
+        )
+    )
+    policies_with_fixed_work_multiplier = shorten_policies(
+        policies_with_fixed_work_multiplier, start_date, end_date
+    )
+
+    # other multiplier auf 0.5 setzen
+
+    # vaccinations durch Vorhersage ersetzen
+
+    # parameter fade in anpassen
+
+    out = {
+        "contact_policies": policies_with_fixed_work_multiplier,
+        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
+        "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
+            fixed_inputs
+        ),
+    }
+    return out
+
+
 def strict_home_office_after_easter(paths, fixed_inputs):
     """Define strict home office after Easter.
 

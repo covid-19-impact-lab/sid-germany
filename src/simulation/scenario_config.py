@@ -324,6 +324,12 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
+        "out_of_sample_validation": {
+            "sim_input_scenario": "out_of_sample_validation",
+            "params_scenario": "baseline",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
     }
     return named_scenarios
 
