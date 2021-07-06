@@ -272,6 +272,11 @@ PLOTS = {
         ],
         "colors": [BLUE, RED, PURPLE],
     },
+    "out_of_sample_validation": {
+        "title": "",
+        "scenarios": ["spring_baseline", "out_of_sample_validation"],
+        "colors": [BLUE, RED],
+    },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
 
