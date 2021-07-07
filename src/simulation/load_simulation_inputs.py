@@ -306,6 +306,9 @@ def get_simulation_dependencies(debug, is_resumed):
         "scenario_config.py": SRC / "simulation" / "scenario_config.py",
         "testing_shared.py": SRC / "testing" / "shared.py",
         "policy_tools.py": SRC / "policies" / "policy_tools.py",
+        "create_rapid_test_statistics": SRC
+        / "testing"
+        / "create_rapid_test_statistics.py",
     }
 
     if not is_resumed:
