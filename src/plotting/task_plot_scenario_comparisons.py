@@ -242,11 +242,6 @@ PLOTS = {
         },
         "plot_start": AFTER_EASTER,
     },
-    "main_prediction": {
-        "title": "",
-        "scenarios": ["summer_baseline"],
-        "colors": [BLUE],
-    },
     "add_single_rapid_test_chanel_to_pessimistic": {
         "title": "",
         "scenarios": [
