@@ -84,6 +84,7 @@ def _calculate_rapid_test_statistics_by_channel(
         dict
 
     """
+    n_obs = len(states)
     tested_positive = rapid_test_results[receives_rapid_test]
     tested_negative = ~rapid_test_results[receives_rapid_test]
 
@@ -106,8 +107,10 @@ def _calculate_rapid_test_statistics_by_channel(
 
     statistics = {}
     for name, sr in individual_outcomes.items():
-        statistics[f"number_{name}_by_{channel_name}"] = POPULATION_GERMANY * sr.mean()
-        statistics[f"popshare_{name}_by_{channel_name}"] = sr.mean()
+        statistics[f"number_{name}_by_{channel_name}"] = (
+            POPULATION_GERMANY * sr.sum() / n_obs
+        )
+        statistics[f"popshare_{name}_by_{channel_name}"] = sr.sum() / n_obs
         statistics[f"testshare_{name}_by_{channel_name}"] = sr.sum() / n_tested
 
     statistics[f"true_positive_rate_by_{channel_name}"] = (

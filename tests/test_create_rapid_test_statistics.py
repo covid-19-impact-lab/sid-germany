@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pandas.testing import assert_series_equal
 
 from src.config import POPULATION_GERMANY
 from src.testing.create_rapid_test_statistics import (
@@ -124,22 +125,33 @@ def test_calculate_rapid_test_statistics_by_channel():
     rapid_test_results = pd.Series([True, False, True, False, False, False])
     receives_rapid_test = pd.Series([True, True, True, True, True, False])
 
-    res = _calculate_rapid_test_statistics_by_channel(
-        states=states,
-        rapid_test_results=rapid_test_results,
-        receives_rapid_test=receives_rapid_test,
-        channel_name="channel",
+    scaling = POPULATION_GERMANY / len(states)
+
+    res = (
+        pd.Series(
+            _calculate_rapid_test_statistics_by_channel(
+                states=states,
+                rapid_test_results=rapid_test_results,
+                receives_rapid_test=receives_rapid_test,
+                channel_name="channel",
+            )
+        )
+        / scaling
     )
 
-    scaling = POPULATION_GERMANY / len(states)
-    expected = {
-        "number_tested_by_channel": 5 * scaling,
-        "number_tested_positive_by_channel": 2 * scaling,
-        "number_tested_negative_by_channel": 3 * scaling,
-        "number_tested_false_positive_by_channel": 1 * scaling,
-        "number_tested_false_negative_by_channel": 2 * scaling,
-        "number_tested_true_positive_by_channel": 1 * scaling,
-        "number_tested_true_negative_by_channel": 1 * scaling,
-    }
+    expected = pd.Series(
+        {
+            "number_tested_by_channel": 5,
+            "number_tested_positive_by_channel": 2,
+            "number_tested_negative_by_channel": 3,
+            "number_false_positive_by_channel": 1,
+            "number_false_negative_by_channel": 2,
+            "number_true_positive_by_channel": 1,
+            "number_true_negative_by_channel": 1,
+        }
+    )
 
-    assert res == expected
+    df = pd.concat([res, expected], axis=1).dropna()
+    df.columns = ["calculated", "expected"]
+
+    assert_series_equal(df["calculated"], df["expected"], check_names=False)
