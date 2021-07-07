@@ -108,8 +108,7 @@ def _calculate_rapid_test_statistics_by_channel(
     for name, sr in individual_outcomes.items():
         statistics[f"number_{name}_by_{channel_name}"] = POPULATION_GERMANY * sr.mean()
         statistics[f"popshare_{name}_by_{channel_name}"] = sr.mean()
-        if name != "tested":
-            statistics[f"testshare_{name}_by_{channel_name}"] = sr.sum() / n_tested
+        statistics[f"testshare_{name}_by_{channel_name}"] = sr.sum() / n_tested
 
     statistics[f"true_positive_rate_by_{channel_name}"] = (
         individual_outcomes["true_positive"].sum() / n_tested_positive

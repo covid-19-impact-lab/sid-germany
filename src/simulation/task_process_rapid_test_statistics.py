@@ -1,3 +1,5 @@
+from itertools import product
+
 import pandas as pd
 import pytask
 
@@ -15,31 +17,32 @@ _DEPENDENCIES = {
     for seed in range(_N_SEEDS)
 }
 
-# private could additionally be split in "hh", "sym_without_pcr", "other_contact"
-CHANNELS = ["private", "work", "educ"]
-TYPES = ["true_positive", "false_positive", "true_negative", "false_negative"]
+CHANNELS = ["private", "work", "educ", "overall"]
+OUTCOMES = [
+    "false_negative",
+    "false_positive",
+    "tested_negative",
+    "tested_positive",
+    "true_negative",
+    "true_positive",
+    "tested",
+]
+SHARE_TYPES = ["number", "popshare", "testshare"]
 
-DEMAND_SHARE_COLS = [f"share_with_rapid_test_through_{c}" for c in CHANNELS] + [
-    "share_with_rapid_test"
-]
-SHARE_INFECTED_COLS = [
-    f"share_of_{c}_rapid_tests_demanded_by_infected" for c in CHANNELS
-]
-_SHARE_CORRECT_AND_FALSE_COLS = []
-for typ in TYPES:
-    _SHARE_CORRECT_AND_FALSE_COLS.append(f"{typ}_rate_overall")
-    for channel in CHANNELS:
-        col = f"{typ}_rate_in_{channel}"
-        _SHARE_CORRECT_AND_FALSE_COLS.append(col)
-OTHER_COLS = [f"n_rapid_tests_through_{c}" for c in CHANNELS] + [
-    "n_rapid_tests_overall_in_germany",
-    "false_positive_rate_in_the_population",
+RATES = [
+    "false_negative_rate",
+    "false_positive_rate",
+    "true_negative_rate",
+    "true_positive_rate",
 ]
 
+RAPID_TEST_STATISTICS = []
+for out, channel, share_type in product(OUTCOMES, CHANNELS, SHARE_TYPES):
+    RAPID_TEST_STATISTICS.append(f"{share_type}_{out}_by_{channel}")
+for out, channel in product(RATES, CHANNELS):
+    RAPID_TEST_STATISTICS.append(f"{out}_by_{channel}")
 
-RAPID_TEST_STATISTICS = (
-    DEMAND_SHARE_COLS + SHARE_INFECTED_COLS + _SHARE_CORRECT_AND_FALSE_COLS + OTHER_COLS
-)
+
 _PARAMETRIZATION = [
     (
         column,

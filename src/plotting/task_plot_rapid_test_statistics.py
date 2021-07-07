@@ -14,38 +14,43 @@ from src.simulation.scenario_config import (
     create_path_to_rapid_test_statistic_time_series,
 )
 from src.simulation.task_process_rapid_test_statistics import CHANNELS
-from src.simulation.task_process_rapid_test_statistics import DEMAND_SHARE_COLS
-from src.simulation.task_process_rapid_test_statistics import SHARE_INFECTED_COLS
-from src.simulation.task_process_rapid_test_statistics import TYPES
+from src.simulation.task_process_rapid_test_statistics import OUTCOMES
+from src.simulation.task_process_rapid_test_statistics import RATES
+from src.simulation.task_process_rapid_test_statistics import SHARE_TYPES
 
 
 def _create_rapid_test_plot_parametrization():
     signature = "depends_on, plot_single_runs, ylabel, produces"
 
-    columns_and_label = [
-        (
-            DEMAND_SHARE_COLS + ["share_with_rapid_test"],
-            "share of the population demanding a rapid test",
-        ),
-        (SHARE_INFECTED_COLS, "share of rapid tests demanded by infected individuals"),
-        (
-            ["false_positive_rate_in_the_population"],
-            "false positive rate in the population",
-        ),
-        (
-            ["n_rapid_tests_overall_in_germany"],
-            "number of rapid tests per day \n(upscaled to the German population)",
-        ),
-    ]
-    for typ in TYPES:
-        column_names = [f"{typ}_rate_in_{channel}" for channel in CHANNELS]
-        columns_and_label.append((column_names, f"{typ.replace('_', ' ')} rate"))
+    label_templates = {
+        "number": "number of {nice_outcome} in Germany",
+        "popshare": "share of the population with {nice_outcome}",
+        "testshare": "share of {nice_outcome}",
+    }
+    nice_outcomes = {
+        "false_negative": "false negative tests",
+        "false_positive": "false positive tests",
+        "tested_negative": "negative tests",
+        "tested_positive": "positive tests",
+        "true_negative": "true negative tests",
+        "true_positive": "true positive tests",
+        "tested": "tests",
+    }
+
+    column_and_label = [(rate, rate.replace("_", " ")) for rate in RATES]
+    for outcome in OUTCOMES:
+        for share_type in SHARE_TYPES:
+            column = f"{share_type}_{outcome}"
+            label = label_templates[share_type].format(
+                nice_outcome=nice_outcomes[outcome]
+            )
+            column_and_label.append((column, label))
 
     parametrization = []
-    for columns, ylabel in columns_and_label:
+    for column, ylabel in column_and_label:
         for plot_single_runs in [True, False]:
             spec = _create_spec(
-                columns=columns,
+                column=column,
                 plot_single_runs=plot_single_runs,
                 ylabel=ylabel,
             )
@@ -54,11 +59,14 @@ def _create_rapid_test_plot_parametrization():
     return signature, parametrization
 
 
-def _create_spec(columns, plot_single_runs, ylabel):
-    depends_on = {
-        col: create_path_to_rapid_test_statistic_time_series("spring_baseline", col)
-        for col in columns
-    }
+def _create_spec(column, plot_single_runs, ylabel):
+    depends_on = {}
+    for channel in CHANNELS:
+        channel_column = column + f"_by_{channel}"
+        depends_on[channel_column] = create_path_to_rapid_test_statistic_time_series(
+            "spring_baseline", channel_column
+        )
+
     if plot_single_runs:
         file_name = f"{ylabel.replace(' ', '_')}_with_single_runs.pdf"
     else:
