@@ -272,10 +272,15 @@ PLOTS = {
         ],
         "colors": [BLUE, RED, PURPLE],
     },
-    "out_of_sample_validation": {
+    "robustness_check": {
         "title": "",
-        "scenarios": ["spring_baseline", "out_of_sample_validation"],
-        "colors": [BLUE, RED],
+        "scenarios": [
+            "spring_baseline",
+            "robustness_check_start_may",
+            "robustness_check_mid_may",
+            "robustness_check_end_may",
+        ],
+        "colors": [BLUE, ORANGE, RED, BROWN],
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.

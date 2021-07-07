@@ -324,9 +324,21 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "out_of_sample_validation": {
-            "sim_input_scenario": "out_of_sample_validation",
-            "params_scenario": "baseline",
+        "robustness_check_mid_may": {
+            "sim_input_scenario": "robustness_check",
+            "params_scenario": "robustness_check_params_mid_may",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "robustness_check_start_may": {
+            "sim_input_scenario": "robustness_check",
+            "params_scenario": "robustness_check_params_start_may",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "robustness_check_end_may": {
+            "sim_input_scenario": "robustness_check",
+            "params_scenario": "robustness_check_params_end_may",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },

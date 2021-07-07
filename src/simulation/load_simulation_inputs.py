@@ -247,11 +247,11 @@ def get_simulation_dependencies(debug, is_resumed):
 
     Args:
         debug (bool): Whether to use the debug initial states.
+        is_resumed (bool): Whether the simulation is a resumed simulation. If False the
+            path to the initial states from BLD / "data" are given.
 
     Returns:
         paths (dict): Dictionary with the dependencies for the simulation.
-        is_resumed (bool): Whether the simulation is a resumed simulation. If False the
-            path to the initial states from BLD / "data" are given.
 
     """
     out = {

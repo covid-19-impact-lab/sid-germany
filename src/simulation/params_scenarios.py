@@ -139,6 +139,32 @@ def mandatory_work_rapid_tests_after_easter(params):
     return new_params
 
 
+def robustness_check_params_mid_may(params):
+    return _robustness_check_params(params, "2021-05-15")
+
+
+def robustness_check_params_start_may(params):
+    return _robustness_check_params(params, "2021-05-01")
+
+
+def robustness_check_params_end_may(params):
+    return _robustness_check_params(params, "2021-06-01")
+
+
+def _robustness_check_params(params, date):
+    """ """
+    params = params.query(
+        "(subcategory != 'private_demand') | (category != 'rapid_test_demand')"
+    )
+    loc = ("rapid_test_demand", "private_demand")
+    params.loc[(*loc, "2020-01-01"), "value"] = 0
+    params.loc[(*loc, "2021-02-28"), "value"] = 0
+    params.loc[(*loc, "2021-02-28"), "value"] = 0
+    params.loc[(*loc, date), "value"] = 0.63
+    params.loc[(*loc, "2025-12-31"), "value"] = 0.63
+    return params
+
+
 # ======================================================================================
 
 

@@ -12,6 +12,7 @@ and must return a dictionary with the following entries:
 from functools import partial
 
 import pandas as pd
+import statsmodels.formula.api as sm
 import yaml
 
 from src.config import AFTER_EASTER
@@ -406,18 +407,28 @@ def _get_vaccination_model_with_new_value_after_date(
 # ================================================================================
 
 
-def out_of_sample_validation(paths, fixed_inputs):
+def robustness_check(paths, fixed_inputs):
+    """Change the inputs to remove knowledge of the time after March 1st.
+
+    This function does the following:
+        - fix the work attend multiplier to the value of end of February
+        - use a simple linear extrapolation of the February vaccination data.
+
+    """
+    exercise_start = pd.Timestamp("2021-03-01")
     start_date = fixed_inputs["duration"]["start"]
     end_date = fixed_inputs["duration"]["end"]
+    init_start = start_date - pd.Timedelta(31, unit="D")
     contact_models = fixed_inputs["contact_models"]
     enacted_policies = get_enacted_policies(contact_models)
 
+    # set work multiplier instead of using the
     policies_with_fixed_work_multiplier = (
         _get_policies_with_different_work_attend_multiplier_after_date(
             enacted_policies=enacted_policies,
             contact_models=contact_models,
             new_attend_multiplier=0.75,
-            split_date=pd.Timestamp("2021-03-01"),
+            split_date=exercise_start,
             prefix="work_fixed_work_multiplier_after_easter",
         )
     )
@@ -425,21 +436,40 @@ def out_of_sample_validation(paths, fixed_inputs):
         policies_with_fixed_work_multiplier, start_date, end_date
     )
 
-    # other multiplier auf 0.5 setzen
-
-    # vaccinations durch Vorhersage ersetzen
-
-    # parameter fade in anpassen
+    # replace vaccinations with prediction from February
+    vaccination_shares = pd.read_pickle(paths["vaccination_shares"])
+    vaccination_models = _replace_vaccination_shares_with_prediction_from_feb(
+        vaccination_shares, init_start
+    )
 
     out = {
         "contact_policies": policies_with_fixed_work_multiplier,
-        "vaccination_models": _baseline_vaccination_models(paths, fixed_inputs),
+        "vaccination_models": vaccination_models,
         "rapid_test_models": _baseline_rapid_test_models(fixed_inputs),
         "rapid_test_reaction_models": _baseline_rapid_test_reaction_models(
             fixed_inputs
         ),
     }
     return out
+
+
+def _replace_vaccination_shares_with_prediction_from_feb(
+    vaccination_shares, init_start
+):
+    """Use an extrapolated prediction from February for the vaccination shares."""
+    vacc = vaccination_shares.to_frame(name="actual")
+    vacc["day"] = vacc.index.dayofyear
+    feb_vacc_data = vacc.loc["2021-02-01":"2021-03-01"]
+    res = sm.ols(formula="actual ~ day", data=feb_vacc_data).fit()
+    predicted_vaccination_shares = res.predict(vacc["day"])
+    predicted_vaccination_shares[:"2021-01-31":] = vaccination_shares[:"2021-01-31"]
+    vaccination_func = partial(
+        find_people_to_vaccinate,
+        vaccination_shares=predicted_vaccination_shares,
+        init_start=init_start,
+    )
+    vaccination_models = {"from_feb_extrapolated_shares": {"model": vaccination_func}}
+    return vaccination_models
 
 
 def strict_home_office_after_easter(paths, fixed_inputs):
