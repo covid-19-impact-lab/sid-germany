@@ -84,12 +84,11 @@ def test_create_rapid_test_statistics(monkeypatch):
                 "number_true_negative_by_b": 2 * scaling,
                 "number_true_negative_by_overall": 2 * scaling,
                 "number_false_positive_by_a": 1 * scaling,
-                "number_false_positive_by_b": np.nan,
+                "number_false_positive_by_b": 0.0,
                 "number_false_positive_by_overall": 1 * scaling,
                 "number_true_positive_by_a": 1 * scaling,
                 "number_true_positive_by_b": 0.0,
                 "number_true_positive_by_overall": 1 * scaling,
-                #
                 "number_tested_by_a": 4 * scaling,
                 "number_tested_by_b": 4 * scaling,
                 "number_tested_by_overall": 6 * scaling,
@@ -99,16 +98,55 @@ def test_create_rapid_test_statistics(monkeypatch):
                 "number_tested_positive_by_a": 2 * scaling,
                 "number_tested_positive_by_b": 0 * scaling,
                 "number_tested_positive_by_overall": 2 * scaling,
+                # popshare
+                "popshare_false_negative_by_a": 2 / len(states),
+                "popshare_false_negative_by_b": 2 / len(states),
+                "popshare_false_negative_by_overall": 2 / len(states),
+                "popshare_true_negative_by_a": 0.0,
+                "popshare_true_negative_by_b": 2 / len(states),
+                "popshare_true_negative_by_overall": 2 / len(states),
+                "popshare_false_positive_by_a": 1 / len(states),
+                "popshare_false_positive_by_b": 0.0,
+                "popshare_false_positive_by_overall": 1 / len(states),
+                "popshare_true_positive_by_a": 1 / len(states),
+                "popshare_true_positive_by_b": 0.0,
+                "popshare_true_positive_by_overall": 1 / len(states),
+                "popshare_tested_by_a": 4 / len(states),
+                "popshare_tested_by_b": 4 / len(states),
+                "popshare_tested_by_overall": 6 / len(states),
+                "popshare_tested_negative_by_a": 2 / len(states),
+                "popshare_tested_negative_by_b": 4 / len(states),
+                "popshare_tested_negative_by_overall": 4 / len(states),
+                "popshare_tested_positive_by_a": 2 / len(states),
+                "popshare_tested_positive_by_b": 0 / len(states),
+                "popshare_tested_positive_by_overall": 2 / len(states),
+                # testshare
+                "testshare_false_negative_by_a": 2 / 4,
+                "testshare_false_negative_by_b": 2 / 4,
+                "testshare_false_negative_by_overall": 2 / 6,
+                "testshare_true_negative_by_a": 0.0,
+                "testshare_true_negative_by_b": 2 / 4,
+                "testshare_true_negative_by_overall": 2 / 6,
+                "testshare_false_positive_by_a": 1 / 4,
+                "testshare_false_positive_by_b": 0 / 4,
+                "testshare_false_positive_by_overall": 1 / 6,
+                "testshare_true_positive_by_a": 1 / 4,
+                "testshare_true_positive_by_b": 0.0,
+                "testshare_true_positive_by_overall": 1 / 6,
+                "testshare_tested_by_a": 4 / 4,
+                "testshare_tested_by_b": 4 / 4,
+                "testshare_tested_by_overall": 6 / 6,
+                "testshare_tested_negative_by_a": 2 / 4,
+                "testshare_tested_negative_by_b": 4 / 4,
+                "testshare_tested_negative_by_overall": 4 / 6,
+                "testshare_tested_positive_by_a": 2 / 4,
+                "testshare_tested_positive_by_b": 0 / 4,
+                "testshare_tested_positive_by_overall": 2 / 6,
             }
         }
     )
-
-    expected.columns = [1]
-    df = pd.concat([res, expected], axis=1)
-    diff = df[df[0] != df[1]].dropna()
-
-    ### pd.testing.assert_frame_equal(expected, res.loc[expected.index])
-    ### assert set(expected.index) == set(res.index)
+    expected.index.name = "index"
+    pd.testing.assert_frame_equal(expected.sort_index(), res.sort_index())
 
 
 def test_calculate_rapid_test_statistics_by_channel():
@@ -127,31 +165,42 @@ def test_calculate_rapid_test_statistics_by_channel():
 
     scaling = POPULATION_GERMANY / len(states)
 
-    res = (
-        pd.Series(
-            _calculate_rapid_test_statistics_by_channel(
-                states=states,
-                rapid_test_results=rapid_test_results,
-                receives_rapid_test=receives_rapid_test,
-                channel_name="channel",
-            )
+    res = pd.Series(
+        _calculate_rapid_test_statistics_by_channel(
+            states=states,
+            rapid_test_results=rapid_test_results,
+            receives_rapid_test=receives_rapid_test,
+            channel_name="channel",
         )
-        / scaling
     )
 
     expected = pd.Series(
         {
-            "number_tested_by_channel": 5,
-            "number_tested_positive_by_channel": 2,
-            "number_tested_negative_by_channel": 3,
-            "number_false_positive_by_channel": 1,
-            "number_false_negative_by_channel": 2,
-            "number_true_positive_by_channel": 1,
-            "number_true_negative_by_channel": 1,
+            "number_tested_by_channel": 5 * scaling,
+            "number_tested_positive_by_channel": 2 * scaling,
+            "number_tested_negative_by_channel": 3 * scaling,
+            "number_false_positive_by_channel": 1 * scaling,
+            "number_false_negative_by_channel": 2 * scaling,
+            "number_true_positive_by_channel": 1 * scaling,
+            "number_true_negative_by_channel": 1 * scaling,
+            "popshare_tested_by_channel": 5 / len(states),
+            "popshare_tested_positive_by_channel": 2 / len(states),
+            "popshare_tested_negative_by_channel": 3 / len(states),
+            "popshare_false_positive_by_channel": 1 / len(states),
+            "popshare_false_negative_by_channel": 2 / len(states),
+            "popshare_true_positive_by_channel": 1 / len(states),
+            "popshare_true_negative_by_channel": 1 / len(states),
+            "testshare_tested_by_channel": 5 / 5,
+            "testshare_tested_positive_by_channel": 2 / 5,
+            "testshare_tested_negative_by_channel": 3 / 5,
+            "testshare_false_positive_by_channel": 1 / 5,
+            "testshare_false_negative_by_channel": 2 / 5,
+            "testshare_true_positive_by_channel": 1 / 5,
+            "testshare_true_negative_by_channel": 1 / 5,
+            "true_positive_rate_by_channel": 1 / 2,
+            "true_negative_rate_by_channel": 1 / 3,
+            "false_positive_rate_by_channel": 1 / 2,
+            "false_negative_rate_by_channel": 2 / 3,
         }
     )
-
-    df = pd.concat([res, expected], axis=1).dropna()
-    df.columns = ["calculated", "expected"]
-
-    assert_series_equal(df["calculated"], df["expected"], check_names=False)
+    assert_series_equal(res.loc[expected.index], expected, check_names=False)
