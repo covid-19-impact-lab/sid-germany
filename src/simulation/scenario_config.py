@@ -121,7 +121,6 @@ def get_named_scenarios():
             "start_date": fall_dates["start_date"],
             "end_date": spring_dates["end_date"],
         }
-        summer_dates = {"start_date": "2021-06-01", "end_date": "2021-07-25"}
     else:
         # for the plotting we need that combined and spring have dates after 2021-01-15
         combined_dates = {"start_date": "2020-12-30", "end_date": "2021-01-18"}
@@ -133,10 +132,6 @@ def get_named_scenarios():
             "start_date": "2021-01-01",
             "end_date": "2021-01-18",
         }
-        summer_dates = {
-            "start_date": "2021-01-19",
-            "end_date": "2021-01-24",
-        }
 
     named_scenarios = {
         # Baseline Scenarios
@@ -144,7 +139,6 @@ def get_named_scenarios():
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
-            "save_last_states": True,
             "is_resumed": False,
             **combined_dates,
         },
@@ -160,17 +154,8 @@ def get_named_scenarios():
             "sim_input_scenario": "baseline_save_rapid_test_statistics",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
-            "save_last_states": True,
             "save_rapid_test_statistics": True,
             **spring_dates,
-        },
-        "summer_baseline": {
-            "sim_input_scenario": "baseline",
-            "params_scenario": "baseline",
-            "n_seeds": n_main_seeds,
-            "save_last_states": True,
-            "is_resumed": "combined",
-            **summer_dates,
         },
         # Scenarios for the main plots
         "spring_no_effects": {
