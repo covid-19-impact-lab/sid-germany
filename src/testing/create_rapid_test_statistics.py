@@ -1,5 +1,6 @@
 import itertools
 
+import numpy as np
 import pandas as pd
 from sid.rapid_tests import _sample_test_outcome
 
@@ -85,7 +86,13 @@ def _calculate_rapid_test_statistics_by_channel(
     """
     tested_positive = rapid_test_results[receives_rapid_test]
     tested_negative = ~rapid_test_results[receives_rapid_test]
+
     n_tested = receives_rapid_test.sum()
+    n_tested = n_tested if n_tested != 0 else np.nan
+    n_tested_positive = tested_positive.sum()
+    n_tested_positive = n_tested_positive if n_tested_positive != 0 else np.nan
+    n_tested_negative = tested_negative.sum()
+    n_tested_negative = n_tested_negative if n_tested_negative != 0 else np.nan
 
     individual_outcomes = {
         "tested": receives_rapid_test,
@@ -105,16 +112,16 @@ def _calculate_rapid_test_statistics_by_channel(
             statistics[f"testshare_{name}_by_{channel_name}"] = sr.sum() / n_tested
 
     statistics[f"true_positive_rate_by_{channel_name}"] = (
-        individual_outcomes["true_positive"].sum() / tested_positive.sum()
+        individual_outcomes["true_positive"].sum() / n_tested_positive
     )
     statistics[f"true_negative_rate_by_{channel_name}"] = (
-        individual_outcomes["true_negative"].sum() / tested_negative.sum()
+        individual_outcomes["true_negative"].sum() / n_tested_negative
     )
     statistics[f"false_positive_rate_by_{channel_name}"] = (
-        individual_outcomes["false_positive"].sum() / tested_positive.sum()
+        individual_outcomes["false_positive"].sum() / n_tested_positive
     )
     statistics[f"false_negative_rate_by_{channel_name}"] = (
-        individual_outcomes["false_negative"].sum() / tested_negative.sum()
+        individual_outcomes["false_negative"].sum() / n_tested_negative
     )
 
     return statistics
