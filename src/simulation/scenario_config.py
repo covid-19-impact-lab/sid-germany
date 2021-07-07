@@ -97,7 +97,7 @@ def get_named_scenarios():
 
     """
     if FAST_FLAG == "debug":
-        n_main_seeds = 2
+        n_main_seeds = 1
         n_other_seeds = 1
     elif FAST_FLAG == "verify":
         n_main_seeds = 30
@@ -141,12 +141,11 @@ def get_named_scenarios():
     named_scenarios = {
         # Baseline Scenarios
         "combined_baseline": {
-            "sim_input_scenario": "baseline_save_rapid_test_statistics",
+            "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
             "save_last_states": True,
             "is_resumed": False,
-            "save_rapid_test_statistics": True,
             **combined_dates,
         },
         "fall_baseline": {
@@ -158,10 +157,11 @@ def get_named_scenarios():
             **fall_dates,
         },
         "spring_baseline": {
-            "sim_input_scenario": "baseline",
+            "sim_input_scenario": "baseline_save_rapid_test_statistics",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
             "save_last_states": True,
+            "save_rapid_test_statistics": True,
             **spring_dates,
         },
         "summer_baseline": {
