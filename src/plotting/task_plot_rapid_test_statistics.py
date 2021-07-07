@@ -8,8 +8,8 @@ from src.config import PLOT_END_DATE
 from src.config import PLOT_SIZE
 from src.plotting.plotting import BLUE
 from src.plotting.plotting import GREEN
-from src.plotting.plotting import RED
 from src.plotting.plotting import style_plot
+from src.plotting.plotting import YELLOW
 from src.simulation.scenario_config import (
     create_path_to_rapid_test_statistic_time_series,
 )
@@ -56,7 +56,7 @@ def _create_rapid_test_plot_parametrization():
 
 def _create_spec(columns, plot_single_runs, ylabel):
     depends_on = {
-        col: create_path_to_rapid_test_statistic_time_series("combined_baseline", col)
+        col: create_path_to_rapid_test_statistic_time_series("spring_baseline", col)
         for col in columns
     }
     if plot_single_runs:
@@ -129,13 +129,13 @@ def _plot_df(
 
 def _get_channel_color_and_label(col):
     if "work" in col:
-        color = BLUE
+        color = GREEN
         label = "work"
     elif "educ" in col:
-        color = GREEN
+        color = YELLOW
         label = "educ"
     elif "private" in col:
-        color = RED
+        color = BLUE
         label = "private"
     else:
         color = "k"

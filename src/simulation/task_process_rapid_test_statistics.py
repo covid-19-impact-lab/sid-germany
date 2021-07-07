@@ -8,10 +8,10 @@ from src.simulation.scenario_config import (
 from src.simulation.scenario_config import create_path_to_raw_rapid_test_statistics
 from src.simulation.scenario_config import get_named_scenarios
 
-_N_SEEDS = get_named_scenarios()["combined_baseline"]["n_seeds"]
+_N_SEEDS = get_named_scenarios()["spring_baseline"]["n_seeds"]
 
 _DEPENDENCIES = {
-    seed: create_path_to_raw_rapid_test_statistics("combined_baseline", seed)
+    seed: create_path_to_raw_rapid_test_statistics("spring_baseline", seed)
     for seed in range(_N_SEEDS)
 }
 
@@ -43,13 +43,13 @@ RAPID_TEST_STATISTICS = (
 _PARAMETRIZATION = [
     (
         column,
-        create_path_to_rapid_test_statistic_time_series("combined_baseline", column),
+        create_path_to_rapid_test_statistic_time_series("spring_baseline", column),
     )
     for column in RAPID_TEST_STATISTICS
 ]
 
 
-@pytask.mark.skipif(_N_SEEDS == 0, reason="combined_baseline did not run.")
+@pytask.mark.skipif(_N_SEEDS == 0, reason="spring baseline did not run.")
 @pytask.mark.depends_on(_DEPENDENCIES)
 @pytask.mark.parametrize("column, produces", _PARAMETRIZATION)
 def task_process_rapid_test_statistics(depends_on, column, produces):
