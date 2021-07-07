@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from src.config import POPULATION_GERMANY
 from src.testing.create_rapid_test_statistics import (
     _calculate_true_positive_and_false_negatives,
 )
@@ -105,7 +106,7 @@ def test_create_rapid_test_statistics(monkeypatch):
                 "share_with_rapid_test_through_b": 3 / 8,
                 "share_of_b_rapid_tests_demanded_by_infected": 1 / 3,
                 "share_with_rapid_test": 0.75,
-                "n_rapid_tests_overall": 6,
+                "n_rapid_tests_overall_in_germany": int(0.75 * POPULATION_GERMANY),
                 "n_rapid_tests_through_a": 3,
                 "n_rapid_tests_through_b": 3,
                 "false_positive_rate_in_the_population": 1 / 8,

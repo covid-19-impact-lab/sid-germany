@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from sid.rapid_tests import _sample_test_outcome
 
+from src.config import POPULATION_GERMANY
+
 
 def create_rapid_test_statistics(demand_by_channel, states, date, params):
     """Calculate the rapid test statistics.
@@ -68,8 +70,11 @@ def create_rapid_test_statistics(demand_by_channel, states, date, params):
 
     # overall results
     receives_rapid_test = demand_by_channel.any(axis=1)
-    statistics["share_with_rapid_test"] = receives_rapid_test.mean()
-    statistics["n_rapid_tests_overall"] = receives_rapid_test.sum()
+    share_with_rapid_test = receives_rapid_test.mean()
+    statistics["share_with_rapid_test"] = share_with_rapid_test
+    statistics["n_rapid_tests_overall_in_germany"] = int(
+        share_with_rapid_test * POPULATION_GERMANY
+    )
 
     # no need to worry about the impact of the seed. After Feb 2021 the number of tests
     # always 1000 every day and exceeds 100,000 per day after mid April

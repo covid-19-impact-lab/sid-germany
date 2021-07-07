@@ -32,7 +32,10 @@ def _create_rapid_test_plot_parametrization():
             ["false_positive_rate_in_the_population"],
             "false positive rate in the population",
         ),
-        (["n_rapid_tests_overall"], "number of rapid tests in the population per day"),
+        (
+            ["n_rapid_tests_overall_in_germany"],
+            "number of rapid tests per day \n(upscaled to the German population)",
+        ),
     ]
     for typ in TYPES:
         column_names = [f"{typ}_rate_in_{channel}" for channel in CHANNELS]

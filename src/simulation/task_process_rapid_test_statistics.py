@@ -32,7 +32,7 @@ for typ in TYPES:
         col = f"{typ}_rate_in_{channel}"
         _SHARE_CORRECT_AND_FALSE_COLS.append(col)
 OTHER_COLS = [f"n_rapid_tests_through_{c}" for c in CHANNELS] + [
-    "n_rapid_tests_overall",
+    "n_rapid_tests_overall_in_germany",
     "false_positive_rate_in_the_population",
 ]
 
