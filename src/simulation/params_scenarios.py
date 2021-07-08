@@ -153,7 +153,18 @@ def robustness_check_params_end_may(params):
 
 def _robustness_check_params(params, date):
     """Remove drop in share_known_cases for Easter and simplify rapid test demand."""
-    params = params.query("category != 'rapid_test_demand'")
+    params = params.copy(deep=True)
+    params = params.drop(
+        index=[
+            ("share_known_cases", "share_known_cases", "2021-04-01"),
+            ("share_known_cases", "share_known_cases", "2021-04-05"),
+            ("rapid_test_demand", "private_demand"),
+            ("rapid_test_demand", "share_accepting_work_offer"),
+            ("rapid_test_demand", "share_workers_receiving_offer"),
+            ("rapid_test_demand", "educ_worker_shares"),
+            ("rapid_test_demand", "student_shares"),
+        ]
+    )
 
     private_loc = ("rapid_test_demand", "private_demand")
     params.loc[(*private_loc, "2020-01-01"), "value"] = 0
@@ -185,12 +196,6 @@ def _robustness_check_params(params, date):
     params.loc[(*student_loc, "2021-04-07"), "value"] = 1.0
     params.loc[(*student_loc, "2025-12-31"), "value"] = 1.0
 
-    params = params.drop(
-        index=[
-            ("share_known_cases", "share_known_cases", "2021-04-01"),
-            ("share_known_cases", "share_known_cases", "2021-04-05"),
-        ]
-    )
     return params
 
 
