@@ -9,6 +9,7 @@ from src.config import PLOT_END_DATE
 from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
+from src.plotting.plotting import BLUE
 from src.plotting.plotting import style_plot
 
 plt.rcParams.update(
@@ -119,7 +120,16 @@ def _plot_time_series(
         fig, ax = plt.subplots(figsize=PLOT_SIZE)
 
     for var in y:
-        sns.lineplot(data=data, y=var, x=x, ax=ax, label=var)
+        sns.lineplot(
+            data=data,
+            y=var,
+            x=x,
+            ax=ax,
+            label=var,
+            linewidth=3.0,
+            alpha=0.6,
+            color=BLUE,
+        )
 
     fig, ax = style_plot(fig, ax)
     ax.set_title(title)
