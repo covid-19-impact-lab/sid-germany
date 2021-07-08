@@ -139,16 +139,16 @@ def mandatory_work_rapid_tests_after_easter(params):
     return new_params
 
 
-def robustness_check_params_mid_may(params):
-    return _robustness_check_params(params, "2021-05-15")
-
-
-def robustness_check_params_start_may(params):
+def robustness_check_params_early(params):
     return _robustness_check_params(params, "2021-05-01")
 
 
-def robustness_check_params_end_may(params):
-    return _robustness_check_params(params, "2021-06-01")
+def robustness_check_params_medium(params):
+    return _robustness_check_params(params, "2021-05-20")
+
+
+def robustness_check_params_late(params):
+    return _robustness_check_params(params, "2021-06-10")
 
 
 def _robustness_check_params(params, date):

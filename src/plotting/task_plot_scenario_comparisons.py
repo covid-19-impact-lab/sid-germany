@@ -272,11 +272,17 @@ PLOTS = {
         "title": "",
         "scenarios": [
             "spring_baseline",
-            "robustness_check_start_may",
-            "robustness_check_mid_may",
-            "robustness_check_end_may",
+            "robustness_check_early",
+            "robustness_check_medium",
+            "robustness_check_late",
         ],
         "colors": [BLUE, ORANGE, RED, BROWN],
+        "name_to_label": {
+            "spring_baseline": "ex post",
+            "robustness_check_early": "full rapid test availability: May 1",
+            "robustness_check_medium": "full rapid test availability: May 20",
+            "robustness_check_late": "full rapid test availability: June 10",
+        },
     },
 }
 """Dict[str, Dict[str, str]]: A dictionary containing the plots to create.

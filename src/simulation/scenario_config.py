@@ -316,21 +316,21 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "robustness_check_mid_may": {
+        "robustness_check_early": {
             "sim_input_scenario": "robustness_check",
-            "params_scenario": "robustness_check_params_mid_may",
+            "params_scenario": "robustness_check_params_early",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "robustness_check_start_may": {
+        "robustness_check_medium": {
             "sim_input_scenario": "robustness_check",
-            "params_scenario": "robustness_check_params_start_may",
+            "params_scenario": "robustness_check_params_medium",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "robustness_check_end_may": {
+        "robustness_check_late": {
             "sim_input_scenario": "robustness_check",
-            "params_scenario": "robustness_check_params_end_may",
+            "params_scenario": "robustness_check_params_late",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
