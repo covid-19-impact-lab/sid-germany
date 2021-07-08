@@ -324,12 +324,12 @@ def create_period_outputs():
     period_outputs = {}
 
     incidence_outcomes = [
-        "newly_infected",  # 7 day incidence
-        "new_known_case",  # 7 day incidence
-        "newly_deceased",  # 7 day incidence
+        "newly_infected",
+        "new_known_case",
+        "newly_deceased",
         "currently_infected",  # only used for share known cases
         "knows_currently_infected",  # only used for share known cases
-        "ever_vaccinated",  # daily share
+        "ever_vaccinated",
     ]
     groupbys = ["state", "age_group_rki", None]
 

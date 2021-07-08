@@ -11,6 +11,7 @@ from src.simulation.scenario_config import (
 )
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
+from src.simulation.scenario_config import INCIDENCE_OUTCOMES
 from src.simulation.scenario_config import NON_INCIDENCE_OUTCOMES
 
 
@@ -82,9 +83,11 @@ def task_create_weekly_outcome_for_scenario(depends_on, produces):
             # undo scaling for non incidence outcomes
             if outcome in NON_INCIDENCE_OUTCOMES:
                 out[seed] = daily_incidence / 100_000
-            # for incidence outcomes make incidence weekly
+            # for incidence outcomes scale to per million
+            elif outcome in INCIDENCE_OUTCOMES:
+                out[seed] = daily_incidence * 10
             else:
-                out[seed] = daily_incidence * 7
+                raise ValueError(f"Unknown outcome {outcome}")
         out.to_pickle(path)
 
 

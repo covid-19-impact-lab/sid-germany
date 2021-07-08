@@ -5,6 +5,13 @@ from src.config import FAST_FLAG
 
 SPRING_START = pd.Timestamp("2021-01-01")
 
+INCIDENCE_OUTCOMES = [
+    "newly_infected",
+    "new_known_case",
+    "newly_deceased",
+    "currently_infected",
+    "knows_currently_infected",
+]
 
 NON_INCIDENCE_OUTCOMES = [
     "ever_vaccinated",
