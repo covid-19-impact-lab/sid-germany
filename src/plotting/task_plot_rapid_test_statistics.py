@@ -68,9 +68,9 @@ def _create_spec(column, plot_single_runs, ylabel):
         )
 
     if plot_single_runs:
-        file_name = f"{ylabel.replace(' ', '_')}_with_single_runs.pdf"
+        file_name = f"{column}_with_single_runs.pdf"
     else:
-        file_name = f"{ylabel.replace(' ', '_')}.pdf"
+        file_name = f"{column}.pdf"
     produces = BLD / "figures" / "rapid_test_statistics" / file_name
     spec = (depends_on, plot_single_runs, ylabel, produces)
     return spec
