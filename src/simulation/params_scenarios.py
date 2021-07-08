@@ -152,16 +152,45 @@ def robustness_check_params_end_may(params):
 
 
 def _robustness_check_params(params, date):
-    """ """
-    params = params.query(
-        "(subcategory != 'private_demand') | (category != 'rapid_test_demand')"
+    """Remove drop in share_known_cases for Easter and simplify rapid test demand."""
+    params = params.query("category != 'rapid_test_demand'")
+
+    private_loc = ("rapid_test_demand", "private_demand")
+    params.loc[(*private_loc, "2020-01-01"), "value"] = 0
+    params.loc[(*private_loc, "2021-02-28"), "value"] = 0
+    params.loc[(*private_loc, "2021-02-28"), "value"] = 0
+    params.loc[(*private_loc, date), "value"] = 0.63
+    params.loc[(*private_loc, "2025-12-31"), "value"] = 0.63
+
+    accept_loc = ("rapid_test_demand", "share_accepting_work_offer")
+    params.loc[(*accept_loc, "2020-01-01"), "value"] = 0.6
+    params.loc[(*accept_loc, "2025-12-31"), "value"] = 0.6
+
+    offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
+    params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*offer_loc, "2021-01-01"), "value"] = 0.0
+    params.loc[(*offer_loc, date), "value"] = 0.833
+    params.loc[(*offer_loc, "2025-12-31"), "value"] = 0.833
+
+    teacher_loc = ("rapid_test_demand", "educ_worker_shares")
+    params.loc[(*teacher_loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*teacher_loc, "2021-01-01"), "value"] = 0.0
+    params.loc[(*teacher_loc, "2021-03-01"), "value"] = 0.3
+    params.loc[(*teacher_loc, "2021-04-07"), "value"] = 0.95
+    params.loc[(*teacher_loc, "2025-12-31"), "value"] = 0.95
+
+    student_loc = ("rapid_test_demand", "student_shares")
+    params.loc[(*student_loc, "2020-01-01"), "value"] = 0.0
+    params.loc[(*student_loc, "2021-03-01"), "value"] = 0.0
+    params.loc[(*student_loc, "2021-04-07"), "value"] = 1.0
+    params.loc[(*student_loc, "2025-12-31"), "value"] = 1.0
+
+    params = params.drop(
+        index=[
+            ("share_known_cases", "share_known_cases", "2021-04-01"),
+            ("share_known_cases", "share_known_cases", "2021-04-05"),
+        ]
     )
-    loc = ("rapid_test_demand", "private_demand")
-    params.loc[(*loc, "2020-01-01"), "value"] = 0
-    params.loc[(*loc, "2021-02-28"), "value"] = 0
-    params.loc[(*loc, "2021-02-28"), "value"] = 0
-    params.loc[(*loc, date), "value"] = 0.63
-    params.loc[(*loc, "2025-12-31"), "value"] = 0.63
     return params
 
 
