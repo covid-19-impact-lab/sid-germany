@@ -169,7 +169,6 @@ def _robustness_check_params(params, date):
     private_loc = ("rapid_test_demand", "private_demand")
     params.loc[(*private_loc, "2020-01-01"), "value"] = 0
     params.loc[(*private_loc, "2021-02-28"), "value"] = 0
-    params.loc[(*private_loc, "2021-02-28"), "value"] = 0
     params.loc[(*private_loc, date), "value"] = 0.63
     params.loc[(*private_loc, "2025-12-31"), "value"] = 0.63
 
