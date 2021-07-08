@@ -81,9 +81,10 @@ def _create_parametrization():
             BLD / "contact_models" / "empirical_distributions" / f"{name}.pkl",
         ]
         if not criteria["recurrent"]:
-            produce_paths.append(
-                BLD / "contact_models" / "age_assort_params" / f"{name}.pkl"
-            )
+            produce_paths += [
+                BLD / "contact_models" / "age_assort_params" / f"{name}.pkl",
+                BLD / "contact_models" / "cell_counts" / f"{name}.pkl",
+            ]
         parametrization.append((criteria, produce_paths))
     return parametrization
 
@@ -135,12 +136,23 @@ def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
     shares.to_pickle(produces[1])
 
     if not specs["recurrent"]:
-        assort_params = _create_assort_params(produces[0].stem, contacts, **specs)
+        assort_params, cell_counts = _create_assort_params(
+            produces[0].stem, contacts, **specs
+        )
         assort_params.to_pickle(produces[2])
+        cell_counts.to_pickle(produces[3])
 
 
 def _create_assort_params(model_name, contacts, places, recurrent, frequency, weekend):
     df = _get_relevant_contacts_subset(contacts, places, recurrent, frequency, weekend)
+
+    cell_counts = pd.crosstab(
+        df["part_age_group"],
+        df["age_group_of_contact"],
+        dropna=False,
+        normalize=False,
+    )
+
     normalized_cell_counts = pd.crosstab(
         df["part_age_group"],
         df["age_group_of_contact"],
@@ -152,9 +164,13 @@ def _create_assort_params(model_name, contacts, places, recurrent, frequency, we
         # no work contacts of and with individuals of age groups that don't work.
         normalized_cell_counts[["0-9", "80-100"]] = 0
         normalized_cell_counts.loc[["0-9", "80-100"]] = 0
+        cell_counts = cell_counts.drop(["0-9", "10-19", "70-79", "80-100"])
+        cell_counts = cell_counts.drop(["0-9", "10-19", "70-79", "80-100"], axis=1)
+
     elif "other" in model_name:
         # too few 80-100 year olds in the sample. Set to next younger age group.
         normalized_cell_counts.loc["80-100"] = normalized_cell_counts.loc["70-79"]
+        cell_counts.loc["80-100"] = cell_counts.loc["70-79"]
 
     meeting_prob = normalized_cell_counts.fillna(0).round(4)
     meeting_prob = meeting_prob.where(
@@ -174,7 +190,7 @@ def _create_assort_params(model_name, contacts, places, recurrent, frequency, we
     assort_params = pd.concat([assort_params], keys=[first_level], names=["category"])
     assort_params.index.names = ["category", "subcategory", "name"]
     assort_params.name = "value"
-    return assort_params
+    return assort_params, cell_counts
 
 
 def _create_n_contacts(contacts, places, recurrent, frequency, weekend):
