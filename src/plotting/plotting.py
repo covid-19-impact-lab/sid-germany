@@ -309,7 +309,7 @@ def format_date_axis(ax):
     ax.xaxis.set_minor_locator(dt.DayLocator())
     ax.xaxis.set_minor_formatter(ticker.NullFormatter())
 
-    if len(ax.xaxis.get_majorticklabels()):
+    if len(ax.xaxis.get_majorticklabels()) <= 2:
         ax.xaxis.set_major_locator(dt.WeekdayLocator())
         ax.xaxis.set_major_formatter(dt.DateFormatter("%b %d\n%Y"))
         ax.xaxis.set_minor_locator(dt.DayLocator())
