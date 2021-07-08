@@ -5,6 +5,13 @@ from src.config import FAST_FLAG
 
 SPRING_START = pd.Timestamp("2021-01-01")
 
+INCIDENCE_OUTCOMES = [
+    "newly_infected",
+    "new_known_case",
+    "newly_deceased",
+    "currently_infected",
+    "knows_currently_infected",
+]
 
 NON_INCIDENCE_OUTCOMES = [
     "ever_vaccinated",
@@ -21,8 +28,9 @@ def create_path_to_last_states_of_simulation(name, seed):
     return path
 
 
-def create_path_to_rapid_test_statistics(name, seed):
-    path = BLD / "tables" / f"{FAST_FLAG}_rapid_test_statistics_{name}_{seed}.csv"
+def create_path_to_raw_rapid_test_statistics(name, seed):
+    csv_name = f"{FAST_FLAG}_{name}_{seed}.csv"
+    path = BLD / "simulations" / "period_outputs" / "rapid_test_statistics" / csv_name
     return path
 
 
@@ -48,6 +56,11 @@ def create_path_to_scenario_outcome_time_series(scenario_name, entry):
         file_name = f"{FAST_FLAG}_{entry}_share.pkl"
     else:
         file_name = f"{FAST_FLAG}_{entry}.pkl"
+    return BLD / "simulations" / "time_series" / scenario_name / file_name
+
+
+def create_path_to_rapid_test_statistic_time_series(scenario_name, entry):
+    file_name = f"{FAST_FLAG}_{entry}.pkl"
     return BLD / "simulations" / "time_series" / scenario_name / file_name
 
 
@@ -92,7 +105,7 @@ def get_named_scenarios():
     """
     if FAST_FLAG == "debug":
         n_main_seeds = 1
-        n_other_seeds = 0
+        n_other_seeds = 1
     elif FAST_FLAG == "verify":
         n_main_seeds = 30
         n_other_seeds = 0
@@ -115,7 +128,6 @@ def get_named_scenarios():
             "start_date": fall_dates["start_date"],
             "end_date": spring_dates["end_date"],
         }
-        summer_dates = {"start_date": "2021-06-01", "end_date": "2021-07-25"}
     else:
         # for the plotting we need that combined and spring have dates after 2021-01-15
         combined_dates = {"start_date": "2020-12-30", "end_date": "2021-01-18"}
@@ -127,20 +139,14 @@ def get_named_scenarios():
             "start_date": "2021-01-01",
             "end_date": "2021-01-18",
         }
-        summer_dates = {
-            "start_date": "2021-01-19",
-            "end_date": "2021-01-24",
-        }
 
     named_scenarios = {
         # Baseline Scenarios
         "combined_baseline": {
-            "sim_input_scenario": "baseline_save_rapid_test_statistics",
+            "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
-            "save_last_states": True,
             "is_resumed": False,
-            "save_rapid_test_statistics": True,
             **combined_dates,
         },
         "fall_baseline": {
@@ -152,19 +158,11 @@ def get_named_scenarios():
             **fall_dates,
         },
         "spring_baseline": {
-            "sim_input_scenario": "baseline",
+            "sim_input_scenario": "baseline_save_rapid_test_statistics",
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
-            "save_last_states": True,
+            "save_rapid_test_statistics": True,
             **spring_dates,
-        },
-        "summer_baseline": {
-            "sim_input_scenario": "baseline",
-            "params_scenario": "baseline",
-            "n_seeds": n_main_seeds,
-            "save_last_states": True,
-            "is_resumed": "combined",
-            **summer_dates,
         },
         # Scenarios for the main plots
         "spring_no_effects": {
@@ -303,6 +301,36 @@ def get_named_scenarios():
         "spring_10_pct_more_work_in_person_after_easter": {
             "sim_input_scenario": "minus_10_pct_home_office_after_easter",
             "params_scenario": "baseline",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_with_completely_random_rapid_tests": {
+            "sim_input_scenario": "completely_random_rapid_tests",
+            "params_scenario": "baseline",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "spring_with_random_rapid_tests_with_30pct_refusers": {
+            "sim_input_scenario": "random_rapid_tests_with_30pct_refusers",
+            "params_scenario": "baseline",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "robustness_check_early": {
+            "sim_input_scenario": "robustness_check",
+            "params_scenario": "robustness_check_params_early",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "robustness_check_medium": {
+            "sim_input_scenario": "robustness_check",
+            "params_scenario": "robustness_check_params_medium",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        "robustness_check_late": {
+            "sim_input_scenario": "robustness_check",
+            "params_scenario": "robustness_check_params_late",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },

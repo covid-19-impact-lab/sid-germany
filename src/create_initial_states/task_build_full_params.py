@@ -172,7 +172,7 @@ def _build_reaction_params(contact_models):
 def _add_virus_strain_params(params):
     """Add parameters governing the infectiousness of the virus strains.
 
-    source: https://doi.org/10.1101/2020.12.24.20248822
+    source: https://doi.org/10.1126/science.abg3055
 
     "We estimate that this variant has a 43–90% (range of 95% credible
     intervals 38–130%) higher reproduction number than preexisting variants"

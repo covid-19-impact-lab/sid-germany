@@ -7,113 +7,123 @@ from src.config import BLD
 from src.config import PLOT_END_DATE
 from src.config import PLOT_SIZE
 from src.plotting.plotting import BLUE
-from src.plotting.plotting import RED
+from src.plotting.plotting import GREEN
 from src.plotting.plotting import style_plot
-from src.simulation.scenario_config import create_path_to_rapid_test_statistics
-from src.simulation.scenario_config import get_named_scenarios
-
-SEEDS = get_named_scenarios()["combined_baseline"]["n_seeds"]
-
-_CSV_DEPENDENCIES = {
-    seed: create_path_to_rapid_test_statistics("combined_baseline", seed)
-    for seed in range(SEEDS)
-}
-
-DEMAND_SHARE_COLS = [
-    "private_demand_share",
-    "work_demand_share",
-    "educ_demand_share",
-    # parts of the private demand share:
-    "hh_demand",
-    "sym_without_pcr_demand",
-    "other_contact_demand",
-]
-
-SHARE_INFECTED_COLS = [
-    f"share_infected_among_{col.replace('_share', '')}" for col in DEMAND_SHARE_COLS
-]
-
-TABLE_PATH = BLD / "tables" / "rapid_test_statistics"
-
-
-_CSV_PARAMETRIZATION = [
-    (column, TABLE_PATH / f"{column}.csv")
-    for column in DEMAND_SHARE_COLS + SHARE_INFECTED_COLS
-]
-
-
-@pytask.mark.skipif(SEEDS == 0, reason="combined_baseline did not run.")
-@pytask.mark.depends_on(_CSV_DEPENDENCIES)
-@pytask.mark.parametrize("column, produces", _CSV_PARAMETRIZATION)
-def task_process_rapid_test_statistics(depends_on, column, produces):
-    dfs = {
-        seed: pd.read_csv(path, parse_dates=["date"], index_col="date")
-        for seed, path in depends_on.items()
-    }
-    for df in dfs.values():
-        assert not df.index.duplicated().any(), (
-            "Duplicates in a rapid test statistic DataFrame's index. "
-            "The csv file must be deleted before every run."
-        )
-    df = pd.concat({seed: df[column] for seed, df in dfs.items()}, axis=1)
-    df["smoothed_mean"] = (
-        df.mean(axis=1).rolling(window=7, min_periods=1, center=False).mean()
-    )
-    df.to_csv(produces)
-
-
-_PLOT_PARAMETRIZATION = []
-for column in DEMAND_SHARE_COLS:
-    for plot_single_runs in [True, False]:
-        depends_on = TABLE_PATH / f"{column}.csv"
-        ylabel = "share of the population demanding a rapid test"
-        file_name = (
-            f"{column}_with_single_runs.pdf" if plot_single_runs else f"{column}.pdf"
-        )
-        produces = BLD / "figures" / "rapid_test_statistics" / file_name
-        spec = (depends_on, BLUE, plot_single_runs, ylabel, produces)
-        _PLOT_PARAMETRIZATION.append(spec)
-
-for column in SHARE_INFECTED_COLS:
-    for plot_single_runs in [True, False]:
-        depends_on = TABLE_PATH / f"{column}.csv"
-        ylabel = "share of rapid tests demanded by infected individuals"
-        file_name = (
-            f"{column}_with_single_runs.pdf" if plot_single_runs else f"{column}.pdf"
-        )
-
-        produces = BLD / "figures" / "rapid_test_statistics" / file_name
-        spec = (depends_on, RED, plot_single_runs, ylabel, produces)
-        _PLOT_PARAMETRIZATION.append(spec)
-
-
-@pytask.mark.parametrize(
-    "depends_on, color, plot_single_runs, ylabel, produces", _PLOT_PARAMETRIZATION
+from src.plotting.plotting import YELLOW
+from src.simulation.scenario_config import (
+    create_path_to_rapid_test_statistic_time_series,
 )
-def task_plot_rapid_test_statistics(
-    depends_on, color, plot_single_runs, ylabel, produces
-):
-    df = pd.read_csv(depends_on, index_col="date", parse_dates=["date"])
-    fig = _plot_df(df=df, color=color, plot_single_runs=plot_single_runs, ylabel=ylabel)
+from src.simulation.task_process_rapid_test_statistics import CHANNELS
+from src.simulation.task_process_rapid_test_statistics import OUTCOMES
+from src.simulation.task_process_rapid_test_statistics import RATES
+from src.simulation.task_process_rapid_test_statistics import SHARE_TYPES
+
+
+def _create_rapid_test_plot_parametrization():
+    signature = "depends_on, plot_single_runs, ylabel, produces"
+
+    label_templates = {
+        "number": "number of {nice_outcome} in Germany",
+        "popshare": "share of the population with {nice_outcome}",
+        "testshare": "share of {nice_outcome}",
+    }
+    nice_outcomes = {
+        "false_negative": "false negative tests",
+        "false_positive": "false positive tests",
+        "tested_negative": "negative tests",
+        "tested_positive": "positive tests",
+        "true_negative": "true negative tests",
+        "true_positive": "true positive tests",
+        "tested": "tests",
+    }
+
+    column_and_label = [(rate, rate.replace("_", " ")) for rate in RATES]
+    for outcome in OUTCOMES:
+        for share_type in SHARE_TYPES:
+            column = f"{share_type}_{outcome}"
+            label = label_templates[share_type].format(
+                nice_outcome=nice_outcomes[outcome]
+            )
+            column_and_label.append((column, label))
+
+    parametrization = []
+    for column, ylabel in column_and_label:
+        for plot_single_runs in [True, False]:
+            spec = _create_spec(
+                column=column,
+                plot_single_runs=plot_single_runs,
+                ylabel=ylabel,
+            )
+            parametrization.append(spec)
+
+    return signature, parametrization
+
+
+def _create_spec(column, plot_single_runs, ylabel):
+    depends_on = {}
+    for channel in CHANNELS:
+        channel_column = column + f"_by_{channel}"
+        depends_on[channel_column] = create_path_to_rapid_test_statistic_time_series(
+            "spring_baseline", channel_column
+        )
+
+    if plot_single_runs:
+        file_name = f"{column}_with_single_runs.pdf"
+    else:
+        file_name = f"{column}.pdf"
+    produces = BLD / "figures" / "rapid_test_statistics" / file_name
+    spec = (depends_on, plot_single_runs, ylabel, produces)
+    return spec
+
+
+_PARAMETRIZATION = _create_rapid_test_plot_parametrization()
+
+
+@pytask.mark.parametrize(*_PARAMETRIZATION)
+def task_plot_rapid_test_statistics(depends_on, plot_single_runs, ylabel, produces):
+    dfs = {col: pd.read_pickle(path) for col, path in depends_on.items()}
+
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
+    for col, df in dfs.items():
+        color, label = _get_channel_color_and_label(col)
+        ax = _plot_df(
+            df=df,
+            column=col,
+            color=color,
+            plot_single_runs=plot_single_runs,
+            ax=ax,
+            label=label,
+        )
+
+    ax.set_xlim(pd.Timestamp("2021-03-01"), pd.Timestamp(PLOT_END_DATE))
+    fig, ax = style_plot(fig, ax)
+    ax.set_ylabel(ylabel)
+    fig.tight_layout()
     fig.savefig(produces)
     plt.close()
 
 
-def _plot_df(df, color, plot_single_runs, ylabel):
-    fig, ax = plt.subplots(figsize=PLOT_SIZE)
-
+def _plot_df(
+    df,
+    column,
+    color,
+    label,
+    ax,
+    plot_single_runs,
+):
     sns.lineplot(
-        x=df["smoothed_mean"].index,
-        y=df["smoothed_mean"],
+        x=df[column].index,
+        y=df[column],
         ax=ax,
         linewidth=4,
         color=color,
+        label=label,
         alpha=0.8,
     )
 
     if plot_single_runs:
         for col in df.columns:
-            if col != "smoothed_mean":
+            if col != column:
                 sns.lineplot(
                     x=df.index,
                     y=df[col].rolling(window=7, min_periods=1, center=False).mean(),
@@ -122,9 +132,20 @@ def _plot_df(df, color, plot_single_runs, ylabel):
                     color=color,
                     alpha=0.6,
                 )
-    ax.set_xlim(pd.Timestamp("2021-03-15"), pd.Timestamp(PLOT_END_DATE))
-    fig, ax = style_plot(fig, ax)
+    return ax
 
-    ax.set_ylabel(ylabel)
-    fig.tight_layout()
-    return fig
+
+def _get_channel_color_and_label(col):
+    if "work" in col:
+        color = GREEN
+        label = "work"
+    elif "educ" in col:
+        color = YELLOW
+        label = "educ"
+    elif "private" in col:
+        color = BLUE
+        label = "private"
+    else:
+        color = "k"
+        label = None
+    return color, label

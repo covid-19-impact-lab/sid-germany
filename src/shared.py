@@ -67,11 +67,11 @@ def create_groups_from_dist(
         initial_states (pandas.DataFrame): SID initial states DataFrame.
         group_distribution (pandas.Series): the index is the support of the group sizes,
             the values is the share of the group size we are aiming for.
-        query (str): query string to identify the subpopulation for which we want to
+        query (str): query string to identify the sub population for which we want to
             create group ids. Note that group_distribution must describe the
-            distribution of group sizes in this subpopulation.
+            distribution of group sizes in this sub population.
         assort_bys (list): columns by which to group individuals, such that in every
-            group people share all charackteristics in the assort_by variables.
+            group people share all characteristics in the assort_by variables.
         seed (int)
 
     Returns:

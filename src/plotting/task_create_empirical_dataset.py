@@ -32,7 +32,7 @@ _DEPENDENCIES = {
 )
 def task_create_empirical_dataset(depends_on, produces):
     rki = pd.read_pickle(depends_on["rki"])
-    new_known_case = 7 * smoothed_outcome_per_hundred_thousand_rki(
+    new_known_case = 10 * smoothed_outcome_per_hundred_thousand_rki(
         df=rki,
         outcome="newly_infected",
         take_logs=False,
@@ -40,7 +40,7 @@ def task_create_empirical_dataset(depends_on, produces):
     )
     new_known_case.name = "new_known_case"
 
-    newly_deceased = 7 * smoothed_outcome_per_hundred_thousand_rki(
+    newly_deceased = 10 * smoothed_outcome_per_hundred_thousand_rki(
         df=rki,
         outcome="newly_deceased",
         take_logs=False,

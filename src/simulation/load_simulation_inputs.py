@@ -60,6 +60,7 @@ def load_simulation_inputs(
         rapid_test_statistics_path (Path, optional): where to save rapid test
             statistics.
 
+
     Returns:
         dict: Dictionary with most arguments of get_simulate_func. Keys are:
             - initial_states
@@ -246,11 +247,11 @@ def get_simulation_dependencies(debug, is_resumed):
 
     Args:
         debug (bool): Whether to use the debug initial states.
+        is_resumed (bool): Whether the simulation is a resumed simulation. If False the
+            path to the initial states from BLD / "data" are given.
 
     Returns:
         paths (dict): Dictionary with the dependencies for the simulation.
-        is_resumed (bool, optional): Whether the simulation is a resumed simulation.
-            If False the path to the initial states from BLD / "data" are given.
 
     """
     out = {
@@ -305,6 +306,9 @@ def get_simulation_dependencies(debug, is_resumed):
         "scenario_config.py": SRC / "simulation" / "scenario_config.py",
         "testing_shared.py": SRC / "testing" / "shared.py",
         "policy_tools.py": SRC / "policies" / "policy_tools.py",
+        "create_rapid_test_statistics": SRC
+        / "testing"
+        / "create_rapid_test_statistics.py",
     }
 
     if not is_resumed:
@@ -320,12 +324,12 @@ def create_period_outputs():
     period_outputs = {}
 
     incidence_outcomes = [
-        "newly_infected",  # 7 day incidence
-        "new_known_case",  # 7 day incidence
-        "newly_deceased",  # 7 day incidence
+        "newly_infected",
+        "new_known_case",
+        "newly_deceased",
         "currently_infected",  # only used for share known cases
         "knows_currently_infected",  # only used for share known cases
-        "ever_vaccinated",  # daily share
+        "ever_vaccinated",
     ]
     groupbys = ["state", "age_group_rki", None]
 

@@ -2,13 +2,14 @@ import pandas as pd
 import pytask
 from sid import get_simulate_func
 
+from src.config import BLD
 from src.config import FAST_FLAG
 from src.simulation.load_params import load_params
 from src.simulation.load_simulation_inputs import get_simulation_dependencies
 from src.simulation.load_simulation_inputs import load_simulation_inputs
 from src.simulation.scenario_config import create_path_to_last_states_of_simulation
 from src.simulation.scenario_config import create_path_to_period_outputs_of_simulation
-from src.simulation.scenario_config import create_path_to_rapid_test_statistics
+from src.simulation.scenario_config import create_path_to_raw_rapid_test_statistics
 from src.simulation.scenario_config import get_named_scenarios
 
 
@@ -32,7 +33,7 @@ def _create_simulation_parametrization():
                 )
             }
             if specs.get("save_rapid_test_statistics", False):
-                rapid_test_statistics_path = create_path_to_rapid_test_statistics(
+                rapid_test_statistics_path = create_path_to_raw_rapid_test_statistics(
                     name, seed
                 )
                 produces["rapid_test_statistics"] = rapid_test_statistics_path
@@ -109,13 +110,20 @@ def task_simulate_scenario(
     )
     params = load_params(params_scenario)
 
+    name = produces["period_outputs"].stem
+
+    temp_path = BLD / "simulations" / "temp" / name
+    temp_path.mkdir(parents=True, exist_ok=True)
+
     simulate = get_simulate_func(
-        params=params, path=None, seed=seed, **simulation_kwargs
+        params=params, path=temp_path, seed=seed, **simulation_kwargs
     )
     res = simulate(params)
 
     if save_last_states:
         last_states = res.pop("last_states")
-        last_states.to_pickle(produces["last_states"])
+        path = produces["last_states"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        last_states.to_pickle(path)
 
     pd.to_pickle(res, produces["period_outputs"])

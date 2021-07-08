@@ -242,11 +242,6 @@ PLOTS = {
         },
         "plot_start": AFTER_EASTER,
     },
-    "main_prediction": {
-        "title": "",
-        "scenarios": ["summer_baseline"],
-        "colors": [BLUE],
-    },
     "add_single_rapid_test_chanel_to_pessimistic": {
         "title": "",
         "scenarios": [
@@ -261,6 +256,32 @@ PLOTS = {
             "spring_without_school_and_work_rapid_tests": "just private rapid tests",
             "spring_without_school_and_private_rapid_tests": "just work rapid tests",
             "spring_without_work_and_private_rapid_tests": "just school rapid tests",
+        },
+    },
+    "random_rapid_tests_vs_baseline": {
+        "title": "",
+        "scenarios": [
+            "spring_baseline",
+            "spring_with_completely_random_rapid_tests",
+            "spring_with_random_rapid_tests_with_30pct_refusers",
+            "spring_without_rapid_tests",
+        ],
+        "colors": [BLUE, RED, PURPLE, "k"],
+    },
+    "robustness_check": {
+        "title": "",
+        "scenarios": [
+            "spring_baseline",
+            "robustness_check_early",
+            "robustness_check_medium",
+            "robustness_check_late",
+        ],
+        "colors": [BLUE, ORANGE, RED, BROWN],
+        "name_to_label": {
+            "spring_baseline": "ex post",
+            "robustness_check_early": "full rapid test availability: May 1",
+            "robustness_check_medium": "full rapid test availability: May 20",
+            "robustness_check_late": "full rapid test availability: June 10",
         },
     },
 }

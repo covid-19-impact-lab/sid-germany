@@ -24,7 +24,7 @@ The individual either ...
 
 def go_to_weekly_meeting(
     states, params, group_col_name, day_of_week, seed  # noqa: U100
-):  # noqa: U100
+):
     """Return who participates in a weekly meeting.
 
     Args:

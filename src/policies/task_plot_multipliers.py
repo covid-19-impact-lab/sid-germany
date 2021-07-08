@@ -8,6 +8,7 @@ from src.config import PLOT_END_DATE
 from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
+from src.plotting.plotting import BLUE
 from src.plotting.plotting import ORANGE
 from src.plotting.plotting import PURPLE
 from src.plotting.plotting import style_plot
@@ -37,7 +38,13 @@ def task_plot_other_multiplier(depends_on, produces):  # noqa: U100
         PLOT_START_DATE, PLOT_END_DATE, OTHER_MULTIPLIER_SPECS
     )
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
-    sns.lineplot(x=other_multiplier.index, y=other_multiplier)
+    sns.lineplot(
+        x=other_multiplier.index,
+        y=other_multiplier,
+        linewidth=3.0,
+        alpha=0.6,
+        color=BLUE,
+    )
     fig, ax = style_plot(fig, ax)
     ax.set_ylabel("share of other pre-pandemic contacts taking place")
     fig.tight_layout()
@@ -89,11 +96,13 @@ def task_plot_multipliers_and_stringency_index(depends_on, produces):
     ]
 
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
-    for sr, label in [
-        (school_multiplier_with_vacations, "with vacations"),
-        (school_multiplier_without_vacations, "without vacations"),
+    for sr, label, color in [
+        (school_multiplier_with_vacations, "with vacations", BLUE),
+        (school_multiplier_without_vacations, "without vacations", ORANGE),
     ]:
-        sns.lineplot(x=sr.index, y=sr, label=label, alpha=0.6, linewidth=4)
+        sns.lineplot(
+            x=sr.index, y=sr, label=label, alpha=0.6, linewidth=3.0, color=color
+        )
     fig, ax = style_plot(fig, ax)
     ax.set_ylabel("share of school contacts taking place")
     fig.tight_layout()

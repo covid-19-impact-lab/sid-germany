@@ -39,8 +39,8 @@ OUTCOME_TO_EMPIRICAL_LABEL = {
     "ever done a rapid test",
     "share_rapid_test_in_last_week": (
         "share of Germans reporting to have\n"
-        "done at least one self-administered\n"
-        "rapid test per week within the last 4 weeks"
+        "done at least one rapid test per week\n"
+        "within the last 4 weeks"
     ),
     "share_b117": "officially reported share of B.1.1.7",
     "ever_vaccinated": "share of Germans with first vaccination dose",
@@ -48,9 +48,9 @@ OUTCOME_TO_EMPIRICAL_LABEL = {
 }
 
 OUTCOME_TO_Y_LABEL = {
-    "newly_infected": "weekly total new cases per 100,000 inhabitants",
-    "new_known_case": "weekly reported new cases per 100,000 inhabitants",
-    "newly_deceased": "weekly deaths per 100,000 inhabitants",
+    "newly_infected": "daily total new cases per 1,000,000 inhabitants",
+    "new_known_case": "daily reported new cases per 1,000,000 inhabitants",
+    "newly_deceased": "daily deaths per 1,000,000 inhabitants",
     "share_ever_rapid_test": "share of the population that has \n"
     "ever done a rapid test",
     "share_rapid_test_in_last_week": "share of the population that has done \na rapid "
@@ -308,6 +308,12 @@ def format_date_axis(ax):
     ax.xaxis.set_major_formatter(dt.DateFormatter("%b\n%Y"))
     ax.xaxis.set_minor_locator(dt.DayLocator())
     ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+
+    if len(ax.xaxis.get_majorticklabels()) <= 2:
+        ax.xaxis.set_major_locator(dt.WeekdayLocator())
+        ax.xaxis.set_major_formatter(dt.DateFormatter("%b %d\n%Y"))
+        ax.xaxis.set_minor_locator(dt.DayLocator())
+        ax.xaxis.set_minor_formatter(ticker.NullFormatter())
     return ax
 
 
