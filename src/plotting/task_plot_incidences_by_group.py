@@ -85,7 +85,7 @@ def task_plot_age_group_incidences_in_one_scenario(
                 group_sizes=group_sizes,
                 take_logs=False,
             )
-            * 7
+            * 10
         )
 
     else:
