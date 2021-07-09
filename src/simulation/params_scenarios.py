@@ -179,6 +179,7 @@ def _robustness_check_params(params, date):
     offer_loc = ("rapid_test_demand", "share_workers_receiving_offer")
     params.loc[(*offer_loc, "2020-01-01"), "value"] = 0.0
     params.loc[(*offer_loc, "2021-01-01"), "value"] = 0.0
+    params.loc[(*offer_loc, "2021-03-01"), "value"] = 0.15
     params.loc[(*offer_loc, date), "value"] = 0.833
     params.loc[(*offer_loc, "2025-12-31"), "value"] = 0.833
 
@@ -192,8 +193,8 @@ def _robustness_check_params(params, date):
     student_loc = ("rapid_test_demand", "student_shares")
     params.loc[(*student_loc, "2020-01-01"), "value"] = 0.0
     params.loc[(*student_loc, "2021-03-01"), "value"] = 0.0
-    params.loc[(*student_loc, "2021-04-07"), "value"] = 1.0
-    params.loc[(*student_loc, "2025-12-31"), "value"] = 1.0
+    params.loc[(*student_loc, "2021-04-07"), "value"] = 0.95
+    params.loc[(*student_loc, "2025-12-31"), "value"] = 0.95
 
     return params
 
