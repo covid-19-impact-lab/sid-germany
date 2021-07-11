@@ -48,8 +48,8 @@ OUTCOME_TO_EMPIRICAL_LABEL = {
 }
 
 OUTCOME_TO_Y_LABEL = {
-    "newly_infected": "total new cases per million inhabitants per day",
-    "new_known_case": "reported new cases per million inhabitants per day",
+    "newly_infected": "total new cases per million per day",
+    "new_known_case": "reported new cases per million per day",
     "newly_deceased": "deaths per million inhabitants per day",
     "share_ever_rapid_test": "share of the population that has \n"
     "ever done a rapid test",
