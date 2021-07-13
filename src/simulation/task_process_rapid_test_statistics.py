@@ -5,7 +5,7 @@ import pytask
 
 from src.config import BLD
 from src.simulation.scenario_config import (
-    create_path_to_rapid_test_statistic_time_series,
+    create_path_to_rapid_test_statistic_time_series as get_ts_path,
 )
 from src.simulation.scenario_config import create_path_to_raw_rapid_test_statistics
 from src.simulation.scenario_config import get_named_scenarios
@@ -29,32 +29,18 @@ OUTCOMES = [
 ]
 SHARE_TYPES = ["number", "popshare", "testshare"]
 
-RATES = [
-    "false_negative_rate",
-    "false_positive_rate",
-    "true_negative_rate",
-    "true_positive_rate",
-]
-
 RAPID_TEST_STATISTICS = []
 for out, channel, share_type in product(OUTCOMES, CHANNELS, SHARE_TYPES):
     RAPID_TEST_STATISTICS.append(f"{share_type}_{out}_by_{channel}")
-for out, channel in product(RATES, CHANNELS):
-    RAPID_TEST_STATISTICS.append(f"{out}_by_{channel}")
 
-
-_PARAMETRIZATION = [
-    (
-        column,
-        create_path_to_rapid_test_statistic_time_series("spring_baseline", column),
-    )
-    for column in RAPID_TEST_STATISTICS
+_SINGLE_COL_PARAMETRIZATION = [
+    (column, get_ts_path("spring_baseline", column)) for column in RAPID_TEST_STATISTICS
 ]
 
 
 @pytask.mark.skipif(_N_SEEDS == 0, reason="spring baseline did not run.")
 @pytask.mark.depends_on(_DEPENDENCIES)
-@pytask.mark.parametrize("column, produces", _PARAMETRIZATION)
+@pytask.mark.parametrize("column, produces", _SINGLE_COL_PARAMETRIZATION)
 def task_process_rapid_test_statistics(depends_on, column, produces):
     dfs = {
         seed: pd.read_csv(path, parse_dates=["date"], index_col="date")
@@ -80,9 +66,11 @@ def task_check_that_a_table_was_created_for_each_rapid_test_statistic(depends_on
     ), "Some rapid test statistic columns that should have a table do not."
 
 
-@pytask.mark.depends_on([path for col, path in _PARAMETRIZATION])
+@pytask.mark.depends_on([path for col, path in _SINGLE_COL_PARAMETRIZATION])
 @pytask.mark.produces(BLD / "tables" / "rapid_test_statistics.csv")
 def task_create_nice_rapid_test_statistic_table_for_lookup(produces):
-    to_concat = [pd.read_pickle(path)[[column]] for column, path in _PARAMETRIZATION]
+    to_concat = [
+        pd.read_pickle(path)[[column]] for column, path in _SINGLE_COL_PARAMETRIZATION
+    ]
     df = pd.concat(to_concat, axis=1)
     df.round(4).to_csv(produces)

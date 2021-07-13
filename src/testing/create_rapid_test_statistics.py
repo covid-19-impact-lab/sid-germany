@@ -65,12 +65,11 @@ def _calculate_rapid_test_statistics_by_channel(
 ):
     """Calculate the rapid test statistics for one channel or overall.
 
-    Naming convention for the denominators:
+        Naming convention for the denominators:
 
-    - testshare             -> n_tests
-    - popshare              -> n_people
-    - number                -> n_people / POPULATION_GERMANY
-    - rate                  -> n_{pos/neg}_tests
+        - testshare             -> n_tests
+        - popshare              -> n_people
+        - number                -> n_people / POPULATION_GERMANY
 
     Args:
         states (pandas.DataFrame): sid states DataFrame.
@@ -112,18 +111,5 @@ def _calculate_rapid_test_statistics_by_channel(
         )
         statistics[f"popshare_{name}_by_{channel_name}"] = sr.sum() / n_obs
         statistics[f"testshare_{name}_by_{channel_name}"] = sr.sum() / n_tested
-
-    statistics[f"true_positive_rate_by_{channel_name}"] = (
-        individual_outcomes["true_positive"].sum() / n_tested_positive
-    )
-    statistics[f"true_negative_rate_by_{channel_name}"] = (
-        individual_outcomes["true_negative"].sum() / n_tested_negative
-    )
-    statistics[f"false_positive_rate_by_{channel_name}"] = (
-        individual_outcomes["false_positive"].sum() / n_tested_positive
-    )
-    statistics[f"false_negative_rate_by_{channel_name}"] = (
-        individual_outcomes["false_negative"].sum() / n_tested_negative
-    )
 
     return statistics
