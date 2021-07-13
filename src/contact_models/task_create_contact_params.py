@@ -119,21 +119,17 @@ def task_calculate_and_plot_nr_of_contacts(depends_on, specs, produces):
     else:
         approx_dist = empirical_distribution
 
-    pct_non_zero = (empirical_distribution / empirical_distribution.sum())[1:].sum()
+    shares = approx_dist / approx_dist.sum()
+    shares.to_pickle(produces[1])
+
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
-    sns.barplot(x=approx_dist.index, y=approx_dist, ax=ax, color=BLUE)
-    ax.set_ylabel("number of individuals reporting\n a given number of contacts")
-    ax.set_xlabel(
-        "reported number of contacts"
-        f"\n\n{int(100 * pct_non_zero)}% individuals reported non-zero contacts."
-    )
+    sns.barplot(x=shares.index, y=shares, ax=ax, color=BLUE)
+    ax.set_ylabel("share of individuals")
+    ax.set_xlabel("reported number of contacts")
     sns.despine()
     fig.tight_layout()
     fig.savefig(produces[0])
     plt.close()
-
-    shares = approx_dist / approx_dist.sum()
-    shares.to_pickle(produces[1])
 
     if not specs["recurrent"]:
         assort_params, cell_counts = _create_assort_params(
