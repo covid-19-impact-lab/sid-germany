@@ -17,6 +17,13 @@ from src.simulation.task_process_rapid_test_statistics import CHANNELS
 from src.simulation.task_process_rapid_test_statistics import OUTCOMES
 from src.simulation.task_process_rapid_test_statistics import SHARE_TYPES
 
+RATES = [
+    "true_positive_rate",
+    "false_positive_rate",
+    "true_negative_rate",
+    "false_negative_rate",
+]
+
 
 def _create_rapid_test_plot_parametrization():
     signature = "depends_on, plot_single_runs, ylabel, produces"
@@ -36,7 +43,7 @@ def _create_rapid_test_plot_parametrization():
         "tested": "tests",
     }
 
-    column_and_label = []
+    column_and_label = [(rate, rate.replace("_", " ")) for rate in RATES]
     for outcome in OUTCOMES:
         for share_type in SHARE_TYPES:
             column = f"{share_type}_{outcome}"
