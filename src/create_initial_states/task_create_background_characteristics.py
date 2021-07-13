@@ -8,6 +8,7 @@ import sid
 from sid.shared import factorize_assortative_variables
 
 from src.config import BLD
+from src.config import FAST_FLAG
 from src.config import N_HOUSEHOLDS
 from src.config import SRC
 from src.create_initial_states.create_contact_model_group_ids import (
@@ -64,15 +65,13 @@ _DEPENDENCIES = {
     "params": BLD / "params.pkl",
 }
 
+_N_HH_AND_PATH = [(100_000, BLD / "data" / "debug_initial_states.parquet")]
+if FAST_FLAG != "debug":
+    _N_HH_AND_PATH.append((N_HOUSEHOLDS, BLD / "data" / "initial_states.parquet"))
+
 
 @pytask.mark.depends_on(_DEPENDENCIES)
-@pytask.mark.parametrize(
-    "n_hhs, produces",
-    [
-        (N_HOUSEHOLDS, BLD / "data" / "initial_states.parquet"),
-        (100_000, BLD / "data" / "debug_initial_states.parquet"),
-    ],
-)
+@pytask.mark.parametrize("n_hhs, produces", _N_HH_AND_PATH)
 def task_create_initial_states_microcensus(depends_on, n_hhs, produces):
     mc = pd.read_stata(depends_on["hh_data"])
     county_probabilities = pd.read_parquet(depends_on["county_probabilities"])

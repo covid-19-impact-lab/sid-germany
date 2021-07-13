@@ -15,7 +15,6 @@ from src.simulation.scenario_config import (
 )
 from src.simulation.task_process_rapid_test_statistics import CHANNELS
 from src.simulation.task_process_rapid_test_statistics import OUTCOMES
-from src.simulation.task_process_rapid_test_statistics import RATES
 from src.simulation.task_process_rapid_test_statistics import SHARE_TYPES
 
 
@@ -37,7 +36,7 @@ def _create_rapid_test_plot_parametrization():
         "tested": "tests",
     }
 
-    column_and_label = [(rate, rate.replace("_", " ")) for rate in RATES]
+    column_and_label = []
     for outcome in OUTCOMES:
         for share_type in SHARE_TYPES:
             column = f"{share_type}_{outcome}"
