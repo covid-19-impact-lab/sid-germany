@@ -65,7 +65,7 @@ def _calculate_rapid_test_statistics_by_channel(
 ):
     """Calculate the rapid test statistics for one channel or overall.
 
-        Naming convention for the denominators:
+    Naming convention for the denominators:
 
         - testshare             -> n_tests
         - popshare              -> n_people
