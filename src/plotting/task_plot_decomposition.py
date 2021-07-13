@@ -207,7 +207,7 @@ def _create_area_plot(df, scenario_to_members, no_effects_scenario, ordering, co
 
         ax = format_date_axis(ax)
 
-        ax.set_ylabel("contribution to difference in weekly incidence")
+        ax.set_ylabel("contribution to difference in the daily incidence")
         ax.set_xlabel(None)
         ax.grid(axis="y")
         ax.get_yaxis().set_major_formatter(

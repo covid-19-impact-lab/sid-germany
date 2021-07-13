@@ -10,6 +10,8 @@ from src.config import PLOT_END_DATE
 from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
+from src.plotting.plotting import BLUE
+from src.plotting.plotting import RED
 from src.plotting.plotting import style_plot
 from src.testing.shared import get_piecewise_linear_interpolation
 
@@ -54,7 +56,7 @@ def task_plot_overall_share_known_cases(depends_on, produces):
         len(missing_dates) == 0
     ), f"There are missing dates in the share_known: {missing_dates}"
 
-    share_known = share_known.loc[PLOT_START_DATE:PLOT_END_DATE]
+    share_known = share_known.loc[PLOT_START_DATE:"2020-12-28"]
 
     params = pd.read_pickle(depends_on["params"])
     with warnings.catch_warnings():
@@ -66,18 +68,29 @@ def task_plot_overall_share_known_cases(depends_on, produces):
     share_known_from_params = share_known_from_params.loc[PLOT_START_DATE:PLOT_END_DATE]
 
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
-    sns.lineplot(x=share_known.index, y=share_known, ax=ax, label="Dunkelzifferradar")
+    sns.lineplot(
+        x=share_known.index,
+        y=share_known,
+        ax=ax,
+        label="Dunkelzifferradar",
+        alpha=0.6,
+        linewidth=3.0,
+        color=BLUE,
+    )
     sns.lineplot(
         x=share_known_from_params.index,
         y=share_known_from_params,
         ax=ax,
-        label="Interpolated",
+        label="Interpolated and Extrapolated",
+        alpha=0.6,
+        linewidth=3.0,
+        color=RED,
     )
-    ax.set_title("Share of known cases")
     fig, ax = style_plot(fig, ax)
+    ax.set_ylabel("share of cases that are detected")
     fig.tight_layout()
 
-    ax.axvline(pd.Timestamp("2020-12-24"))
+    ax.axvline(pd.Timestamp("2020-12-24"), alpha=0.6, color="k")
     fig.savefig(produces["share_known_cases_fig"])
     plt.close()
 

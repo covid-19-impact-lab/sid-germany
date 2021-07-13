@@ -23,7 +23,7 @@ def _create_rapid_test_plot_parametrization():
     signature = "depends_on, plot_single_runs, ylabel, produces"
 
     label_templates = {
-        "number": "number of {nice_outcome} in Germany",
+        "number": "number of {nice_outcome} per million",
         "popshare": "share of the population with {nice_outcome}",
         "testshare": "share of {nice_outcome}",
     }
@@ -85,9 +85,13 @@ def task_plot_rapid_test_statistics(depends_on, plot_single_runs, ylabel, produc
 
     fig, ax = plt.subplots(figsize=PLOT_SIZE)
     for col, df in dfs.items():
+        if "number_" in col:
+            # scale from cases in Germany to cases per million
+            df = df / 83
+
         color, label = _get_channel_color_and_label(col)
         ax = _plot_df(
-            df=df,
+            df=df.loc["2021-03-15":],
             column=col,
             color=color,
             plot_single_runs=plot_single_runs,
@@ -147,5 +151,5 @@ def _get_channel_color_and_label(col):
         label = "private"
     else:
         color = "k"
-        label = None
+        label = "aggregate"
     return color, label

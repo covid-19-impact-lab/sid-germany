@@ -15,6 +15,10 @@ from src.plotting.plotting import GREEN
 from src.plotting.plotting import PURPLE
 from src.plotting.plotting import RED
 from src.plotting.plotting import style_plot
+from src.simulation.params_scenarios import baseline
+from src.simulation.params_scenarios import robustness_check_params_early
+from src.simulation.params_scenarios import robustness_check_params_late
+from src.simulation.params_scenarios import robustness_check_params_medium
 from src.testing.shared import get_piecewise_linear_interpolation
 
 _DEPENDENCIES = {
@@ -23,16 +27,30 @@ _DEPENDENCIES = {
     "testing_shared.py": SRC / "testing" / "shared.py",
 }
 
+_OUT_PATH = BLD / "figures" / "data" / "testing" / "rapid_test_demand"
+
+params_scenarios = [
+    baseline,
+    robustness_check_params_early,
+    robustness_check_params_medium,
+    robustness_check_params_late,
+]
+
+_PARAMETRIZATION = []
+for func in params_scenarios:
+    name = func.__name__
+    produces = {"figure": _OUT_PATH / f"{name}_shares.pdf"}
+    if name == "baseline":
+        produces["data"] = BLD / "tables" / "rapid_test_demand_shares.csv"
+    _PARAMETRIZATION.append((func, produces))
+
 
 @pytask.mark.depends_on(_DEPENDENCIES)
-@pytask.mark.produces(
-    {
-        "figure": BLD / "figures" / "data" / "testing" / "rapid_test_demand_shares.pdf",
-        "data": BLD / "tables" / "rapid_test_demand_shares.csv",
-    }
-)
-def task_plot_combined_rapid_test_demand_params(depends_on, produces):
+@pytask.mark.parametrize("func, produces", _PARAMETRIZATION)
+def task_plot_combined_rapid_test_demand_params(depends_on, func, produces):
     params = pd.read_pickle(depends_on["params"])
+    params = func(params)
+
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="indexing past lexsort depth may impact performance."
@@ -78,15 +96,16 @@ def task_plot_combined_rapid_test_demand_params(depends_on, produces):
     fig.savefig(produces["figure"])
     plt.close()
 
-    df = pd.DataFrame(
-        {
-            "share_educ_workers": share_educ_workers,
-            "share_students": share_students,
-            "share_workers": share_workers,
-            "private_demand_shares": private_demand_shares,
-        }
-    )
-    df.round(3).to_csv(produces["data"])
+    if "data" in produces.keys():
+        df = pd.DataFrame(
+            {
+                "share_educ_workers": share_educ_workers,
+                "share_students": share_students,
+                "share_workers": share_workers,
+                "private_demand_shares": private_demand_shares,
+            }
+        )
+        df.round(3).to_csv(produces["data"])
 
 
 def _plot_rapid_test_demand_shares(
