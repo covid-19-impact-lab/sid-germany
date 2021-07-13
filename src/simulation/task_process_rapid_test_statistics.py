@@ -121,7 +121,14 @@ def task_create_rapid_test_statistic_ratios(name, depends_on, produces):
     denominator = pd.read_pickle(depends_on["denominator"])
 
     seeds = list(range(_N_SEEDS))
-    rate_df = numerator[seeds] / denominator[seeds]  # needed for plotting single runs
+    rate_df = pd.DataFrame()
+    # needed for plotting single runs
+    for s in seeds:
+        smooth_num = numerator[s].rolling(window=7, min_periods=1, center=False).mean()
+        smooth_denom = (
+            denominator[s].rolling(window=7, min_periods=1, center=False).mean()
+        )
+        rate_df[s] = smooth_num / smooth_denom
 
     # it's important to first average and smooth and **then** divide to get rid of noise
     # before the division.
