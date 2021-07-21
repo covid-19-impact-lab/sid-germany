@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from pandas.testing import assert_series_equal
 
@@ -61,21 +60,6 @@ def test_create_rapid_test_statistics(monkeypatch):
         {
             0: {
                 "date": date,
-                # overall shares
-                "true_positive_rate_by_overall": 0.5,
-                "true_negative_rate_by_overall": 0.5,
-                "false_negative_rate_by_overall": 0.5,
-                "false_positive_rate_by_overall": 0.5,
-                # shares in a
-                "true_positive_rate_by_a": 0.5,
-                "true_negative_rate_by_a": 0.0,
-                "false_negative_rate_by_a": 1.0,
-                "false_positive_rate_by_a": 0.5,
-                # shares in b
-                "true_positive_rate_by_b": np.nan,
-                "true_negative_rate_by_b": 0.5,
-                "false_negative_rate_by_b": 0.5,
-                "false_positive_rate_by_b": np.nan,
                 # numbers
                 "number_false_negative_by_a": 2 * scaling,
                 "number_false_negative_by_b": 2 * scaling,
@@ -197,10 +181,6 @@ def test_calculate_rapid_test_statistics_by_channel():
             "testshare_false_negative_by_channel": 2 / 5,
             "testshare_true_positive_by_channel": 1 / 5,
             "testshare_true_negative_by_channel": 1 / 5,
-            "true_positive_rate_by_channel": 1 / 2,
-            "true_negative_rate_by_channel": 1 / 3,
-            "false_positive_rate_by_channel": 1 / 2,
-            "false_negative_rate_by_channel": 2 / 3,
         }
     )
     assert_series_equal(res.loc[expected.index], expected, check_names=False)

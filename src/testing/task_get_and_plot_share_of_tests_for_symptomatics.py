@@ -9,6 +9,7 @@ from src.config import PLOT_END_DATE
 from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import SRC
+from src.plotting.plotting import BLUE
 from src.plotting.plotting import style_plot
 from src.testing.shared import convert_weekly_to_daily
 from src.testing.shared import get_date_from_year_and_week
@@ -46,6 +47,11 @@ plt.rcParams.update(
         / "data"
         / "testing"
         / "share_of_pcr_tests_going_to_symptomatics.pdf",
+        "used_share_pcr_going_to_symptomatic": BLD
+        / "figures"
+        / "data"
+        / "testing"
+        / "used_share_of_pcr_tests_going_to_symptomatics.pdf",
     }
 )
 def task_prepare_characteristics_of_the_tested(depends_on, produces):
@@ -105,6 +111,18 @@ def task_prepare_characteristics_of_the_tested(depends_on, produces):
 
     df = df.reset_index().rename(columns={"index": "date"})
     df.to_csv(produces["data"])
+
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
+    sns.lineplot(
+        x=share_of_tests_for_symptomatics_series.index,
+        y=share_of_tests_for_symptomatics_series,
+        color=BLUE,
+        linewidth=3.0,
+        alpha=0.6,
+    )
+    fig, ax = style_plot(fig, ax)
+    fig.tight_layout()
+    fig.savefig(produces["used_share_pcr_going_to_symptomatic"])
 
 
 def _clean_data(df):

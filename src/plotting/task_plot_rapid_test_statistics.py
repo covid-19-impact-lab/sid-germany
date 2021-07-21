@@ -15,8 +15,14 @@ from src.simulation.scenario_config import (
 )
 from src.simulation.task_process_rapid_test_statistics import CHANNELS
 from src.simulation.task_process_rapid_test_statistics import OUTCOMES
-from src.simulation.task_process_rapid_test_statistics import RATES
 from src.simulation.task_process_rapid_test_statistics import SHARE_TYPES
+
+RATES = [
+    "true_positive_rate",
+    "false_positive_rate",
+    "true_negative_rate",
+    "false_negative_rate",
+]
 
 
 def _create_rapid_test_plot_parametrization():
