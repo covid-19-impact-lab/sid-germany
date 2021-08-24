@@ -183,6 +183,10 @@ def _add_virus_strain_params(params):
     params = params.copy(deep=True)
     params.loc[("virus_strain", "base_strain", "factor"), "value"] = 1.0
     params.loc[("virus_strain", "b117", "factor"), "value"] = 1.67
+    # for Delta (https://doi.org/10.1038/d41586-021-01696-3):
+    # "Delta seems to be around 60% more transmissible than the already highly
+    # infectious Alpha variant (also called B.1.1.7)."
+    params.loc[("virus strain", "delta", "factor"), "value"] = 1.67 * 1.5
     return params
 
 
