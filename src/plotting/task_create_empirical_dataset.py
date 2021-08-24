@@ -70,6 +70,10 @@ def task_create_empirical_dataset(depends_on, produces):
 
     share_b117 = pd.read_pickle(depends_on["virus_shares_dict"])["b117"]["2021-01-15":]
     share_b117.name = "share_b117"
+    share_delta = pd.read_pickle(depends_on["virus_shares_dict"])["delta"][
+        "2021-01-15":
+    ]
+    share_delta.name = "share_delta"
 
     vacc_shares = pd.read_pickle(depends_on["vaccinations"]).sort_index().cumsum()
     vacc_shares.name = "ever_vaccinated"
@@ -84,6 +88,7 @@ def task_create_empirical_dataset(depends_on, produces):
             share_ever_rapid_test,
             share_rapid_test_in_last_week,
             share_b117,
+            share_delta,
             vacc_shares,
             r_effective,
         ],

@@ -50,6 +50,7 @@ OUTCOMES = [
     "share_ever_rapid_test",
     "share_rapid_test_in_last_week",
     "share_b117",
+    "share_delta",
     "share_doing_rapid_test_today",
     "ever_vaccinated",
 ]

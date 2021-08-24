@@ -13,6 +13,7 @@ from src.create_initial_states.create_initial_conditions import (
     create_initial_conditions,
 )
 from src.events.events import introduce_b117
+from src.events.events import introduce_delta
 from src.policies.policy_tools import combine_dictionaries
 from src.simulation import scenario_simulation_inputs
 from src.simulation.calculate_susceptibility import calculate_susceptibility
@@ -210,7 +211,10 @@ def load_simulation_inputs(
         "knows_currently_infected": _knows_currently_infected,
     }
 
-    events = {"introduce_b117": {"model": introduce_b117}}
+    events = {
+        "introduce_b117": {"model": introduce_b117},
+        "introduce_delta": {"model": introduce_delta},
+    }
 
     fixed_inputs = {
         "initial_states": initial_states,
@@ -223,7 +227,7 @@ def load_simulation_inputs(
         "saved_columns": saved_columns,
         "initial_conditions": initial_conditions,
         "susceptibility_factor_model": calculate_susceptibility,
-        "virus_strains": ["base_strain", "b117"],
+        "virus_strains": ["base_strain", "b117", "delta"],
         "seasonality_factor_model": seasonality_factor_model,
         "derived_state_variables": derived_state_variables,
         "return_last_states": return_last_states,
@@ -343,7 +347,10 @@ def create_period_outputs():
             )
 
     period_outputs["r_effective"] = partial(calculate_r_effective, window_length=7)
-    period_outputs["share_b117"] = calculate_period_virus_share
+    period_outputs["share_b117"] = partial(calculate_period_virus_share, strain="b117")
+    period_outputs["share_delta"] = partial(
+        calculate_period_virus_share, strain="delta"
+    )
 
     for groupby in groupbys:
         gb_str = f"_by_{groupby}" if groupby is not None else ""
@@ -411,12 +418,12 @@ def _calculate_share_rapid_test_countdown_between(df, groupby, lower, upper, nam
     return within_interval_share_per_group
 
 
-def calculate_period_virus_share(df):
+def calculate_period_virus_share(df, strain):
     df = df[["virus_strain", "date", "newly_infected"]]
     df = df[df["newly_infected"]]
-    df["b117"] = df["virus_strain"] == "b117"
+    df[strain] = df["virus_strain"] == strain
 
-    out = df.groupby([pd.Grouper(key="date", freq="D")])["b117"].mean().fillna(0)
+    out = df.groupby([pd.Grouper(key="date", freq="D")])[strain].mean().fillna(0)
     return out
 
 
