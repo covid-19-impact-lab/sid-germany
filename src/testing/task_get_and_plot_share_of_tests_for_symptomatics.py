@@ -162,7 +162,7 @@ def _clean_data(df):
     return df
 
 
-def _extrapolate_series_after_february(sr, end_date="2021-08-30"):
+def _extrapolate_series_after_february(sr, end_date="2021-12-31"):
     end_date = pd.Timestamp(end_date)
     last_empirical_date = min(pd.Timestamp("2021-02-28"), sr.index.max())
     empirical_part = sr[:last_empirical_date]
