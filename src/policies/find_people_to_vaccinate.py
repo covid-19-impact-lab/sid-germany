@@ -24,7 +24,8 @@ def find_people_to_vaccinate(
             column vaccination_rank. This column is a float with values
             between zero and one. Low values mean that people get
             vaccinated early.
-        params (pandas.DataFrame): not used.
+        params (pandas.DataFrame): params DataFrame that contains a row labeled
+            ("vaccinations", "share_refuser", "share_refuser").
         seed (int): not used.
         vaccination_shares (pandas.Series): Series with a date index. For each
             day the value indicates the share of people who get vaccinated on
