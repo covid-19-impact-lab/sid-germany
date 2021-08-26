@@ -74,6 +74,7 @@ PLOTS = {
         "scenarios": ["summer_baseline"],
         "colors": [BLUE],
         "name_to_label": {"summer_baseline": "summer and fall with open schools"},
+        "empirical": True,
     },
     # Main Plots (Fixed)
     "combined_fit": {
@@ -416,8 +417,6 @@ def task_plot_scenario_comparison(
         plot_start (pandas.Timestamp, optional): date on which the plot should start.
             If None, the plot start is the simulation start.
         empirical (bool, optional): whether to plot empirical equivalents.
-            If not given, they are plotted if an empirical analogue for the outcome is
-            available.
         produces (pathlib.Path): path where to save the figure
 
     """
