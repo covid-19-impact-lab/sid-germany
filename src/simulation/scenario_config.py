@@ -124,12 +124,12 @@ def get_named_scenarios():
             "start_date": "2020-09-15",
             "end_date": SPRING_START - pd.Timedelta(days=1),
         }
-        spring_dates = {"start_date": SPRING_START, "end_date": "2021-05-31"}
+        spring_dates = {"start_date": SPRING_START, "end_date": "2021-06-21"}
         combined_dates = {
             "start_date": fall_dates["start_date"],
             "end_date": spring_dates["end_date"],
         }
-        summer_dates = {"start_date": "2021-06-01", "end_date": "2021-10-01"}
+        summer_dates = {"start_date": "2021-06-22", "end_date": "2021-10-01"}
     else:
         # for the plotting we need that combined and spring have dates after 2021-01-15
         combined_dates = {"start_date": "2020-12-30", "end_date": "2021-01-18"}
