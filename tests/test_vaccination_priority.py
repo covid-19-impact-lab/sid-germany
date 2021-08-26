@@ -10,6 +10,9 @@ from src.create_initial_states.create_vaccination_priority import (
 )
 from src.create_initial_states.create_vaccination_priority import _get_third_priority
 from src.create_initial_states.create_vaccination_priority import (
+    add_refuser_value_to_vaccination_group,
+)
+from src.create_initial_states.create_vaccination_priority import (
     create_vaccination_rank,
 )
 
@@ -18,18 +21,46 @@ def test_create_vaccination_rank_without_refusals():
     vaccination_group = pd.Series([3, 1, 1, 2, 4, 4])
     # ranks 3, 0, 1, 2, 4, 5
     expected = pd.Series([0.6, 0.0, 0.2, 0.4, 0.8, 1.0])
-    res = create_vaccination_rank(vaccination_group, share_refuser=0.0, seed=333)
+    res = create_vaccination_rank(
+        vaccination_group=vaccination_group,
+    )
     res_sorted_index = res.sort_index()
     pd.testing.assert_series_equal(res_sorted_index, expected, check_index_type=False)
 
 
+def test_create_vaccination_rank_with_youths():
+    states = pd.Series([50, 60, 16, 15, 12, 5], name="age").to_frame()
+    states["vaccination_priority_group"] = pd.Series([3, 2, 1, 5, 5, 6])
+    expected = pd.Series()
+    vaccination_group_with_refuser_value = add_refuser_value_to_vaccination_group(
+        states=states,
+        share_refuser_adult=0.0,
+        share_refuser_youth=1.0,
+        seed=3049,
+    )
+    res = create_vaccination_rank(
+        vaccination_group=vaccination_group_with_refuser_value,
+    )
+    expected = pd.Series([0.4, 0.2, 0.0, 0.6, 0.8, 1.0])
+    pd.testing.assert_series_equal(res, expected, check_index_type=False)
+
+
 def test_create_vaccination_rank_lln():
-    vaccination_group = pd.Series([1, 2, 3] * 500_000)
+    only_adult_states = pd.Series([50] * 1_500_000, name="age").to_frame()
+    only_adult_states["vaccination_priority_group"] = pd.Series([1, 2, 3] * 500_000)
+
     # this does not necessarily work for other seeds
     # That is because np.random.choice does not always fit exactly the share of
     # refusers leading to the mis-identification of non_refusers / refusers
     # through the res[res < 0.5] specification
-    res = create_vaccination_rank(vaccination_group, share_refuser=0.5, seed=1114)
+    vaccination_group = add_refuser_value_to_vaccination_group(
+        states=only_adult_states,
+        share_refuser_adult=0.5,
+        share_refuser_youth=1.0,
+        seed=1114,
+    )
+
+    res = create_vaccination_rank(vaccination_group=vaccination_group)
 
     non_refusers = res[res < 0.5]
 
@@ -40,7 +71,7 @@ def test_create_vaccination_rank_lln():
     assert comply_group2.max() <= comply_group3.min()
     assert comply_group3.max() == pytest.approx(0.5, rel=1e-4, abs=1e-4)
 
-    refuser_groups = vaccination_group[res > 0.5]
+    refuser_groups = only_adult_states["vaccination_priority_group"][res > 0.501]
     refuser_group_shares = refuser_groups.value_counts(normalize=True).sort_index()
     expected_group_shares = pd.Series(1 / 3, index=[1, 2, 3])
     share_diff = np.abs(refuser_group_shares - expected_group_shares)
