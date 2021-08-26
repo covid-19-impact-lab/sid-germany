@@ -8,6 +8,7 @@ from src.testing.rapid_tests import _calculate_own_symptom_rapid_test_demand
 from src.testing.rapid_tests import _calculate_work_rapid_test_demand
 from src.testing.rapid_tests import _determine_if_hh_had_event
 from src.testing.rapid_tests import _get_eligible_educ_participants
+from src.testing.rapid_tests import _only_not_fully_vaccinated_test_themselves
 from src.testing.rapid_tests import _randomize_rapid_tests
 
 
@@ -25,6 +26,7 @@ def educ_states():
         "school",  # 5: student to be tested
     ]
     states["cd_received_rapid_test"] = [-2, -5, -20, -5, -20, -5]
+    states["cd_is_immune_by_vaccine"] = -10_000
     states["rapid_test_compliance"] = 1.0
     states["date"] = pd.Timestamp("2021-05-05")
     return states
@@ -276,3 +278,21 @@ def test_random_rapid_test_demand_lln():
     )
     assert not res[states["rapid_test_compliance"] < 0.15].any()
     assert res.mean() == pytest.approx(0.6, abs=0.001)
+
+
+def test_exclude_vaccinated_from_being_tested():
+    states = pd.Series(
+        [-10_030, -50, -3, 5] * 2, name="cd_is_immune_by_vaccine"
+    ).to_frame()
+    rapid_test_demand = pd.Series([True] * 4 + [False] * 4)
+    res = _only_not_fully_vaccinated_test_themselves(rapid_test_demand, states)
+    expected = pd.Series(
+        [
+            True,  # never vaccinated
+            False,  # long enough since vaccination
+            True,  # not long enough since vaccination
+            True,  # not long enough since vaccination
+        ]
+        + [False] * 4
+    )
+    pd.testing.assert_series_equal(res, expected, check_names=False)

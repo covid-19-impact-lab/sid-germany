@@ -32,6 +32,8 @@ def rapid_test_demand(
     If randomize is True the calculated demand is distributed randomly in the entire
     population (excluding a share of refusers).
 
+    After Easter vaccinated individuals do not perform rapid tests.
+
     """
     date = get_date(states)
 
@@ -107,6 +109,15 @@ def rapid_test_demand(
 
     private_demand = hh_demand | sym_without_pcr_demand | other_contact_demand
     rapid_test_demand = work_demand | educ_demand | private_demand
+    preemptive_rapid_test_demand = work_demand | educ_demand | other_contact_demand
+
+    # vaccinated individuals do not test themselves for work, educ or leisure contacts
+    if date > pd.Timestamp("2021-04-05"):
+        rapid_test_demand = _only_not_fully_vaccinated_test_themselves(
+            preemptive_rapid_test_demand, states
+        )
+
+    rapid_test_demand = rapid_test_demand | hh_demand | sym_without_pcr_demand
 
     if randomize and date > pd.Timestamp("2021-04-05"):  # only randomize after Easter
         assert (
@@ -325,3 +336,21 @@ def _randomize_rapid_tests(states, target_share_to_be_tested, share_refuser, see
     rapid_test_demand = pd.Series(False, index=states.index)
     rapid_test_demand[to_test_indices] = True
     return rapid_test_demand
+
+
+def _only_not_fully_vaccinated_test_themselves(rapid_test_demand, states):
+    """Exclude fully vaccinated individuals from being tested.
+
+    The immunity countdown is initialized at -9999. The vaccine countdown is set
+    between -1 and 21. This is only the 1st vaccine. Assuming 30 days between
+    shots and 14 days of wait period after the 2nd shot, individuals are freed
+    from testing obligations ~45 days after their first shot. This translates
+    into countdown values between -45 and -20. For simplicity we simply assume
+    that individuals stop testing themselves 40 days after their first shot.
+
+    """
+    more_than_14d_since_vaccination = states["cd_is_immune_by_vaccine"].between(
+        -9990, -40
+    )
+    lowered_test_demand = rapid_test_demand & ~more_than_14d_since_vaccination
+    return lowered_test_demand
