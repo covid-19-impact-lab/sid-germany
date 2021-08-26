@@ -21,7 +21,7 @@ OTHER_MULTIPLIER_SPECS = [
     ("lockdown_light_with_fatigue", "2020-12-23", 0.57),
     ("christmas_days", "2020-12-26", 0.65),
     ("hard_lockdown", "2021-02-10", 0.35),
-    ("hard_lockdown_with_fatige", "2021-02-28", 0.5),
+    ("hard_lockdown_with_fatigue", "2021-02-28", 0.5),
     ("reopening", "2021-04-12", 0.515),
     ("spring", "2021-06-01", 0.515),
     # in early June the federal incidence dropped below 35
