@@ -52,10 +52,10 @@ def rapid_test_demand(
         students_params = params.loc[("rapid_test_demand", "student_shares")]
         private_demand_params = params.loc[("rapid_test_demand", "private_demand")]
         other_low_incidence_factor = params.loc[
-            ("rapid_test_demand", "low_incidence_factor", "other_demand")
+            ("rapid_test_demand", "low_incidence_factor", "other_demand"), "value"
         ]
         work_low_incidence_factor = params.loc[
-            ("rapid_test_demand", "low_incidence_factor", "worker_demand")
+            ("rapid_test_demand", "low_incidence_factor", "worker_demand"), "value"
         ]
 
     # get work demand inputs
