@@ -108,7 +108,7 @@ def get_named_scenarios():
         n_main_seeds = 1
         n_other_seeds = 0
     elif FAST_FLAG == "verify":
-        n_main_seeds = 40
+        n_main_seeds = 20
         n_other_seeds = 0
     elif FAST_FLAG == "full":
         n_main_seeds = 30
@@ -124,8 +124,8 @@ def get_named_scenarios():
             "start_date": "2020-09-15",
             "end_date": SPRING_START - pd.Timedelta(days=1),
         }
-        spring_dates = {"start_date": SPRING_START, "end_date": "2021-06-21"}
-        summer_dates = {"start_date": "2021-06-22", "end_date": "2021-09-01"}
+        spring_dates = {"start_date": SPRING_START, "end_date": "2021-04-10"}
+        summer_dates = {"start_date": "2021-04-11", "end_date": "2021-09-01"}
         combined_dates = {
             "start_date": fall_dates["start_date"],
             "end_date": summer_dates["end_date"],
@@ -155,7 +155,7 @@ def get_named_scenarios():
         "fall_baseline": {
             "sim_input_scenario": "baseline",
             "params_scenario": "baseline",
-            "n_seeds": n_other_seeds,
+            "n_seeds": n_main_seeds,
             "save_last_states": True,
             "is_resumed": False,
             **fall_dates,
@@ -163,7 +163,7 @@ def get_named_scenarios():
         "spring_baseline": {
             "sim_input_scenario": "baseline_save_rapid_test_statistics",
             "params_scenario": "baseline",
-            "n_seeds": n_other_seeds,
+            "n_seeds": n_main_seeds,
             "save_rapid_test_statistics": True,
             "save_last_states": True,
             **spring_dates,
@@ -171,7 +171,7 @@ def get_named_scenarios():
         "summer_baseline": {
             "sim_input_scenario": "baseline_save_rapid_test_statistics",
             "params_scenario": "baseline",
-            "n_seeds": n_other_seeds,
+            "n_seeds": n_main_seeds,
             "save_rapid_test_statistics": True,
             "save_last_states": False,
             "is_resumed": "spring",
