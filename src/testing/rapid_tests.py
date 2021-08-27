@@ -52,7 +52,10 @@ def rapid_test_demand(
         students_params = params.loc[("rapid_test_demand", "student_shares")]
         private_demand_params = params.loc[("rapid_test_demand", "private_demand")]
         other_low_incidence_factor = params.loc[
-            ("rapid_test_demand", "other_demand", "low_incidence_factor")
+            ("rapid_test_demand", "low_incidence_factor", "other_demand")
+        ]
+        work_low_incidence_factor = params.loc[
+            ("rapid_test_demand", "low_incidence_factor", "worker_demand")
         ]
 
     # get work demand inputs
@@ -88,6 +91,7 @@ def rapid_test_demand(
         states=states,
         contacts=contacts,
         compliance_multiplier=work_compliance_multiplier,
+        low_incidence_factor=work_low_incidence_factor,
     )
 
     educ_demand = _calculate_educ_rapid_test_demand(
@@ -223,8 +227,12 @@ def _get_student_demand(eligible, states, student_multiplier):
     return student_demand
 
 
-def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
+def _calculate_work_rapid_test_demand(
+    states, contacts, compliance_multiplier, low_incidence_factor
+):
     date = get_date(states)
+    weekly_cases_per_100_000 = 7 * 100_000 * states["new_known_case"].mean()
+
     work_cols = [col for col in contacts if col.startswith("work_")]
     has_work_contacts = (contacts[work_cols] > 0).any(axis=1)
 
@@ -249,6 +257,16 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
     should_get_test = has_work_contacts & too_long_since_last_test
     complier = states["rapid_test_compliance"] >= (1 - compliance_multiplier)
     work_rapid_test_demand = should_get_test & complier
+
+    # assume that people become more negligent when the incidences are low
+    if date > pd.Timestamp("2021-06-01") and weekly_cases_per_100_000 < 35:
+        non_negligent = np.random.choice(
+            [True, False],
+            len(work_rapid_test_demand),
+            p=[low_incidence_factor, 1 - low_incidence_factor],
+        )
+        work_rapid_test_demand = work_rapid_test_demand & non_negligent
+
     return work_rapid_test_demand
 
 
@@ -294,13 +312,6 @@ def _calculate_other_meeting_rapid_test_demand(
 ):
     weekly_cases_per_100_000 = 7 * 100_000 * states["new_known_case"].mean()
     date = get_date(states)
-    if date < pd.Timestamp("2021-06-01") or weekly_cases_per_100_000 > 35:
-        scaling_factor = 1.0
-    else:
-        scaling_factor = low_incidence_factor
-
-    demand_share = scaling_factor * demand_share
-
     complier = states["quarantine_compliance"] >= (1 - demand_share)
     not_tested_recently = states["cd_received_rapid_test"] < -3
 
@@ -310,6 +321,16 @@ def _calculate_other_meeting_rapid_test_demand(
     with_relevant_contact = (contacts[weekly_other_cols] > 0).any(axis=1)
 
     to_be_tested = complier & not_tested_recently & with_relevant_contact
+
+    # when incidences are low there are less testing requirements and
+    # testing is perceived to have a lower benefit
+    if date < pd.Timestamp("2021-06-01") or weekly_cases_per_100_000 > 35:
+        tests_despite_low_incidence = np.random.choice(
+            [True, False],
+            len(to_be_tested),
+            p=[low_incidence_factor, 1 - low_incidence_factor],
+        )
+        to_be_tested = to_be_tested & tests_despite_low_incidence
     return to_be_tested
 
 

@@ -28,7 +28,7 @@ def educ_states():
     states["cd_received_rapid_test"] = [-2, -5, -20, -5, -20, -5]
     states["cd_is_immune_by_vaccine"] = -10_000
     states["rapid_test_compliance"] = 1.0
-    states["date"] = pd.Timestamp("2021-05-05")
+    states["date"] = pd.Timestamp("2021-07-05")
     return states
 
 
@@ -82,6 +82,7 @@ def work_states():
     # 6: yes if compliance_multiplier >= 0.3
     states["cd_received_rapid_test"] = [-1, -10, -10, -10, -5, -10]
     states["rapid_test_compliance"] = [0.8, 0.8, 0.8, 0.8, 0.8, 0.3]
+    states["new_known_case"] = False
     return states
 
 
@@ -114,7 +115,10 @@ def test_calculate_work_rapid_test_demand_early(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-04-01")
     expected = pd.Series([False, False, True, True, False, True])
     res = _calculate_work_rapid_test_demand(
-        work_states, work_contacts, compliance_multiplier=1.0  # perfect compliance
+        work_states,
+        work_contacts,
+        compliance_multiplier=1.0,  # perfect compliance
+        low_incidence_factor=1.0,
     )
     pd.testing.assert_series_equal(res, expected)
 
@@ -123,7 +127,10 @@ def test_calculate_work_rapid_test_demand_late(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-05-05")
     expected = pd.Series([False, False, True, True, True, False])
     res = _calculate_work_rapid_test_demand(
-        work_states, work_contacts, compliance_multiplier=0.3
+        work_states,
+        work_contacts,
+        compliance_multiplier=0.3,
+        low_incidence_factor=1.0,
     )
     pd.testing.assert_series_equal(res, expected)
 
@@ -132,7 +139,10 @@ def test_calculate_work_rapid_test_demand_no_compliance(work_states, work_contac
     work_states["date"] = pd.Timestamp("2021-05-05")
     expected = pd.Series([False, False, False, False, False, False])
     res = _calculate_work_rapid_test_demand(
-        work_states, work_contacts, compliance_multiplier=0.0
+        work_states,
+        work_contacts,
+        compliance_multiplier=0.0,
+        low_incidence_factor=1.0,
     )
     pd.testing.assert_series_equal(res, expected)
 
@@ -143,7 +153,10 @@ def test_calculate_work_rapid_test_demand_imperfect_compliance(
     work_states["date"] = pd.Timestamp("2021-05-05")
     expected = pd.Series([False, False, True, True, True, False])
     res = _calculate_work_rapid_test_demand(
-        work_states, work_contacts, compliance_multiplier=0.5
+        work_states,
+        work_contacts,
+        compliance_multiplier=0.5,
+        low_incidence_factor=1.0,
     )
     pd.testing.assert_series_equal(res, expected)
 
