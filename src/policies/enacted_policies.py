@@ -23,11 +23,13 @@ OTHER_MULTIPLIER_SPECS = [
     ("hard_lockdown", "2021-02-10", 0.35),
     ("hard_lockdown_with_fatigue", "2021-02-28", 0.5),
     ("reopening", "2021-04-12", 0.515),
-    ("spring", "2021-06-01", 0.515),
+    ("spring", "2021-05-15", 0.515),
+    # mid May federal incidence dropped below 100
+    ("spring2", "2021-06-01", 0.6),
     # in early June the federal incidence dropped below 35
     # leading to massive opening of restaurants etc.
     # in addition rules were loosend (e.g. https://bit.ly/3t1Vx3b)
-    ("june", "2021-07-01", 0.7),
+    ("june", "2021-07-01", 0.8),
     ("summer", VERY_LATE, 1.0),
 ]
 """Specification for the other multipliers"""
@@ -362,7 +364,7 @@ def _get_enacted_school_policies(contact_models):
             => A/B for everyone. With this we err on the side of restricting contacts
                too much.
 
-    - "summer": (last updated May 22nd)
+    - "summer": (last updated Aug 27th)
         - BW: normal <100, A/B from 100 to 165 (source: https://bit.ly/3hYtbDt).
         - BY: normal <50, A/B from 50 to 165 (https://bit.ly/2T6uupf).
         - NRW: normal <100, A/B from 100 ot 165 (https://bit.ly/2SbmD9v).
