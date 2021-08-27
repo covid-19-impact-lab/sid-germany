@@ -51,6 +51,9 @@ def rapid_test_demand(
         educ_workers_params = params.loc[("rapid_test_demand", "educ_worker_shares")]
         students_params = params.loc[("rapid_test_demand", "student_shares")]
         private_demand_params = params.loc[("rapid_test_demand", "private_demand")]
+        other_low_incidence_factor = params.loc[
+            ("rapid_test_demand", "other_demand", "low_incidence_factor")
+        ]
 
     # get work demand inputs
     share_of_workers_with_offer = get_piecewise_linear_interpolation_for_one_day(
@@ -104,7 +107,10 @@ def rapid_test_demand(
     )
 
     other_contact_demand = _calculate_other_meeting_rapid_test_demand(
-        states=states, contacts=contacts, demand_share=private_demand_share
+        states=states,
+        contacts=contacts,
+        demand_share=private_demand_share,
+        low_incidence_factor=other_low_incidence_factor,
     )
 
     private_demand = hh_demand | sym_without_pcr_demand | other_contact_demand
@@ -113,11 +119,13 @@ def rapid_test_demand(
 
     # vaccinated individuals do not test themselves for work, educ or leisure contacts
     if date > pd.Timestamp("2021-04-05"):
-        rapid_test_demand = _only_not_fully_vaccinated_test_themselves(
+        preemptive_rapid_test_demand = _only_not_fully_vaccinated_test_themselves(
             preemptive_rapid_test_demand, states
         )
 
-    rapid_test_demand = rapid_test_demand | hh_demand | sym_without_pcr_demand
+    rapid_test_demand = (
+        preemptive_rapid_test_demand | hh_demand | sym_without_pcr_demand
+    )
 
     if randomize and date > pd.Timestamp("2021-04-05"):  # only randomize after Easter
         assert (
@@ -240,8 +248,7 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
 
     should_get_test = has_work_contacts & too_long_since_last_test
     complier = states["rapid_test_compliance"] >= (1 - compliance_multiplier)
-    receives_offer_and_accepts = should_get_test & complier
-    work_rapid_test_demand = should_get_test & receives_offer_and_accepts
+    work_rapid_test_demand = should_get_test & complier
     return work_rapid_test_demand
 
 
@@ -282,8 +289,16 @@ def _calculate_own_symptom_rapid_test_demand(states, demand_share):
     return own_symptom_demand
 
 
-def _calculate_other_meeting_rapid_test_demand(states, contacts, demand_share):
-    scaling_factor = 1.0
+def _calculate_other_meeting_rapid_test_demand(
+    states, contacts, demand_share, low_incidence_factor
+):
+    weekly_cases_per_100_000 = 7 * 100_000 * states["new_known_case"].mean()
+    date = get_date(states)
+    if date < pd.Timestamp("2021-06-01") or weekly_cases_per_100_000 > 35:
+        scaling_factor = 1.0
+    else:
+        scaling_factor = low_incidence_factor
+
     demand_share = scaling_factor * demand_share
 
     complier = states["quarantine_compliance"] >= (1 - demand_share)

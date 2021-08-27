@@ -235,6 +235,8 @@ def test_calculate_other_meeting_rapid_test_demand():
     states = pd.DataFrame()
     states["quarantine_compliance"] = [0.2, 0.8, 0.8, 0.8]
     states["cd_received_rapid_test"] = [-99, -2, -99, -99]
+    states["new_known_case"] = [False, False, False, False]
+    states["date"] = pd.Timestamp("2021-04-15")
 
     contacts = pd.DataFrame()
     contacts["other_recurrent_weekly_1"] = [3, 3, 0, 3]
@@ -242,7 +244,10 @@ def test_calculate_other_meeting_rapid_test_demand():
     demand_share = 0.3
 
     res = _calculate_other_meeting_rapid_test_demand(
-        states=states, contacts=contacts, demand_share=demand_share
+        states=states,
+        contacts=contacts,
+        demand_share=demand_share,
+        low_incidence_factor=1.0,
     )
 
     # 0: non-complier, 1: recently tested, 2: no relevant contact, 3: test

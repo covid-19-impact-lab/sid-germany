@@ -340,6 +340,9 @@ def _add_private_rapid_test_demand_fade_in_params(params):
     We assume that for Easter visits many people demanded tests for the first
     time and are more likely to test themselves after knowing where to get them.
 
+    After May 2021 we assume that below a federal incidence of 35 demand for other
+    tests is reduced.
+
     """
     params = params.copy(deep=True)
     loc = ("rapid_test_demand", "private_demand")
@@ -351,6 +354,9 @@ def _add_private_rapid_test_demand_fade_in_params(params):
     params.loc[(*loc, "2021-05-04"), "value"] = 0.63
     params.loc[(*loc, "2025-12-31"), "value"] = 0.63
 
+    params.loc[
+        ("rapid_test_demand", "other_demand", "low_incidence_factor"), "value"
+    ] = 0.25
     return params
 
 
