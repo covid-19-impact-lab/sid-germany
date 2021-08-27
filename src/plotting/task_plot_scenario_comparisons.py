@@ -79,6 +79,7 @@ not_plotted_scenarios = not_plotted_scenarios - {
     "spring_with_only_vaccinations",
     "spring_with_only_rapid_tests",
     "fall_baseline",
+    "spring_baseline",
 }
 if not_plotted_scenarios:
     raise ValueError(
