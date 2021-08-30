@@ -124,8 +124,9 @@ def get_named_scenarios():
             "start_date": "2020-09-15",
             "end_date": SPRING_START - pd.Timedelta(days=1),
         }
+        # spring goes until April 10 because we start mid April to introduce Delta.
         spring_dates = {"start_date": SPRING_START, "end_date": "2021-04-10"}
-        summer_dates = {"start_date": "2021-04-11", "end_date": "2021-09-01"}
+        summer_dates = {"start_date": "2021-04-11", "end_date": "2021-08-01"}
         combined_dates = {
             "start_date": fall_dates["start_date"],
             "end_date": summer_dates["end_date"],
