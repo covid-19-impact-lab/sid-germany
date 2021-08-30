@@ -216,7 +216,7 @@ def _add_vacation_model_distribution_params(params):
     params.loc[(*loc, "Winterferien2021"), "value"] = 0.5
     params.loc[(*loc, "Osterferien2021"), "value"] = 0.5
     params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.5
-    params.loc[(*loc, "Sommerferien2021"), "value"] = 1.0
+    params.loc[(*loc, "Sommerferien2021"), "value"] = 0.5
     params.loc[(*loc, "Herbstferien2021"), "value"] = 0.5
     return params
 

@@ -22,14 +22,11 @@ OTHER_MULTIPLIER_SPECS = [
     ("christmas_days", "2020-12-26", 0.65),
     ("hard_lockdown", "2021-02-10", 0.35),
     ("hard_lockdown_with_fatigue", "2021-02-28", 0.5),
-    ("reopening", "2021-04-12", 0.515),
-    ("spring", "2021-05-15", 0.515),
-    # mid May federal incidence dropped below 100
-    ("spring2", "2021-06-01", 0.6),
-    # in early June the federal incidence dropped below 35
+    ("reopening", "2021-06-01", 0.515),
+    # end of May the federal incidence dropped below 35
     # leading to massive opening of restaurants etc.
+    ("june", "2021-07-01", 0.6),
     # in addition rules were loosend (e.g. https://bit.ly/3t1Vx3b)
-    ("june", "2021-07-01", 0.8),
     ("summer", VERY_LATE, 1.0),
 ]
 """Specification for the other multipliers"""
