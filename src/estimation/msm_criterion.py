@@ -26,6 +26,7 @@ def get_parallelizable_msm_criterion(
     spring_end_date,
     mode,
     debug,
+    initial_states_path=None,
 ):
     """Get a parallelizable msm criterion function."""
     pmsm = functools.partial(
@@ -37,6 +38,7 @@ def get_parallelizable_msm_criterion(
         spring_end_date=spring_end_date,
         mode=mode,
         debug=debug,
+        initial_states_path=initial_states_path,
     )
     return pmsm
 
@@ -67,6 +69,7 @@ def _build_and_evaluate_msm_func(
     spring_end_date,
     mode,
     debug,
+    initial_states_path,
 ):
     """ """
     params_hash = hash_array(params["value"].to_numpy())
@@ -79,10 +82,11 @@ def _build_and_evaluate_msm_func(
             start_date=fall_start_date,
             end_date=fall_end_date,
             debug=debug,
+            initial_states_path=initial_states_path,
         )
         res_fall["share_known_cases"].to_pickle(share_known_path)
 
-    if mode in ["spring", "combined"]:
+    if mode == "spring":
         res_spring = _build_and_evaluate_msm_func_one_season(
             params=params,
             seed=seed + 84587,
@@ -91,7 +95,20 @@ def _build_and_evaluate_msm_func(
             end_date=spring_end_date,
             debug=debug,
             group_share_known_case_path=share_known_path,
+            initial_states_path=initial_states_path,
         )
+    elif mode == "combined":
+        res_spring = _build_and_evaluate_msm_func_one_season(
+            params=params,
+            seed=seed + 84587,
+            prefix=prefix,
+            start_date=spring_start_date,
+            end_date=spring_end_date,
+            debug=debug,
+            group_share_known_case_path=share_known_path,
+            initial_states_path=None,
+        )
+
     if mode == "fall":
         res = res_fall
     elif mode == "spring":
@@ -140,6 +157,7 @@ def _build_and_evaluate_msm_func_one_season(
     start_date,
     end_date,
     debug,
+    initial_states_path,
     group_share_known_case_path=None,
 ):
     """Build and evaluate a msm criterion function.
@@ -155,6 +173,7 @@ def _build_and_evaluate_msm_func_one_season(
         group_share_known_case_path=group_share_known_case_path,
         debug=debug,
         return_last_states=False,
+        initial_states_path=initial_states_path,
     )
     params_hash = hash_array(params["value"].to_numpy())
     path = BLD / "exploration" / f"{prefix}_{params_hash}_{os.getpid()}"
@@ -260,7 +279,17 @@ def _get_period_outputs_for_simulate():
             outcome="knows_currently_infected",
             groupby="age_group_rki",
         ),
-        "aggregated_b117_share": calculate_period_virus_share,
+        # To Do: Discuss this with Janos !!!
+        "aggregated_infections_not_log": functools.partial(
+            calculate_period_outcome_sim,
+            outcome="new_known_case",
+        ),
+        "aggregated_b117_share": functools.partial(
+            calculate_period_virus_share, strain="b117"
+        ),
+        "aggregated_delta_share": functools.partial(
+            calculate_period_virus_share, strain="delta"
+        ),
     }
     return additional_outputs
 
@@ -301,7 +330,12 @@ def _get_calc_moments():
             outcome="aggregated_infections",
             take_logs=True,
         ),
-        "aggregated_b117_share": _aggregate_period_virus_share,
+        "aggregated_b117_share": functools.partial(
+            _aggregate_period_virus_share, strain="b117"
+        ),
+        "aggregated_delta_share": functools.partial(
+            _aggregate_period_virus_share, strain="delta"
+        ),
     }
     return calc_moments
 
@@ -327,8 +361,8 @@ def _calculate_share_known_cases(sim_out):
     return avg_share_known
 
 
-def _aggregate_period_virus_share(sim_out):
-    sr = pd.concat(sim_out["period_outputs"]["aggregated_b117_share"])
+def _aggregate_period_virus_share(sim_out, strain):
+    sr = pd.concat(sim_out["period_outputs"][f"aggregated_{strain}_share"])
     smoothed = sr.rolling(window=7, min_periods=1, center=False).mean()
     return smoothed
 
@@ -368,6 +402,9 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes, start_date, end_dat
         "aggregated_b117_share": pd.read_pickle(
             BLD / "data" / "virus_strains" / "virus_shares_dict.pkl"
         )["b117"],
+        "aggregated_delta_share": pd.read_pickle(
+            BLD / "data" / "virus_strains" / "virus_shares_dict.pkl"
+        )["delta"],
     }
     empirical_moments = {}
     for key, moment in long_empirical_moments.items():
@@ -404,6 +441,7 @@ def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
         # strong weight because very important
         "aggregated_infections": 2.5,
         "aggregated_b117_share": 1,
+        "aggregated_delta_share": 1,
     }
 
     weight_mat = get_diag_weighting_matrix(
