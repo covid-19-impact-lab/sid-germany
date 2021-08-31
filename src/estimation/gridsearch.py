@@ -10,7 +10,9 @@ from estimagic.batch_evaluators import joblib_batch_evaluator
 warnings.filterwarnings("ignore", message="Polyfit may be poorly conditioned")
 
 
-def run_1d_gridsearch(func, params, loc, gridspec, n_seeds, n_cores):
+def run_1d_gridsearch(
+    func, params, loc, gridspec, n_seeds, n_cores, initial_states_path
+):
     """Run a grid search over one parameter."""
     seeds = _get_seeds(n_seeds)
     grid = np.linspace(*gridspec)
@@ -19,7 +21,15 @@ def run_1d_gridsearch(func, params, loc, gridspec, n_seeds, n_cores):
     for point, seed in itertools.product(grid, seeds):
         p = params.copy(deep=True)
         p.loc[loc, "value"] = point
-        arguments.append({"params": p, "seed": seed})
+        arguments.append(
+            {
+                "params": p,
+                "seed": seed,
+                "initial_states_path": initial_states_path.format(seed)
+                if initial_states_path is not None
+                else None,
+            }
+        )
 
     results = joblib_batch_evaluator(
         func=func,
@@ -68,6 +78,7 @@ def run_2d_gridsearch(
     n_cores,
     mask=None,
     names=("x_1", "x_2"),
+    initial_states_path=None,
 ):
     """Run a grid search over two parameters."""
     # naming: _x refers to loc1, _y to loc2 and z to function values
@@ -93,7 +104,15 @@ def run_2d_gridsearch(
             p = params.copy(deep=True)
             p.loc[loc1, "value"] = x
             p.loc[loc2, "value"] = y
-            arguments.append({"params": p, "seed": seed})
+            arguments.append(
+                {
+                    "params": p,
+                    "seed": seed,
+                    "initial_states_path": initial_states_path.format(seed)
+                    if initial_states_path is not None
+                    else None,
+                }
+            )
 
     results = joblib_batch_evaluator(
         func=func,

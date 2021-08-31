@@ -442,5 +442,5 @@ def _add_event_params(params):
     params.loc[("events", "b117_cases_per_100_000", "2021-01-31"), "value"] = 0.986
 
     params.loc[("events", "delta_cases_per_100_000", "2021-04-15"), "value"] = 0
-    params.loc[("events", "delta_cases_per_100_000", "2021-06-01"), "value"] = 0.25
+    params.loc[("events", "delta_cases_per_100_000", "2021-05-15"), "value"] = 0.1
     return params
