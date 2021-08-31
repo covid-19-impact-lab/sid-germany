@@ -26,7 +26,7 @@ OTHER_MULTIPLIER_SPECS = [
     # end of May the federal incidence dropped below 35
     # leading to massive opening of restaurants etc.
     ("june", "2021-07-01", 0.6),
-    # in addition rules were loosend (e.g. https://bit.ly/3t1Vx3b)
+    # rules were loosend (e.g. https://bit.ly/3t1Vx3b)
     ("summer", VERY_LATE, 1.0),
 ]
 """Specification for the other multipliers"""

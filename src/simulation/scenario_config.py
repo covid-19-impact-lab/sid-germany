@@ -172,7 +172,7 @@ def get_named_scenarios():
         "summer_baseline": {
             "sim_input_scenario": "baseline_save_rapid_test_statistics",
             "params_scenario": "baseline",
-            "n_seeds": n_main_seeds,
+            "n_seeds": n_other_seeds,
             "save_rapid_test_statistics": True,
             "save_last_states": False,
             "is_resumed": "spring",
