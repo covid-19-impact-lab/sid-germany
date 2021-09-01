@@ -1,5 +1,6 @@
 import itertools
 import warnings
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,13 +22,16 @@ def run_1d_gridsearch(
     for point, seed in itertools.product(grid, seeds):
         p = params.copy(deep=True)
         p.loc[loc, "value"] = point
+        if initial_states_path is not None:
+            # go back from seed to seed index
+            path = Path(initial_states_path.format(seed=int((seed - 500) / 100_000)))
+        else:
+            path = None
         arguments.append(
             {
                 "params": p,
                 "seed": seed,
-                "initial_states_path": initial_states_path.format(seed)
-                if initial_states_path is not None
-                else None,
+                "initial_states_path": path,
             }
         )
 
@@ -104,13 +108,18 @@ def run_2d_gridsearch(
             p = params.copy(deep=True)
             p.loc[loc1, "value"] = x
             p.loc[loc2, "value"] = y
+
+            if initial_states_path is not None:
+                # go back from seed to seed index
+                path = Path(initial_states_path.format(seed=int(seed / 100_000 - 500)))
+            else:
+                path = None
+
             arguments.append(
                 {
                     "params": p,
                     "seed": seed,
-                    "initial_states_path": initial_states_path.format(seed)
-                    if initial_states_path is not None
-                    else None,
+                    "initial_states_path": path,
                 }
             )
 
