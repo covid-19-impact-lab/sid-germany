@@ -195,10 +195,17 @@ def _add_virus_strain_params(params):
     params = params.copy(deep=True)
     params.loc[("virus_strain", "base_strain", "factor"), "value"] = 1.0
     params.loc[("virus_strain", "b117", "factor"), "value"] = 1.67
-    # for Delta (https://doi.org/10.1038/d41586-021-01696-3):
-    # "Delta seems to be around 60% more transmissible than the already highly
-    # infectious Alpha variant (also called B.1.1.7)."
-    params.loc[("virus_strain", "delta", "factor"), "value"] = 1.67 * 1.6
+    # for Delta:
+    # - CDC
+    #   (https://www.cdc.gov/coronavirus/2019-ncov/variants/delta-variant.html):
+    #   "more than 2x as contagious as previous variants." (Sep 2)
+    # - meta-analysis (10.1093/jtm/taab124):
+    #   basic replication number estimated from 3.2 to 8.
+    # - BBC (https://www.bbc.com/news/health-57431420):
+    #   basic replication number from 5-8 vs. 4-5 for Alpha.
+    # To fit the spread in Germany relative to Alpha, we need an increase in
+    # transmissibility of >2 relative to Alpha.
+    params.loc[("virus_strain", "delta", "factor"), "value"] = 2.3
     return params
 
 
@@ -442,5 +449,5 @@ def _add_event_params(params):
     params.loc[("events", "b117_cases_per_100_000", "2021-01-31"), "value"] = 0.986
 
     params.loc[("events", "delta_cases_per_100_000", "2021-04-15"), "value"] = 0
-    params.loc[("events", "delta_cases_per_100_000", "2021-05-15"), "value"] = 0.1
+    params.loc[("events", "delta_cases_per_100_000", "2021-06-01"), "value"] = 0.06
     return params
