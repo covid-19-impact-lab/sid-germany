@@ -203,9 +203,7 @@ def _add_virus_strain_params(params):
     #   basic replication number estimated from 3.2 to 8.
     # - BBC (https://www.bbc.com/news/health-57431420):
     #   basic replication number from 5-8 vs. 4-5 for Alpha.
-    # To fit the spread in Germany relative to Alpha, we need an increase in
-    # transmissibility of >2 relative to Alpha.
-    params.loc[("virus_strain", "delta", "factor"), "value"] = 2.3
+    params.loc[("virus_strain", "delta", "factor"), "value"] = 2.0
     return params
 
 
@@ -450,4 +448,7 @@ def _add_event_params(params):
 
     params.loc[("events", "delta_cases_per_100_000", "2021-04-15"), "value"] = 0
     params.loc[("events", "delta_cases_per_100_000", "2021-06-01"), "value"] = 0.06
+
+    params.loc[("events", "summer_vacation", "cases_per_100_000")] = 0.1
+
     return params
