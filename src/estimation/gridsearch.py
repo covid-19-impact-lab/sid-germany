@@ -1,6 +1,5 @@
 import itertools
 import warnings
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,9 +10,7 @@ from estimagic.batch_evaluators import joblib_batch_evaluator
 warnings.filterwarnings("ignore", message="Polyfit may be poorly conditioned")
 
 
-def run_1d_gridsearch(
-    func, params, loc, gridspec, n_seeds, n_cores, initial_states_path
-):
+def run_1d_gridsearch(func, params, loc, gridspec, n_seeds, n_cores):
     """Run a grid search over one parameter."""
     seeds = _get_seeds(n_seeds)
     grid = np.linspace(*gridspec)
@@ -22,18 +19,7 @@ def run_1d_gridsearch(
     for point, seed in itertools.product(grid, seeds):
         p = params.copy(deep=True)
         p.loc[loc, "value"] = point
-        if initial_states_path is not None:
-            # go back from seed to seed index
-            path = Path(initial_states_path.format(seed=int((seed - 500) / 100_000)))
-        else:
-            path = None
-        arguments.append(
-            {
-                "params": p,
-                "seed": seed,
-                "initial_states_path": path,
-            }
-        )
+        arguments.append({"params": p, "seed": seed})
 
     results = joblib_batch_evaluator(
         func=func,
@@ -82,7 +68,6 @@ def run_2d_gridsearch(
     n_cores,
     mask=None,
     names=("x_1", "x_2"),
-    initial_states_path=None,
 ):
     """Run a grid search over two parameters."""
     # naming: _x refers to loc1, _y to loc2 and z to function values
@@ -108,20 +93,7 @@ def run_2d_gridsearch(
             p = params.copy(deep=True)
             p.loc[loc1, "value"] = x
             p.loc[loc2, "value"] = y
-
-            if initial_states_path is not None:
-                # go back from seed to seed index
-                path = Path(initial_states_path.format(seed=int(seed / 100_000 - 500)))
-            else:
-                path = None
-
-            arguments.append(
-                {
-                    "params": p,
-                    "seed": seed,
-                    "initial_states_path": path,
-                }
-            )
+            arguments.append({"params": p, "seed": seed})
 
     results = joblib_batch_evaluator(
         func=func,

@@ -26,7 +26,6 @@ def get_parallelizable_msm_criterion(
     spring_end_date,
     mode,
     debug,
-    initial_states_path=None,
 ):
     """Get a parallelizable msm criterion function."""
     pmsm = functools.partial(
@@ -38,7 +37,6 @@ def get_parallelizable_msm_criterion(
         spring_end_date=spring_end_date,
         mode=mode,
         debug=debug,
-        initial_states_path=initial_states_path,
     )
     return pmsm
 
@@ -69,7 +67,6 @@ def _build_and_evaluate_msm_func(
     spring_end_date,
     mode,
     debug,
-    initial_states_path,
 ):
     """ """
     params_hash = hash_array(params["value"].to_numpy())
@@ -82,11 +79,10 @@ def _build_and_evaluate_msm_func(
             start_date=fall_start_date,
             end_date=fall_end_date,
             debug=debug,
-            initial_states_path=initial_states_path,
         )
         res_fall["share_known_cases"].to_pickle(share_known_path)
 
-    if mode == "spring":
+    if mode in ["spring", "combined"]:
         res_spring = _build_and_evaluate_msm_func_one_season(
             params=params,
             seed=seed + 84587,
@@ -95,20 +91,7 @@ def _build_and_evaluate_msm_func(
             end_date=spring_end_date,
             debug=debug,
             group_share_known_case_path=share_known_path,
-            initial_states_path=initial_states_path,
         )
-    elif mode == "combined":
-        res_spring = _build_and_evaluate_msm_func_one_season(
-            params=params,
-            seed=seed + 84587,
-            prefix=prefix,
-            start_date=spring_start_date,
-            end_date=spring_end_date,
-            debug=debug,
-            group_share_known_case_path=share_known_path,
-            initial_states_path=None,
-        )
-
     if mode == "fall":
         res = res_fall
     elif mode == "spring":
@@ -157,7 +140,6 @@ def _build_and_evaluate_msm_func_one_season(
     start_date,
     end_date,
     debug,
-    initial_states_path,
     group_share_known_case_path=None,
 ):
     """Build and evaluate a msm criterion function.
@@ -173,7 +155,6 @@ def _build_and_evaluate_msm_func_one_season(
         group_share_known_case_path=group_share_known_case_path,
         debug=debug,
         return_last_states=False,
-        initial_states_path=initial_states_path,
     )
     params_hash = hash_array(params["value"].to_numpy())
     path = BLD / "exploration" / f"{prefix}_{params_hash}_{os.getpid()}"
