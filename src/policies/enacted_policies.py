@@ -21,7 +21,13 @@ OTHER_MULTIPLIER_SPECS = [
     ("lockdown_light_with_fatigue", "2020-12-23", 0.57),
     ("christmas_days", "2020-12-26", 0.65),
     ("hard_lockdown", "2021-02-10", 0.35),
-    ("hard_lockdown_with_fatige", "2021-02-28", 0.5),
+    ("hard_lockdown_with_fatigue", "2021-02-28", 0.5),
+    ("reopening", "2021-06-01", 0.515),
+    # end of May the federal incidence dropped below 35
+    # leading to massive opening of restaurants etc.
+    ("june", "2021-07-01", 0.6),
+    # rules were loosend (e.g. https://bit.ly/3t1Vx3b)
+    ("summer", VERY_LATE, 1.0),
     ("reopening", "2021-04-12", 0.515),
     ("decline", VERY_LATE, 0.515),
 ]
@@ -357,10 +363,14 @@ def _get_enacted_school_policies(contact_models):
             => A/B for everyone. With this we err on the side of restricting contacts
                too much.
 
-    - "summer": (last updated May 22nd)
+    - "summer": (last updated Sep 3)
         - BW: normal <100, A/B from 100 to 165 (source: https://bit.ly/3hYtbDt).
         - BY: normal <50, A/B from 50 to 165 (https://bit.ly/2T6uupf).
         - NRW: normal <100, A/B from 100 ot 165 (https://bit.ly/2SbmD9v).
+
+        From Aug onwards politicians strongly support keeping schools open
+        (https://bit.ly/3mUqaGC) and rules with respect to infection numbers
+        are removed (https://bit.ly/2WJG7ov).
 
             => normal
 
