@@ -50,6 +50,7 @@ OUTCOMES = [
     "share_ever_rapid_test",
     "share_rapid_test_in_last_week",
     "share_b117",
+    "share_delta",
     "share_doing_rapid_test_today",
     "ever_vaccinated",
 ]
@@ -409,8 +410,6 @@ def task_plot_scenario_comparison(
         plot_start (pandas.Timestamp, optional): date on which the plot should start.
             If None, the plot start is the simulation start.
         empirical (bool, optional): whether to plot empirical equivalents.
-            If not given, they are plotted if an empirical analogue for the outcome is
-            available.
         produces (pathlib.Path): path where to save the figure
 
     """
