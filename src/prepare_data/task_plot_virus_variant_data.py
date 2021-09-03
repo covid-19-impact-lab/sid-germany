@@ -18,33 +18,27 @@ _MODULE_DEPENDENCIES = {
 
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)
 @pytask.mark.depends_on(STRAIN_FILES)
-@pytask.mark.produces(
-    {
-        "b117": BLD / "data" / "virus_strains" / "compare_b117.pdf",
-        "delta": BLD / "data" / "virus_strains" / "compare_delta.pdf",
-    }
-)
+@pytask.mark.produces(BLD / "data" / "virus_strains" / "compare_b117.pdf")
 def task_plot_comparison_of_virus_variant_data(depends_on, produces):
-    data = pd.read_csv(
+    rki_b117 = pd.read_csv(
         depends_on["rki_strains"],
         parse_dates=["date"],
         index_col="date",
-    )
-    for strain, fig_path in produces.items():
-        rki = data[f"share_{strain}"]
-        extrapolated = pd.read_pickle(depends_on["virus_shares_dict"])[strain]
+    )["share_b117"]
 
-        fig, ax = plt.subplots(figsize=PLOT_SIZE)
-        for sr, label, style in zip(
-            [rki, extrapolated], ["rki", "extrapolated"], ["-", "--"]
-        ):
-            sr = sr[sr > 0]
-            sns.lineplot(x=sr.index, y=sr, label=label, ax=ax, linestyle=style)
+    our_b117 = pd.read_pickle(depends_on["virus_shares_dict"])["b117"]
 
-        fig, ax = style_plot(fig, ax)
-        ax.set_title(f"Share of Virus Variant {strain.title()} Over Time")
-        fig.savefig(fig_path)
-        plt.close()
+    fig, ax = plt.subplots(figsize=PLOT_SIZE)
+    for sr, label, style in zip(
+        [rki_b117, our_b117], ["rki", "extrapolated"], ["-", "--"]
+    ):
+        sr = sr["2020-11-01":"2021-05-01"]
+        sns.lineplot(x=sr.index, y=sr, label=label, ax=ax, linestyle=style)
+
+    fig, ax = style_plot(fig, ax)
+    ax.set_title("Share of Virus Variants Over Time")
+    fig.savefig(produces)
+    plt.close()
 
 
 @pytask.mark.depends_on(_MODULE_DEPENDENCIES)

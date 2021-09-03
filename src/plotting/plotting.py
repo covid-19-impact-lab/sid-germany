@@ -43,7 +43,6 @@ OUTCOME_TO_EMPIRICAL_LABEL = {
         "within the last 4 weeks"
     ),
     "share_b117": "officially reported share of B.1.1.7",
-    "share_delta": "officially reported share of Delta",
     "ever_vaccinated": "share of Germans with first vaccination dose",
     "r_effective": "effective reproduction number as estimated by the RKI",
 }
@@ -57,7 +56,6 @@ OUTCOME_TO_Y_LABEL = {
     "share_rapid_test_in_last_week": "share of the population that has done \na rapid "
     "test within the last seven days",
     "share_b117": "share of B.1.1.7 among new infections",
-    "share_delta": "share of Delta among new infections",
     "share_doing_rapid_test_today": "share of the population doing "
     "a rapid test per day",
     "ever_vaccinated": "share of the population that has been vaccinated",
