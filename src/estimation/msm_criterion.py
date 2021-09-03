@@ -279,11 +279,6 @@ def _get_period_outputs_for_simulate():
             outcome="knows_currently_infected",
             groupby="age_group_rki",
         ),
-        # To Do: Discuss this with Janos !!!
-        "aggregated_infections_not_log": functools.partial(
-            calculate_period_outcome_sim,
-            outcome="new_known_case",
-        ),
         "aggregated_b117_share": calculate_period_virus_share,
     }
     return additional_outputs
@@ -352,7 +347,7 @@ def _calculate_share_known_cases(sim_out):
 
 
 def _aggregate_period_virus_share(sim_out):
-    sr = pd.concat(sim_out["period_outputs"][f"aggregated_b117_share"])
+    sr = pd.concat(sim_out["period_outputs"]["aggregated_b117_share"])
     smoothed = sr.rolling(window=7, min_periods=1, center=False).mean()
     return smoothed
 

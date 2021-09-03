@@ -19,7 +19,6 @@ NON_INCIDENCE_OUTCOMES = [
     "share_ever_rapid_test",
     "share_rapid_test_in_last_week",
     "share_b117",
-    "share_delta",
     "share_doing_rapid_test_today",
 ]
 
@@ -106,9 +105,9 @@ def get_named_scenarios():
     """
     if FAST_FLAG == "debug":
         n_main_seeds = 1
-        n_other_seeds = 0
+        n_other_seeds = 1
     elif FAST_FLAG == "verify":
-        n_main_seeds = 20
+        n_main_seeds = 30
         n_other_seeds = 0
     elif FAST_FLAG == "full":
         n_main_seeds = 30
@@ -124,12 +123,10 @@ def get_named_scenarios():
             "start_date": "2020-09-15",
             "end_date": SPRING_START - pd.Timedelta(days=1),
         }
-        # spring goes until April 10 because we start mid April to introduce Delta.
-        spring_dates = {"start_date": SPRING_START, "end_date": "2021-04-10"}
-        summer_dates = {"start_date": "2021-04-11", "end_date": "2021-08-01"}
+        spring_dates = {"start_date": SPRING_START, "end_date": "2021-05-31"}
         combined_dates = {
             "start_date": fall_dates["start_date"],
-            "end_date": summer_dates["end_date"],
+            "end_date": spring_dates["end_date"],
         }
     else:
         # for the plotting we need that combined and spring have dates after 2021-01-15
@@ -142,7 +139,6 @@ def get_named_scenarios():
             "start_date": "2021-01-01",
             "end_date": "2021-01-18",
         }
-        summer_dates = {"start_date": "2021-01-19", "end_date": "2021-01-22"}
 
     named_scenarios = {
         # Baseline Scenarios
@@ -166,17 +162,7 @@ def get_named_scenarios():
             "params_scenario": "baseline",
             "n_seeds": n_main_seeds,
             "save_rapid_test_statistics": True,
-            "save_last_states": True,
             **spring_dates,
-        },
-        "summer_baseline": {
-            "sim_input_scenario": "baseline_save_rapid_test_statistics",
-            "params_scenario": "baseline",
-            "n_seeds": n_other_seeds,
-            "save_rapid_test_statistics": True,
-            "save_last_states": False,
-            "is_resumed": "spring",
-            **summer_dates,
         },
         # Scenarios for the main plots
         "spring_no_effects": {
