@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import pytask
 import seaborn as sns
@@ -11,7 +10,6 @@ from src.config import PLOT_END_DATE
 from src.config import PLOT_SIZE
 from src.config import PLOT_START_DATE
 from src.config import POPULATION_GERMANY
-from src.config import SRC
 from src.plotting.plotting import style_plot
 
 
@@ -22,77 +20,6 @@ plt.rcParams.update(
         "legend.frameon": False,
     }
 )
-
-
-_BY_AGE_DEPENDENCIES = {
-    "june": SRC / "original_data" / "vaccinations_by_age_group" / "2021-06-14.xlsx",
-    "july": SRC / "original_data" / "vaccinations_by_age_group" / "2021-07-14.xlsx",
-    "aug1": SRC / "original_data" / "vaccinations_by_age_group" / "2021-08-01.xlsx",
-    "aug2": SRC / "original_data" / "vaccinations_by_age_group" / "2021-08-12.xlsx",
-    "aug3": SRC / "original_data" / "vaccinations_by_age_group" / "2021-08-23.xlsx",
-}
-
-
-@pytask.mark.depends_on(_BY_AGE_DEPENDENCIES)
-@pytask.mark.produces(
-    {
-        "data": BLD / "data" / "vaccinations" / "vaccinations_by_age_group.pkl",
-        "fig": BLD / "figures" / "data" / "vaccinations_by_age_group.pdf",
-    }
-)
-def task_create_vaccination_rates_by_age_group(depends_on, produces):
-    june = pd.read_excel(
-        depends_on["june"], sheet_name="Impfquote_bis_einschl_14.06.21", header=[0, 2]
-    )
-    # no data at the federal level yet, so take the unweighted mean over the
-    # states for which data is available
-    june = june["Impfquote mindestens einmal geimpft *"].replace("-", np.nan).mean()
-    june = june.rename(index={"<18 Jahre": "12-17 Jahre"})
-    june.name = pd.Timestamp("2021-06-14")
-
-    july = pd.read_excel(
-        depends_on["july"], sheet_name="Impfquote_bis_einschl_14.07.21", header=[0, 2]
-    )
-    july = july.loc[17, "Impfquote mindestens einmal geimpft *"]
-    july = july.rename(index={"<18 Jahre": "12-17 Jahre"})
-    july.name = pd.Timestamp("2021-07-14")
-
-    aug1 = pd.read_excel(
-        depends_on["aug1"], sheet_name="Impfquote_bis_einschl_01.08.21", header=[0, 2]
-    )
-    aug1 = aug1.loc[17, "Impfquote mindestens einmal geimpft "]
-    aug1.index = [x.replace("*", "") for x in aug1.index]
-    aug1.name = pd.Timestamp("2021-08-01")
-
-    aug2 = pd.read_excel(
-        depends_on["aug2"], sheet_name="Impfquote_bis_einschl_12.08.21", header=[0, 2]
-    )
-    aug2 = aug2.loc[17, "Impfquote mindestens einmal geimpft "]
-    aug2.index = [x.replace("*", "") for x in aug2.index]
-    aug2.name = pd.Timestamp("2021-08-12")
-
-    aug3 = pd.read_excel(
-        depends_on["aug3"], sheet_name="Impfquote_bis_einschl_23.08.21", header=[0, 2]
-    )
-    aug3 = aug3.loc[17, "Impfquote mindestens einmal geimpft "]
-    aug3.index = [x.replace("*", "") for x in aug3.index]
-    aug3.name = pd.Timestamp("2021-08-23")
-
-    vacc_shares_by_age = pd.concat([june, july, aug1, aug2, aug3], axis=1) / 100
-    vacc_shares_by_age = vacc_shares_by_age.rename(
-        index={
-            "Gesamt": "overall",
-            "12-17 Jahre": "12-17",
-            "18-59 Jahre": "18-59",
-            "60+ Jahre": ">=60",
-        }
-    )
-    vacc_shares_by_age.to_pickle(produces["data"])
-
-    fig, ax = plt.subplots(figsize=PLOT_SIZE)
-    vacc_shares_by_age.T.plot(ax=ax)
-    fig, ax = style_plot(fig, ax)
-    fig.savefig(produces["fig"])
 
 
 @pytask.mark.depends_on(
@@ -134,37 +61,38 @@ def task_prepare_vaccination_data(depends_on, produces):
     plt.close()
 
     vaccination_shares = df["share_with_first_dose"].diff().dropna()
+    vaccination_shares.to_pickle(produces["vaccination_shares_raw"])
+
+    # extend data to 2020.
+    backward_dates = pd.date_range("2020-01-01", vaccination_shares.index.max())
+    vaccination_shares = vaccination_shares.reindex(backward_dates)
+    vaccination_shares = vaccination_shares.fillna(0)
 
     # the first individuals to be vaccinated were nursing homes which are not
     # in our synthetic data so we exclude the first 1% of vaccinations to
     # be going to them.
     vaccination_shares[vaccination_shares.cumsum() <= 0.01] = 0
 
-    vaccination_shares.to_pickle(produces["vaccination_shares_raw"])
-
     # family physicians started vaccinating on April 6th (Tue after Easter)
+    # we assume that the number of vaccinations is constant to the weekday's
+    # mean when extrapolating into the future.
     start_physicians = pd.Timestamp("2021-04-06")
+    after_start = vaccination_shares.loc[start_physicians:]
 
-    # for reproduction of vaccination scenarios save the weekday means
-    easter_until_july = vaccination_shares.loc[start_physicians:"2021-07-06"]
-    dayname_to_mean = easter_until_july.groupby(
-        easter_until_july.index.day_name()
-    ).mean()
+    dayname_to_mean = after_start.groupby(after_start.index.day_name()).mean()
     with open(produces["mean_vacc_share_per_day"], "w") as f:
         yaml.dump(data=dayname_to_mean.to_dict(), stream=f)
 
-    # extrapolate into the future
-    last_month_avg = vaccination_shares[-28:].mean()
-
-    end_date = vaccination_shares.index.max() + pd.Timedelta(days=56)
-    extended_dates = pd.date_range("2020-03-01", end_date)
-    extended = vaccination_shares.copy(deep=True).reindex(extended_dates)
-    extended[: vaccination_shares.index.min()] = 0.0
-    extrapolated = extended.fillna(last_month_avg)
+    start_date = vaccination_shares.index.max() + pd.Timedelta(days=1)
+    end_date = start_date + pd.Timedelta(weeks=12)
+    future_dates = pd.date_range(start_date, end_date)
+    future_day_names = future_dates.day_name()
+    future_values = future_day_names.to_series().replace(dayname_to_mean)
+    extension = pd.Series(future_values.values, index=future_dates)
 
     labeled = [
         ("raw data", vaccination_shares),
-        ("extrapolated", extrapolated),
+        ("extension", extension),
     ]
     fig, ax = _plot_labeled_series(labeled)
     ax.axvline(
@@ -177,8 +105,9 @@ def task_prepare_vaccination_data(depends_on, produces):
     fig.savefig(produces["fig_vaccination_shares"])
     plt.close()
 
-    _test_extrapolated(extrapolated)
-    extrapolated.to_pickle(produces["vaccination_shares_extended"])
+    extended = pd.concat([vaccination_shares, extension])
+    _test_extended(extended)
+    extended.to_pickle(produces["vaccination_shares_extended"])
 
 
 def _clean_vaccination_data(df):
@@ -236,7 +165,7 @@ def _plot_labeled_series(labeled):
     return fig, ax
 
 
-def _test_extrapolated(sr):
+def _test_extended(sr):
     assert sr.index.is_monotonic, "index is not monotonic."
     assert not sr.index.duplicated().any(), "Duplicate dates in Series."
     assert (sr.index == pd.date_range(start=sr.index.min(), end=sr.index.max())).all()
