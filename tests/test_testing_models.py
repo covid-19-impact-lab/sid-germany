@@ -26,7 +26,6 @@ def states():
     states["cd_symptoms_true"] = [-1, 2, -1] + [-5] * 6 + [-1]
     states["educ_worker"] = False
     states["state"] = "Hessen"
-    states["cd_received_test_result_true"] = -3
     states["cd_received_rapid_test"] = -99
     states["index"] = states.index
     return states
@@ -92,6 +91,7 @@ def test_calculate_test_demand_from_share_known_cases():
     states["pending_test"] = [False, True] + [True] * 7 + [False]
     states["currently_infected"] = [True, True, True] + [False] * 5 + [True] * 2
     states["knows_immune"] = False
+    states["cd_received_test_result_true"] = -28
 
     share_known_cases = 2 / 3
     share_of_tests_for_symptomatics = 0.5
