@@ -16,6 +16,7 @@ def test_2d_gridsearch():
         gridspec2=(-3, 3, 21),
         n_seeds=1,
         n_cores=1,
+        initial_states_path=None,
     )
 
     assert_array_almost_equal(grid[best_index], np.zeros(2))
@@ -29,6 +30,7 @@ def test_1d_gridsearch():
         gridspec=(-1, 1, 21),
         n_seeds=1,
         n_cores=1,
+        initial_states_path=None,
     )
 
     assert np.allclose(grid[best_index], 0.1)
