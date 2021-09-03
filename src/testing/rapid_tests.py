@@ -32,6 +32,8 @@ def rapid_test_demand(
     If randomize is True the calculated demand is distributed randomly in the entire
     population (excluding a share of refusers).
 
+    After Easter vaccinated individuals do not perform rapid tests.
+
     """
     date = get_date(states)
 
@@ -49,6 +51,12 @@ def rapid_test_demand(
         educ_workers_params = params.loc[("rapid_test_demand", "educ_worker_shares")]
         students_params = params.loc[("rapid_test_demand", "student_shares")]
         private_demand_params = params.loc[("rapid_test_demand", "private_demand")]
+        other_low_incidence_factor = params.loc[
+            ("rapid_test_demand", "low_incidence_factor", "other_demand"), "value"
+        ]
+        work_low_incidence_factor = params.loc[
+            ("rapid_test_demand", "low_incidence_factor", "worker_demand"), "value"
+        ]
 
     # get work demand inputs
     share_of_workers_with_offer = get_piecewise_linear_interpolation_for_one_day(
@@ -83,6 +91,7 @@ def rapid_test_demand(
         states=states,
         contacts=contacts,
         compliance_multiplier=work_compliance_multiplier,
+        low_incidence_factor=work_low_incidence_factor,
     )
 
     educ_demand = _calculate_educ_rapid_test_demand(
@@ -102,11 +111,25 @@ def rapid_test_demand(
     )
 
     other_contact_demand = _calculate_other_meeting_rapid_test_demand(
-        states=states, contacts=contacts, demand_share=private_demand_share
+        states=states,
+        contacts=contacts,
+        demand_share=private_demand_share,
+        low_incidence_factor=other_low_incidence_factor,
     )
 
     private_demand = hh_demand | sym_without_pcr_demand | other_contact_demand
     rapid_test_demand = work_demand | educ_demand | private_demand
+    preemptive_rapid_test_demand = work_demand | educ_demand | other_contact_demand
+
+    # vaccinated individuals do not test themselves for work, educ or leisure contacts
+    if date > pd.Timestamp("2021-04-05"):
+        preemptive_rapid_test_demand = _only_not_fully_vaccinated_test_themselves(
+            preemptive_rapid_test_demand, states
+        )
+
+    rapid_test_demand = (
+        preemptive_rapid_test_demand | hh_demand | sym_without_pcr_demand
+    )
 
     if randomize and date > pd.Timestamp("2021-04-05"):  # only randomize after Easter
         assert (
@@ -204,8 +227,12 @@ def _get_student_demand(eligible, states, student_multiplier):
     return student_demand
 
 
-def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
+def _calculate_work_rapid_test_demand(
+    states, contacts, compliance_multiplier, low_incidence_factor
+):
     date = get_date(states)
+    weekly_cases_per_100_000 = 7 * 100_000 * states["new_known_case"].mean()
+
     work_cols = [col for col in contacts if col.startswith("work_")]
     has_work_contacts = (contacts[work_cols] > 0).any(axis=1)
 
@@ -229,8 +256,17 @@ def _calculate_work_rapid_test_demand(states, contacts, compliance_multiplier):
 
     should_get_test = has_work_contacts & too_long_since_last_test
     complier = states["rapid_test_compliance"] >= (1 - compliance_multiplier)
-    receives_offer_and_accepts = should_get_test & complier
-    work_rapid_test_demand = should_get_test & receives_offer_and_accepts
+    work_rapid_test_demand = should_get_test & complier
+
+    # assume that people become more negligent when the incidences are low
+    if date > pd.Timestamp("2021-06-01") and weekly_cases_per_100_000 < 35:
+        non_negligent = np.random.choice(
+            [True, False],
+            len(work_rapid_test_demand),
+            p=[low_incidence_factor, 1 - low_incidence_factor],
+        )
+        work_rapid_test_demand = work_rapid_test_demand & non_negligent
+
     return work_rapid_test_demand
 
 
@@ -271,10 +307,11 @@ def _calculate_own_symptom_rapid_test_demand(states, demand_share):
     return own_symptom_demand
 
 
-def _calculate_other_meeting_rapid_test_demand(states, contacts, demand_share):
-    scaling_factor = 1.0
-    demand_share = scaling_factor * demand_share
-
+def _calculate_other_meeting_rapid_test_demand(
+    states, contacts, demand_share, low_incidence_factor
+):
+    weekly_cases_per_100_000 = 7 * 100_000 * states["new_known_case"].mean()
+    date = get_date(states)
     complier = states["quarantine_compliance"] >= (1 - demand_share)
     not_tested_recently = states["cd_received_rapid_test"] < -3
 
@@ -284,6 +321,16 @@ def _calculate_other_meeting_rapid_test_demand(states, contacts, demand_share):
     with_relevant_contact = (contacts[weekly_other_cols] > 0).any(axis=1)
 
     to_be_tested = complier & not_tested_recently & with_relevant_contact
+
+    # when incidences are low there are less testing requirements and
+    # testing is perceived to have a lower benefit
+    if date < pd.Timestamp("2021-06-01") or weekly_cases_per_100_000 > 35:
+        tests_despite_low_incidence = np.random.choice(
+            [True, False],
+            len(to_be_tested),
+            p=[low_incidence_factor, 1 - low_incidence_factor],
+        )
+        to_be_tested = to_be_tested & tests_despite_low_incidence
     return to_be_tested
 
 
@@ -325,3 +372,21 @@ def _randomize_rapid_tests(states, target_share_to_be_tested, share_refuser, see
     rapid_test_demand = pd.Series(False, index=states.index)
     rapid_test_demand[to_test_indices] = True
     return rapid_test_demand
+
+
+def _only_not_fully_vaccinated_test_themselves(rapid_test_demand, states):
+    """Exclude fully vaccinated individuals from being tested.
+
+    The immunity countdown is initialized at -9999. The vaccine countdown is set
+    between -1 and 21. This is only the 1st vaccine. Assuming 30 days between
+    shots and 14 days of wait period after the 2nd shot, individuals are freed
+    from testing obligations ~45 days after their first shot. This translates
+    into countdown values between -45 and -20. For simplicity we simply assume
+    that individuals stop testing themselves 40 days after their first shot.
+
+    """
+    more_than_14d_since_vaccination = states["cd_is_immune_by_vaccine"].between(
+        -9990, -40
+    )
+    lowered_test_demand = rapid_test_demand & ~more_than_14d_since_vaccination
+    return lowered_test_demand

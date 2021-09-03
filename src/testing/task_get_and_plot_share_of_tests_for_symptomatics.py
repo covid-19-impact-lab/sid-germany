@@ -55,7 +55,7 @@ plt.rcParams.update(
     }
 )
 def task_prepare_characteristics_of_the_tested(depends_on, produces):
-    df = pd.read_excel(depends_on["data"], sheet_name="Klinische_Aspekte", header=1)
+    df = pd.read_excel(depends_on["data"], sheet_name="Klinische_Aspekte", header=2)
 
     df = _clean_data(df)
     df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[])
