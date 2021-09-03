@@ -437,8 +437,7 @@ def task_plot_scenario_comparison(
     else:
         xlims = plot_start, first_df.index.max()
 
-    plot_end = pd.Timestamp("2021-05-01") if outcome == "share_b117" else None
-    dfs = shorten_dfs(dfs, plot_start=plot_start, plot_end=plot_end)
+    dfs = shorten_dfs(dfs, plot_start=plot_start, plot_end=None)
     dates = list(dfs.values())[0].index
 
     if empirical and outcome in empirical_df.columns:
