@@ -46,13 +46,6 @@ if FAST_FLAG != "debug":
 
 
 PLOTS = {
-    "summer_baseline": {
-        "title": "",
-        "scenarios": ["summer_baseline"],
-        "colors": [BLUE],
-        "name_to_label": {"summer_baseline": "summer and fall with open schools"},
-        "empirical": True,
-    },
     # Main Plots (Fixed)
     "combined_fit": {
         "title": "Simulated versus Empirical: {outcome}",
