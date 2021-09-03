@@ -8,7 +8,6 @@ from src.testing.rapid_tests import _calculate_own_symptom_rapid_test_demand
 from src.testing.rapid_tests import _calculate_work_rapid_test_demand
 from src.testing.rapid_tests import _determine_if_hh_had_event
 from src.testing.rapid_tests import _get_eligible_educ_participants
-from src.testing.rapid_tests import _only_not_fully_vaccinated_test_themselves
 from src.testing.rapid_tests import _randomize_rapid_tests
 
 
@@ -26,9 +25,8 @@ def educ_states():
         "school",  # 5: student to be tested
     ]
     states["cd_received_rapid_test"] = [-2, -5, -20, -5, -20, -5]
-    states["cd_is_immune_by_vaccine"] = -10_000
     states["rapid_test_compliance"] = 1.0
-    states["date"] = pd.Timestamp("2021-07-05")
+    states["date"] = pd.Timestamp("2021-05-05")
     return states
 
 
@@ -82,7 +80,6 @@ def work_states():
     # 6: yes if compliance_multiplier >= 0.3
     states["cd_received_rapid_test"] = [-1, -10, -10, -10, -5, -10]
     states["rapid_test_compliance"] = [0.8, 0.8, 0.8, 0.8, 0.8, 0.3]
-    states["new_known_case"] = False
     return states
 
 
@@ -115,10 +112,7 @@ def test_calculate_work_rapid_test_demand_early(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-04-01")
     expected = pd.Series([False, False, True, True, False, True])
     res = _calculate_work_rapid_test_demand(
-        work_states,
-        work_contacts,
-        compliance_multiplier=1.0,  # perfect compliance
-        low_incidence_factor=1.0,
+        work_states, work_contacts, compliance_multiplier=1.0  # perfect compliance
     )
     pd.testing.assert_series_equal(res, expected)
 
@@ -127,10 +121,7 @@ def test_calculate_work_rapid_test_demand_late(work_states, work_contacts):
     work_states["date"] = pd.Timestamp("2021-05-05")
     expected = pd.Series([False, False, True, True, True, False])
     res = _calculate_work_rapid_test_demand(
-        work_states,
-        work_contacts,
-        compliance_multiplier=0.3,
-        low_incidence_factor=1.0,
+        work_states, work_contacts, compliance_multiplier=0.3
     )
     pd.testing.assert_series_equal(res, expected)
 
@@ -139,10 +130,7 @@ def test_calculate_work_rapid_test_demand_no_compliance(work_states, work_contac
     work_states["date"] = pd.Timestamp("2021-05-05")
     expected = pd.Series([False, False, False, False, False, False])
     res = _calculate_work_rapid_test_demand(
-        work_states,
-        work_contacts,
-        compliance_multiplier=0.0,
-        low_incidence_factor=1.0,
+        work_states, work_contacts, compliance_multiplier=0.0
     )
     pd.testing.assert_series_equal(res, expected)
 
@@ -153,10 +141,7 @@ def test_calculate_work_rapid_test_demand_imperfect_compliance(
     work_states["date"] = pd.Timestamp("2021-05-05")
     expected = pd.Series([False, False, True, True, True, False])
     res = _calculate_work_rapid_test_demand(
-        work_states,
-        work_contacts,
-        compliance_multiplier=0.5,
-        low_incidence_factor=1.0,
+        work_states, work_contacts, compliance_multiplier=0.5
     )
     pd.testing.assert_series_equal(res, expected)
 
@@ -248,8 +233,6 @@ def test_calculate_other_meeting_rapid_test_demand():
     states = pd.DataFrame()
     states["quarantine_compliance"] = [0.2, 0.8, 0.8, 0.8]
     states["cd_received_rapid_test"] = [-99, -2, -99, -99]
-    states["new_known_case"] = [False, False, False, False]
-    states["date"] = pd.Timestamp("2021-04-15")
 
     contacts = pd.DataFrame()
     contacts["other_recurrent_weekly_1"] = [3, 3, 0, 3]
@@ -257,10 +240,7 @@ def test_calculate_other_meeting_rapid_test_demand():
     demand_share = 0.3
 
     res = _calculate_other_meeting_rapid_test_demand(
-        states=states,
-        contacts=contacts,
-        demand_share=demand_share,
-        low_incidence_factor=1.0,
+        states=states, contacts=contacts, demand_share=demand_share
     )
 
     # 0: non-complier, 1: recently tested, 2: no relevant contact, 3: test
@@ -296,21 +276,3 @@ def test_random_rapid_test_demand_lln():
     )
     assert not res[states["rapid_test_compliance"] < 0.15].any()
     assert res.mean() == pytest.approx(0.6, abs=0.001)
-
-
-def test_exclude_vaccinated_from_being_tested():
-    states = pd.Series(
-        [-10_030, -50, -3, 5] * 2, name="cd_is_immune_by_vaccine"
-    ).to_frame()
-    rapid_test_demand = pd.Series([True] * 4 + [False] * 4)
-    res = _only_not_fully_vaccinated_test_themselves(rapid_test_demand, states)
-    expected = pd.Series(
-        [
-            True,  # never vaccinated
-            False,  # long enough since vaccination
-            True,  # not long enough since vaccination
-            True,  # not long enough since vaccination
-        ]
-        + [False] * 4
-    )
-    pd.testing.assert_series_equal(res, expected, check_names=False)
