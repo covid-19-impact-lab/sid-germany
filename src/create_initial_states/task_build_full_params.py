@@ -103,6 +103,15 @@ def task_create_full_params(depends_on, produces):
     params = _add_educ_rapid_test_fade_in_params(params)
     params = _add_private_rapid_test_demand_fade_in_params(params)
     params = _add_rapid_test_reaction_params(params)
+
+    # these are arbitrary and will have to be estimated.
+    params.loc[
+        ("rapid_test_demand", "low_incidence_factor", "other_demand"), "value"
+    ] = 0.25
+    params.loc[
+        ("rapid_test_demand", "low_incidence_factor", "worker_demand"), "value"
+    ] = 0.25
+
     params = _add_event_params(params)
 
     # seasonality parameter
