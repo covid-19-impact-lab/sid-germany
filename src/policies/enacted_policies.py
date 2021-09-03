@@ -28,8 +28,6 @@ OTHER_MULTIPLIER_SPECS = [
     ("june", "2021-07-01", 0.6),
     # rules were loosend (e.g. https://bit.ly/3t1Vx3b)
     ("summer", VERY_LATE, 1.0),
-    ("reopening", "2021-04-12", 0.515),
-    ("decline", VERY_LATE, 0.515),
 ]
 """Specification for the other multipliers"""
 
