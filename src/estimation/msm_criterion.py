@@ -284,12 +284,7 @@ def _get_period_outputs_for_simulate():
             calculate_period_outcome_sim,
             outcome="new_known_case",
         ),
-        "aggregated_b117_share": functools.partial(
-            calculate_period_virus_share, strain="b117"
-        ),
-        "aggregated_delta_share": functools.partial(
-            calculate_period_virus_share, strain="delta"
-        ),
+        "aggregated_b117_share": calculate_period_virus_share,
     }
     return additional_outputs
 
@@ -330,12 +325,7 @@ def _get_calc_moments():
             outcome="aggregated_infections",
             take_logs=True,
         ),
-        "aggregated_b117_share": functools.partial(
-            _aggregate_period_virus_share, strain="b117"
-        ),
-        "aggregated_delta_share": functools.partial(
-            _aggregate_period_virus_share, strain="delta"
-        ),
+        "aggregated_b117_share": _aggregate_period_virus_share,
     }
     return calc_moments
 
@@ -361,8 +351,8 @@ def _calculate_share_known_cases(sim_out):
     return avg_share_known
 
 
-def _aggregate_period_virus_share(sim_out, strain):
-    sr = pd.concat(sim_out["period_outputs"][f"aggregated_{strain}_share"])
+def _aggregate_period_virus_share(sim_out):
+    sr = pd.concat(sim_out["period_outputs"][f"aggregated_b117_share"])
     smoothed = sr.rolling(window=7, min_periods=1, center=False).mean()
     return smoothed
 
@@ -402,9 +392,6 @@ def _get_empirical_moments(df, age_group_sizes, state_sizes, start_date, end_dat
         "aggregated_b117_share": pd.read_pickle(
             BLD / "data" / "virus_strains" / "virus_shares_dict.pkl"
         )["b117"],
-        "aggregated_delta_share": pd.read_pickle(
-            BLD / "data" / "virus_strains" / "virus_shares_dict.pkl"
-        )["delta"],
     }
     empirical_moments = {}
     for key, moment in long_empirical_moments.items():
@@ -441,7 +428,6 @@ def _get_weighting_matrix(empirical_moments, age_weights, state_weights):
         # strong weight because very important
         "aggregated_infections": 2.5,
         "aggregated_b117_share": 1,
-        "aggregated_delta_share": 1,
     }
 
     weight_mat = get_diag_weighting_matrix(
