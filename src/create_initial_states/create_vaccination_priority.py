@@ -95,19 +95,13 @@ import numpy as np
 import pandas as pd
 
 
-def create_vaccination_rank(vaccination_group, share_refuser, seed):
+def create_vaccination_rank(vaccination_group):
     """Create the order in which individuals get vaccinated, including refusers.
 
     Args:
         vaccination_group (pandas.Series): index is the same as that of states.
             Low values indicate individuals that have a high priority to be
             vaccinated.
-        share_refuser (float): share of individuals (irrespective of their
-            vaccination group) that refuse to be vaccinated.
-
-            .. warning::
-                This share must also be passed to the vaccination model!
-        seed (int)
 
     Returns:
         vaccination_order (pandas.Series): same index as that of
@@ -117,21 +111,52 @@ def create_vaccination_rank(vaccination_group, share_refuser, seed):
             rest.
 
     """
-    np.random.seed(seed)
-    sampled_to_refuse = np.random.choice(
-        a=[True, False],
-        size=len(vaccination_group),
-        p=[share_refuser, 1 - share_refuser],
-    )
-    refuser_value = vaccination_group.max() + 1
-    with_refusers = vaccination_group.where(~sampled_to_refuse, refuser_value)
-    vaccination_order = with_refusers.rank(method="first", pct=True)
+    vaccination_order = vaccination_group.rank(method="first", pct=True)
     min_at_zero = vaccination_order - vaccination_order.min()
     scaled = min_at_zero / min_at_zero.max()
     return scaled
 
 
-def create_vaccination_group(states, seed):
+def add_refuser_value_to_vaccination_group(
+    states, share_refuser_adult, share_refuser_youth, seed
+):
+    """Create the vaccination group giving refusers the highest value.
+
+    Args:
+        states (pandas.DataFrame): states DataFrame, must contain
+            "vaccination_priority_group" and "age".
+        share_refuser_adult (float): share of adults (irrespective of their
+            vaccination group) that refuse to be vaccinated.
+        share_refuser_youth (float): share of youths that refuse to be vaccinated.
+        seed (int): seed
+
+    """
+    np.random.seed(seed)
+    refuser_value = states["vaccination_priority_group"].max() + 1
+    is_adult = states["age"] >= 16
+
+    adults_sampled_to_refuse = np.random.choice(
+        a=[True, False],
+        size=len(states),
+        p=[share_refuser_adult, 1 - share_refuser_adult],
+    )
+    youths_sampled_to_refuse = np.random.choice(
+        a=[True, False],
+        size=len(states),
+        p=[share_refuser_youth, 1 - share_refuser_youth],
+    )
+
+    with_adult_refusers = states["vaccination_priority_group"].where(
+        ~adults_sampled_to_refuse | ~is_adult, refuser_value
+    )
+    with_all_refusers = with_adult_refusers.where(
+        ~youths_sampled_to_refuse | is_adult, refuser_value
+    )
+    with_all_refusers.name = None
+    return with_all_refusers
+
+
+def create_vaccination_group_without_refusers(states, seed):
     """Put individuals into vaccination priority groups based on age and work.
 
     Args:
@@ -147,7 +172,7 @@ def create_vaccination_group(states, seed):
 
     """
     np.random.seed(seed)
-    is_adult = states["age"] >= 18
+    is_adult = states["age"] >= 16
 
     vaccination_group = pd.Series(np.nan, index=states.index)
 
@@ -222,7 +247,7 @@ def _get_third_priority(states, vaccination_group):
         "(60 <= age < 70) | educ_worker | work_contact_priority > 0.88"
     )
     third_priority_non_random = states.eval(third_priority_non_random_str)
-    n_third_priority_random = 0.03 * (states["age"] >= 18).sum()
+    n_third_priority_random = 0.03 * (states["age"] >= 16).sum()
     third_priority_sampled = _sample_from_subgroups(
         n_to_sample=n_third_priority_random,
         states=states,
@@ -274,7 +299,7 @@ def _sample_from_subgroups(
     n_young = int((1 - share_to_sample_above_age_cutoff) * n_to_sample)
     n_old = int(share_to_sample_above_age_cutoff * n_to_sample)
 
-    pool = states[(states["age"] >= 18) & vaccination_groups_so_far.isnull()]
+    pool = states[(states["age"] >= 16) & vaccination_groups_so_far.isnull()]
     young_pool = pool[pool["age"] < age_cutoff].index
     old_pool = pool[pool["age"] >= age_cutoff].index
 
@@ -298,14 +323,14 @@ def _check_vaccination_group(vaccination_group, states):
     youth_groups = vaccination_group[(12 <= states["age"]) & (states["age"] <= 16)]
     assert (youth_groups == 5).all()
 
-    adult_groups = vaccination_group[states["age"] >= 18]
+    adult_groups = vaccination_group[states["age"] >= 16]
     share_group_1 = (adult_groups == 1).mean()
     share_group_2 = (adult_groups == 2).mean()
     share_group_3 = (adult_groups == 3).mean()
     share_group_4 = (adult_groups == 4).mean()
     assert 0.08 < share_group_1 < 0.10, share_group_1
-    assert 0.15 < share_group_2 < 0.17, share_group_2
-    assert 0.18 < share_group_3 < 0.19, share_group_3
+    assert 0.15 < share_group_2 < 0.175, share_group_2
+    assert 0.175 < share_group_3 < 0.19, share_group_3
     assert 0.55 < share_group_4 < 0.6, share_group_4
     res_shares = adult_groups.value_counts(normalize=True)
     target_shares = pd.Series([0.09, 0.15, 0.19, 0.57], index=[1, 2, 3, 4])
