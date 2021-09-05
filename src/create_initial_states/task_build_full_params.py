@@ -92,7 +92,11 @@ def task_create_full_params(depends_on, produces):
     # 12% are undecided. 8% are opposed to being vaccinated.
     # We assume that 15% will refuse to be vaccinated.
     # source: https://bit.ly/3c9mTgX (publication date: 2021-03-02)
-    params.loc[("vaccinations", "share_refuser", "share_refuser"), "value"] = 0.15
+    params.loc[("vaccinations", "share_refuser", "adult"), "value"] = 0.15
+    # for 12 to 15 year olds, there are more refusers: 44 to 66% are willing to
+    # vaccinate their child (https://bit.ly/3BdHHgJ). Thus, for them the share
+    # of refusers is 34 to 56%
+    params.loc[("vaccinations", "share_refuser", "youth"), "value"] = 0.45
 
     # source: https://bit.ly/3gHlcKd (section 3.5, 2021-03-09, accessed 2021-04-28)
     # 82% say they would get a PCR test after a positive rapid test
