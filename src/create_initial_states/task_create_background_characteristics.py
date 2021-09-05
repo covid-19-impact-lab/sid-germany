@@ -14,10 +14,7 @@ from src.create_initial_states.create_contact_model_group_ids import (
     add_contact_model_group_ids,
 )
 from src.create_initial_states.create_vaccination_priority import (
-    add_refuser_value_to_vaccination_group,
-)
-from src.create_initial_states.create_vaccination_priority import (
-    create_vaccination_group_without_refusers,
+    create_vaccination_group,
 )
 from src.create_initial_states.create_vaccination_priority import (
     create_vaccination_rank,
@@ -84,11 +81,8 @@ def task_create_initial_states_microcensus(depends_on, n_hhs, produces):
     other_daily_dist = pd.read_pickle(depends_on["other_daily_dist"])
     other_weekly_dist = pd.read_pickle(depends_on["other_weekly_dist"])
     params = pd.read_pickle(depends_on["params"])
-    no_vaccination_share_adult = params.loc[
-        ("vaccinations", "share_refuser", "adult"), "value"
-    ]
-    no_vaccination_share_youth = params.loc[
-        ("vaccinations", "share_refuser", "youth"), "value"
+    no_vaccination_share = params.loc[
+        ("vaccinations", "share_refuser", "share_refuser"), "value"
     ]
 
     df = _build_initial_states(
@@ -100,8 +94,7 @@ def task_create_initial_states_microcensus(depends_on, n_hhs, produces):
         other_weekly_dist=other_weekly_dist,
         n_households=n_hhs,
         seed=3933,
-        no_vaccination_share_adult=no_vaccination_share_adult,
-        no_vaccination_share_youth=no_vaccination_share_youth,
+        no_vaccination_share=no_vaccination_share,
     )
     df.to_parquet(produces)
 
@@ -115,8 +108,7 @@ def _build_initial_states(
     other_weekly_dist,
     n_households,
     seed,
-    no_vaccination_share_adult,
-    no_vaccination_share_youth,
+    no_vaccination_share,
 ):
     mc = _prepare_microcensus(mc)
 
@@ -154,17 +146,9 @@ def _build_initial_states(
     df["adult_in_hh_at_home"] = adult_at_home.groupby(df["hh_id"]).transform(np.any)
     df["educ_contact_priority"] = _create_educ_contact_priority(df)
 
-    df["vaccination_priority_group"] = create_vaccination_group_without_refusers(
-        states=df, seed=484
-    )
-    df["vaccination_group_with_refuser_group"] = add_refuser_value_to_vaccination_group(
-        states=df,
-        share_refuser_adult=no_vaccination_share_adult,
-        share_refuser_youth=no_vaccination_share_youth,
-        seed=909,
-    )
+    df["vaccination_group"] = create_vaccination_group(states=df, seed=484)
     df["vaccination_rank"] = create_vaccination_rank(
-        vaccination_group=df["vaccination_group_with_refuser_group"]
+        df["vaccination_group"], share_refuser=no_vaccination_share, seed=909
     )
 
     # This is uncorrelated with the work contact priority.
@@ -355,7 +339,7 @@ def _only_keep_relevant_columns(df):
         "hh_model_group_id",
         "adult_in_hh_at_home",
         "educ_contact_priority",
-        "vaccination_group_with_refuser_group",
+        "vaccination_group",
         "vaccination_rank",
         "rapid_test_compliance",
         "quarantine_compliance",
@@ -386,7 +370,6 @@ def _only_keep_relevant_columns(df):
         "index",
         "stays_home_when_schools_close",  # not used at the moment
         "work_type",
-        "vaccination_priority_group",
     ]
 
     assert set(keep + to_drop) == set(df.columns)
