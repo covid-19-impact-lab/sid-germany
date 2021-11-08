@@ -50,7 +50,7 @@ def _convert_to_params_format(df):
 
 @pytask.mark.depends_on(
     {
-        "data": SRC / "original_data" / "vacations" / "vacations_2020.xlsx",
+        "data": SRC / "original_data" / "vacations.xlsx",
         "shared.py": SRC / "shared.py",
     }
 )

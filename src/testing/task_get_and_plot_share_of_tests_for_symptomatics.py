@@ -55,7 +55,7 @@ plt.rcParams.update(
     }
 )
 def task_prepare_characteristics_of_the_tested(depends_on, produces):
-    df = pd.read_excel(depends_on["data"], sheet_name="Klinische_Aspekte", header=1)
+    df = pd.read_excel(depends_on["data"], sheet_name="Klinische_Aspekte", header=2)
 
     df = _clean_data(df)
     df = convert_weekly_to_daily(df.reset_index(), divide_by_7_cols=[])
@@ -162,7 +162,7 @@ def _clean_data(df):
     return df
 
 
-def _extrapolate_series_after_february(sr, end_date="2021-08-30"):
+def _extrapolate_series_after_february(sr, end_date="2021-12-23"):
     end_date = pd.Timestamp(end_date)
     last_empirical_date = min(pd.Timestamp("2021-02-28"), sr.index.max())
     empirical_part = sr[:last_empirical_date]

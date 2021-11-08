@@ -90,8 +90,12 @@ def _calculate_test_demand_from_share_known_cases(
     """
     n_newly_infected = states["newly_infected"].sum()
     n_pos_tests = n_newly_infected * share_known_cases
-    untested = ~states["knows_immune"] & ~states["pending_test"]
-
+    has_not_received_pcr_test_recently = states["cd_received_test_result_true"] < -14
+    untested = (
+        ~states["knows_immune"]
+        & ~states["pending_test"]
+        & has_not_received_pcr_test_recently
+    )
     symptomatic_untested = states["symptomatic"] & untested
     n_symptomatic_untested = symptomatic_untested.sum()
 

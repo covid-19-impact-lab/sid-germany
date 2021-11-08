@@ -211,6 +211,7 @@ def _add_vacation_model_distribution_params(params):
     params.loc[(*loc, "Osterferien2021"), "value"] = 0.5
     params.loc[(*loc, "Pfingstferien2021"), "value"] = 0.5
     params.loc[(*loc, "Sommerferien2021"), "value"] = 0.5
+    params.loc[(*loc, "Herbstferien2021"), "value"] = 0.5
     return params
 
 
@@ -410,7 +411,7 @@ def _build_share_known_cases_params():
             "2021-04-01": 0.22,
             "2021-04-05": 0.22,
             "2021-04-07": 0.31,
-            "2021-08-15": 0.31,
+            "2021-12-23": 0.31,
         },
         name="value",
     ).to_frame()
