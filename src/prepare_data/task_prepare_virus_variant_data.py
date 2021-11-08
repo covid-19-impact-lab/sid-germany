@@ -24,18 +24,16 @@ def task_prepare_virus_variant_data(depends_on, produces):
     rki = _prepare_rki_data(rki)
     rki.to_csv(produces["rki_strains"])
 
-    zero_part = pd.Series(0.0, index=pd.date_range("2020-03-01", "2020-12-31"))
-    data_part = rki["share_b117"]
-    b117 = (
-        pd.concat([zero_part, data_part])
-        .reindex(pd.date_range("2020-03-01", rki.index.max()))
-        .interpolate()
-    )
+    b117 = rki["share_b117"]
     b117.name = "b117"
 
+    delta = rki["share_delta"]
+    delta.name = "delta"
+
     virus_shares = {
-        "base_strain": 1 - b117,
+        "base_strain": 1 - b117 - delta,
         "b117": b117,
+        "delta": delta,
     }
     pd.to_pickle(virus_shares, produces["virus_shares_dict"])
 
@@ -53,5 +51,7 @@ def _prepare_rki_data(df):
     dates = pd.date_range(df.index.min(), df.index.max())
     # no division by 7 necessary because the data only contains shares.
     df = df.reindex(dates).interpolate()
+    # add zero part for 2020
+    df = df.reindex(pd.date_range("2020-03-01", df.index.max()), fill_value=0.0)
     df.index.name = "date"
     return df

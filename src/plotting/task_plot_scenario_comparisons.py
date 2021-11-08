@@ -50,6 +50,7 @@ OUTCOMES = [
     "share_ever_rapid_test",
     "share_rapid_test_in_last_week",
     "share_b117",
+    "share_delta",
     "share_doing_rapid_test_today",
     "ever_vaccinated",
 ]
@@ -409,8 +410,6 @@ def task_plot_scenario_comparison(
         plot_start (pandas.Timestamp, optional): date on which the plot should start.
             If None, the plot start is the simulation start.
         empirical (bool, optional): whether to plot empirical equivalents.
-            If not given, they are plotted if an empirical analogue for the outcome is
-            available.
         produces (pathlib.Path): path where to save the figure
 
     """
@@ -437,8 +436,7 @@ def task_plot_scenario_comparison(
     else:
         xlims = plot_start, first_df.index.max()
 
-    plot_end = pd.Timestamp("2021-05-01") if outcome == "share_b117" else None
-    dfs = shorten_dfs(dfs, plot_start=plot_start, plot_end=plot_end)
+    dfs = shorten_dfs(dfs, plot_start=plot_start, plot_end=None)
     dates = list(dfs.values())[0].index
 
     if empirical and outcome in empirical_df.columns:
