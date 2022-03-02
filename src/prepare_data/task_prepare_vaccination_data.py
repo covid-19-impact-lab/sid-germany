@@ -119,7 +119,7 @@ def _clean_vaccination_data(df):
 
     # check date conversion was correct
     assert df["date"].min() == pd.Timestamp(year=2020, month=12, day=27)
-    assert df["date"].max() < pd.Timestamp(year=2021, month=12, day=31)
+    assert df["date"].max() < pd.Timestamp(year=2022, month=12, day=31)
 
     # sort_index is super important here because of the cumsum below!
     df = df.set_index("date").sort_index()
