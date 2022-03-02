@@ -109,10 +109,8 @@ def task_plot_decomposition_of_infection_channels_in_spring(depends_on, produces
     plt.close()
 
 
-@pytask.mark.skipif(
-    not _ALL_RAPID_TEST_SCENARIOS_AVAILABLE,
-    reason="required scenarios are not available",
-)
+"""
+@pytask.mark.skip
 @pytask.mark.depends_on(
     {
         name: create_path_to_scenario_outcome_time_series(name, "newly_infected")
@@ -155,6 +153,7 @@ def task_plot_decomposition_of_rapid_tests_in_spring(depends_on, produces):
     ax.set_xlim(pd.Timestamp("2021-01-15"), None)
     fig.savefig(produces["area_plot"])
     plt.close()
+"""
 
 
 def _create_bar_plot(df, scenario_to_members, no_effects_scenario, ordering, color):
