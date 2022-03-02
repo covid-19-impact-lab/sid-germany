@@ -189,29 +189,28 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        # School Scenarios
-        "spring_close_educ_after_easter": {
-            "sim_input_scenario": "close_educ_after_april_5",
-            "params_scenario": "no_rapid_tests_at_schools_after_easter",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        # For the school opening scenarios we assume that the supply of rapid tests is
-        # large enough to allow the same fraction of individuals that should be tested
-        # is actually tested. After Easter that was 95% for educ workers and 75% for
-        # school pupils and increases from there to 1 for pupils.
-        "spring_educ_open_after_easter_with_tests": {
-            "sim_input_scenario": "open_all_educ_after_easter",
+        # Other Scenarios
+        "spring_without_rapid_tests_and_no_vaccinations": {
+            "sim_input_scenario": "just_seasonality",
             "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "spring_educ_open_after_easter_without_tests": {
-            "sim_input_scenario": "open_all_educ_after_easter",
-            "params_scenario": "no_rapid_tests_at_schools_after_easter",
+        "spring_without_rapid_tests_without_seasonality": {  # i.e. only vaccinations
+            "sim_input_scenario": "no_rapid_tests",
+            "params_scenario": "no_seasonality",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
+        "spring_without_vaccinations_without_seasonality": {  # i.e. only rapid tests
+            "sim_input_scenario": "no_vaccinations",
+            "params_scenario": "no_seasonality",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+    }
+
+    skipped = {
         # Other Scenarios
         "spring_vaccinate_1_pct_per_day_after_easter": {
             "sim_input_scenario": "vaccinate_1_pct_per_day_after_easter",
@@ -219,6 +218,7 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
+        # Test decomposition
         "spring_without_school_rapid_tests": {
             "sim_input_scenario": "baseline",
             "params_scenario": "no_rapid_tests_at_schools",
@@ -255,21 +255,26 @@ def get_named_scenarios():
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "spring_without_rapid_tests_and_no_vaccinations": {
-            "sim_input_scenario": "just_seasonality",
+        # School Scenarios
+        "spring_close_educ_after_easter": {
+            "sim_input_scenario": "close_educ_after_april_5",
+            "params_scenario": "no_rapid_tests_at_schools_after_easter",
+            "n_seeds": n_other_seeds,
+            **spring_dates,
+        },
+        # For the school opening scenarios we assume that the supply of rapid tests is
+        # large enough to allow the same fraction of individuals that should be tested
+        # is actually tested. After Easter that was 95% for educ workers and 75% for
+        # school pupils and increases from there to 1 for pupils.
+        "spring_educ_open_after_easter_with_tests": {
+            "sim_input_scenario": "open_all_educ_after_easter",
             "params_scenario": "baseline",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },
-        "spring_without_rapid_tests_without_seasonality": {  # i.e. only vaccinations
-            "sim_input_scenario": "no_rapid_tests",
-            "params_scenario": "no_seasonality",
-            "n_seeds": n_other_seeds,
-            **spring_dates,
-        },
-        "spring_without_vaccinations_without_seasonality": {  # i.e. only rapid tests
-            "sim_input_scenario": "no_vaccinations",
-            "params_scenario": "no_seasonality",
+        "spring_educ_open_after_easter_without_tests": {
+            "sim_input_scenario": "open_all_educ_after_easter",
+            "params_scenario": "no_rapid_tests_at_schools_after_easter",
             "n_seeds": n_other_seeds,
             **spring_dates,
         },

@@ -127,6 +127,37 @@ PLOTS = {
         "colors": [BLUE, RED, GREEN, TEAL, ORANGE],
         "plot_start": pd.Timestamp("2021-01-15"),
     },
+    "explaining_the_decline": {
+        "title": "Explaining the Puzzling Decline in\n{outcome}",
+        "scenarios": [
+            "spring_no_effects",
+            "spring_without_rapid_tests_and_no_vaccinations",
+            "spring_without_rapid_tests",
+            "spring_baseline",
+        ],
+        "colors": [RED, GREEN, ORANGE, BLUE],
+        "name_to_label": {
+            "spring_no_effects": "pessimistic scenario",
+            "spring_without_rapid_tests_and_no_vaccinations": NO_VACCINATIONS
+            + WITH_SEASONALITY
+            + NO_RAPID_TESTS,
+            "spring_without_rapid_tests": WITH_VACCINATIONS
+            + WITH_SEASONALITY
+            + NO_RAPID_TESTS,
+            "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
+        },
+        "plot_start": pd.Timestamp("2021-01-15"),
+    },
+}
+"""Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
+
+Each key in the dictionary is a name for a collection of scenarios. The values are
+dictionaries with the title and the lists of scenario names which are combined to
+create the collection.
+
+"""
+
+skipped = {
     "school_scenarios": {
         "title": "The Effect of Schools on {outcome}",
         "scenarios": SCHOOL_SCENARIOS,
@@ -156,27 +187,6 @@ PLOTS = {
             "spring_without_work_rapid_tests": "without work rapid tests",
             "spring_baseline": "full rapid test demand",
             "spring_without_private_rapid_tests": "without private rapid test demand",
-        },
-        "plot_start": pd.Timestamp("2021-01-15"),
-    },
-    "explaining_the_decline": {
-        "title": "Explaining the Puzzling Decline in\n{outcome}",
-        "scenarios": [
-            "spring_no_effects",
-            "spring_without_rapid_tests_and_no_vaccinations",
-            "spring_without_rapid_tests",
-            "spring_baseline",
-        ],
-        "colors": [RED, GREEN, ORANGE, BLUE],
-        "name_to_label": {
-            "spring_no_effects": "pessimistic scenario",
-            "spring_without_rapid_tests_and_no_vaccinations": NO_VACCINATIONS
-            + WITH_SEASONALITY
-            + NO_RAPID_TESTS,
-            "spring_without_rapid_tests": WITH_VACCINATIONS
-            + WITH_SEASONALITY
-            + NO_RAPID_TESTS,
-            "spring_baseline": WITH_VACCINATIONS + WITH_SEASONALITY + WITH_RAPID_TESTS,
         },
         "plot_start": pd.Timestamp("2021-01-15"),
     },
@@ -285,13 +295,6 @@ PLOTS = {
         },
     },
 }
-"""Dict[str, Dict[str, str]]: A dictionary containing the plots to create.
-
-Each key in the dictionary is a name for a collection of scenarios. The values are
-dictionaries with the title and the lists of scenario names which are combined to
-create the collection.
-
-"""
 
 AVAILABLE_SCENARIOS = get_available_scenarios(NAMED_SCENARIOS)
 
