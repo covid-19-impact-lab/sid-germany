@@ -62,3 +62,6 @@ N_HOUSEHOLDS = 1_150_000
 
 VERY_EARLY = pd.Timestamp("2020-01-01")
 VERY_LATE = pd.Timestamp("2022-12-31")
+
+
+SENSITIVITY_PARAMETER_COLUMN = "lower_envelope"

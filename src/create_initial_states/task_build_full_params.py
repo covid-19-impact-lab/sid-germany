@@ -5,6 +5,7 @@ import pytask
 import sid
 
 from src.config import BLD
+from src.config import SENSITIVITY_PARAMETER_COLUMN
 from src.config import SRC
 from src.contact_models.get_contact_models import get_all_contact_models
 
@@ -32,6 +33,9 @@ _DEPENDENCIES = {
     "susceptibility": SRC / "original_data" / "susceptibility.csv",
     "contact_models.py": SRC / "contact_models" / "get_contact_models.py",
     "covid_epi_params": EPI_PARAMS_PATH,
+    "rapid_test_sensitivities": BLD
+    / "tables"
+    / "sensitivity_params_with_different_methods.csv",
 }
 
 
@@ -109,7 +113,22 @@ def task_create_full_params(depends_on, produces):
     params.loc[("seasonality_effect", "seasonality_effect", "weak"), "value"] = 0.21
     params.loc[("seasonality_effect", "seasonality_effect", "strong"), "value"] = 0.42
 
+    # ==================================================================================
+    # overwrite the sensitivity parameters
+    params = params.query("category != 'rapid_test' | subcategory != 'sensitivity'")
+    path = depends_on["rapid_test_sensitivities"]
+    new_values = pd.read_csv(path, index_col=0)[SENSITIVITY_PARAMETER_COLUMN]
+    index_tuples = [("rapid_test", "sensitivity", i) for i in new_values.index]
+    to_append = pd.DataFrame(
+        new_values.to_numpy().reshape(-1, 1),
+        index=pd.MultiIndex.from_tuples(index_tuples),
+        columns=["value"],
+    )
+    params = pd.concat([params, to_append])
+    # ==================================================================================
+
     params = _convert_index_to_int_where_possible(params)
+
     assert params["value"].notnull().all(), "Params contains NaNs."
     params.to_pickle(produces)
 
