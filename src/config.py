@@ -64,4 +64,4 @@ VERY_EARLY = pd.Timestamp("2020-01-01")
 VERY_LATE = pd.Timestamp("2022-12-31")
 
 
-SENSITIVITY_PARAMETER_COLUMN = "lower_envelope"
+SENSITIVITY_PARAMETER_COLUMN = "average"
