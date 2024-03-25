@@ -1,4 +1,5 @@
 """For each available scenario plot the incidences in each of the age groups."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
