@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.5.0
     hooks:
     -   id: check-added-large-files
         args: ['--maxkb=25']
@@ -17,7 +17,7 @@ repos:
         args: [--branch, main]
     -   id: trailing-whitespace
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
     -   id: python-check-blanket-noqa
     -   id: python-check-mock-methods
@@ -28,37 +28,37 @@ repos:
     -   id: rst-inline-touching-normal
     -   id: text-unicode-replacement-char
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.29.0
+    rev: v3.15.2
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]
--   repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.6.0
+-   repo: https://github.com/asottile/reorder-python-imports
+    rev: v3.12.0
     hooks:
     -   id: reorder-python-imports
         types: [python]
 -   repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v1.19.0
+    rev: v2.5.0
     hooks:
     -   id: setup-cfg-fmt
 -   repo: https://github.com/psf/black
-    rev: 21.10b0
+    rev: 24.3.0
     hooks:
     -   id: black
         types: [python]
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 1.1.1
+  rev: 1.8.4
   hooks:
     -   id: nbqa-black
     -   id: nbqa-pyupgrade
     -   id: nbqa-isort
 -   repo: https://github.com/asottile/blacken-docs
-    rev: v1.11.0
+    rev: 1.16.0
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black]
 -   repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+    rev: 7.0.0
     hooks:
     -   id: flake8
         types: [python]
@@ -77,7 +77,7 @@ repos:
             Pygments,
         ]
 -   repo: https://github.com/PyCQA/doc8
-    rev: 0.9.1
+    rev: v1.1.1
     hooks:
     -   id: doc8
 -   repo: https://github.com/econchick/interrogate
@@ -86,7 +86,7 @@ repos:
     -   id: interrogate
         args: [-v, --fail-under=25, src, tests]
 -   repo: https://github.com/mgedmin/check-manifest
-    rev: "0.47"
+    rev: "0.49"
     hooks:
     -   id: check-manifest
 -   repo: meta
