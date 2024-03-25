@@ -13,6 +13,7 @@ Explanation on the coding of the variables
 - https://covid19-de-stats.sourceforge.io/rki-fall-tabelle.html
 
 """
+
 from datetime import datetime
 from datetime import timedelta
 

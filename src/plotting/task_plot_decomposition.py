@@ -1,4 +1,5 @@
 """This module holds the code to compute marginal contributions and shapley values."""
+
 from typing import Dict
 
 import matplotlib

@@ -15,6 +15,7 @@ All public functions here take the following arguments (and possibly some more)
 The functions here expect that the domain names are part of contact model names.
 
 """
+
 from functools import partial
 
 from src.policies.single_policy_functions import mixed_educ_policy

@@ -1,4 +1,5 @@
 """Create plots, illustrating the share known cases over time."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
