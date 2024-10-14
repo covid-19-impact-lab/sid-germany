@@ -93,9 +93,9 @@ def add_contact_model_group_ids(
     df[educ_group_cols] = df[educ_group_cols].astype("category")
 
     # the stays_home_when_schools_close variable is not used yet.
-    df[
-        "stays_home_when_schools_close"
-    ] = _identify_adult_staying_home_when_schools_close(df)
+    df["stays_home_when_schools_close"] = (
+        _identify_adult_staying_home_when_schools_close(df)
+    )
 
     df = df.drop(columns=["pos_in_group", "one", "group_size"])
     return df
