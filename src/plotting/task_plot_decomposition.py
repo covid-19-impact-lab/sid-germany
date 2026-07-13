@@ -1,4 +1,5 @@
 """This module holds the code to compute marginal contributions and shapley values."""
+
 from typing import Dict
 
 import matplotlib
@@ -20,7 +21,6 @@ from src.plotting.plotting import YELLOW
 from src.simulation.scenario_config import create_path_to_scenario_outcome_time_series
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
-
 
 _CHANNEL_SCENARIOS_TO_MEMBERS = {
     "spring_baseline": frozenset(["rapid_tests", "vaccinations", "seasonality"]),

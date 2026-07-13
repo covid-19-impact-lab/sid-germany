@@ -1,4 +1,5 @@
 """For each available scenario plot the incidences in each of the age groups."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytask
@@ -14,7 +15,6 @@ from src.simulation.scenario_config import create_path_to_group_incidence_plot
 from src.simulation.scenario_config import (
     create_path_to_scenario_outcome_time_series,
 )
-
 
 _DEPENDENCIES = {
     "calculate_moments.py": SRC / "calculate_moments.py",

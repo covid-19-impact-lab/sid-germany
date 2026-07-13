@@ -7,7 +7,6 @@ from src.config import SRC
 from src.shared import create_age_groups
 from src.shared import load_dataset
 
-
 LOCATIONS = [
     "cnt_home",
     "cnt_work",

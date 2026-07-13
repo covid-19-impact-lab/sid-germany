@@ -12,7 +12,6 @@ from src.simulation.task_save_params_changes_of_params_scenarios import (
 )
 from src.testing.shared import get_piecewise_linear_interpolation
 
-
 SCENARIO_FUNCS = [func for name, func in get_params_scenarios()]
 
 

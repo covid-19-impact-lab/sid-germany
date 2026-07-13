@@ -3,6 +3,7 @@
 This module is copied from sid commit 206886a14eeb3257deb71db91aba4e7fb2385fc2.
 
 """
+
 import string
 
 import numpy as np
