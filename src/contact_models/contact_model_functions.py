@@ -6,7 +6,6 @@ from sid.time import get_date
 
 from src.shared import from_epochs_to_timestamps
 
-
 IS_POSITIVE_CASE = (
     "knows_infectious | (knows_immune & symptomatic) "
     "| (knows_immune & (cd_received_test_result_true >= -13))"

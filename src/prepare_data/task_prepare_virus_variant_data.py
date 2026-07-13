@@ -5,7 +5,6 @@ from src.config import BLD
 from src.config import SRC
 from src.testing.shared import get_date_from_year_and_week
 
-
 STRAIN_FILES = {
     "rki_strains": BLD / "data" / "virus_strains" / "rki_strains.csv",
     "virus_shares_dict": BLD / "data" / "virus_strains" / "virus_shares_dict.pkl",

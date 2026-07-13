@@ -9,6 +9,7 @@ and must return a dictionary with the following entries:
     - rapid_test_reaction_models
 
 """
+
 from functools import partial
 
 import pandas as pd
