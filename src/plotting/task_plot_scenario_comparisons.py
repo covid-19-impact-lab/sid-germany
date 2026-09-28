@@ -25,7 +25,6 @@ from src.simulation.scenario_config import create_path_to_scenario_outcome_time_
 from src.simulation.scenario_config import get_available_scenarios
 from src.simulation.scenario_config import get_named_scenarios
 
-
 _MODULE_DEPENDENCIES = {
     "plotting.py": SRC / "plotting" / "plotting.py",
     "policy_tools.py": SRC / "policies" / "policy_tools.py",

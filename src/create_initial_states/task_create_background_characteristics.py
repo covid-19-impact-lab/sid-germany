@@ -1,4 +1,5 @@
 """Create a synthetic population that is representative of Germany."""
+
 from pathlib import Path
 
 import numpy as np

@@ -351,7 +351,7 @@ def measure_of_diff_btw_distributions(params, old_distribution, desired_total):
     """
     assert (params.index == old_distribution.index).all()
     params_deviation = params["value"].to_numpy() - old_distribution.to_numpy()
-    params_penalty = (params_deviation ** 2).sum()
+    params_penalty = (params_deviation**2).sum()
     actual_total = params.index.to_numpy() @ params["value"].to_numpy()
     total_contacts_penalty = (desired_total - actual_total) ** 2
     cost = total_contacts_penalty + params_penalty
