@@ -12,7 +12,6 @@ from src.config import PLOT_START_DATE
 from src.config import POPULATION_GERMANY
 from src.plotting.plotting import style_plot
 
-
 plt.rcParams.update(
     {
         "axes.spines.right": False,
