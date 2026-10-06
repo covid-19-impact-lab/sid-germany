@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from sid.contacts import _sum_preserving_round
 
-
 # ---------------------------------- Contact Models ----------------------------------
 
 
