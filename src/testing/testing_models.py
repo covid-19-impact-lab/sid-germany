@@ -1,4 +1,5 @@
 """PCR testing model for sid."""
+
 import warnings
 
 import numpy as np

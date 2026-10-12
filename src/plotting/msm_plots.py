@@ -7,7 +7,6 @@ from sid.plotting import plot_infection_rates_by_contact_models
 
 from src.plotting.plotting import format_date_axis
 
-
 plt.rcParams.update(
     {
         "axes.spines.right": False,
