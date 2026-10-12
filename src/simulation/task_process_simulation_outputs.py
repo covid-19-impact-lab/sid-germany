@@ -14,7 +14,6 @@ from src.simulation.scenario_config import get_named_scenarios
 from src.simulation.scenario_config import INCIDENCE_OUTCOMES
 from src.simulation.scenario_config import NON_INCIDENCE_OUTCOMES
 
-
 _MODULE_DEPENDENCIES = {
     "calculate_moments.py": SRC / "calculate_moments.py",
     "load_simulation_inputs.py": SRC / "simulation" / "load_simulation_inputs.py",

@@ -1,4 +1,5 @@
 """Functions for rapid tests."""
+
 import warnings
 
 import numpy as np
