@@ -368,9 +368,9 @@ def _add_rapid_test_reaction_params(params):
 
     """
     params = params.copy(deep=True)
-    params.loc[
-        ("rapid_test_demand", "reaction", "hh_contacts_multiplier"), "value"
-    ] = 0.7
+    params.loc[("rapid_test_demand", "reaction", "hh_contacts_multiplier"), "value"] = (
+        0.7
+    )
     params.loc[
         ("rapid_test_demand", "reaction", "not_hh_contacts_multiplier"), "value"
     ] = 0.15
