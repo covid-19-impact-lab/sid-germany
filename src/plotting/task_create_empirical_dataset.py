@@ -5,7 +5,6 @@ from src.calculate_moments import smoothed_outcome_per_hundred_thousand_rki
 from src.config import BLD
 from src.config import SRC
 
-
 _DEPENDENCIES = {
     "rki": BLD / "data" / "processed_time_series" / "rki.pkl",
     "cosmo_ever_rapid_test": SRC
