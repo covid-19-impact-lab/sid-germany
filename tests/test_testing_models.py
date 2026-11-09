@@ -6,7 +6,6 @@ from src.testing.testing_models import _calculate_test_demand_from_share_known_c
 from src.testing.testing_models import allocate_tests
 from src.testing.testing_models import process_tests
 
-
 DATE = pd.Timestamp("2020-10-10")
 
 

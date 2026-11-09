@@ -18,7 +18,6 @@ from src.policies.enacted_policies import OTHER_MULTIPLIER_SPECS
 from src.simulation.seasonality import create_seasonality_series
 from src.testing.shared import get_piecewise_linear_interpolation
 
-
 _DEPENDENCIES = {
     # modules
     "plotting.py": SRC / "plotting" / "plotting.py",
